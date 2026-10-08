@@ -1,0 +1,72 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt
+index 4143b47..f17c23b 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt
+@@ -96,7 +96,7 @@ class FileStorage(
+         val parent = directory.resolve(Settings["storage.reports.path", "reports/"])
+         parent.mkdirs()
+         val file = parent.resolve("${report.time}-${report.reporter}.toml")
+-        Config.fileWriter(file) {
++        Config.atomicFileWriter(file) {
+             writePair("reporter", report.reporter)
+             writePair("reported", report.reported)
+             writePair("rule", report.rule)
+@@ -110,17 +110,13 @@ class FileStorage(
+ 
+     override fun saveOffers(offers: OpenOffers) {
+         val buy = directory.resolve(Settings["storage.grand.exchange.offers.buy.path"])
+-        if (buy.deleteRecursively()) {
+-            buy.mkdirs()
+-        }
++        check(buy.isDirectory || buy.mkdirs()) { "Unable to create exchange buy-offer storage." }
+         saveOffers(buy, offers.buyByItem)
+         val sell = directory.resolve(Settings["storage.grand.exchange.offers.sell.path"])
+-        if (sell.deleteRecursively()) {
+-            sell.mkdirs()
+-        }
++        check(sell.isDirectory || sell.mkdirs()) { "Unable to create exchange sell-offer storage." }
+         saveOffers(sell, offers.sellByItem)
+         val file = directory.resolve(Settings["storage.grand.exchange.offers.path"])
+-        Config.fileWriter(file) {
++        Config.atomicFileWriter(file) {
+             writePair("counter", offers.counter)
+         }
+     }
+@@ -128,7 +124,7 @@ class FileStorage(
+     private fun saveOffers(directory: File, byItem: Map<String, TreeMap<Int, MutableList<OpenOffer>>>) {
+         for ((item, map) in byItem) {
+             val file = directory.resolve("$item.toml")
+-            Config.fileWriter(file) {
++            Config.atomicFileWriter(file) {
+                 for ((price, list) in map) {
+                     for (offer in list) {
+                         writeSection(offer.id.toString())
+@@ -142,6 +138,10 @@ class FileStorage(
+                 }
+             }
+         }
++        // Retire obsolete item files only after every replacement was serialized.
++        directory.listFiles { file -> file.extension == "toml" && file.nameWithoutExtension !in byItem }
++            ?.forEach { check(it.delete()) { "Unable to retire exchange offer file: $it" } }
++
+     }
+ 
+     private fun loadOffers(directory: File, offers: OpenOffers, sell: Boolean) {
+@@ -212,7 +212,7 @@ class FileStorage(
+     override fun saveClaims(claims: Map<Int, Claim>) {
+         val file = directory.resolve(Settings["storage.grand.exchange.offers.claim.path"])
+         file.parentFile.mkdirs()
+-        Config.fileWriter(file) {
++        Config.atomicFileWriter(file) {
+             for ((id, claim) in claims) {
+                 writeKey(id.toString())
+                 list(2) { index ->
+@@ -295,7 +295,7 @@ class FileStorage(
+     override fun savePriceHistory(history: Map<String, PriceHistory>) {
+         directory.resolve(Settings["storage.grand.exchange.history.path"]).mkdirs()
+         for ((key, value) in history) {
+-            Config.fileWriter(directory.resolve("${Settings["storage.grand.exchange.history.path"]}/$key.toml")) {
++            Config.atomicFileWriter(directory.resolve("${Settings["storage.grand.exchange.history.path"]}/$key.toml")) {
+                 val configWriter: Writer = this
+                 writeSection("day")
+                 writeMap(configWriter, value.day)

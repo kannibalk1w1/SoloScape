@@ -195,6 +195,8 @@ class Profile:
         for path in self.state.rglob('*'):
             if path.is_symlink():
                 raise ValueError('World state contains a symbolic link; backup refused.')
+            if path.name.startswith('.save-') and path.name.endswith('.tmp'):
+                continue
             if path.is_file() and path.relative_to(self.state).parts[0] in ('saves', 'errors'):
                 if path.stat().st_size > MAX_FILE:
                     raise ValueError('A world-state file is too large for this backup format.')

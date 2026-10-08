@@ -34,7 +34,7 @@ def java_version(executable):
     return int(match.group(1))
 
 
-def doctor():
+def doctor(port=PORT, require_display=True, output=print):
     errors = []
     if shutil.which("flock") is None:
         errors.append("Install util-linux (flock) for safe client patch application.")
@@ -56,7 +56,7 @@ def doctor():
             if (variable == "SERVER_JAVA" and version < required) or (variable == "CLIENT_JAVA" and version != required):
                 errors.append(f"{variable}: Java {version}; set {variable} to a JDK {required} executable.")
             else:
-                print(f"OK {variable}: Java {version}")
+                output(f"OK {variable}: Java {version}")
             javac = Path(shutil.which(executable) or executable).resolve().with_name("javac")
             if not javac.is_file():
                 errors.append(f"{variable} needs a JDK including javac, not only a JRE.")
@@ -71,29 +71,29 @@ def doctor():
             errors.append(f"Missing upstream client library {name}.")
     if (SERVER / "game.properties").exists():
         errors.append("External upstream/game-server/game.properties found. This launcher requires the audited internal defaults; move the override aside or audit it first.")
-    if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
+    if require_display and not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
         errors.append("No graphical display. Run from a Linux desktop session (Java 8 AWT needs X11/XWayland).")
     try:
         with socket.socket() as probe:
-            probe.bind(("0.0.0.0", PORT))
+            probe.bind(("127.0.0.1", port))
     except OSError as exc:
         if exc.errno in (errno.EPERM, errno.EACCES):
-            errors.append(f"Port {PORT} probe denied by environment permissions; run doctor with local socket access.")
+            errors.append(f"Port {port} probe denied by environment permissions; run doctor with local socket access.")
         else:
-            errors.append(f"Port {PORT} is unavailable: {exc}. Stop the existing listener before launching.")
-    print("NOTE: upstream binds all interfaces; restrict LAN access with your firewall for local development.")
-    print("NOTE: cache presence checks do not prove revision/content compatibility.")
-    print("Linux input nodes (not controller identification):", ", ".join(str(p) for p in Path("/dev/input").glob("event*")) or "none visible")
+            errors.append(f"Port {port} is unavailable: {exc}. Stop the existing listener before launching.")
+    output("NOTE: patched server binds IPv4 loopback by default; LAN hosting requires an explicit override.")
+    output("NOTE: cache presence checks do not prove revision/content compatibility.")
+    output("Linux input nodes (not controller identification):", ", ".join(str(p) for p in Path("/dev/input").glob("event*")) or "none visible")
     for error in errors:
-        print("ERROR:", error)
-    print(f"Doctor: {len(errors)} error(s).")
+        output("ERROR:", error)
+    output(f"Doctor: {len(errors)} error(s).")
     return not errors
 
 
-def stop(process):
+def stop(process, output=print):
     if process is None or process.poll() is not None:
         return
-    print(f"Stopping child {process.pid}; waiting for normal shutdown/save hooks.", flush=True)
+    output(f"Stopping child {process.pid}; waiting for normal shutdown/save hooks.", flush=True)
     try:
         os.killpg(process.pid, signal.SIGTERM)
     except ProcessLookupError:
@@ -104,7 +104,7 @@ def stop(process):
         try:
             process.wait(timeout=10)
         except subprocess.TimeoutExpired:
-            print("Still waiting for shutdown; no forced kill. See .runtime logs.", flush=True)
+            output("Still waiting for shutdown; no forced kill. See .runtime logs.", flush=True)
 
 
 def build(repo, java, task):
