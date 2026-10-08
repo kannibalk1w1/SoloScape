@@ -60,3 +60,25 @@ export SOLOSCAPE_TEST_ROOT="$PWD/.runtime/alpha-tests/content-route"
 
 The fixture deliberately skips without an explicit isolated test root. A longer
 checked-in graphical smoke harness is being validated separately before publication.
+
+## Graphical native smoke harness: passed
+
+`./scripts/smoke-profile.sh` now provides a repeatable New Character/Continue check.
+It compiles the small native probe, creates an independent test profile below
+`.runtime/alpha-tests/session-<id>/`, starts owned server/client processes on port 43595
+and a private Xvfb display :197, and repeats clean shutdown/save twice. It requires a
+matched source build, the existing compatible cache, Xvfb and a free test port/display.
+
+The probe waits at least 15 seconds and requires native world readiness and freshly
+rendered home-tab availability. It continues new-character welcome dialogue only
+through a fresh ordinary native Continue action. It records diagnostic state flags
+and a screenshot from the private display; no production diagnostic socket is exposed.
+The test fails closed if startup/login/readiness/save-field checks fail.
+
+Both iterations pass: native character save valid, inventory/XP/location preserved,
+four backups verified and original save/error/derived-path size/mtime snapshots unchanged.
+The final state has no dialogue or modal entry and no pending scene load. The following
+is the actual software-rendered disposable world, not a mockup or a controller/hardware
+acceptance claim.
+
+![Actual disposable native world](images/alpha-native-private-world.png)
