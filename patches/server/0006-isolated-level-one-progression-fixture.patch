@@ -1,0 +1,113 @@
+diff --git a/game/src/test/kotlin/WorldTest.kt b/game/src/test/kotlin/WorldTest.kt
+index 8d1f67e..b3bd7b8 100644
+--- a/game/src/test/kotlin/WorldTest.kt
++++ b/game/src/test/kotlin/WorldTest.kt
+@@ -309,6 +309,16 @@ abstract class WorldTest : KoinTest {
+             properties["storage.disabled"] = true
+             properties["events.randomEvents.active"] = false
+             properties["bots.count"] = 0
++            System.getenv("SOLOSCAPE_TEST_ROOT")?.let { path ->
++                val isolated = File(path).absoluteFile
++                check(isolated.isAbsolute && isolated.mkdirs() || isolated.isDirectory)
++                properties["storage.players.path"] = isolated.resolve("saves").path + "/"
++                properties["storage.players.logs"] = isolated.resolve("logs").path + "/"
++                properties["storage.players.errors"] = isolated.resolve("errors").path + "/"
++                properties["storage.caching.path"] = isolated.resolve("temp").path + "/"
++                properties["storage.data.modified"] = isolated.resolve("temp/modified.dat").path
++                properties["storage.wildcards"] = isolated.resolve("temp/wildcards.txt").path
++            }
+             properties.remove("world.id")
+             properties.remove("world.name")
+             properties
+diff --git a/game/src/test/kotlin/content/soloscape/AlphaProgressionTest.kt b/game/src/test/kotlin/content/soloscape/AlphaProgressionTest.kt
+new file mode 100644
+index 0000000..ca4ffe9
+--- /dev/null
++++ b/game/src/test/kotlin/content/soloscape/AlphaProgressionTest.kt
+@@ -0,0 +1,86 @@
++package content.soloscape
++
++import FakeRandom
++import WorldTest
++import dialogueOption
++import equipItem
++import itemOnObject
++import itemOption
++import npcOption
++import org.junit.jupiter.api.Assertions.*
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
++import world.gregs.voidps.engine.client.ui.closeDialogue
++import world.gregs.voidps.engine.data.PlayerSave
++import world.gregs.voidps.engine.data.SaveQueue
++import world.gregs.voidps.engine.data.file.FileStorage
++import kotlinx.coroutines.runBlocking
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.entity.item.floor.FloorItems
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.equipment
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.type.setRandom
++import java.nio.file.Files
++
++/** Real content handlers/validated instructions on disposable fixture tiles, no networking. */
++@EnabledIfEnvironmentVariable(named = "SOLOSCAPE_TEST_ROOT", matches = ".+")
++internal class AlphaProgressionTest : WorldTest() {
++    @Test
++    fun `level one gathering production equipment combat food and native save reload`() {
++        val player = createPlayer(emptyTile)
++        // Only starting tools are seeded; no fish, cooked food, XP or combat loot is injected.
++        player.inventory.add("small_fishing_net")
++        player.inventory.add("bronze_sword")
++        assertEquals(1, player.levels.get(Skill.Fishing))
++        assertEquals(1, player.levels.get(Skill.Cooking))
++        setRandom(object : FakeRandom() { override fun nextInt(until: Int) = 0 })
++        val spot = createNPC("fishing_spot_small_net_bait_draynor", emptyTile.addY(1))
++        player.npcOption(spot, "Net")
++        tickIf(150) { player.inventory.count("raw_shrimps") < 3 }
++        assertTrue(player.experience.get(Skill.Fishing) > 0)
++        val raw = player.inventory.count("raw_shrimps")
++
++        val fire = createObject("fire_orange", emptyTile.addX(1))
++        player.itemOnObject(fire, player.inventory.indexOf("raw_shrimps"))
++        tick()
++        player.dialogueOption(id = "dialogue_skill_creation", component = "choice1")
++        tickIf(100) { player.inventory.count("shrimps") == 0 }
++        assertTrue(player.inventory.count("raw_shrimps") < raw)
++        assertTrue(player.experience.get(Skill.Cooking) > 0)
++        player.closeDialogue()
++        player.equipItem("bronze_sword")
++        tick(3)
++        assertTrue(player.equipment.contains("bronze_sword"))
++
++        // Deterministic valid rolls remove chance from the route without raising player skills.
++        setRandom(object : FakeRandom() {
++            override fun nextInt(until: Int) = (until - 1).coerceAtLeast(0)
++            override fun nextInt(from: Int, until: Int) = if (until == 128 || until == 1) from else (until - 1).coerceAtLeast(from)
++        })
++        val chicken = createNPC("chicken", emptyTile.addY(4))
++        val attackXp = player.experience.get(Skill.Attack)
++        player.npcOption(chicken, "Attack")
++        tickIf(250) { chicken.levels.get(Skill.Constitution) > 0 }
++        val deathTile = chicken["death_tile", chicken.tile]
++        tick(8)
++        assertTrue(player.experience.get(Skill.Attack) > attackXp)
++        assertNotNull(FloorItems.firstOrNull(deathTile, "bones"))
++        val food = player.inventory.count("shrimps")
++        player.itemOption("Eat", "shrimps")
++        tick(4)
++        assertEquals(food - 1, player.inventory.count("shrimps"))
++
++        val directory = Files.createTempDirectory("soloscape-route-save-")
++        try {
++            val file = directory.resolve("${player.accountName.lowercase()}.toml").toFile()
++            val queue = SaveQueue(FileStorage(directory.toFile()))
++            runBlocking { queue.direct().join() }
++            assertTrue(file.isFile)
++            val restored = PlayerSave.load(file)
++            assertArrayEquals(player.experience.experience, restored.experience)
++            assertEquals(player.tile, restored.tile)
++            for ((name, inventory) in player.inventories.instances) assertArrayEquals(inventory.items, restored.inventories[name])
++        } finally { directory.toFile().deleteRecursively() }
++    }
++}
