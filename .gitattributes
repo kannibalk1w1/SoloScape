@@ -1,0 +1,3 @@
+# Unified diff context needs leading spaces, including on otherwise blank lines.
+# Validate patch syntax separately; do not treat diff context as source whitespace.
+*.patch -whitespace
