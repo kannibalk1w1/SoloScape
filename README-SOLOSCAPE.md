@@ -5,13 +5,13 @@ experimental controller support. JDK 21, JDK 8 and the upstream cache are instal
 Both upstream builds pass, doctor passes, and the server reaches world readiness.
 The controller prototype supports camera, precise walking, LT aiming, LB/RB target
 cycling, scene highlights, inventory and dialogue controls, plus an optional direct
-movement mode, world action menus, loot pickup and a View/Select main-tab radial; see
+movement mode, world action menus, loot pickup, bank/shop panes, a controller keyboard, equipment/prayer/spell focus and a View/Select main-tab radial; see
 [controller testing instructions](docs/CONTROLLER_TESTING.md) to enable it.
 
 The [proposed roadmap](docs/ROADMAP.md) is the working task list.
 The [current-state handoff](docs/PROJECT_HANDOFF.md) can be taken into ChatGPT for discussion.
 
-The branch is `soloscape/bootstrap`. Source checkouts under `upstream/` are
+The local Orca branch is `soloscape/bootstrap`, tracking remote `overnight/controller-sprint`; public `main` retains the preceding baseline. Source checkouts under `upstream/` are
 ignored; tracked SoloScape patches reproduce the client changes and the server
 directional movement extension. See [reconnaissance](docs/UPSTREAM_RECON.md),
 [architecture](docs/ARCHITECTURE.md) and the original [brief](docs/KICKOFF.md).
@@ -94,3 +94,6 @@ write it after success; `--no-build` refuses missing or mismatched stamps. Enabl
 **SoloScape server features** only for our patched server, then **Direct movement**
 if desired. With server features off, the controller uses ordinary walking and
 same-tile Walk cancellation. See [protocol extensions](docs/PROTOCOL_EXTENSIONS.md).
+
+
+After changing source, export the patch stack and run `python3 scripts/verify_patches.py client` and `python3 scripts/verify_patches.py server`. These compare every modified/untracked source file with the reproduced stack, including native hooks. The root tests exercise missing files and changed contents. See `docs/MORNING_REPORT.md` for the current verified batch and acceptance steps.

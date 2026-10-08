@@ -394,3 +394,14 @@ The native amount, name, string and bank-search prompts now show a controller ke
 Validate Withdraw/Deposit-X (including Cancel and a second quantity request), search with several matches/no matches/clearing, mouse/keyboard edits while the controller keyboard is open, hidden/replaced prompts, and held A during opening. B on an amount prompt cancels the native entry; the server retains its ordinary cancellation behavior. No quantity is fabricated on cancellation. Bank PIN remains native.
 
 Bank/shop B recovers after one second if a busy server ignores a close. Scrolling resolves focus after an actual widget render, and item replacement requires release before A can act. The controller pauses camera input while UI modes consume input.
+
+
+## Equipment, prayer and spell handoff (patch 0013)
+
+On the View/Select radial, choose Equipment, Prayer or Spellbook. D-pad navigates rendered actionable widgets, A performs the native action, X lists alternatives and B returns to world control. Ordinary mouse tab switching does not enter controller focus. Equipment bonuses (667) and its side inventory (670) also support panes.
+
+Selecting a targeted spell stops controller walking and hands off to eligible nearby NPC/object/ground targets; stick aims, LB/RB cycles, A dispatches, B cancels. Inventory-target spells open/focus inventory through a native tab operation that preserves selection. Source identity/item/quantity/permissions and a re-selection token are revalidated. A source stack change requires cancellation and re-selection. Ineligible or invalid inventory targeting never falls back to eating/dropping. Immediate casts still use their native operations. Server/native messages handle unmet requirements.
+
+Test removing/equipping with a full bag, empty worn slots, opening/closing bonuses, toggling prayers and quick-prayer selection/confirmation, modern/ancient/lunar books, immediate/home teleport, a targeted NPC cast with enough and insufficient runes, an inventory spell, replacing the selected item, despawns/region changes, and B cancellation. Player/PvP/self and arbitrary ground-tile targets are not added; nearby targets retain conservative approach reachability rather than a new ranged-combat policy.
+
+**Native interface navigation** in SoloScape Controller defaults on. Turn it off to restore mouse/keyboard handling for the added interfaces; inventory/dialogue controls and tab switching remain. New renderer previews in `images/controller-bank-preview.png` and `images/controller-keyboard-preview.png` use plain backgrounds, not gameplay screenshots.

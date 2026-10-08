@@ -41,6 +41,10 @@ not a prerequisite for a good console RuneScape experience.
 - [x] BASE-10 Fix review findings H1/M2/M3: B content cleanup and per-geometry target checks, with regression tests.
 - [x] BASE-11 Build a reversible 16-slot home-tab radial proof of concept; native tab screens remain.
 
+## Overnight controller sprint checkpoint
+
+Completed implementation on `overnight/controller-sprint` through `bb1aca0`: reliability, bank/shop focus, native quantity/search keyboard, equipment/prayer/spell panels, selected target safety, radial handoff and hints. M1-01/02/03/08 are checked as implementations; gameplay acceptance remains pending. M1-04 is partial (equipment/stats), M1-05 is partial pending acceptance/requirements feedback checks, and M1-06 has native item/spell bindings but does not cover every target or interface. Other home tabs, quick slots and special interfaces remain open. Evidence: 100 client cases, 14 root cases, full 53/14-file patch exports; see `MORNING_REPORT.md`.
+
 ## M0 — finish the first reliable controller playable
 
 Priority: now. Depends on the current built client and server.
@@ -66,14 +70,14 @@ work together, and the character survives a clean restart with expected state.
 Priority: next. Depends on M0. Recommended implementation order: bank → shop →
 equipment/prayer/spells → targeting/quick actions → special interfaces.
 
-- [ ] M1-01 Audit bank widgets and native actions; implement item focus, deposit/withdraw and quantity selection.
-- [ ] M1-02 Add bank search/tab navigation and visible focus through scrolling lists.
-- [ ] M1-03 Implement shop stock/player inventory focus, buy/sell amounts and insufficient funds/stock feedback.
+- [x] M1-01 Audit bank widgets and native actions; implement item focus, deposit/withdraw and quantity selection.
+- [x] M1-02 Add bank search/tab navigation and visible focus through scrolling lists.
+- [x] M1-03 Implement shop stock/player inventory focus, buy/sell amounts and insufficient funds/stock feedback.
 - [ ] M1-04 Implement equipment, stats, quest, settings and world-map panel navigation using real widget metadata.
 - [ ] M1-05 Implement prayer/spell navigation, selection state and clear feedback for missing requirements.
 - [ ] M1-06 Finish inventory item-on-item and item/spell-on-world targeting, with explicit cancel and target revalidation.
 - [ ] M1-07 Add configurable quick slots for food, potions, prayers, spells and supported special attacks.
-- [ ] M1-08 Support number/text entry, including a Deck-friendly keyboard path, without advancing unrelated dialogues.
+- [x] M1-08 Support number/text entry, including a Deck-friendly keyboard path, without advancing unrelated dialogues.
 - [ ] M1-09 Audit special interfaces such as smithing/crafting lists, quest choices and familiar/Dungeoneering panels; implement the highest-use gaps.
 - [ ] M1-10 Add remapping/presets and document button precedence across world, menus and widgets.
 

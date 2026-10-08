@@ -199,3 +199,14 @@ restart. Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.
 ## Overnight reliability checkpoint (2026-10-08)
 
 Client patch 0010 implements the reliability changes described in `MORNING_REPORT.md` and `PROTOCOL_EXTENSIONS.md`. Client test/build: 76 cases, zero failures/errors, one SDL skip. Root tooling: 11 cases pass. Fresh, upgrade, reverse and repeated patch application reproduce all 41 affected client files. Claude found no blockers; minor follow-ups were applied. Direct movement now requires both Direct movement and SoloScape server features settings. Automatic remote capability negotiation and physical gameplay acceptance remain pending.
+
+
+## Completed overnight controller sprint (2026-10-08)
+
+Implementation commits: `daf577c`, `40cc0a0`, `237e5be`, `bb1aca0`. Final client test/Shadow build passes: **100 cases, zero failures/errors, one SDL virtual-device skip**. Root tooling: **14 cases**, ShellCheck and Python compilation pass. Server source/jar was unchanged by this client sprint; existing server evidence remains **247 network + 61 selected engine** passing cases.
+
+The complete modified trees match reproduced patches: **53 client / 14 server files**. Fresh application, upgrades, reverse application and repeated application pass; real patch helpers are idempotent. Whole-tree export verification additionally detects omitted tracked/new files and changed contents. Patch 0013 includes the entry observer, render-frame and selection hooks, completing the exported native paths.
+
+Native widget/pane tests cover bank/shop grids, permissions, quantities, scroll bounds, item replacement, close retry and radial handoff. Entry checks cover native edit/Enter/Escape argument shapes, explicit one-shot bank search, hidden/replaced prompts and overflow. Selection tests cover source identity/permissions/quantity, re-selection tokens, inventory tab preservation, ineligible item targets and an actual native spell-on-NPC packet (opcode 61, source group/component, child/item and NPC fields matched to the pinned decoder).
+
+Three bounded Claude reviews are retained; identified medium bank close/recovery and minor redraw/search/test improvements were fixed. Bank and keyboard overlays were inspected at 765×503 and 1280×800 on plain backgrounds. No real session was launched/stopped, no cache/saves changed and no physical acceptance or fresh native SDL run is claimed. See `MORNING_REPORT.md` for remaining checks.

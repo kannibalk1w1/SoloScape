@@ -84,12 +84,12 @@ when its network receipt is at least 750 ms old, checked on a game tick. The ord
 run-toggle preference is preserved; energy and equipment restrictions still apply.
 A plain directional stop cannot cancel a newer mouse walk or interaction.
 
-The latest B world action uses custom opcode **86**, with no payload or client
+With **SoloScape server features** explicitly enabled, B world cancellation uses custom opcode **86**, with no payload or client
 position. It clears normal movement/interaction, watch, weak actions and suspension.
 After clearing the old action it runs pending walk cleanup once, allowing unmorph
 or content exits and preserving any route the callback installs. It respects the
 ordinary busy/delay gate; it is not an escape from forced actions such as agility.
-Dialogue B currently uses the already-verified ordinary same-tile Walk cancellation path, not opcode 86.
+The server-features setting defaults off; ordinary cancellation uses native Walk. Direct movement requires both that opt-in and the Direct movement toggle. Dialogue B uses the already-verified ordinary same-tile Walk cancellation path, not opcode 86.
 
 Focus loss, disconnect, UI modes, A, LT, shutdown and mode changes stop direct input.
 A native mouse menu action takes over and blocks held direct input until neutral.
@@ -111,7 +111,7 @@ Root branch: `soloscape/bootstrap`.
 
 The root repository owns code patches, scripts and documentation. Upstream
 checkouts, downloaded cache, runtime binaries/logs and saves remain ignored.
-Seven client patches and two server patches reproduce the current modifications.
+Thirteen client patches and three server patches reproduce the current modifications.
 The launcher applies missing patches before source builds, checks pinned bases,
 and refuses conflicting local changes rather than resetting them.
 
@@ -136,14 +136,14 @@ Both Shadow jars are rebuilt:
 
 Current checks pass with zero failures or errors:
 
-- **71 client test cases (68 distinct methods)**, with one SDL virtual-device test
+- **100 client test cases**, with one SDL virtual-device test
   deliberately skipped in this batch. Native camera,
   pathfinder, widget tests, world-menu input, actual loot tables, NPC options,
   12-item cycling, blocked-pile starvation, cache freshness and encrypted
   directional/cancel packet encoding are covered. Earlier SDL validation passed.
 - **247 network tests** and **61 selected engine movement/decoder/cancel tests**, without skips.
-- Three patch-helper tests and four simulated launcher lifecycle tests.
-- Client/server source reproduction matches all **41 / 14** affected files on
+- **14 root tooling tests** cover patch application, launcher lifecycle, jar/patch fingerprints, log retention and full-tree patch export.
+- Client/server source reproduction matches all **53 / 14** affected files on
   fresh bases, upgrades, sequential reverse application and repeated application.
 
 These establish automated behavior, not Steam Deck performance or complete
@@ -157,16 +157,14 @@ To try the latest code, quit the running game/launcher cleanly and run from the 
 ```
 
 This starts both updated processes. Keep the controller plugin enabled and choose
-Direct movement if desired. Try X on an NPC with several options, D-pad/A confirmation,
+Direct movement and SoloScape server features if desired (only for this patched server). Try X on an NPC with several options, D-pad/A confirmation,
 B back/cancel, dropped loot, stacked pile cycling, inventory/dialogue handoff and
 ordinary mouse actions. See `docs/CONTROLLER_TESTING.md` for more detailed checks.
 
 ## Important gaps
 
 - Confirm real character persistence across a clean restart, not just server startup.
-- Banks, shops, equipment/prayer/spell panels, quick actions, and many special
-  interfaces still need controller navigation. Inventory Use has limited widget
-  selection support; full item/spell targeting and numeric/text entry remain unfinished.
+- Bank/shop/deposit-box focus, scrolling, native amounts, tabs/search, a bounded controller keyboard, equipment/prayer/spell focus and native targeting are implemented but still need physical acceptance. Bank PIN, many special interfaces, other home tabs, quick slots, PvP/player targeting and full combat-range/line-of-sight policy remain pending. The keyboard uses printable ASCII; native physical keyboard input remains available.
 - No console launcher, Continue/New Character save UI, backups/restore UI, pause,
   Steam Gaming Mode packaging or suspend/resume behavior has been completed.
 - No physical Deck performance/thermal/battery benchmark or two-client/LAN smoke test.
@@ -210,11 +208,7 @@ reachable targets (M3). Reachability is cached per geometry for one scan, capped
 at eight distinct geometries; every item on an evaluated pile shares the result.
 The new build has not yet been accepted in gameplay.
 
-Remaining proposals include server capability negotiation/jar mismatch detection,
-separate SDL and game-adapter exception handling, reducing idle inventory snapshot
-work, and checking dialogue cancellation coordinates and border passages. Combat
-range/line-of-sight targeting needs its own policy before controller combat work.
-These are not implemented by the review-fix batch. Restart both client and server
+The overnight reliability batch now implements jar/patch fingerprint checks, separate SDL and game-adapter exception handling, reduced idle inventory snapshots and queued-tile dialogue cancellation. Automatic server capability negotiation, border-passage gameplay checks and a complete combat range/line-of-sight policy remain pending. Restart both client and server
 with `./scripts/dev-run.sh --no-build` after quitting the current session to use
 both rebuilt jars, then complete M0 (including a real save roundtrip).
 
@@ -235,8 +229,7 @@ dialogues block the wheel. There are no new server packets. The Objectives slot
 maps to the layout's native objectives/familiar position and is available only if
 its native button is visible/actionable. Native logout remains separate.
 
-This prototype switches existing tabs; only Inventory has controller navigation
-inside it today. Other opened tabs still use their existing mouse controls. The
+The original radial prototype switched existing tabs. Patch 0013 now adds controller handoff inside Inventory, Equipment, Prayer and Spellbook; remaining tabs retain their native mouse controls. The
 renderer was visually checked at 765×503 and 1280×800 on a plain background; it
 has not yet been accepted in-game. The README includes that labelled preview.
 
@@ -248,3 +241,16 @@ is documented in `CACHE_SETUP.md`; no assets, saves or runtime files are publish
 ## Overnight reliability checkpoint (2026-10-08)
 
 Client patch 0010 implements the reliability changes described in `MORNING_REPORT.md` and `PROTOCOL_EXTENSIONS.md`. Client test/build: 76 cases, zero failures/errors, one SDL skip. Root tooling: 11 cases pass. Fresh, upgrade, reverse and repeated patch application reproduce all 41 affected client files. Claude found no blockers; minor follow-ups were applied. Direct movement now requires both Direct movement and SoloScape server features settings. Automatic remote capability negotiation and physical gameplay acceptance remain pending.
+
+
+## Overnight controller-interface completion
+
+Development branch: `overnight/controller-sprint`, implementation commit `bb1aca0`. Reliability (`daf577c`), bank/shop focus (`40cc0a0`), entry/recovery (`237e5be`) and tab/spell targeting (`bb1aca0`) are pushed. Read `MORNING_REPORT.md` for the complete session report and acceptance checklist.
+
+Bank/shop focus activates automatically when their main interface opens. D-pad navigates and scrolls the visible native grid; LB/RB changes item/inventory/control panes. A withdraws/deposits or buys/sells; X exposes native quantities and actions. B leaves the action list, then closes; ignored closes recover for retry. Bank tabs, note/swap and deposit-carried/worn buttons use native actions.
+
+Choose Equipment, Prayer or Spellbook on the radial to navigate their actionable widgets. A removes/toggles/selects; X exposes alternatives; B returns to the world. Equipment bonuses window 667 and side inventory 670 also have panes. Immediate spells use their ordinary actions; targeted spells preserve their selected source and hand off to eligible world targets or inventory. Selected targeting makes the stick aim without walking. Native masks/parameters, source item/quantity, widget identity and selection revision are checked again before dispatch. B cancels; an invalid selection never becomes a normal Eat/Drop action. Nearby world targets keep the existing conservative approach-path policy; this is not a full ranged-combat redesign.
+
+Amount/name/string/bank-search prompts use a controller keyboard: D-pad chooses keys, A enters, X deletes, Y submits, B uses native Escape. Native CS2 handles editing and packet dispatch; only explicit controller Search requests trigger its armed key callback. Settings → SoloScape Controller → Native interface navigation disables these additions while retaining the original inventory/dialogue and radial behavior.
+
+Three bounded Claude checks found no remaining blockers. Reported close/redraw/search and test issues were fixed; original reviews are retained in `CLAUDE_RELIABILITY_REVIEW.md`, `CLAUDE_BANK_SHOP_REVIEW.md` and `CLAUDE_ENTRY_SELECTION_REVIEW.md`. Automated checks and plain-background renderer previews are not proof of physical gameplay acceptance. No cache, accounts or running session was changed.
