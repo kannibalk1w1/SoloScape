@@ -36,6 +36,7 @@ need an in-game acceptance pass after restarting both client and server.
 | Input | Behavior |
 | --- | --- |
 | View/Select | Toggle the 16-slot main-tab radial; left stick highlights, A opens, B cancels |
+| Start/Menu | Separate eight-slot quick-action wheel; all slots start empty, X assigns the focused supported native action, Y clears that slot |
 | Right stick | Native camera yaw/pitch, configurable speed, deadzone and inversion |
 | Left stick, destination mode | Camera-relative, collision-checked one-to-three-tile walks |
 | Left stick, direct mode | Held eight-way server directional intent; gentle tilt walks, full tilt requests running |
@@ -136,14 +137,14 @@ Both Shadow jars are rebuilt:
 
 Current checks pass with zero failures or errors:
 
-- **100 client test cases**, with one SDL virtual-device test
+- **121 client test cases**, with one SDL virtual-device test
   deliberately skipped in this batch. Native camera,
   pathfinder, widget tests, world-menu input, actual loot tables, NPC options,
   12-item cycling, blocked-pile starvation, cache freshness and encrypted
   directional/cancel packet encoding are covered. Earlier SDL validation passed.
 - **247 network tests** and **61 selected engine movement/decoder/cancel tests**, without skips.
 - **14 root tooling tests** cover patch application, launcher lifecycle, jar/patch fingerprints, log retention and full-tree patch export.
-- Client/server source reproduction matches all **53 / 14** affected files on
+- Client/server source reproduction matches all **59 / 14** affected files on
   fresh bases, upgrades, sequential reverse application and repeated application.
 
 These establish automated behavior, not Steam Deck performance or complete
@@ -164,7 +165,7 @@ ordinary mouse actions. See `docs/CONTROLLER_TESTING.md` for more detailed check
 ## Important gaps
 
 - Confirm real character persistence across a clean restart, not just server startup.
-- Bank/shop/deposit-box focus, scrolling, native amounts, tabs/search, a bounded controller keyboard, equipment/prayer/spell focus and native targeting are implemented but still need physical acceptance. Bank PIN, many special interfaces, other home tabs, quick slots, PvP/player targeting and full combat-range/line-of-sight policy remain pending. The keyboard uses printable ASCII; native physical keyboard input remains available.
+- Bank/shop/deposit-box focus, scrolling, native amounts, tabs/search, a bounded controller keyboard, equipment/prayer/spell focus and native targeting are implemented but still need physical acceptance. Quick actions, common production and Combat/Skills/Quests/selected Settings focus are now implemented. Bank PIN, niche/special interfaces, remaining home tabs, quick special attacks and player/PvP targeting remain pending. Combat/selected-NPC-spell targets defer approach to the server; no client LOS or weapon range simulation is added. The keyboard uses printable ASCII; native physical keyboard input remains available.
 - No console launcher, Continue/New Character save UI, backups/restore UI, pause,
   Steam Gaming Mode packaging or suspend/resume behavior has been completed.
 - No physical Deck performance/thermal/battery benchmark or two-client/LAN smoke test.
@@ -178,8 +179,8 @@ ordinary mouse actions. See `docs/CONTROLLER_TESTING.md` for more detailed check
 ## Recommended next steps
 
 1. Accept the newest world action/loot/cancel build and verify a real save restart.
-2. Accept the new bank/shop/equipment/prayer/spell controls; then fill remaining interface gaps and add quick combat actions.
-3. Make the UI readable and discoverable at Deck resolution; add glyphs and presets.
+2. Accept bank/shop, quick actions, production and the added tabs; then fix gameplay findings and fill remaining interface gaps.
+3. Accept the implemented overlay scaling, glyph labels, optional guide and menu bindings at Deck resolution; broader remapping/presets remain proposed.
 4. Build reliable save/launcher lifecycle, then validate it on actual Steam Deck hardware.
 5. Verify two independent players before changes to global simulation or solo behavior.
 6. Audit existing content, then ship one complete solo gameplay slice.
@@ -229,7 +230,7 @@ dialogues block the wheel. There are no new server packets. The Objectives slot
 maps to the layout's native objectives/familiar position and is available only if
 its native button is visible/actionable. Native logout remains separate.
 
-The original radial prototype switched existing tabs. Patch 0013 now adds controller handoff inside Inventory, Equipment, Prayer and Spellbook; remaining tabs retain their native mouse controls. The
+The original radial prototype switched existing tabs. Patch 0013 now adds controller handoff inside Inventory, Equipment, Prayer and Spellbook; patch 0014 additionally covers Combat, Skills, Quests and supported Settings. Other tabs retain native mouse controls. The
 renderer was visually checked at 765×503 and 1280×800 on a plain background; it
 has not yet been accepted in-game. The README includes that labelled preview.
 
@@ -254,3 +255,18 @@ Choose Equipment, Prayer or Spellbook on the radial to navigate their actionable
 Amount/name/string/bank-search prompts use a controller keyboard: D-pad chooses keys, A enters, X deletes, Y submits, B uses native Escape. Native CS2 handles editing and packet dispatch; only explicit controller Search requests trigger its armed key callback. Settings → SoloScape Controller → Native interface navigation disables these additions while retaining the original inventory/dialogue and radial behavior.
 
 Three bounded Claude checks found no remaining blockers. Reported close/redraw/search and test issues were fixed; original reviews are retained in `CLAUDE_RELIABILITY_REVIEW.md`, `CLAUDE_BANK_SHOP_REVIEW.md` and `CLAUDE_ENTRY_SELECTION_REVIEW.md`. Automated checks and plain-background renderer previews are not proof of physical gameplay acceptance. No cache, accounts or running session was changed.
+
+
+## Second autonomous sprint checkpoint
+
+Client patch 0014 adds an independent eight-slot Start/Menu wheel. Focus food/potion in inventory, or a prayer/spell via home-tab focus; open the quick wheel, choose a slot and X assigns the focused native action (including an action selected in X's list). A uses it once after opening its native tab and revalidating the rendered widget; B cancels, including the pending handoff. Y restores the highlighted slot to its empty default. All slots start empty. Potion family bindings survive dose changes and prefer the lowest dose; cakes/pies that change item ID need reassigning.
+
+Production dialogue 905 now includes native amount controls from 916: LB/RB chooses 1/5/10/All, the prompt shows the native amount and A confirms the recipe. Zero-producing decrement is not exposed. Smithing 300 groups exact pinned product/quantity widgets; A prefers one, X offers five/X/all through separately validated native sibling buttons. Tanning, silver casting and jewellery 324/438/446/675 use native permissions/actions. Quantity-X hands off to the existing controller keyboard.
+
+Combat/Skills/Quests/selected Settings handoff uses groups 884/320/190/261/982. Native graphics/audio, quest and skill detail screens are supported where they expose ordinary actionable widgets; arbitrary sliders, drag controls and niche pages retain native input.
+
+Attack options and selected NPC spells can be offered within a ten-tile selection radius across walking obstacles. Up to six such candidates are cycled; dashed highlights say “server approach”. This is a selection radius, not a claim that a weapon or spell can reach or see the target. The pinned server keeps its actual approach, weapon/spell range, collision and LOS decisions. Other world actions retain the bounded walking check. Failed/stale actions and cancellation have controller feedback.
+
+Settings add auxiliary button choices for home wheel, quick wheel and inventory, overlap feedback, 75–175% controller overlay size, Xbox/PlayStation face labels and an optional controller guide. Native game UI text itself is not rescaled. Plugin Reset restores menu controls/empty slots; the wheel can restore one slot. A full remapping editor, first-run onboarding and custom native UI replacement remain future work.
+
+Final automated evidence: 121 client cases (0 failures/errors, 1 SDL skip), 14 root cases, client Shadow jar and exact 59/14-file patch reproduction. No server code changed in either interface sprint. Actual Claude's planning audit, implementation review and follow-up are in the three `CLAUDE_SECOND_SPRINT_*.md` files; its medium default-consumable finding was fixed, and follow-up reports no blockers. Production cache/CS2 op availability and all new physical gameplay remain unaccepted. Read `MORNING_REPORT.md` for the combined report; the first report is archived as `MORNING_REPORT_SPRINT_1.md`.

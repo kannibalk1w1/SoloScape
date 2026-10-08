@@ -43,7 +43,7 @@ not a prerequisite for a good console RuneScape experience.
 
 ## Overnight controller sprint checkpoint
 
-Completed implementation on `overnight/controller-sprint` through `bb1aca0`: reliability, bank/shop focus, native quantity/search keyboard, equipment/prayer/spell panels, selected target safety, radial handoff and hints. M1-01/02/03/08 are checked as implementations; gameplay acceptance remains pending. M1-04 is partial (equipment/stats), M1-05 is partial pending acceptance/requirements feedback checks, and M1-06 has native item/spell bindings but does not cover every target or interface. Other home tabs, quick slots and special interfaces remain open. Evidence: 100 client cases, 14 root cases, full 53/14-file patch exports; see `MORNING_REPORT.md`.
+Both autonomous controller sprints are implemented on `overnight/controller-sprint`: reliability; bank/shop quantities/search; equipment/prayer/spell targeting; eight explicit quick-action slots; common production amount/smithing/tanning/jewellery controls; Combat/Skills/Quests/selected Settings handoff; scalable controller overlays, glyph labels, menu-button settings and a guide. Evidence: 121 client cases, 14 root cases, full 59/14-file patch exports; see `MORNING_REPORT.md`. Physical gameplay/save/Deck acceptance remains pending. M1-04/05/06/07/09/10 and M2 stay open where their full scope exceeds these increments.
 
 ## M0 — finish the first reliable controller playable
 
@@ -59,7 +59,7 @@ Priority: now. Depends on the current built client and server.
 - [ ] M0-08 Test world B while morphed and during content cleanup/exit; confirm recovery without losing the exit route.
 - [ ] M0-09 Check banker/shopkeeper targeting across counters and border-guard crossings in both movement modes.
 - [ ] M0-10 Test dialogue B while a walking step is interpolating.
-- [ ] M0-11 Resolve Claude review follow-ups before expanding features: server capabilities/jar mismatch detection, exception recovery and idle snapshot cost. See `CLAUDE_REVIEW.md`.
+- [x] M0-11 Implement review follow-ups: explicit matched-server guard, jar/patch fingerprints, exception recovery and idle snapshot cost. Automatic server capability negotiation remains proposed.
 - [ ] M0-12 Accept View/Select tab radial in both layouts: all available tabs, held input, Inventory handoff, focus/reconnect and dialogue priority.
 
 Acceptance: controller walking, camera, action selection, loot, inventory and dialogue
@@ -76,10 +76,10 @@ equipment/prayer/spells → targeting/quick actions → special interfaces.
 - [ ] M1-04 Implement equipment, stats, quest, settings and world-map panel navigation using real widget metadata.
 - [ ] M1-05 Implement prayer/spell navigation, selection state and clear feedback for missing requirements.
 - [ ] M1-06 Finish inventory item-on-item and item/spell-on-world targeting, with explicit cancel and target revalidation.
-- [ ] M1-07 Add configurable quick slots for food, potions, prayers, spells and supported special attacks.
+- [ ] M1-07 Add configurable quick slots for food, potions, prayers, spells and supported special attacks. **Implemented:** eight assignable food/potion/prayer/spell slots; special attacks and physical acceptance remain.
 - [x] M1-08 Support number/text entry, including a Deck-friendly keyboard path, without advancing unrelated dialogues.
-- [ ] M1-09 Audit special interfaces such as smithing/crafting lists, quest choices and familiar/Dungeoneering panels; implement the highest-use gaps.
-- [ ] M1-10 Add remapping/presets and document button precedence across world, menus and widgets.
+- [ ] M1-09 Audit special interfaces such as smithing/crafting lists, quest choices and familiar/Dungeoneering panels; implement the highest-use gaps. **Implemented:** common make-amount, smithing, tanning, silver and jewellery paths; niche interfaces and acceptance remain.
+- [ ] M1-10 Add remapping/presets and document button precedence across world, menus and widgets. **Implemented:** three auxiliary menu bindings, overlap feedback, defaults/Reset and documented precedence; full remapping/presets remain.
 
 Acceptance: a normal session of gathering, fighting, looting, banking and buying supplies
 can be completed without a mouse, with an intentional mouse/trackpad fallback for any remaining niche interface.
@@ -290,13 +290,13 @@ selected release without the development workspace or undocumented setup steps.
 
 ## Proposed next working queue
 
-1. M0-01 through M0-07: accept this build and prove persistence.
-2. M1-01: bank focus, simple deposit/withdraw and quantity selection.
-3. M1-03: basic shop buy/sell navigation.
-4. M1-04/M1-05: equipment, prayer and spell panels.
-5. M1-06/M1-07: world item/spell targeting and quick actions.
-6. M2-01/M2-02/M2-03: consistent readable controller UI and glyphs.
-7. M3-01/M3-02/M3-03: save ownership, Continue and backups.
+1. Accept both sprints in-game: banks/shops, quick slots, production, tabs, targeting and scaled overlays; verify a real save restart.
+2. Fix reproducible gameplay blockers; confirm production cache/CS2 operations and client-opened modal close behavior.
+3. Complete remaining high-use interface gaps and decide special-attack support after combat acceptance.
+4. Finish M2 readability/accessibility acceptance, first-run guide and wider remapping/presets.
+5. M3-01/M3-02/M3-03: save ownership, Continue and backups tested on copies.
+6. Validate Deck lifecycle/performance/suspend, then choose the first complete solo gameplay slice.
+7. Review larger art/AI/economy/backport proposals before authorizing their implementation.
 
 Continue from demonstrated results rather than treating this document as a fixed
 calendar. Keep each next batch small enough to build, play and reverse.

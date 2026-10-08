@@ -1,0 +1,1673 @@
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+index 30f213c..2a2ef57 100644
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -19,6 +19,101 @@ final class ControllerUi
+     private static boolean panelsEnabled = true;
+     static void enablePanels(boolean value) { panelsEnabled = value; }
+     private static long renderFrame;
++    // Model, name, one, five, X, all: explicit pinned smithing.ifaces.toml rows.
++    private static final Map<Integer,Integer> JEWELLERY_MODELS = new HashMap<>();
++    static {
++        JEWELLERY_MODELS.put(29229138,29229137);
++        JEWELLERY_MODELS.put(29229140,29229139);
++        JEWELLERY_MODELS.put(29229142,29229141);
++        JEWELLERY_MODELS.put(29229144,29229143);
++        JEWELLERY_MODELS.put(29229146,29229145);
++        JEWELLERY_MODELS.put(29229148,29229147);
++        JEWELLERY_MODELS.put(29229150,29229149);
++        JEWELLERY_MODELS.put(29229153,29229152);
++        JEWELLERY_MODELS.put(29229124,29229123);
++        JEWELLERY_MODELS.put(29229126,29229125);
++        JEWELLERY_MODELS.put(29229128,29229127);
++        JEWELLERY_MODELS.put(29229130,29229129);
++        JEWELLERY_MODELS.put(29229132,29229131);
++        JEWELLERY_MODELS.put(29229134,29229133);
++        JEWELLERY_MODELS.put(29229136,29229135);
++        JEWELLERY_MODELS.put(29229109,29229108);
++        JEWELLERY_MODELS.put(29229111,29229110);
++        JEWELLERY_MODELS.put(29229113,29229112);
++        JEWELLERY_MODELS.put(29229115,29229114);
++        JEWELLERY_MODELS.put(29229117,29229116);
++        JEWELLERY_MODELS.put(29229119,29229118);
++        JEWELLERY_MODELS.put(29229121,29229120);
++        JEWELLERY_MODELS.put(29229089,29229088);
++        JEWELLERY_MODELS.put(29229091,29229090);
++        JEWELLERY_MODELS.put(29229093,29229092);
++        JEWELLERY_MODELS.put(29229095,29229094);
++        JEWELLERY_MODELS.put(29229097,29229096);
++        JEWELLERY_MODELS.put(29229099,29229098);
++        JEWELLERY_MODELS.put(29229101,29229100);
++        JEWELLERY_MODELS.put(44236820,44236819);
++        JEWELLERY_MODELS.put(44236822,44236821);
++        JEWELLERY_MODELS.put(44236824,44236823);
++        JEWELLERY_MODELS.put(44236826,44236825);
++        JEWELLERY_MODELS.put(44236828,44236827);
++        JEWELLERY_MODELS.put(44236830,44236829);
++        JEWELLERY_MODELS.put(44236832,44236831);
++        JEWELLERY_MODELS.put(44236839,44236838);
++        JEWELLERY_MODELS.put(44236841,44236840);
++        JEWELLERY_MODELS.put(44236843,44236842);
++        JEWELLERY_MODELS.put(44236845,44236844);
++        JEWELLERY_MODELS.put(44236847,44236846);
++        JEWELLERY_MODELS.put(44236849,44236848);
++        JEWELLERY_MODELS.put(44236851,44236850);
++        JEWELLERY_MODELS.put(44236858,44236857);
++        JEWELLERY_MODELS.put(44236860,44236859);
++        JEWELLERY_MODELS.put(44236862,44236861);
++        JEWELLERY_MODELS.put(44236864,44236863);
++        JEWELLERY_MODELS.put(44236866,44236865);
++        JEWELLERY_MODELS.put(44236868,44236867);
++        JEWELLERY_MODELS.put(44236870,44236869);
++        JEWELLERY_MODELS.put(44236877,44236876);
++        JEWELLERY_MODELS.put(44236879,44236878);
++        JEWELLERY_MODELS.put(44236881,44236880);
++        JEWELLERY_MODELS.put(44236883,44236882);
++        JEWELLERY_MODELS.put(44236885,44236884);
++        JEWELLERY_MODELS.put(44236887,44236886);
++        JEWELLERY_MODELS.put(44236889,44236888);
++    }
++    private static final int[][] SMITHING = {
++        {18,19,24,23,22,21},
++        {26,27,32,31,30,29},
++        {34,35,40,39,38,37},
++        {42,43,48,47,46,45},
++        {50,51,56,55,54,53},
++        {58,59,64,63,62,61},
++        {66,67,72,71,70,69},
++        {74,75,80,79,78,77},
++        {82,83,88,87,86,85},
++        {90,91,96,95,94,93},
++        {98,99,104,103,102,101},
++        {106,107,112,111,110,109},
++        {114,115,120,119,118,117},
++        {122,123,128,127,126,125},
++        {130,131,136,135,134,133},
++        {138,139,144,143,142,141},
++        {146,147,152,151,150,149},
++        {154,155,160,159,158,157},
++        {162,163,168,167,166,165},
++        {170,171,176,175,174,173},
++        {178,179,184,183,182,181},
++        {186,187,192,191,190,189},
++        {194,195,200,199,198,197},
++        {202,203,208,207,206,205},
++        {210,211,216,215,214,213},
++        {218,219,224,223,222,221},
++        {226,227,232,231,230,229},
++        {234,235,240,239,238,237},
++        {242,243,248,247,246,245},
++        {267,268,273,272,271,270},
++        {251,252,257,256,255,254},
++        {259,260,265,264,263,262}
++    };
+     static void beginFrame() { renderFrame++; }
+     private static final Pattern TAGS = Pattern.compile("<[^>]*>");
+     private static final UiState.Widget[] NO_INVENTORY = new UiState.Widget[0];
+@@ -50,7 +145,7 @@ final class ControllerUi
+         if (!enabled || width <= 0 || height <= 0) return;
+         int group = widget.anInt830 >>> 16;
+         if (widget.anInt830 != INVENTORY && !DIALOGUES.contains(group)
+-            && !HomeTab.isTab(widget.anInt830) && !panelGroup(group) && group != 752) return;
++            && !HomeTab.isTab(widget.anInt830) && !panelGroup(group) && group != 752 && group != 916) return;
+         Seen seen = visible.computeIfAbsent(key(widget.anInt830, widget.anInt704), unused -> new Seen());
+         seen.widget = widget;
+         if (seen.bounds == null) seen.bounds = new Rectangle();
+@@ -104,9 +199,34 @@ final class ControllerUi
+         dialogue.sort(Comparator.comparingInt((UiState.Widget w) -> w.bounds.y).thenComparingInt(w -> w.bounds.x));
+         Class46 inventoryRoot = loadedWidget(INVENTORY);
+         boolean inventoryVisible = open.contains(149) && inventoryRoot != null && isVisible(inventoryRoot);
+-        return new UiState(inventory, dialogue.toArray(new UiState.Widget[0]), dialogueId, inventoryVisible, panel(open), ControllerEntry.snapshot());
++        return new UiState(inventory, dialogue.toArray(new UiState.Widget[0]), dialogueId, inventoryVisible, panel(open), ControllerEntry.snapshot(), amountWidgets(open,dialogueId), productionAmount(dialogueId));
+     }
+ 
++    private static UiState.Widget[] amountWidgets(Set<Integer> open,int dialogueId)
++    {
++        List<UiState.Widget> result=new ArrayList<>();
++        if (!panelsEnabled || dialogueId!=905 || !open.contains(916)) return new UiState.Widget[0];
++        for (Seen seen:visible.values())
++        {
++            int comp=seen.widget.anInt830&65535;
++            if (seen.widget.anInt830>>>16==916 && comp>=5 && comp<=8 && fresh(seen) && seen.frame==renderFrame)
++            {
++                UiState.Widget w=describePanel(seen);
++                if (w.actions.length>0) result.add(w);
++            }
++        }
++        result.sort(Comparator.comparingInt(w->w.id));
++        return result.toArray(new UiState.Widget[0]);
++    }
++    private static int productionAmount(int dialogueId)
++    {
++        if (dialogueId!=905 || Class318_Sub1_Sub3_Sub3.aClass170_10209==null || Class229.aClass194_2981==null) return -1;
++        try { return Class318_Sub1_Sub3_Sub3.aClass170_10209.method62(8095,-65536); }
++        catch (RuntimeException unavailableDefinition) { return -1; }
++    }
++    private static boolean production(int id) { return id==300 || id==324 || id==438 || id==446 || id==675; }
++    private static boolean extraModal(int id) { return production(id) || id==742 || id==743 || id==178 || id==275 || id==134; }
++
+     static boolean entryReady() { return panelsEnabled && ready(); }
+     static boolean hasBank() { return openGroups().contains(762); }
+     static Class46 entryPrompt()
+@@ -118,12 +238,12 @@ final class ControllerUi
+     private static boolean panelGroup(int group)
+     {
+         return group == 762 || group == 763 || group == 11 || group == 620 || group == 621 || group == 387 || group == 667 || group == 670 || group == 271
+-            || group == 192 || group == 193 || group == 430;
++            || group == 192 || group == 193 || group == 430 || group==884 || group==320 || group==190 || group==261 || group==982 || extraModal(group);
+     }
+ 
+     static boolean hasModalPanel()
+     {
+-        for (int group : openGroups()) if (group == 762 || group == 11 || group == 620 || group == 667) return true;
++        for (int group : openGroups()) if (group == 762 || group == 11 || group == 620 || group == 667 || extraModal(group)) return true;
+         return false;
+     }
+ 
+@@ -149,6 +269,51 @@ final class ControllerUi
+                 System.arraycopy(options,0,all,1,options.length); options = all;
+             }
+         }
++        if (JEWELLERY_MODELS.containsKey(w.anInt830))
++        {
++            Seen model=visible.get(key(JEWELLERY_MODELS.get(w.anInt830),-1));
++            if (model!=null && fresh(model) && model.frame==renderFrame && model.widget.anInt812>=0)
++            {
++                Class46 paired=model.widget;
++                String modelName=clean(paired.aString752);
++                if (paired.anInt812>=0 && Exception_Sub1.aClass255_112!=null)
++                {
++                    ObjType item=Exception_Sub1.aClass255_112.getItemDefinitions(-115,paired.anInt812);
++                    if (item!=null) modelName=clean(item.name);
++                }
++                if (!modelName.isEmpty()) name=modelName;
++                else options=new UiState.Action[0];
++            }
++            else options=new UiState.Action[0];
++        }
++        if (group==324 && w.anInt812<0)
++        {
++            String[] hides={"Soft leather","Hard leather","Snakeskin","Swamp snakeskin","Green dragonhide","Blue dragonhide","Red dragonhide","Black dragonhide"};
++            int component=(w.anInt830&65535)-1;
++            if(component>=0 && component<hides.length) name=hides[component];
++        }
++        if (group==438)
++        {
++            Class46 text=loadedWidget(w.anInt830+2);
++            if (text!=null && isVisible(text) && !clean(text.aString792).isEmpty()) name=clean(text.aString792);
++        }
++        if (group==300)
++        {
++            for (int[] row:SMITHING) if ((w.anInt830&65535)==row[0])
++            {
++                if (name.isEmpty()) { Class46 text=loadedWidget(300<<16|row[1]); if (text!=null && isVisible(text)) name=clean(text.aString792); }
++                List<UiState.Action> linked=new ArrayList<>();
++                for (int i=2;i<row.length;i++)
++                {
++                    Seen button=visible.get(key(300<<16|row[i],-1));
++                    if (button==null || !fresh(button) || button.frame!=renderFrame) continue;
++                    for (UiState.Action a:actions(button.widget,true))
++                        if (a.type==18 || a.type==1011) linked.add(new UiState.Action(i==2?"Make 1":i==3?"Make 5":i==4?"Make X":"Make All",a.type,a.operation,0,button.widget.anInt830));
++                }
++                options=linked.toArray(new UiState.Action[0]);break;
++            }
++        }
++        if (group==916) name=(w.anInt830&65535)==5?"Make 1":(w.anInt830&65535)==6?"Make 5":(w.anInt830&65535)==7?"Make 10":"Make All";
+         if (name.isEmpty()) name = options.length > 0 ? options[0].label : "Item";
+         return new UiState.Widget(w.anInt830, w.anInt704, w.anInt812, w.anInt781,
+             name, new Rectangle(seen.bounds), options);
+@@ -159,10 +324,11 @@ final class ControllerUi
+         if (!panelsEnabled) return null;
+         int id = open.contains(762) ? 762 : open.contains(11) ? 11 : open.contains(620) ? 620 : -1;
+         if (id < 0 && open.contains(667)) id = 667;
++        if (id<0) for (int group:open) if (extraModal(group)) { id=group;break; }
+         boolean modal = id >= 0;
+         if (id < 0)
+         {
+-            int[] tabs = {387,271,192,193,430};
++            int[] tabs = {387,271,192,193,430,884,320,190,261,982};
+             for (int group : tabs)
+                 if (open.contains(group))
+                     for (Seen seen : visible.values())
+@@ -177,21 +343,27 @@ final class ControllerUi
+             if (group != id && !(id == 762 && group == 763) && !(id == 620 && group == 621) && !(id == 667 && group == 670)) continue;
+             if (!open.contains(group) || !fresh(seen) || seen.frame != renderFrame) continue;
+             // Dynamic empty slots can expose inherited operations; never invoke them.
+-            if (w.anInt704 >= 0 && w.anInt812 < 0 && id != 271) continue;
++            if (w.anInt704 >= 0 && w.anInt812 < 0 && id != 271 && id!=190) continue;
++            if (id==300)
++            {
++                boolean sibling=false;
++                for (int[] row:SMITHING) for (int i=2;i<row.length;i++) if ((w.anInt830&65535)==row[i]) sibling=true;
++                if (sibling) continue;
++            }
+             UiState.Widget widget = describePanel(seen);
+             if (widget.actions.length == 0) continue;
+             if (group == 763 || group == 621 || group == 670) side.add(widget);
+-            else if ((w.anInt812 >= 0 || !modal) && (id != 762 || (w.anInt830 & 65535) == 93)
++            else if ((w.anInt812 >= 0 || !modal || extraModal(id)) && (id != 762 || (w.anInt830 & 65535) == 93)
+                 && (id != 620 || (w.anInt830 & 65535) == 25 || (w.anInt830 & 65535) == 26)) items.add(widget);
+             else controls.add(widget);
+         }
+         Comparator<UiState.Widget> order = Comparator.comparingInt((UiState.Widget w) -> w.bounds.y).thenComparingInt(w -> w.bounds.x).thenComparingInt(w -> w.child);
+         items.sort(order); side.sort(order); controls.sort(order);
+         List<UiState.Pane> panes = new ArrayList<>();
+-        String name = id == 620 ? "Shop" : id == 11 ? "Deposit box" : id == 762 ? "Bank" : id == 387 || id == 667 ? "Equipment" : id == 271 ? "Prayer" : "Spellbook";
+-        panes.add(new UiState.Pane(!modal || id == 667 ? name : id == 620 ? "Stock" : id == 11 ? "Inventory" : "Bank", items.toArray(new UiState.Widget[0])));
++        String name = id == 620 ? "Shop" : id == 11 ? "Deposit box" : id == 762 ? "Bank" : id == 387 || id == 667 ? "Equipment" : id == 271 ? "Prayer" : id==884?"Combat":id==320?"Skills":id==190 || id==178 || id==275?"Quests":id==261 || id==982 || id==742 || id==743?"Settings":id==134?"Skill guide":id==300?"Smithing":id==324?"Tanning":production(id)?"Crafting":"Spellbook";
++        panes.add(new UiState.Pane(!modal || id == 667 || extraModal(id) ? name : id == 620 ? "Stock" : id == 11 ? "Inventory" : "Bank", items.toArray(new UiState.Widget[0])));
+         if (id == 762 || id == 620 || id == 667) panes.add(new UiState.Pane("Inventory", side.toArray(new UiState.Widget[0])));
+-        if (modal) panes.add(new UiState.Pane("Controls / tabs", controls.toArray(new UiState.Widget[0])));
++        if (modal && !extraModal(id)) panes.add(new UiState.Pane("Controls / tabs", controls.toArray(new UiState.Widget[0])));
+         return new UiState.Panel(id, renderFrame, name, panes.toArray(new UiState.Pane[0]),modal);
+     }
+ 
+@@ -366,16 +538,27 @@ final class ControllerUi
+         if (seen == null || !fresh(seen)) return false;
+         int group = expected.id >>> 16;
+         boolean dialogue = DIALOGUES.contains(group);
+-        if (panelGroup(group) && !panelsEnabled) return false;
+-        if ((group == 149 || dialogue || panelGroup(group)) && !openGroups().contains(group)) return false;
+-        UiState.Widget current = panelGroup(group) ? describePanel(seen) : describe(seen, dialogue || group != 149);
++        if ((panelGroup(group) || group==916) && !panelsEnabled) return false;
++        if ((group == 149 || dialogue || panelGroup(group) || group==916) && !openGroups().contains(group)) return false;
++        UiState.Widget current = panelGroup(group) || group==916 ? describePanel(seen) : describe(seen, dialogue || group != 149);
+         if (!current.same(expected)) return false;
+         for (UiState.Action valid : current.actions)
+         {
+             if (!valid.same(action)) continue;
+             if (valid.type == 16 && Class49.aClass46_4730 != null) return false;
+-            Class325.method2599((byte) 109, new Class348_Sub42_Sub12(valid.label, current.name, -1,
+-                valid.type, current.itemId, valid.operation, current.child, current.id, true, false, 0, false),
++            UiState.Widget destination=current;
++            UiState.Action dispatched=valid;
++            if (valid.targetId>=0)
++            {
++                Seen target=visible.get(key(valid.targetId,-1));
++                if (target==null || !fresh(target) || target.frame!=renderFrame || !openGroups().contains(valid.targetId>>>16)) return false;
++                destination=describePanel(target);dispatched=null;
++                for (UiState.Action candidate:destination.actions)
++                    if (candidate.type==valid.type && candidate.operation==valid.operation) { dispatched=candidate;break; }
++                if (dispatched==null) return false;
++            }
++            Class325.method2599((byte) 109, new Class348_Sub42_Sub12(dispatched.label, destination.name, -1,
++                dispatched.type, destination.itemId, dispatched.operation, destination.child, destination.id, true, false, 0, false),
+                 current.bounds.x + current.bounds.width / 2, current.bounds.y + current.bounds.height / 2);
+             if (current.id == (762<<16|17) && valid.label.equalsIgnoreCase("Search")) ControllerEntry.requestBankSearch();
+             return true;
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+index 1e7e0fc..6a84bbd 100644
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -91,8 +91,8 @@ final class ControllerWorld
+         List<ControllerTarget> candidates = candidates();
+         Player p = Class132.aPlayer_1907;
+         double px = (p.x >> 9) + .5, py = (p.y >> 9) + .5;
+-        candidates.removeIf(t -> !Double.isFinite(WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false)));
+-        candidates.sort(Comparator.<ControllerTarget>comparingDouble(t -> WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false))
++        candidates.removeIf(t -> !nearby(p,t) || !Double.isFinite(WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false,t.serverApproach?10:5)));
++        candidates.sort(Comparator.<ControllerTarget>comparingDouble(t -> WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false,t.serverApproach?10:5))
+             .thenComparingInt(ControllerTarget::kind).thenComparingLong(t -> t.identifier)
+             .thenComparingInt(t -> t.x).thenComparingInt(t -> t.y));
+         // Preserve explicit focus while it remains valid, even if a closer target enters the cone.
+@@ -107,12 +107,14 @@ final class ControllerWorld
+         if (retainedReachable) reachable.add(retained);
+         // Budget distinct geometry, not item count. Continue scanning cached tiles after
+         // the budget is exhausted so every entry in an evaluated pile remains selectable.
++        int approachCount=retainedReachable && retained.serverApproach?1:0;
+         for (ControllerTarget candidate : candidates)
+-            if (reachable(candidate, paths)) reachable.add(candidate);
++            if ((!candidate.serverApproach || approachCount<6) && reachable(candidate, paths))
++            { reachable.add(candidate); if(candidate.serverApproach) approachCount++; }
+         if (reachable.isEmpty()) return null;
+         if (direction == 0 || retained == null) return reachable.get(direction < 0 ? reachable.size() - 1 : 0);
+         // Sort independently of current focus so repeated bumper presses traverse all candidates.
+-        reachable.sort(Comparator.<ControllerTarget>comparingDouble(t -> WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false))
++        reachable.sort(Comparator.<ControllerTarget>comparingDouble(t -> WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false,t.serverApproach?10:5))
+             .thenComparingInt(ControllerTarget::kind).thenComparingLong(t -> t.identifier)
+             .thenComparingInt(t -> t.x).thenComparingInt(t -> t.y));
+         int index = -1;
+@@ -127,7 +129,7 @@ final class ControllerWorld
+         // Re-enumerate immediately: despawns, transforms, plane/region changes and options invalidate focus.
+         for (ControllerTarget current : candidates(true))
+         {
+-            if (current.sameEntity(target) && current.option.equals(target.option) && java.util.Objects.equals(current.name, target.name) && nearby(p, current) && reachable(current))
++            if (current.sameEntity(target) && current.option.equals(target.option) && java.util.Objects.equals(current.name, target.name) && nearby(p, current) && (current.serverApproach || reachable(current)))
+             {
+                 clearWalkMarker();
+                 dispatch(current);
+@@ -166,7 +168,7 @@ final class ControllerWorld
+                 {
+                     int size = npc.method2436((byte) 70);
+                     int x = (npc.x >> 9) - size / 2, y = (npc.y >> 9) - size / 2;
+-                    if (Math.hypot(x - px, y - py) <= 5 + size)
++                    if (Math.hypot(x - px, y - py) <= 10 + size)
+                     {
+                         NPCType def = npc.definition;
+                         if (def.multinpcs != null) def = def.method794(Class318_Sub1_Sub3_Sub3.aClass170_10209, -1);
+@@ -267,15 +269,21 @@ final class ControllerWorld
+ 
+     private static ControllerTarget target(String name, String option, int action, long id, int x, int y, int width, int height)
+     {
+-        return new ControllerTarget(name, option, action, id, x, y, Class132.aPlayer_1907.plane, za_Sub2.regionTileX, Class90.regionTileY, width, height, ControllerSelection.token());
++        return new ControllerTarget(name, option, action, id, x, y, Class132.aPlayer_1907.plane, za_Sub2.regionTileX, Class90.regionTileY, width, height, ControllerSelection.token(), action==30 && selectedSpell() || isAttack(action,option));
+     }
+ 
++    private static boolean selectedSpell() { int group=Class149.anInt2046>>>16;return group==192 || group==193 || group==430; }
++    private static boolean isAttack(int action,String option)
++    {
++        boolean npc=false; for(int id:NPC_ACTIONS) if(action==id) npc=true;
++        return npc && option!=null && option.equalsIgnoreCase(Class274.aClass274_3506.method2063(Class348_Sub33.anInt6967,544));
++    }
+     private static boolean nearby(Player p, ControllerTarget t)
+     {
+         double x = (p.x >> 9) + .5, y = (p.y >> 9) + .5;
+         double dx = Math.max(t.x - x, Math.max(0, x - t.x - t.width));
+         double dy = Math.max(t.y - y, Math.max(0, y - t.y - t.height));
+-        return Math.hypot(dx, dy) <= 5;
++        return Math.hypot(dx, dy) <= (t.serverApproach?10:5);
+     }
+ 
+     private static final class ReachabilityKey
+@@ -308,6 +316,7 @@ final class ControllerWorld
+ 
+     private static boolean reachable(ControllerTarget t, Map<ReachabilityKey, Boolean> paths)
+     {
++        if (t.serverApproach) return true;
+         ReachabilityKey key = new ReachabilityKey(t);
+         Boolean cached = paths.get(key);
+         if (cached != null) return cached;
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+index fadb70c..bfdd25f 100644
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -385,6 +385,7 @@ public abstract class GameClient extends Applet {
+         public final String name, option;
+         public final int action, x, y, plane, baseX, baseY, width, height;
+         public final long identifier, selection;
++        public final boolean serverApproach;
+         public ControllerTarget(String name, String option, int action, long identifier,
+                                 int x, int y, int plane, int baseX, int baseY)
+         {
+@@ -398,6 +399,11 @@ public abstract class GameClient extends Applet {
+         public ControllerTarget(String name, String option, int action, long identifier,
+             int x, int y, int plane, int baseX, int baseY, int width, int height, long selection)
+         {
++            this(name,option,action,identifier,x,y,plane,baseX,baseY,width,height,selection,false);
++        }
++        public ControllerTarget(String name,String option,int action,long identifier,int x,int y,int plane,int baseX,int baseY,int width,int height,long selection,boolean serverApproach)
++        {
++            this.serverApproach=serverApproach;
+             this.selection = selection;
+             this.name = name; this.option = option; this.action = action; this.identifier = identifier;
+             this.x = x; this.y = y; this.plane = plane; this.baseX = baseX; this.baseY = baseY;
+diff --git a/client/src/net/runelite/client/input/controller/PanelControls.java b/client/src/net/runelite/client/input/controller/PanelControls.java
+index 6c8e2d1..491d543 100644
+--- a/client/src/net/runelite/client/input/controller/PanelControls.java
++++ b/client/src/net/runelite/client/input/controller/PanelControls.java
+@@ -132,6 +132,8 @@ public final class PanelControls
+     }
+     static UiState.Action primary(UiState.Widget widget)
+     {
++        for (UiState.Action action : widget.actions)
++            if (action.label.matches("(?i)(Make|Tan|Smith)[ -]1")) return action;
+         for (UiState.Action action : widget.actions)
+             if (action.label.startsWith("Buy") || action.label.startsWith("Sell") || action.label.startsWith("Take")) return action;
+         return widget.actions[0];
+diff --git a/client/src/net/runelite/client/input/controller/QuickBinding.java b/client/src/net/runelite/client/input/controller/QuickBinding.java
+new file mode 100644
+index 0000000..153edf4
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/QuickBinding.java
+@@ -0,0 +1,74 @@
++package net.runelite.client.input.controller;
++
++import java.nio.charset.StandardCharsets;
++import java.util.Base64;
++
++/** A user-selected native action, never a packet or a cached widget reference. */
++public final class QuickBinding
++{
++    public final int tab, group, item, type, operation;
++    public final String name, action;
++    private QuickBinding(int tab,int group,int item,int type,int operation,String name,String action)
++    { this.tab=tab; this.group=group; this.item=item; this.type=type;this.operation=operation; this.name=name; this.action=action; }
++    public static QuickBinding capture(UiState.Widget w,UiState.Action a)
++    {
++        if (w==null || a==null || a.selection!=0) return null;
++        int group=w.id>>>16;
++        if (group==149 && w.itemId>=0 && (a.type==18 || a.type==1011)
++            && (a.label.equalsIgnoreCase("Eat") || a.label.equalsIgnoreCase("Drink")))
++            return new QuickBinding(0,group,w.itemId,a.type,a.operation,w.name,a.label);
++        if (group==271 && (a.type==18 || a.type==1011) && prayer(a.label))
++            return new QuickBinding(HomeTab.PRAYER.ordinal(),group,w.id,a.type,a.operation,w.name,"Toggle");
++        if ((group==192 || group==193 || group==430) && (a.type==13 || a.type==18 || a.type==1011))
++            return new QuickBinding(HomeTab.SPELLBOOK.ordinal(),group,w.id,a.type,a.operation,w.name,a.label);
++        return null;
++    }
++    private static boolean prayer(String label)
++    { return label.equalsIgnoreCase("Activate") || label.equalsIgnoreCase("Deactivate"); }
++    public UiState.Action match(UiState.Widget w)
++    {
++        if (w==null || w.id>>>16!=group) return null;
++        if (group==149)
++        {
++            if (w.itemId<0) return null;
++            if (item>=0 && w.itemId!=item && !(action.equalsIgnoreCase("Drink") && family(w.name).equals(family(name)))) return null;
++        }
++        else if (w.id!=item || !w.name.equals(name)) return null;
++        for (UiState.Action a:w.actions)
++        {
++            if (a.selection!=0 || a.type!=type) continue;
++            if (action.equals("Toggle") && prayer(a.label) && (a.type==18 || a.type==1011)) return a;
++            if (a.operation==operation && a.label.equalsIgnoreCase(action) && (a.type==13 || a.type==18 || a.type==1011)) return a;
++        }
++        return null;
++    }
++    /** Prefer finishing a lower dose within the explicitly assigned potion family. */
++    public int priority(UiState.Widget w)
++    {
++        if (!action.equalsIgnoreCase("Drink")) return w.itemId==item?0:10;
++        java.util.regex.Matcher m=java.util.regex.Pattern.compile("\\(([1-9])\\)$").matcher(w.name);
++        return m.find()?Integer.parseInt(m.group(1)):10;
++    }
++    private static String family(String value) { return value.replaceAll("\\([1-9]\\)$", "").trim(); }
++    public String displayName() { return action.equalsIgnoreCase("Drink")?family(name):name; }
++    public String encode()
++    {
++        return "2:"+tab+":"+group+":"+item+":"+type+":"+operation+":"+encode(name)+":"+encode(action);
++    }
++    private static String encode(String s) { return Base64.getUrlEncoder().withoutPadding().encodeToString(s.getBytes(StandardCharsets.UTF_8)); }
++    private static String decodeText(String s) { return new String(Base64.getUrlDecoder().decode(s),StandardCharsets.UTF_8); }
++    public static QuickBinding decode(String value)
++    {
++        try
++        {
++            String[] parts=value.split(":",-1); if (parts.length!=8 || !parts[0].equals("2")) return null;
++            QuickBinding b=new QuickBinding(Integer.parseInt(parts[1]),Integer.parseInt(parts[2]),Integer.parseInt(parts[3]),Integer.parseInt(parts[4]),Integer.parseInt(parts[5]),decodeText(parts[6]),decodeText(parts[7]));
++            if (b.name.length()>120 || b.action.length()>120 || (b.type!=13 && b.type!=18 && b.type!=1011) || b.operation<0 || b.operation>10) return null;
++            if (b.group==149 && b.tab==0 && b.item>=0 && (b.type==18 || b.type==1011) && (b.action.equalsIgnoreCase("Eat") || b.action.equalsIgnoreCase("Drink"))) return b;
++            if (b.group==271 && b.tab==HomeTab.PRAYER.ordinal() && b.item>>>16==271 && (b.type==18 || b.type==1011) && b.action.equals("Toggle")) return b;
++            if ((b.group==192 || b.group==193 || b.group==430) && b.tab==HomeTab.SPELLBOOK.ordinal() && b.item>>>16==b.group && !b.action.isEmpty()) return b;
++        }
++        catch (RuntimeException malformed) { /* An invalid preference is an empty slot. */ }
++        return null;
++    }
++}
+diff --git a/client/src/net/runelite/client/input/controller/QuickRadialControls.java b/client/src/net/runelite/client/input/controller/QuickRadialControls.java
+new file mode 100644
+index 0000000..352c769
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/QuickRadialControls.java
+@@ -0,0 +1,99 @@
++package net.runelite.client.input.controller;
++
++/** Separate eight-slot quick wheel; one native action per explicit confirmation. */
++public final class QuickRadialControls
++{
++    public interface Gateway
++    {
++        boolean allowed();
++        UiState snapshot();
++        boolean openTab(int index);
++        boolean invoke(UiState.Widget widget,UiState.Action action);
++        QuickBinding binding(int slot);
++        void bind(int slot,QuickBinding binding);
++        void restore(int slot);
++    }
++    private final Gateway gateway;
++    private boolean active, armed, openingArmed, stickArmed, selectedSpell;
++    private int selected, trigger=1<<6;
++    private long deadline;
++    private QuickBinding pending,captured;
++    private String message;
++    public QuickRadialControls(Gateway gateway) { this.gateway=gateway; }
++    public void trigger(int button) { if (trigger!=button) { reset();trigger=button; } }
++    public void reset() { active=armed=openingArmed=stickArmed=selectedSpell=false;pending=captured=null;deadline=0;message=null;selected=0; }
++    public boolean active() { return active; }
++    public int selected() { return selected; }
++    public String message() { return message; }
++    public boolean canBind() { return captured!=null; }
++    public boolean selectedSpell() { return selectedSpell; }
++    public String label(int slot) { QuickBinding b=gateway.binding(slot);return b==null ? (slot==0?"Assign food":slot==1?"Assign potion":"Empty slot "+(slot+1)) : b.displayName(); }
++    public boolean update(GamepadState input,long now,UiState.Widget focus,UiState.Action action)
++    {
++        selectedSpell=false;
++        if (!openingArmed) { if ((input.buttonsHeld&trigger)==0) openingArmed=true; else return false; }
++        if (!active)
++        {
++            if ((input.buttonsPressed&trigger)==0 || !gateway.allowed()) return false;
++            active=true;armed=false;stickArmed=Math.hypot(input.leftX,input.leftY)<.35;
++            captured=QuickBinding.capture(focus,action);message=null;return true;
++        }
++        if (!gateway.allowed()) { reset();return true; }
++        if ((input.buttonsPressed&(2|trigger))!=0) { active=false;pending=null;return true; }
++        if (pending!=null)
++        {
++            if (now>=deadline) { pending=null;armed=false;message="Unavailable: missing item, spell or permission";return true; }
++            UiState state=gateway.snapshot();
++            UiState.Widget[] widgets=pending.group==149 ? state.inventory : panelWidgets(state.panel);
++            UiState.Widget chosen=null;UiState.Action chosenAction=null;int priority=Integer.MAX_VALUE;
++            for (UiState.Widget w:widgets)
++            {
++                UiState.Action nativeAction=pending.match(w);
++                if (nativeAction!=null && pending.priority(w)<priority)
++                { chosen=w;chosenAction=nativeAction;priority=pending.priority(w); }
++            }
++            if (chosen!=null)
++            {
++                boolean sent=gateway.invoke(chosen,chosenAction);
++                pending=null;armed=false;
++                if (sent) { selectedSpell=chosenAction.type==13;active=false; }
++                else message="Action changed or unavailable";
++                return true;
++            }
++            return true;
++        }
++        if (!armed) { if ((input.buttonsHeld&(1|4|8|(1<<9)|(1<<10)|(15<<11)))==0) armed=true;else return true; }
++        if (Math.hypot(input.leftX,input.leftY)<.35) stickArmed=true;
++        if (stickArmed && Math.hypot(input.leftX,input.leftY)>=.45)
++        {
++            double angle=Math.atan2(input.leftX,-input.leftY),step=Math.PI/4;
++            double distance=Math.abs(Math.atan2(Math.sin(angle-selected*step),Math.cos(angle-selected*step)));
++            if (distance>step/2+Math.toRadians(3)) { selected=Math.floorMod((int)Math.floor(angle/step+.5),8);message=null; }
++        }
++        int prev=input.buttonsPressed&((1<<9)|(1<<11)|(1<<13)),next=input.buttonsPressed&((1<<10)|(1<<12)|(1<<14));
++        if (prev!=0 && next==0) { selected=(selected+7)%8;message=null; }
++        if (next!=0 && prev==0) { selected=(selected+1)%8;message=null; }
++        if ((input.buttonsPressed&4)!=0)
++        {
++            if (captured!=null) { gateway.bind(selected,captured);message="Assigned "+captured.name; }
++            else message="Focus food, potion, prayer or spell first";
++            armed=false;
++        }
++        else if ((input.buttonsPressed&8)!=0) { gateway.restore(selected);message="Slot restored to default";armed=false; }
++        else if ((input.buttonsPressed&1)!=0)
++        {
++            pending=gateway.binding(selected);armed=false;
++            if (pending==null) message="Empty: focus an action, reopen wheel, press X";
++            else if (!gateway.openTab(pending.tab)) { pending=null;message="Tab unavailable here"; }
++            else { deadline=now+1_000_000_000L;message="Opening native action…"; }
++        }
++        return true;
++    }
++    private static UiState.Widget[] panelWidgets(UiState.Panel panel)
++    {
++        if (panel==null || panel.modal) return new UiState.Widget[0];
++        java.util.List<UiState.Widget> all=new java.util.ArrayList<>();
++        for (UiState.Pane pane:panel.panes) java.util.Collections.addAll(all,pane.widgets);
++        return all.toArray(new UiState.Widget[0]);
++    }
++}
+diff --git a/client/src/net/runelite/client/input/controller/TabRadialControls.java b/client/src/net/runelite/client/input/controller/TabRadialControls.java
+index 528c2d1..94da1ca 100644
+--- a/client/src/net/runelite/client/input/controller/TabRadialControls.java
++++ b/client/src/net/runelite/client/input/controller/TabRadialControls.java
+@@ -8,7 +8,9 @@ public final class TabRadialControls
+         int availableTabs();
+         boolean openTab(int index);
+     }
+-    private static final int A = 1, B = 2, VIEW = 1 << 4;
++    private static final int A = 1, B = 2;
++    private int VIEW=1<<4;
++    public void trigger(int mask) { if (VIEW!=mask) { reset();VIEW=mask; } }
+     private static final int PREVIOUS = (1 << 9) | (1 << 11) | (1 << 13);
+     private static final int NEXT = (1 << 10) | (1 << 12) | (1 << 14);
+     private static final int COUNT = HomeTab.values().length;
+diff --git a/client/src/net/runelite/client/input/controller/UiControls.java b/client/src/net/runelite/client/input/controller/UiControls.java
+index 6a18419..ed65807 100644
+--- a/client/src/net/runelite/client/input/controller/UiControls.java
++++ b/client/src/net/runelite/client/input/controller/UiControls.java
+@@ -28,6 +28,9 @@ public final class UiControls
+     private long openingUntil, repeatAt;
+     private int focusedTab = -1;
+     private long tabOpeningUntil;
++    private int amountIndex;
++    private int inventoryButton=8;
++    public void inventoryButton(int mask) { if (inventoryButton!=mask) { reset(); inventoryButton=mask; } }
+     private int slot, choice, dialogueId = -1, heldDirection;
+     private UiState state = UiState.EMPTY;
+     private UiState.Widget context;
+@@ -50,7 +53,7 @@ public final class UiControls
+     {
+         reset();
+         if (index == HomeTab.INVENTORY.ordinal()) { focusInventory(now); return; }
+-        if (index == HomeTab.EQUIPMENT.ordinal() || index == HomeTab.PRAYER.ordinal() || index == HomeTab.SPELLBOOK.ordinal())
++        if (index == HomeTab.EQUIPMENT.ordinal() || index == HomeTab.PRAYER.ordinal() || index == HomeTab.SPELLBOOK.ordinal() || index == HomeTab.COMBAT.ordinal() || index == HomeTab.SKILLS.ordinal() || index == HomeTab.QUESTS.ordinal() || index == HomeTab.SETTINGS.ordinal())
+         { focusedTab = index; tabOpeningUntil = now+1_000_000_000L; }
+     }
+     private boolean matchesTab(UiState.Panel panel)
+@@ -58,6 +61,10 @@ public final class UiControls
+         if (panel == null || focusedTab < 0) return false;
+         return focusedTab == HomeTab.EQUIPMENT.ordinal() && panel.id == 387
+             || focusedTab == HomeTab.PRAYER.ordinal() && panel.id == 271
++            || focusedTab==HomeTab.COMBAT.ordinal() && panel.id==884
++            || focusedTab==HomeTab.SKILLS.ordinal() && panel.id==320
++            || focusedTab==HomeTab.QUESTS.ordinal() && panel.id==190
++            || focusedTab==HomeTab.SETTINGS.ordinal() && (panel.id==261 || panel.id==982)
+             || focusedTab == HomeTab.SPELLBOOK.ordinal() && (panel.id == 192 || panel.id == 193 || panel.id == 430);
+     }
+     public boolean inDialogue() { return state.dialogueId >= 0; }
+@@ -76,7 +83,7 @@ public final class UiControls
+         if (panel.active()) return panel.prompt();
+         if (focusedTab >= 0) return "Opening " + HomeTab.values()[focusedTab].label + "…";
+         UiState.Widget widget = focus();
+-        if (inDialogue()) return widget == null ? "Dialogue: waiting · B: close" : "A: " + widget.name + " · B: close";
++        if (inDialogue()) return (state.dialogueId==905 ? "Make "+(state.amount<0?"native amount":state.amount)+" · LB/RB: amount · " : "") + (widget == null ? "Dialogue: waiting · B: close" : "A: " + widget.name + " · D-pad: recipe · B: close");
+         if (!inventory) return null;
+         if (context != null && contextIndex < context.actions.length)
+             return "A: " + context.actions[contextIndex].label + " " + context.name + " · D-pad: choose · B: back";
+@@ -88,13 +95,18 @@ public final class UiControls
+ 
+     public boolean update(GamepadState input, long now)
+     {
+-        state = gateway.snapshot(inventory || (input.buttonsPressed & Y) != 0);
++        state = gateway.snapshot(inventory || (input.buttonsPressed & inventoryButton) != 0);
+         boolean wasEntry = entry.active();
+         if (entry.update(state.entry,input,now)) { context = null; armed = false; return true; }
+         if (wasEntry) { armed = false; return true; }
+         if (state.dialogueId != dialogueId)
+         {
+-            dialogueId = state.dialogueId; choice = 0; context = null; armed = false;
++            dialogueId = state.dialogueId; choice = amountIndex = 0;
++            if (dialogueId==905) for(int i=0;i<state.amounts.length;i++)
++            {
++                int comp=state.amounts[i].id&65535;
++                if (comp==5 && state.amount==1 || comp==6 && state.amount==5 || comp==7 && state.amount==10 || comp==8 && state.amount>10) amountIndex=i;
++            } context = null; armed = false;
+             heldDirection = 0; repeatAt = 0;
+             if (dialogueId >= 0) { inventory = false; focusedTab = -1; }
+         }
+@@ -119,12 +131,19 @@ public final class UiControls
+         if (wasPanel && !panel.active()) { armed = false; return true; }
+         if (!armed)
+         {
+-            if ((input.buttonsHeld & (A | B | X | Y | DIRECTIONS)) == 0) armed = true;
++            if ((input.buttonsHeld & (A | B | X | inventoryButton | DIRECTIONS | (1<<9) | (1<<10))) == 0) armed = true;
+             else return active();
+         }
+         if (inDialogue())
+         {
+             if ((input.buttonsPressed & B) != 0) { gateway.cancelDialogue(); armed = false; return true; }
++            if (state.dialogueId==905 && state.amounts.length>0 && (input.buttonsPressed&((1<<9)|(1<<10)))!=0)
++            {
++                amountIndex=Math.floorMod(amountIndex+((input.buttonsPressed&(1<<9))!=0?-1:1),state.amounts.length);
++                UiState.Widget amount=state.amounts[amountIndex];
++                if (amount.actions.length>0) gateway.invoke(amount,amount.actions[0]);
++                armed=false;return true;
++            }
+             int direction = direction(input, now);
+             if (direction != 0) choice = clamp(choice + (direction == 11 || direction == 13 ? -1 : 1), state.dialogue.length);
+             if ((input.buttonsPressed & A) != 0)
+@@ -135,7 +154,7 @@ public final class UiControls
+             }
+             return true;
+         }
+-        if ((input.buttonsPressed & Y) != 0)
++        if ((input.buttonsPressed & inventoryButton) != 0)
+         {
+             if (inventory) { leave(); return true; }
+             if (state.hasInventory() || gateway.openInventory())
+diff --git a/client/src/net/runelite/client/input/controller/UiState.java b/client/src/net/runelite/client/input/controller/UiState.java
+index 4474dbc..02b2041 100644
+--- a/client/src/net/runelite/client/input/controller/UiState.java
++++ b/client/src/net/runelite/client/input/controller/UiState.java
+@@ -9,6 +9,8 @@ public final class UiState
+     public final Widget[] inventory, dialogue;
+     public final Panel panel;
+     public final EntryState entry;
++    public final Widget[] amounts;
++    public final int amount;
+     public final int dialogueId;
+     public final boolean inventoryVisible;
+     public UiState(Widget[] inventory, Widget[] dialogue, int dialogueId)
+@@ -25,6 +27,11 @@ public final class UiState
+     }
+     public UiState(Widget[] inventory, Widget[] dialogue, int dialogueId, boolean inventoryVisible, Panel panel, EntryState entry)
+     {
++        this(inventory,dialogue,dialogueId,inventoryVisible,panel,entry,new Widget[0],-1);
++    }
++    public UiState(Widget[] inventory,Widget[] dialogue,int dialogueId,boolean inventoryVisible,Panel panel,EntryState entry,Widget[] amounts,int amount)
++    {
++        this.amounts=amounts; this.amount=amount;
+         this.entry = entry;
+         this.panel = panel;
+         this.inventory = inventory; this.dialogue = dialogue; this.dialogueId = dialogueId;
+@@ -58,9 +65,12 @@ public final class UiState
+         public final String label;
+         public final int type, operation;
+         public final long selection;
++        public final int targetId;
+         public Action(String label, int type, int operation) { this(label,type,operation,0); }
+-        public Action(String label, int type, int operation, long selection) { this.label = label; this.type = type; this.operation = operation; this.selection = selection; }
+-        public boolean same(Action other) { return other != null && selection == other.selection && type == other.type && operation == other.operation && label.equals(other.label); }
++        public Action(String label, int type, int operation, long selection) { this(label,type,operation,selection,-1); }
++        public Action(String label,int type,int operation,long selection,int targetId)
++        { this.label=label;this.type=type;this.operation=operation;this.selection=selection;this.targetId=targetId; }
++        public boolean same(Action other) { return other != null && targetId == other.targetId && selection == other.selection && type == other.type && operation == other.operation && label.equals(other.label); }
+     }
+     public static final class Widget
+     {
+diff --git a/client/src/net/runelite/client/input/controller/WorldControls.java b/client/src/net/runelite/client/input/controller/WorldControls.java
+index 4f9bfbf..693cc45 100644
+--- a/client/src/net/runelite/client/input/controller/WorldControls.java
++++ b/client/src/net/runelite/client/input/controller/WorldControls.java
+@@ -25,6 +25,9 @@ public final class WorldControls
+     private static final ControllerTarget[] EMPTY = new ControllerTarget[0];
+     private final Gateway gateway;
+     private volatile ControllerTarget target;
++    private String feedback;
++    private long feedbackUntil;
++    public String feedback(long now) { return now<feedbackUntil?feedback:null; }
+     private boolean armed, haveAim, moving, walkingPaused, directMode;
+     private long lastFind, lastWalk;
+     private double facingX, facingY = 1, moveX, moveY;
+@@ -43,7 +46,7 @@ public final class WorldControls
+ 
+     public void reset()
+     {
+-        closeMenu();
++        closeMenu(); feedback=null;feedbackUntil=0;
+         target = null; armed = haveAim = moving = walkingPaused = false;
+         lastFind = lastWalk = 0; facingX = 0; facingY = 1;
+         gateway.stopDirect();
+@@ -76,6 +79,7 @@ public final class WorldControls
+         if ((state.buttonsPressed & 2) != 0)
+         {
+             gateway.stopDirect(); gateway.cancel(); target = null;
++            feedback="Action cancelled";feedbackUntil=now+1_500_000_000L;
+             pauseWalking(x, y);
+             return;
+         }
+@@ -125,8 +129,10 @@ public final class WorldControls
+             // Act on the focus already displayed; never silently substitute a different target.
+             if (target != null && gateway.interact(target))
+             {
+-                pauseWalking(x, y);
++                feedback=target.serverApproach?"Action sent — server decides approach and range":"Action sent";
++                feedbackUntil=now+1_500_000_000L;pauseWalking(x,y);
+             }
++            else { feedback=target==null?"No target — aim with LT and cycle with LB/RB":"Target changed or unavailable — aim again";feedbackUntil=now+2_000_000_000L;target=null;pauseWalking(x,y); }
+             return;
+         }
+         else if (lastFind == 0 || now - lastFind >= 75_000_000L || aimChanged)
+@@ -196,7 +202,7 @@ public final class WorldControls
+         else { heldDirection = 0; repeatAt = 0; }
+         if ((state.buttonsPressed & 1) != 0)
+         {
+-            gateway.interact(menu[menuIndex]); // Native adapter revalidates even between snapshot updates.
++            feedback=gateway.interact(menu[menuIndex])?"Action sent":"Target changed or unavailable — aim again";feedbackUntil=now+2_000_000_000L;
+             closeMenu(); pauseWalking(x, y);
+         }
+     }
+diff --git a/client/src/net/runelite/client/input/controller/WorldInput.java b/client/src/net/runelite/client/input/controller/WorldInput.java
+index 62b5f3f..8a0bcbe 100644
+--- a/client/src/net/runelite/client/input/controller/WorldInput.java
++++ b/client/src/net/runelite/client/input/controller/WorldInput.java
+@@ -66,10 +66,14 @@ public final class WorldInput
+     /** Distance/heading use the nearest edge of a footprint, rather than its origin tile. */
+     public static double areaScore(double playerX, double playerY, int x, int y, int width, int height,
+                                    double facingX, double facingY, boolean retained)
++    {
++        return areaScore(playerX,playerY,x,y,width,height,facingX,facingY,retained,5);
++    }
++    public static double areaScore(double playerX,double playerY,int x,int y,int width,int height,double facingX,double facingY,boolean retained,double radius)
+     {
+         double dx = Math.max(x, Math.min(x + width, playerX)) - playerX;
+         double dy = Math.max(y, Math.min(y + height, playerY)) - playerY;
+-        return targetScore(dx, dy, facingX, facingY, retained);
++        return targetScore(dx, dy, facingX, facingY, retained,radius);
+     }
+ 
+     public static long pack(int x, int y) { return ((long) x << 32) | (y & 0xffffffffL); }
+@@ -78,9 +82,13 @@ public final class WorldInput
+ 
+     /** Nearby forward cone, with hysteresis so similarly ranked targets do not flicker. */
+     public static double targetScore(double dx, double dy, double facingX, double facingY, boolean retained)
++    {
++        return targetScore(dx,dy,facingX,facingY,retained,5);
++    }
++    private static double targetScore(double dx,double dy,double facingX,double facingY,boolean retained,double radius)
+     {
+         double distance = Math.hypot(dx, dy);
+-        if (distance > 5) return Double.POSITIVE_INFINITY;
++        if (distance > radius) return Double.POSITIVE_INFINITY;
+         double dot = distance < 0.001 ? 1 : (dx * facingX + dy * facingY) / distance;
+         if (dot < 0.15) return Double.POSITIVE_INFINITY;
+         return distance + (1 - dot) * 1.5 - (retained ? 0.65 : 0);
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerButton.java b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerButton.java
+new file mode 100644
+index 0000000..4a67d53
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerButton.java
+@@ -0,0 +1,11 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++/** SDL mapped auxiliary buttons; menu bindings can be restored through plugin settings. */
++public enum ControllerButton
++{
++    VIEW(4,"View / Select"), START(6,"Start / Menu"), LEFT_STICK(7,"Left stick click"), RIGHT_STICK(8,"Right stick click"), Y(3,"Y / Triangle");
++    public final int mask;
++    private final String label;
++    ControllerButton(int index,String label) { this.mask=1<<index;this.label=label; }
++    @Override public String toString() { return label; }
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerGlyphs.java b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerGlyphs.java
+new file mode 100644
+index 0000000..64ff570
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerGlyphs.java
+@@ -0,0 +1,15 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++/** The same face-button labels across controller overlays. */
++public enum ControllerGlyphs
++{
++    XBOX, PLAYSTATION;
++    public String text(String text)
++    {
++        if (text==null) return null;
++        String[] from={"A","B","X","Y"};
++        String[] to=this==PLAYSTATION?new String[]{"Cross","Circle","Square","Triangle"}:new String[]{"[A]","[B]","[X]","[Y]"};
++        for (int i=0;i<4;i++) text=text.replaceAll("\\b"+from[i]+"(?=[: ])",java.util.regex.Matcher.quoteReplacement(to[i]));
++        return text;
++    }
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+index b55259e..574598e 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -34,6 +34,24 @@ public interface SoloScapeControllerConfig extends Config
+     default boolean tabRadial() { return true; }
+     @ConfigItem(keyName = "serverFeatures", name = "SoloScape server features", description = "Enable directional and position-free cancel packets only for the patched SoloScape server. Off uses ordinary walking/cancellation and is safe for older servers.", position = 8)
+     default boolean serverFeatures() { return false; }
+-    @ConfigItem(keyName = "interfaceControls", name = "Native interface navigation", description = "Controller focus and keyboard for banks, shops, equipment, prayer and spells. Turn off to use their normal mouse/keyboard controls.", position = 9)
++    @ConfigItem(keyName = "interfaceControls", name = "Native interface navigation", description = "Controller focus and keyboard for banks, shops, production, equipment, prayer, spells and supported home tabs. Turn off to use their normal mouse/keyboard controls.", position = 9)
+     default boolean interfaceControls() { return true; }
++
++    @ConfigItem(keyName="quickRadial",name="Quick-action wheel",description="Start opens eight slots. Focus food, potion, prayer or spell, open the wheel and press X to assign it. Y restores the highlighted slot.",position=10)
++    default boolean quickRadial() { return true; }
++    @ConfigItem(keyName="quickButton",name="Quick wheel button",description="Choose a different button from Home wheel and Inventory. Default: Start / Menu.",position=11)
++    default ControllerButton quickButton() { return ControllerButton.START; }
++    @ConfigItem(keyName="homeButton",name="Home wheel button",description="Default: View / Select. Choose a different button from Quick wheel and Inventory.",position=12)
++    default ControllerButton homeButton() { return ControllerButton.VIEW; }
++    @ConfigItem(keyName="inventoryButton",name="Inventory button",description="Default: Y / Triangle. Choose a different button from both wheels.",position=13)
++    default ControllerButton inventoryButton() { return ControllerButton.Y; }
++    @Range(min=75,max=175)
++    @ConfigItem(keyName="overlayScale",name="Controller overlay size (%)",description="Scale wheels, keyboard and focus hints; constrained to the game canvas.",position=14)
++    default int overlayScale() { return 100; }
++    @ConfigItem(keyName="glyphs",name="Button labels",description="Xbox or PlayStation face-button names across controller hints.",position=15)
++    default ControllerGlyphs glyphs() { return ControllerGlyphs.XBOX; }
++    @ConfigItem(keyName="showGuide",name="Show controller guide",description="Display controls and quick-slot assignment instructions. Turn off when familiar. Settings can be restored using the plugin's Reset button.",position=16)
++    default boolean showGuide() { return false; }
++    @ConfigItem(keyName="quickSlots",name="Saved quick actions",description="Assigned by the wheel. Reset the plugin or press Y in the wheel to restore defaults.",hidden=true)
++    default String quickSlots() { return ""; }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+index 34b9c76..261c5c5 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+@@ -22,50 +22,51 @@ public final class SoloScapeControllerOverlay extends Overlay
+         setLayer(OverlayLayer.ABOVE_WIDGETS);
+     }
+ 
+-    @Override
+-    public Dimension render(Graphics2D graphics)
++    @Override public Dimension render(Graphics2D graphics)
+     {
+-        GameClient.ControllerTarget target = plugin.getTarget();
+-        if (target == null)
++        if (!plugin.isActive() || plugin.getUi().active() || plugin.getRadial().active() || plugin.getQuick().active()) return null;
++        java.util.List<String> lines=new java.util.ArrayList<>();
++        GameClient.ControllerTarget target=plugin.getTarget();
++        GameClient.ControllerTarget[] menu=plugin.getWorld().getMenu();
++        String feedback=plugin.getWorld().feedback(System.nanoTime());
++        if(menu.length>0)
+         {
+-            String selected = plugin.selectionHint();
+-            if (selected == null) return null;
+-            String help = "Stick: aim · LB/RB: target · B: cancel";
+-            int width = Math.max(graphics.getFontMetrics().stringWidth(selected),graphics.getFontMetrics().stringWidth(help))+12;
+-            graphics.setColor(new Color(0,0,0,210)); graphics.fillRect(0,0,width,44);
+-            graphics.setColor(new Color(255,215,75));graphics.drawString(selected,6,17);
+-            graphics.setColor(Color.WHITE);graphics.drawString(help,6,35);
+-            return new Dimension(width,44);
++            for(int i=0;i<menu.length;i++) lines.add((i==plugin.getWorld().getMenuIndex()?"> ":"  ")+menu[i].option+" "+menu[i].name);
++            lines.add("D-pad: choose · A: confirm · B: back");
+         }
+-        String label = "A: " + target.option + " " + target.name;
+-        GameClient.ControllerTarget[] menu = plugin.getWorld().getMenu();
+-        if (menu.length > 0)
++        else if(target!=null)
+         {
+-            String help = "D-pad: choose  |  A: confirm  |  B: back";
+-            int width = graphics.getFontMetrics().stringWidth(help) + 12;
+-            for (GameClient.ControllerTarget action : menu)
+-                width = Math.max(width, graphics.getFontMetrics().stringWidth(action.option + " " + action.name) + 24);
+-            int height = 24 * (menu.length + 1);
+-            graphics.setColor(new Color(0, 0, 0, 210));
+-            graphics.fillRect(0, 0, width, height);
+-            for (int i = 0; i < menu.length; i++)
++            lines.add("A: "+target.option+" "+target.name+(target.serverApproach?" · server approach":""));
++            lines.add("LT: aim · LB/RB: target · X: actions · B: cancel");
++        }
++        else
++        {
++            String selection=plugin.selectionHint();
++            if(selection!=null) { lines.add(selection);lines.add("Stick: aim · LB/RB: target · B: cancel"); }
++        }
++        if(feedback!=null) lines.add(feedback);
++        if(lines.isEmpty()) return null;
++        Graphics2D g=(Graphics2D)graphics.create();
++        try
++        {
++            g.setFont(new java.awt.Font(java.awt.Font.SANS_SERIF,java.awt.Font.PLAIN,Math.max(10,(int)(13*plugin.config().overlayScale()/100.0))));
++            int width=0,lineHeight=g.getFontMetrics().getHeight()+6,max=plugin.canvasWidth()-24;
++            for(int i=0;i<lines.size();i++)
++            {
++                String text=plugin.config().glyphs().text(lines.get(i)),fit=text;
++                while(!fit.isEmpty() && g.getFontMetrics().stringWidth(fit)>max) fit=fit.substring(0,fit.length()-1);
++                if(!fit.equals(text) && fit.length()>2) fit=fit.substring(0,fit.length()-2)+"…";
++                lines.set(i,fit);width=Math.max(width,g.getFontMetrics().stringWidth(fit)+12);
++            }
++            int height=lines.size()*lineHeight+6;
++            g.setColor(new Color(0,0,0,210));g.fillRect(0,0,width,height);
++            for(int i=0;i<lines.size();i++)
+             {
+-                boolean selected = i == plugin.getWorld().getMenuIndex();
+-                graphics.setColor(selected ? new Color(255, 215, 75) : Color.WHITE);
+-                graphics.drawString((selected ? "> " : "  ") + menu[i].option + " " + menu[i].name, 6, i * 24 + 17);
++                g.setColor(i==0?new Color(255,215,75):Color.WHITE);
++                g.drawString(lines.get(i),6,4+g.getFontMetrics().getAscent()+i*lineHeight);
+             }
+-            graphics.setColor(new Color(255, 215, 75));
+-            graphics.drawString(help, 6, menu.length * 24 + 17);
+-            return new Dimension(width, height);
++            return new Dimension(width,height);
+         }
+-        String help = "LT: aim  |  LB / RB: target  |  X: actions  |  B: cancel";
+-        int width = Math.max(graphics.getFontMetrics().stringWidth(label), graphics.getFontMetrics().stringWidth(help)) + 12;
+-        graphics.setColor(new Color(0, 0, 0, 180));
+-        graphics.fillRect(0, 0, width, 44);
+-        graphics.setColor(Color.WHITE);
+-        graphics.drawString(label, 6, 17);
+-        graphics.setColor(new Color(255, 215, 75));
+-        graphics.drawString(help, 6, 35);
+-        return new Dimension(width, 44);
++        finally {g.dispose();}
+     }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index 72a30a6..e8ef5e6 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -18,6 +18,8 @@ import net.runelite.client.input.controller.UiControls;
+ import net.runelite.client.input.controller.UiState;
+ import net.runelite.client.input.controller.TabRadialControls;
+ import net.runelite.client.input.controller.HomeTab;
++import net.runelite.client.input.controller.QuickBinding;
++import net.runelite.client.input.controller.QuickRadialControls;
+ import net.runelite.client.ui.overlay.OverlayManager;
+ import net.runelite.client.plugins.Plugin;
+ import net.runelite.client.plugins.PluginDescriptor;
+@@ -41,6 +43,36 @@ public class SoloScapeControllerPlugin extends Plugin
+ 	@Inject private SoloScapeUiOverlay uiOverlay;
+     @Inject private SoloScapeTargetOverlay targetOverlay;
+     @Inject private SoloScapeTabRadialOverlay tabRadialOverlay;
++    @Inject private SoloScapeQuickRadialOverlay quickRadialOverlay;
++    @Inject private ConfigManager configManager;
++    private String bindingWarning;
++    private final QuickRadialControls quick = new QuickRadialControls(new QuickRadialControls.Gateway()
++    {
++        public boolean allowed() { return config.interfaceControls() && client.getControllerAvailableTabs()!=0; }
++        public UiState snapshot() { return client.getControllerUiState(true); }
++        public boolean openTab(int index) { return client.openControllerTab(index); }
++        public boolean invoke(UiState.Widget widget,UiState.Action action) { return client.invokeControllerUi(widget,action); }
++        public QuickBinding binding(int slot) { return quickBinding(slot); }
++        public void bind(int slot,QuickBinding binding) { saveBinding(slot,binding.encode()); }
++        public void restore(int slot) { saveBinding(slot,"default"); }
++    });
++    private QuickBinding quickBinding(int slot)
++    {
++        String[] slots=config.quickSlots().split(";",-1);
++        String value=slot<slots.length?slots[slot]:"";
++        if (value.isEmpty() || value.equals("default")) return null;
++        return QuickBinding.decode(value);
++    }
++    private void saveBinding(int slot,String value)
++    {
++        String[] old=config.quickSlots().split(";",-1),slots=new String[8];
++        for (int i=0;i<8;i++) slots[i]=i<old.length?old[i]:"default";
++        slots[slot]=value;configManager.setConfiguration("soloscapecontroller","quickSlots",String.join(";",slots));
++    }
++    QuickRadialControls getQuick() { return quick; }
++    SoloScapeControllerConfig config() { return config; }
++    String bindingWarning() { return bindingWarning; }
++    int canvasWidth() { return client.getCanvas()==null?765:Math.max(100,client.getCanvas().getWidth()); }
+     private int radialFocusTab = -1;
+     private final TabRadialControls radial = new TabRadialControls(new TabRadialControls.Gateway()
+     {
+@@ -104,6 +136,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 		overlayManager.add(uiOverlay);
+         overlayManager.add(targetOverlay);
+         overlayManager.add(tabRadialOverlay);
++        overlayManager.add(quickRadialOverlay);
+ 		clientThread.invoke(() -> { reset(); failed = false; client.setControllerUiEnabled(true); active = true; });
+ 	}
+ 
+@@ -116,14 +149,15 @@ public class SoloScapeControllerPlugin extends Plugin
+ 		overlayManager.remove(uiOverlay);
+         overlayManager.remove(targetOverlay);
+         overlayManager.remove(tabRadialOverlay);
++        overlayManager.remove(quickRadialOverlay);
+ 		clientThread.invoke(this::reset);
+ 	}
+ 
+ 	boolean isActive() { return active; }
+ 
+-	ControllerTarget getTarget() { return active && !ui.active() && !radial.active() ? world.getTarget() : null; }
++	ControllerTarget getTarget() { return active && !ui.active() && !radial.active() && !quick.active() ? world.getTarget() : null; }
+ 
+-    String selectionHint() { return active && !ui.active() && !radial.active() ? client.getControllerSelectionHint() : null; }
++    String selectionHint() { return active && !ui.active() && !radial.active() && !quick.active() ? client.getControllerSelectionHint() : null; }
+ 
+     TabRadialControls getRadial() { return radial; }
+ 
+@@ -140,7 +174,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 		resetWorld();
+ 		state.clear();
+ 		ui.reset();
+-        radial.reset();
++        radial.reset(); quick.reset();
+         radialFocusTab = -1;
+ 		client.setControllerServerFeatures(false);
+ 		client.setControllerUiEnabled(false);
+@@ -185,13 +219,35 @@ public class SoloScapeControllerPlugin extends Plugin
+             if (!state.connected || canvas == null || !canvas.isFocusOwner() || !client.hasLocalPlayer())
+             {
+                 client.setControllerCameraInput(0, 0);
+-                resetWorld(); ui.reset(); radial.reset(); radialFocusTab = -1;
++                resetWorld(); ui.reset(); radial.reset(); quick.reset(); radialFocusTab = -1;
+                 return;
+             }
+             client.prepareControllerUi();
+             long now = System.nanoTime();
+-            if (!config.tabRadial()) radial.reset();
+-            if (config.tabRadial() && radial.update(state, now))
++            radial.trigger(config.homeButton().mask);
++            quick.trigger(config.quickButton().mask);
++            ui.inventoryButton(config.inventoryButton().mask);
++            boolean conflict=config.quickButton()==config.homeButton() || config.quickButton()==config.inventoryButton() || config.homeButton()==config.inventoryButton();
++            bindingWarning=conflict?"Controller bindings overlap. Choose distinct buttons or reset plugin settings.":null;
++            if (!config.quickRadial() || conflict || !config.interfaceControls()) quick.reset();
++            if (!conflict && config.quickRadial() && config.interfaceControls() && !radial.active())
++            {
++                UiState.Widget focused=ui.context()!=null?ui.context():ui.focus();
++                UiState.Action action=focused==null || focused.actions.length==0?null:focused.actions[Math.min(ui.context()!=null?ui.contextIndex():0,focused.actions.length-1)];
++                if (quick.update(state,now,focused,action))
++                {
++                    client.setControllerCameraInput(0,0);resetWorld();
++                    // Keep the captured focus while assigning, discard it on exit.
++                    if (!quick.active())
++                    {
++                        ui.reset();
++                        if (quick.selectedSpell() && (client.getControllerSelectionMask()&32)!=0 && client.openControllerTargetInventory()) ui.focusInventory(now);
++                    }
++                    return;
++                }
++            }
++            if (!config.tabRadial() || conflict) radial.reset();
++            if (!conflict && config.tabRadial() && radial.update(state, now))
+             {
+                 client.setControllerCameraInput(0, 0);
+                 resetWorld(); ui.reset();
+@@ -219,7 +275,7 @@ public class SoloScapeControllerPlugin extends Plugin
+             // Reset intent and rearm, but keep the device/provider alive.
+             try { client.setControllerCameraInput(0, 0); resetWorld(); }
+             catch (RuntimeException cleanup) { ex.addSuppressed(cleanup); }
+-            finally { ui.reset(); radial.reset(); radialFocusTab = -1; }
++            finally { ui.reset(); radial.reset(); quick.reset(); radialFocusTab = -1; }
+             long now = System.nanoTime();
+             if (lastAdapterFailure == 0 || now - lastAdapterFailure >= 5_000_000_000L)
+             {
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+new file mode 100644
+index 0000000..5f74bb9
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+@@ -0,0 +1,84 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import com.GameClient;
++import java.awt.*;
++import java.awt.geom.*;
++import javax.inject.Inject;
++import net.runelite.client.input.controller.QuickRadialControls;
++import net.runelite.client.ui.overlay.*;
++
++public final class SoloScapeQuickRadialOverlay extends Overlay
++{
++    private final SoloScapeControllerPlugin plugin;
++    private final GameClient client;
++    @Inject SoloScapeQuickRadialOverlay(GameClient client,SoloScapeControllerPlugin plugin)
++    {
++        super(plugin);this.client=client;this.plugin=plugin;
++        setPosition(OverlayPosition.DYNAMIC);setLayer(OverlayLayer.ABOVE_WIDGETS);setPriority(OverlayPriority.HIGHEST);
++    }
++    @Override public Dimension render(Graphics2D g)
++    {
++        if (!plugin.isActive() || client.getCanvas()==null) return null;
++        if (plugin.getQuick().active()) paint(g,client.getCanvas().getWidth(),client.getCanvas().getHeight(),plugin.getQuick(),plugin.config().overlayScale()/100.0,plugin.config().glyphs());
++        else if (plugin.bindingWarning()!=null || plugin.config().showGuide()) guide(g);
++        return null;
++    }
++    private void guide(Graphics2D graphics)
++    {
++        Graphics2D g=(Graphics2D)graphics.create();
++        try
++        {
++            g.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,(int)(13*plugin.config().overlayScale()/100.0)));
++            String[] lines=plugin.bindingWarning()!=null?new String[]{plugin.bindingWarning()}:new String[]{
++                "CONTROLLER GUIDE — hide in SoloScape Controller settings",
++                "Left stick: move / aim · Right stick: camera · LT: aim · Full tilt: direct-mode run",
++                "A: interact · X: actions · LB/RB: targets / panes · B: back / cancel",
++                plugin.config().homeButton()+": home tabs · "+plugin.config().quickButton()+": quick actions · "+plugin.config().inventoryButton()+": inventory",
++                "D-pad: UI focus / scroll · Production LB/RB: amount · A: make recipe",
++                "Quick slots: focus food, potion, prayer or spell; open quick wheel; X: assign · Y: restore",
++                "All slots start empty · Potion bindings use the lowest available dose · Plugin Reset restores controls"};
++            int max=Math.max(100,client.getCanvas().getWidth()-32),w=0,lineHeight=g.getFontMetrics().getHeight()+5;
++            for(String line:lines) w=Math.max(w,Math.min(max,g.getFontMetrics().stringWidth(plugin.config().glyphs().text(line))+20));
++            int y=Math.max(8,client.getCanvas().getHeight()-lines.length*lineHeight-20);
++            g.setColor(new Color(0,0,0,225));g.fillRoundRect(8,y,w,lines.length*lineHeight+12,10,10);g.setColor(Color.WHITE);
++            for(int i=0;i<lines.length;i++) centreFit(g,plugin.config().glyphs().text(lines[i]),18,y+lineHeight*(i+1),w-20,false);
++        }
++        finally { g.dispose(); }
++    }
++    public static void paint(Graphics2D graphics,int width,int height,QuickRadialControls quick,double scale,ControllerGlyphs glyphs)
++    {
++        Graphics2D g=(Graphics2D)graphics.create();
++        try
++        {
++            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
++            g.setColor(new Color(0,0,0,115));g.fillRect(0,0,width,height);
++            double radius=Math.min(210*scale,Math.min(width/2.0-18,height/2.0-48));if(radius<80)return;
++            double cx=width/2.0,cy=height/2.0,inner=radius*.50,s=Math.min(scale,radius/210);
++            g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,Math.max(10,(int)(13*s))));
++            for(int i=0;i<8;i++)
++            {
++                boolean selected=i==quick.selected();
++                Area wedge=new Area(new Arc2D.Double(cx-radius,cy-radius,2*radius,2*radius,90-i*45-21.5,43,Arc2D.PIE));
++                wedge.subtract(new Area(new Ellipse2D.Double(cx-inner,cy-inner,2*inner,2*inner)));
++                g.setColor(selected?new Color(137,105,39,245):new Color(31,29,26,240));g.fill(wedge);
++                g.setColor(selected?new Color(255,218,105):new Color(111,91,55));g.draw(wedge);
++                double angle=Math.toRadians(i*45);int x=(int)(cx+Math.sin(angle)*radius*.76),y=(int)(cy-Math.cos(angle)*radius*.76);
++                g.setColor(Color.WHITE);centreFit(g,quick.label(i),x,y,(int)(radius*.52),true);
++            }
++            g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,Math.max(12,(int)(16*s))));g.setColor(new Color(255,218,105));
++            centreFit(g,quick.label(quick.selected()),(int)cx,(int)cy-16,(int)(inner*1.8),true);
++            g.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,Math.max(10,(int)(12*s))));g.setColor(Color.WHITE);
++            centreFit(g,glyphs.text("A: use · B: back"),(int)cx,(int)cy+8,(int)(inner*1.8),true);
++            centreFit(g,glyphs.text("X: assign · Y: restore"),(int)cx,(int)cy+30,(int)(inner*1.8),true);
++            centreFit(g,"QUICK ACTIONS",(int)cx,(int)(cy-radius-14),width-30,true);
++            centreFit(g,quick.message()==null?(quick.canBind()?"Current action ready to assign":"Focus food, potion, prayer or spell to assign"):quick.message(),(int)cx,(int)(cy+radius+23),width-30,true);
++        }
++        finally {g.dispose();}
++    }
++    private static void centreFit(Graphics2D g,String text,int x,int y,int max,boolean centre)
++    {
++        String value=text;while(!value.isEmpty() && g.getFontMetrics().stringWidth(value)>max) value=value.substring(0,value.length()-1);
++        if(!value.equals(text) && value.length()>2) value=value.substring(0,value.length()-2)+"…";
++        g.drawString(value,centre?x-g.getFontMetrics().stringWidth(value)/2:x,y);
++    }
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java
+index 53ebf22..7b860df 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java
+@@ -35,23 +35,28 @@ public final class SoloScapeTabRadialOverlay extends Overlay
+     @Override public Dimension render(Graphics2D graphics)
+     {
+         if (!plugin.isActive() || !plugin.getRadial().active() || client.getCanvas() == null) return null;
+-        paint(graphics, client.getCanvas().getWidth(), client.getCanvas().getHeight(), plugin.getRadial());
++        paint(graphics, client.getCanvas().getWidth(), client.getCanvas().getHeight(), plugin.getRadial(),plugin.config().overlayScale()/100.0,plugin.config().glyphs());
+         return null;
+     }
+ 
+     public static void paint(Graphics2D graphics, int width, int height, TabRadialControls radial)
++    {
++        paint(graphics,width,height,radial,1,ControllerGlyphs.XBOX);
++    }
++    public static void paint(Graphics2D graphics,int width,int height,TabRadialControls radial,double scale,ControllerGlyphs glyphs)
+     {
+         Graphics2D draw = (Graphics2D) graphics.create();
+         try
+         {
+             draw.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+             draw.setColor(new Color(0, 0, 0, 115)); draw.fillRect(0, 0, width, height);
+-            double radius = Math.min(210, Math.min(width / 2.0 - 18, height / 2.0 - 32));
++            double radius = Math.min(210*scale, Math.min(width / 2.0 - 18, height / 2.0 - 32));
+             if (radius < 80) return;
++            scale=Math.min(scale,radius/210);
+             double cx = width / 2.0, cy = height / 2.0;
+             double inner = radius * .51, labelRadius = radius * .78;
+             double step = 360.0 / TABS.length;
+-            draw.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 11));
++            draw.setFont(new Font(Font.SANS_SERIF, Font.BOLD, Math.max(10,(int)(11*scale))));
+             for (int i = 0; i < TABS.length; i++)
+             {
+                 boolean selected = i == radial.selected(), available = radial.available(i);
+@@ -70,16 +75,16 @@ public final class SoloScapeTabRadialOverlay extends Overlay
+             }
+             draw.setColor(new Color(20, 19, 17, 245));
+             draw.fill(new Ellipse2D.Double(cx - inner + 3, cy - inner + 3, 2 * inner - 6, 2 * inner - 6));
+-            draw.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 19));
++            draw.setFont(new Font(Font.SANS_SERIF, Font.BOLD, Math.max(12,(int)(19*scale))));
+             draw.setColor(new Color(255, 218, 105)); centre(draw, TABS[radial.selected()].label, (int) cx, (int) cy - 9);
+-            draw.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
++            draw.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, Math.max(10,(int)(12*scale))));
+             draw.setColor(Color.WHITE);
+-            centre(draw, radial.message() != null ? radial.message() : radial.available(radial.selected()) ? "A  Open tab" : "Unavailable here", (int) cx, (int) cy + 15);
+-            draw.setColor(new Color(194, 185, 161)); centre(draw, "B  Back", (int) cx, (int) cy + 38);
+-            draw.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
++            centre(draw, radial.message() != null ? radial.message() : radial.available(radial.selected()) ? glyphs.text("A  Open tab") : "Unavailable here", (int) cx, (int) cy + 15);
++            draw.setColor(new Color(194, 185, 161)); centre(draw, glyphs.text("B  Back"), (int) cx, (int) cy + 38);
++            draw.setFont(new Font(Font.SANS_SERIF, Font.BOLD, Math.max(10,(int)(14*scale))));
+             draw.setColor(new Color(255, 222, 139)); centre(draw, "HOME TABS", (int) cx, (int) (cy - radius - 13));
+-            draw.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+-            centre(draw, "Left stick: choose   ·   D-pad / LB / RB: cycle   ·   View/Select: close", (int) cx, (int) (cy + radius + 21));
++            draw.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, Math.max(10,(int)(12*scale))));
++            centre(draw, "Left stick: choose   ·   D-pad / LB / RB: cycle   ·   wheel button: close", (int) cx, (int) (cy + radius + 21));
+         }
+         finally { draw.dispose(); }
+     }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java
+index 886ed7c..903cfe2 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java
+@@ -46,11 +46,18 @@ public final class SoloScapeTargetOverlay extends Overlay
+         try
+         {
+             Color gold = new Color(255, 215, 75);
+-            OverlayUtil.renderPolygon(draw, footprint, gold, new Color(255, 215, 75, 55), new BasicStroke(3));
+-            String label = "A: " + target.option + " " + target.name;
++            OverlayUtil.renderPolygon(draw, footprint, gold, new Color(255, 215, 75, 55), target.serverApproach?new BasicStroke(3,BasicStroke.CAP_BUTT,BasicStroke.JOIN_ROUND,10,new float[]{6,4},0):new BasicStroke(3));
++            draw.setFont(new java.awt.Font(java.awt.Font.SANS_SERIF,java.awt.Font.BOLD,(int)(13*plugin.config().overlayScale()/100.0)));
++            String label = plugin.config().glyphs().text("A: " + target.option + " " + target.name + (target.serverApproach?" · server approach":""));
++            int max=client.getCanvas().getWidth()-20;
++            String full=label;
++            while(!label.isEmpty() && draw.getFontMetrics().stringWidth(label)>max) label=label.substring(0,label.length()-1);
++            if(!label.equals(full) && label.length()>2) label=label.substring(0,label.length()-2)+"…";
+             Rectangle bounds = footprint.getBounds();
+             int width = draw.getFontMetrics().stringWidth(label), height = draw.getFontMetrics().getHeight();
+             int x = bounds.x + (bounds.width - width) / 2, y = bounds.y - 8;
++            x=Math.max(8,Math.min(client.getCanvas().getWidth()-width-8,x));
++            y=Math.max(draw.getFontMetrics().getAscent()+8,Math.min(client.getCanvas().getHeight()-8,y));
+             draw.setColor(new Color(0, 0, 0, 190));
+             draw.fillRoundRect(x - 5, y - draw.getFontMetrics().getAscent() - 3, width + 10, height + 4, 6, 6);
+             draw.setColor(gold);
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+index 33d3caf..eee6e69 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
+ import java.awt.Color;
+ import java.awt.Dimension;
+ import java.awt.Graphics2D;
++import com.GameClient;
+ import java.awt.Rectangle;
+ import javax.inject.Inject;
+ import net.runelite.client.input.controller.UiControls;
+@@ -16,29 +17,37 @@ import net.runelite.client.ui.overlay.OverlayPosition;
+ public final class SoloScapeUiOverlay extends Overlay
+ {
+     private final SoloScapeControllerPlugin plugin;
+-    @Inject SoloScapeUiOverlay(SoloScapeControllerPlugin plugin)
++    private final GameClient client;
++    @Inject SoloScapeUiOverlay(SoloScapeControllerPlugin plugin,GameClient client)
+     {
+-        super(plugin); this.plugin = plugin;
++        super(plugin); this.plugin = plugin;this.client=client;
+         setPosition(OverlayPosition.DYNAMIC); setLayer(OverlayLayer.ABOVE_WIDGETS);
+     }
+     @Override public Dimension render(Graphics2D graphics)
+     {
+-        if (!plugin.isActive()) return null;
+-        return paint(graphics,plugin.getUi());
++        if (!plugin.isActive() || plugin.getQuick().active() || plugin.getRadial().active() || client.getCanvas()==null) return null;
++        return paint(graphics,plugin.getUi(),client.getCanvas().getWidth(),client.getCanvas().getHeight(),plugin.config().overlayScale()/100.0,plugin.config().glyphs());
+     }
+     public static Dimension paint(Graphics2D graphics,UiControls ui)
+     {
+-        String prompt = ui.prompt();
++        return paint(graphics,ui,765,503,1,ControllerGlyphs.XBOX);
++    }
++    public static Dimension paint(Graphics2D graphics,UiControls ui,int canvasWidth,int canvasHeight,double scale,ControllerGlyphs glyphs)
++    {
++        String prompt = glyphs.text(ui.prompt());
+         if (prompt == null) return null;
+         Graphics2D draw = (Graphics2D) graphics.create();
+         try
+         {
++            draw.setFont(new java.awt.Font(java.awt.Font.SANS_SERIF,java.awt.Font.PLAIN,Math.max(10,(int)(13*scale))));
+             if (ui.entry().active())
+             {
+                 net.runelite.client.input.controller.EntryControls keyboard = ui.entry();
+                 String[] keys = keyboard.keys(); int columns = keyboard.columns();
+                 int cellWidth = 58, cellHeight = 32, rows = (keys.length+columns-1)/columns;
+                 int width = Math.max(440,columns*cellWidth+24), height = rows*cellHeight+106;
++                double keyboardScale=Math.min(scale,Math.min((canvasWidth-16.0)/(width+8),(canvasHeight-16.0)/(height+8)));
++                draw.scale(keyboardScale,keyboardScale);draw.setFont(new java.awt.Font(java.awt.Font.SANS_SERIF,java.awt.Font.PLAIN,13));
+                 draw.setColor(new Color(0,0,0,235)); draw.fillRoundRect(8,8,width,height,12,12);
+                 draw.setColor(new Color(255,220,95)); draw.drawString(fit(draw,keyboard.state().prompt,width-24),20,30);
+                 String value = keyboard.state().value;
+@@ -62,7 +71,7 @@ public final class SoloScapeUiOverlay extends Overlay
+                 draw.setColor(new Color(255, 205, 75, 65)); draw.fill(rect);
+                 draw.setColor(new Color(255, 205, 75)); draw.setStroke(new BasicStroke(2)); draw.draw(rect);
+             }
+-            java.util.List<String> lines = wrap(draw,prompt,680);
++            java.util.List<String> lines = wrap(draw,prompt,Math.max(100,canvasWidth-32));
+             int width = 0;
+             for (String line : lines) width = Math.max(width,draw.getFontMetrics().stringWidth(line)+12);
+             int lineHeight = Math.max(18,draw.getFontMetrics().getHeight()), hintHeight = lines.size()*lineHeight+10;
+@@ -74,13 +83,19 @@ public final class SoloScapeUiOverlay extends Overlay
+             if (menu != null)
+             {
+                 int menuWidth = 160;
+-                for (UiState.Action action : menu.actions) menuWidth = Math.max(menuWidth, draw.getFontMetrics().stringWidth(action.label) + 20);
+-                draw.setColor(new Color(0, 0, 0, 230)); draw.fillRect(8, menuY, menuWidth, menu.actions.length * 23 + 6);
+-                for (int i = 0; i < menu.actions.length; i++)
++                for (UiState.Action action : menu.actions) menuWidth = Math.max(menuWidth, draw.getFontMetrics().stringWidth(glyphs.text(action.label)) + 20);
++                menuWidth=Math.min(menuWidth,Math.max(100,canvasWidth-16));
++                int rowHeight=draw.getFontMetrics().getHeight()+8;
++                int shown=Math.max(1,Math.min(menu.actions.length,(canvasHeight-menuY-14)/rowHeight));
++                int start=Math.max(0,Math.min(menu.actions.length-shown,ui.contextIndex()-shown+1));
++                draw.setColor(new Color(0,0,0,230));draw.fillRect(8,menuY,menuWidth,shown*rowHeight+6);
++                for(int i=start;i<start+shown;i++)
+                 {
+-                    if (i == ui.contextIndex()) { draw.setColor(new Color(110, 90, 35)); draw.fillRect(10, menuY+3 + i * 23, menuWidth - 4, 22); }
+-                    draw.setColor(i == ui.contextIndex() ? new Color(255, 220, 95) : Color.WHITE);
+-                    draw.drawString(menu.actions[i].label, 16, menuY+19 + i * 23);
++                    int row=i-start;
++                    if(i==ui.contextIndex()) {draw.setColor(new Color(110,90,35));draw.fillRect(10,menuY+3+row*rowHeight,menuWidth-4,rowHeight-1);}
++                    draw.setColor(i==ui.contextIndex()?new Color(255,220,95):Color.WHITE);
++                    String label=glyphs.text(menu.actions[i].label)+(row==0 && start>0?" ↑":row==shown-1 && start+shown<menu.actions.length?" ↓":"");
++                    draw.drawString(fit(draw,label,menuWidth-16),16,menuY+5+draw.getFontMetrics().getAscent()+row*rowHeight);
+                 }
+             }
+         }
+diff --git a/client/test/ControllerSelectionTest.java b/client/test/ControllerSelectionTest.java
+index 5f29185..b67856d 100644
+--- a/client/test/ControllerSelectionTest.java
++++ b/client/test/ControllerSelectionTest.java
+@@ -52,6 +52,19 @@ public class ControllerSelectionTest
+         assertEquals(0,ControllerWorld.actions(target).length);assertFalse(ControllerWorld.interact(target));
+         ControllerTarget fresh=ControllerWorld.findTarget(0,1,null);assertFalse(fresh.sameEntity(target));
+     }
++    @Test public void attackAndSelectedNpcTargetsAcrossObstaclesDeferApproachToServer()
++    {
++        Npc npc=((Class348_Sub22)Class282.aClass356_3654.method3480(7,-6008)).aNpc_6859;
++        npc.y=72*512+256;npc.anIntArray10317[0]=72;
++        for(int x=0;x<128;x++) Class348_Sub45.aClass361Array7108[0].anIntArrayArray4438[x][65]=-1;
++        npc.definition.op=new String[]{"Talk-to",Class274.aClass274_3506.method2063(Class348_Sub33.anInt6967,544)};
++        r.aBoolean9722=true;ControllerTarget spellTarget=ControllerWorld.findTarget(0,1,null);
++        assertNotNull(spellTarget);assertTrue(spellTarget.serverApproach);assertEquals(30,spellTarget.action);
++        r.aBoolean9722=false;npc.definition.op=new String[]{"Talk-to"};assertNull(ControllerWorld.findTarget(0,1,null));
++        npc.definition.op=new String[]{Class274.aClass274_3506.method2063(Class348_Sub33.anInt6967,544)};
++        ControllerTarget attack=ControllerWorld.findTarget(0,1,null);assertNotNull(attack);assertTrue(attack.serverApproach);
++        npc.y=76*512+256;npc.anIntArray10317[0]=76;assertNull(ControllerWorld.findTarget(0,1,null));
++    }
+     @Test public void itemTargetActionsBindTheSelectedSourceRevisionAndTargetPermission()
+     {
+         r.aBoolean9722=true;Class38.anInt500=32;spell.aClass348_Sub44_748=new Class348_Sub44(32<<11,-1);
+diff --git a/client/test/ControllerUiTest.java b/client/test/ControllerUiTest.java
+index 46edf7d..7306357 100644
+--- a/client/test/ControllerUiTest.java
++++ b/client/test/ControllerUiTest.java
+@@ -101,7 +101,7 @@ public class ControllerUiTest
+     {
+         if (Class348_Sub40_Sub33.aClass46ArrayArray9427[group] == null)
+         {
+-            Class348_Sub40_Sub33.aClass46ArrayArray9427[group] = new Class46[120];
++            Class348_Sub40_Sub33.aClass46ArrayArray9427[group] = new Class46[300];
+             Class348_Sub41 attached = new Class348_Sub41(); attached.anInt7050 = group;
+             Class125.aClass356_4915.method3483((byte) 120, outer.anInt830, attached);
+         }
+@@ -174,6 +174,61 @@ public class ControllerUiTest
+         assertEquals(192,tab.id);assertEquals(13,tab.panes[0].widgets[0].actions[0].type);
+     }
+ 
++    @Test public void productionAmountRowPreservesRecipesAndOmitsZeroAmountControls()
++    {
++        Class46 recipe=panelSlot(905,14,-1,-1);recipe.aString792="Cook fish";recipe.aClass348_Sub44_748=new Class348_Sub44(1,-1);
++        for(int comp=5;comp<=8;comp++) panelSlot(916,comp,-1,-1,"Select");
++        panelSlot(916,20,-1,-1,"Decrement");
++        UiState state=ControllerUi.snapshot(false);assertEquals(905,state.dialogueId);assertEquals(1,state.dialogue.length);assertEquals(4,state.amounts.length);
++        assertEquals("Cook fish",state.dialogue[0].name);assertEquals("Make 1",state.amounts[0].name);assertEquals("Make All",state.amounts[3].name);
++        Class348_Sub40_Sub33.aClass46ArrayArray9427[916][8].aClass348_Sub44_748=new Class348_Sub44(0,-1);
++        assertEquals(3,ControllerUi.snapshot(false).amounts.length);
++    }
++    @Test public void smithingRowsUsePinnedSiblingIdsAndRejectHiddenQuantityButtons()
++    {
++        Class46 model=panelSlot(300,18,-1,100);model.aString752="Bronze dagger";
++        panelSlot(300,24,-1,-1,"Smith");panelSlot(300,23,-1,-1,"Smith");panelSlot(300,22,-1,-1,"Smith");panelSlot(300,21,-1,-1,"Smith");
++        UiState.Panel panel=ControllerUi.snapshot(false).panel;assertEquals(300,panel.id);assertTrue(panel.modal);assertEquals(1,panel.panes[0].widgets.length);
++        UiState.Widget row=panel.panes[0].widgets[0];assertEquals(4,row.actions.length);assertEquals("Make 1",row.actions[0].label);assertEquals(300<<16|24,row.actions[0].targetId);
++        Class348_Sub40_Sub33.aClass46ArrayArray9427[300][24].aBoolean813=true;
++        assertFalse(ControllerUi.invoke(row,row.actions[0]));assertEquals(3,ControllerUi.snapshot(false).panel.panes[0].widgets[0].actions.length);
++        model.aBoolean813=true;assertEquals(0,ControllerUi.snapshot(false).panel.panes[0].widgets.length);
++    }
++    @Test public void smithingQuantityDispatchUsesActualSiblingNativePacket()
++    {
++        Class262 queue=Class348_Sub40_Sub13.aClass262_9201;Isaac cipher=Class348_Sub23_Sub2.aClass77_9029;int bytes=Class348_Sub42_Sub14.anInt9630;
++        try
++        {
++            panelSlot(300,18,-1,100).aString752="Bronze dagger";panelSlot(300,24,-1,-1,"Smith");
++            Class348_Sub40_Sub13.aClass262_9201=new Class262();Class348_Sub23_Sub2.aClass77_9029=new Isaac(new int[4]);Isaac decoder=new Isaac(new int[4]);
++            UiState.Widget row=ControllerUi.snapshot(false).panel.panes[0].widgets[0];assertTrue(ControllerUi.invoke(row,row.actions[0]));
++            Class348_Sub47 packet=(Class348_Sub47)Class348_Sub40_Sub13.aClass262_9201.aClass348_3334.next;
++            assertEquals(Class27.aClass351_398.method3456(200),(packet.aClass348_Sub49_Sub2_7116.data[0]-decoder.method781((byte)-85))&255);
++            byte[] data=packet.aClass348_Sub49_Sub2_7116.data;
++            // Ordinary interface op payload starts with packed widget, big-endian.
++            assertEquals(300<<16|24,((data[1]&255)<<24)|((data[2]&255)<<16)|((data[3]&255)<<8)|(data[4]&255));
++        }
++        finally {Class348_Sub40_Sub13.aClass262_9201=queue;Class348_Sub23_Sub2.aClass77_9029=cipher;Class348_Sub42_Sub14.anInt9630=bytes;}
++    }
++    @Test public void jewelleryQuantityButtonsUseThePairedNativeItemName()
++    {
++        Class46 model=panelSlot(675,19,-1,100);model.aString752="Gold ring";
++        panelSlot(675,20,-1,-1,"Make All","Make 1","Make X");
++        UiState.Widget option=ControllerUi.snapshot(false).panel.panes[0].widgets[0];assertEquals("Gold ring",option.name);
++        model.aString752="Sapphire ring";assertFalse(ControllerUi.invoke(option,option.actions[1]));
++        model.aBoolean813=true;assertEquals(0,ControllerUi.snapshot(false).panel.panes[0].widgets.length);
++    }
++    @Test public void supportedHomeTabsExposeFreshNativeOpsAndProductionBlocksWheels()
++    {
++        int[] groups={884,320,190,261};
++        for(int group:groups)
++        {
++            ControllerUi.beginFrame();Class46 w=panelSlot(group,11,-1,-1,"Select");w.aString752="Option";
++            UiState.Panel panel=ControllerUi.snapshot(false).panel;assertEquals(group,panel.id);assertFalse(panel.modal);assertEquals(1,panel.panes[0].widgets.length);
++        }
++        ControllerUi.beginFrame();panelSlot(324,1,-1,100,"Tan All","Tan 1","Tan X");assertTrue(ControllerUi.hasModalPanel());assertEquals(0,ControllerUi.availableTabs());
++    }
++
+     private Class46 tab(int group, int component)
+     {
+         Class46 widget = new Class46(); widget.anInt830 = group << 16 | component;
+diff --git a/client/test/net/runelite/client/input/controller/PanelControlsTest.java b/client/test/net/runelite/client/input/controller/PanelControlsTest.java
+index 070672c..f7d1582 100644
+--- a/client/test/net/runelite/client/input/controller/PanelControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/PanelControlsTest.java
+@@ -33,6 +33,12 @@ public class PanelControlsTest
+         input.updateButtons(0); ui.update(panel,input,now);
+         input.updateButtons(mask); ui.update(panel,input,now+1);
+     }
++    @Test public void productionPrimaryPrefersOneOverAllAndX()
++    {
++        UiState.Widget w=new UiState.Widget(324<<16|1,-1,100,1,"Cowhide",new Rectangle(),new UiState.Action[]{new UiState.Action("Tan All",18,1),new UiState.Action("Tan X",18,2),new UiState.Action("Tan 1",18,3)});
++        assertEquals("Tan 1",PanelControls.primary(w).label);
++    }
++
+     @Test public void openingConsumesHeldWorldAAndShopDefaultsBuyOrSellInsteadOfInfo()
+     {
+         Fake game=new Fake(); PanelControls ui=new PanelControls(game); GamepadState input=new GamepadState();
+diff --git a/client/test/net/runelite/client/input/controller/QuickRadialControlsTest.java b/client/test/net/runelite/client/input/controller/QuickRadialControlsTest.java
+new file mode 100644
+index 0000000..ea29924
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/QuickRadialControlsTest.java
+@@ -0,0 +1,121 @@
++package net.runelite.client.input.controller;
++
++import java.awt.Rectangle;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class QuickRadialControlsTest
++{
++    private static UiState.Widget widget(int id,int item,String name,String action,int type)
++    { return new UiState.Widget(id,0,item,1,name,new Rectangle(1,1,32,32),new UiState.Action[]{new UiState.Action(action,type,1)}); }
++    private static final class Fake implements QuickRadialControls.Gateway
++    {
++        boolean allowed=true,sends=true,opens=true;int actions,opened=-1;UiState.Widget acted;
++        UiState state=UiState.EMPTY;
++        QuickBinding[] bindings={QuickBinding.capture(widget(149<<16,379,"Lobster","Eat",18),new UiState.Action("Eat",18,1)),QuickBinding.capture(widget(149<<16,100,"Prayer potion(4)","Drink",18),new UiState.Action("Drink",18,1)),null,null,null,null,null,null};
++        public boolean allowed(){return allowed;}
++        public UiState snapshot(){return state;}
++        public boolean openTab(int index){opened=index;return opens;}
++        public boolean invoke(UiState.Widget w,UiState.Action a){actions++;acted=w;return sends;}
++        public QuickBinding binding(int slot){return bindings[slot];}
++        public void bind(int slot,QuickBinding b){bindings[slot]=b;}
++        public void restore(int slot){bindings[slot]=null;}
++    }
++    private QuickRadialControls open(Fake f,GamepadState input,UiState.Widget focus)
++    {
++        QuickRadialControls q=new QuickRadialControls(f);input.updateButtons(0);q.update(input,1,null,null);
++        input.updateButtons(64);q.update(input,2,focus,focus==null?null:focus.actions[0]);
++        input.updateButtons(0);q.update(input,3,null,null);return q;
++    }
++    private void press(QuickRadialControls q,GamepadState i,int mask,long now)
++    { i.updateButtons(0);q.update(i,now,null,null);i.updateButtons(mask);q.update(i,now+1,null,null); }
++    @Test public void confirmationOpensTabAndWaitsForNativeWidgetThenSendsOnlyOnce()
++    {
++        Fake f=new Fake();GamepadState i=new GamepadState();QuickRadialControls q=open(f,i,null);
++        press(q,i,1,10);assertEquals(0,f.opened);assertEquals(0,f.actions);
++        f.state=new UiState(new UiState.Widget[]{widget(149<<16,379,"Lobster","Eat",18)},new UiState.Widget[0],-1);
++        i.updateButtons(1);q.update(i,12,null,null);assertEquals(1,f.actions);assertFalse(q.active());
++        q.update(i,13,null,null);assertEquals(1,f.actions);
++    }
++    @Test public void missingItemTimesOutWithFeedbackAndNeverDispatches()
++    {
++        Fake f=new Fake();GamepadState i=new GamepadState();QuickRadialControls q=open(f,i,null);
++        press(q,i,1,10);i.updateButtons(0);q.update(i,1_000_000_012L,null,null);
++        assertTrue(q.active());assertTrue(q.message().startsWith("Unavailable"));assertEquals(0,f.actions);
++    }
++    @Test public void expiredHandoffCannotFireAnActionEvenIfItemAppearsLate()
++    {
++        Fake f=new Fake();GamepadState i=new GamepadState();QuickRadialControls q=open(f,i,null);press(q,i,1,10);
++        f.state=new UiState(new UiState.Widget[]{widget(149<<16,379,"Lobster","Eat",18)},new UiState.Widget[0],-1);
++        i.updateButtons(0);q.update(i,2_000_000_000L,null,null);assertEquals(0,f.actions);assertTrue(q.message().startsWith("Unavailable"));
++    }
++    @Test public void cancelDuringTabHandoffPreventsDelayedAction()
++    {
++        Fake f=new Fake();GamepadState i=new GamepadState();QuickRadialControls q=open(f,i,null);
++        press(q,i,1,10);press(q,i,2,20);
++        f.state=new UiState(new UiState.Widget[]{widget(149<<16,379,"Lobster","Eat",18)},new UiState.Widget[0],-1);
++        i.updateButtons(0);q.update(i,30,null,null);assertFalse(q.active());assertEquals(0,f.actions);
++    }
++    @Test public void modalOrPermissionLossCancelsPendingAndBindingIsCapturedOnOpen()
++    {
++        Fake f=new Fake();GamepadState i=new GamepadState();UiState.Widget food=widget(149<<16,379,"Lobster","Eat",18);
++        QuickRadialControls q=open(f,i,food);press(q,i,4,10);assertEquals("Lobster",f.bindings[0].name);
++        press(q,i,1,20);f.allowed=false;i.updateButtons(0);q.update(i,30,null,null);assertFalse(q.active());assertEquals(0,f.actions);
++    }
++    @Test public void rejectedNativeActionDoesNotRetryOrFallBackToAnotherItem()
++    {
++        Fake f=new Fake();f.sends=false;GamepadState i=new GamepadState();QuickRadialControls q=open(f,i,null);
++        f.state=new UiState(new UiState.Widget[]{widget(149<<16,379,"Lobster","Eat",18),widget(149<<16,385,"Shark","Eat",18)},new UiState.Widget[0],-1);
++        press(q,i,1,10);i.updateButtons(0);q.update(i,12,null,null);q.update(i,13,null,null);
++        assertEquals(1,f.actions);assertTrue(q.active());assertEquals("Action changed or unavailable",q.message());
++    }
++    @Test public void openingWithHeldConfirmationAndTiltRequiresReleaseAndNeutral()
++    {
++        Fake f=new Fake();GamepadState i=new GamepadState();QuickRadialControls q=new QuickRadialControls(f);q.update(i,1,null,null);
++        i.leftX=1;i.updateButtons(65);q.update(i,2,null,null);i.updateButtons(65);q.update(i,3,null,null);assertEquals(0,f.actions);assertEquals(-1,f.opened);assertEquals(0,q.selected());
++        i.updateButtons(0);q.update(i,4,null,null);assertEquals(0,q.selected());i.leftX=0;q.update(i,5,null,null);i.leftX=1;q.update(i,6,null,null);assertEquals(2,q.selected());
++    }
++    @Test public void prayerToggleAndSpellSelectionUseOnlyCurrentNativeAction()
++    {
++        UiState.Widget prayer=widget(271<<16|8,-1,"Protect from Melee","Activate",18);
++        QuickBinding b=QuickBinding.capture(prayer,prayer.actions[0]);assertNotNull(b);
++        UiState.Widget changed=widget(prayer.id,-1,prayer.name,"Deactivate",18);assertEquals("Deactivate",b.match(changed).label);
++        Fake f=new Fake();UiState.Widget spell=widget(192<<16|25,-1,"Wind strike","Cast",13);f.bindings[0]=QuickBinding.capture(spell,spell.actions[0]);
++        GamepadState i=new GamepadState();QuickRadialControls q=open(f,i,null);press(q,i,1,10);assertEquals(HomeTab.SPELLBOOK.ordinal(),f.opened);
++        f.state=new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,new UiState.Panel(192,1,"Spells",new UiState.Pane[]{new UiState.Pane("Spells",new UiState.Widget[]{spell})},false));
++        i.updateButtons(0);q.update(i,12,null,null);assertEquals(1,f.actions);assertTrue(q.selectedSpell());assertFalse(q.active());
++    }
++    @Test public void bindingsRejectDropBankSelectedActionsAndDifferentPrayerIdentity()
++    {
++        UiState.Widget drop=widget(149<<16,379,"Lobster","Drop",1011);assertNull(QuickBinding.capture(drop,drop.actions[0]));
++        UiState.Widget bank=widget(762<<16|93,379,"Lobster","Withdraw-1",18);assertNull(QuickBinding.capture(bank,bank.actions[0]));
++        UiState.Widget selected=widget(149<<16,379,"Lobster","Cast",6);assertNull(QuickBinding.capture(selected,selected.actions[0]));
++        UiState.Widget prayer=widget(271<<16|8,-1,"Protect from Melee","Activate",18);QuickBinding b=QuickBinding.capture(prayer,prayer.actions[0]);
++        assertNull(b.match(widget(271<<16|9,-1,prayer.name,"Activate",18)));
++    }
++    @Test public void savedBindingsRoundTripAndPotionDoseChangesRetainFamilyOnly()
++    {
++        UiState.Widget dose=widget(149<<16,100,"Prayer potion(4)","Drink",18);QuickBinding original=QuickBinding.capture(dose,dose.actions[0]);
++        QuickBinding saved=QuickBinding.decode(original.encode());assertNotNull(saved);assertEquals(original.name,saved.name);
++        assertNotNull(saved.match(widget(149<<16,101,"Prayer potion(3)","Drink",18)));
++        assertNull(saved.match(widget(149<<16,102,"Attack potion(3)","Drink",18)));
++        assertNull(QuickBinding.decode("bogus"));assertNull(QuickBinding.decode("2:0:149:-1:18:1:RnNo:RHJvcA"));
++        UiState.Widget sameLabelWrongType=widget(192<<16|25,-1,"Wind strike","Cast",18);
++        UiState.Widget spell=widget(192<<16|25,-1,"Wind strike","Cast",13);
++        assertNull(QuickBinding.capture(spell,spell.actions[0]).match(sameLabelWrongType));
++    }
++    @Test public void potionResolutionPrefersLowestDoseAndEmptySlotCannotConsume()
++    {
++        Fake f=new Fake();GamepadState i=new GamepadState();QuickRadialControls q=open(f,i,null);
++        press(q,i,1<<10,10);assertEquals(1,q.selected());press(q,i,1,20);
++        f.state=new UiState(new UiState.Widget[]{widget(149<<16,100,"Prayer potion(4)","Drink",18),widget(149<<16,101,"Prayer potion(1)","Drink",18)},new UiState.Widget[0],-1);
++        i.updateButtons(0);q.update(i,22,null,null);assertEquals(101,f.acted.itemId);
++        q.reset();f.bindings[0]=null;q=open(f,i,null);press(q,i,1,30);i.updateButtons(0);q.update(i,32,null,null);assertEquals(1,f.actions);assertTrue(q.message().startsWith("Empty:"));
++    }
++    @Test public void slotResetRestoresDefaultAndRebindingTriggerRequiresRelease()
++    {
++        Fake f=new Fake();GamepadState i=new GamepadState();QuickRadialControls q=open(f,i,null);
++        f.bindings[0]=null;press(q,i,8,10);assertEquals("Assign food",q.label(0));
++        q.trigger(128);i.updateButtons(128);assertFalse(q.update(i,20,null,null));i.updateButtons(0);q.update(i,21,null,null);i.updateButtons(128);assertTrue(q.update(i,22,null,null));
++    }
++}
+diff --git a/client/test/net/runelite/client/input/controller/UiControlsTest.java b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+index aea76a4..2708f60 100644
+--- a/client/test/net/runelite/client/input/controller/UiControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+@@ -79,6 +79,28 @@ public class UiControlsTest
+         input.updateButtons(0);assertFalse(ui.update(input,20));
+     }
+ 
++    @Test public void productionPresetsDoNotConsumeRecipeConfirmationOrRepeatHeldBumpers()
++    {
++        Fake f=new Fake();GamepadState i=new GamepadState();UiControls ui=new UiControls(f);
++        UiState.Widget recipe=new UiState.Widget(905<<16|14,-1,-1,0,"Cook fish",new Rectangle(),new UiState.Action[]{new UiState.Action("Continue",16,0)});
++        UiState.Widget five=new UiState.Widget(916<<16|6,-1,-1,0,"Make 5",new Rectangle(),new UiState.Action[]{new UiState.Action("Select",18,1)});
++        f.state=new UiState(new UiState.Widget[0],new UiState.Widget[]{recipe},905,false,null,null,new UiState.Widget[]{five},5);
++        ui.update(i,1);assertTrue(ui.prompt().startsWith("Make 5"));press(ui,i,1<<10,10);assertEquals(five.id,f.acted.id);assertEquals(1,f.actions);
++        i.updateButtons(1<<10);ui.update(i,20);ui.update(i,100_000_000L);assertEquals(1,f.actions);
++        press(ui,i,1,200_000_000L);assertEquals(recipe.id,f.acted.id);assertEquals(2,f.actions);
++    }
++    @Test public void configurableInventoryButtonAndAdditionalTabsRetainOpeningGuard()
++    {
++        Fake f=new Fake();GamepadState i=new GamepadState();UiControls ui=new UiControls(f);ui.inventoryButton(128);
++        press(ui,i,8,1);assertFalse(ui.active());press(ui,i,128,10);assertTrue(ui.active());
++        for(int[] map:new int[][]{{HomeTab.COMBAT.ordinal(),884},{HomeTab.SKILLS.ordinal(),320},{HomeTab.QUESTS.ordinal(),190},{HomeTab.SETTINGS.ordinal(),261}})
++        {
++            f.state=new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,new UiState.Panel(map[1],1,"Tab",new UiState.Pane[]{new UiState.Pane("Options",new UiState.Widget[]{widget(0,100,"Choice")})},false));
++            int before=f.actions;i.updateButtons(1);ui.focusTab(map[0],20);ui.update(i,21);assertNotNull(ui.focus());assertEquals(before,f.actions);
++            press(ui,i,1,30);assertEquals(before+1,f.actions);
++        }
++    }
++
+     @Test public void gridStopsAtRowAndColumnEdgesAndIncludesEmptySlots()
+     {
+         assertEquals(0, UiControls.moveSlot(0, 11)); assertEquals(3, UiControls.moveSlot(3, 14));

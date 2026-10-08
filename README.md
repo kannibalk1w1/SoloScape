@@ -24,10 +24,12 @@ please discuss larger changes before starting. See [contributing](CONTRIBUTING.m
 - A **16-slot home-tab radial proof of concept**: View/Select opens; left stick
   highlights; A opens the tab; B cancels. D-pad/LB/RB can cycle. Settings, spellbook,
   inventory, equipment and the other main slots share one wheel. Unavailable tabs
-  are dimmed. Inventory, Equipment, Prayer and Spellbook now hand off to controller focus; remaining tabs keep their native mouse controls.
+  are dimmed. Inventory, Equipment, Prayer and Spellbook now hand off to controller focus; Combat, Skills, Quests and supported Settings now also hand off; remaining tabs keep native mouse controls.
 - Bank, deposit-box and shop panes, native quantities/actions, scrolling and tabs.
 - A controller keyboard for quantities, names, text and native bank search.
 - Equipment/prayer/spell focus and native item/spell targeting with explicit cancel.
+- A separate eight-slot quick-action wheel for explicitly assigned food, potions, prayers and spells.
+- Production amount presets, smithing/tanning/jewellery navigation, scaled controller overlays, Xbox/PlayStation labels and configurable menu buttons.
 - Reproducible client/server patches and a supervised local development launcher.
 
 ![Actual radial renderer on a plain background](docs/images/tab-radial-preview.png)
@@ -43,7 +45,7 @@ and SDL2 2.0.22+ for controller support. The scripts install project-local JDKs;
 first builds need network access to resolve Gradle dependencies.
 
 ```bash
-git clone https://github.com/kannibalk1w1/SoloScape.git
+git clone --branch overnight/controller-sprint https://github.com/kannibalk1w1/SoloScape.git
 cd SoloScape
 ```
 
@@ -58,6 +60,7 @@ cd SoloScape
    is on by default within that plugin; **Direct movement** is optional; enable **SoloScape server features** only for
    the patched server to use direct movement and position-free cancellation.
    **Native interface navigation** defaults on and can be disabled independently.
+   **Quick-action wheel** defaults on: Start/Menu opens; all slots begin empty and X assigns the currently focused supported action. Overlay size, button labels and three menu bindings are in the same plugin settings.
 5. Read the [controls and acceptance checklist](docs/CONTROLLER_TESTING.md).
 
 After a successful build, `./scripts/dev-run.sh --no-build` uses existing jars.
@@ -78,11 +81,11 @@ restrict access to port 43594 when using it for local play.
 
 The overnight sprint is on [`overnight/controller-sprint`](https://github.com/kannibalk1w1/SoloScape/tree/overnight/controller-sprint); see the [morning report](docs/MORNING_REPORT.md). Public `main` retains the earlier baseline until review.
 
-Next: play the new bank/shop/equipment/prayer/spell controls, verify a real save restart, then fill remaining interface gaps and improve UI readability. Larger ambitions—solo adaptations, original graphics, persistent AI
+Next: play the bank/shop/quick-action/production build, verify a real save restart, then fix acceptance findings and work on save/Deck lifecycle. Larger ambitions—solo adaptations, original graphics, persistent AI
 adventurers, a local economy, selected backports and private co-op—remain proposals,
 not implemented features or promised releases.
 
-Latest automated client run: **100 cases**, zero failures/errors,
+Latest automated client run: **121 cases**, zero failures/errors,
 one SDL virtual-device case deliberately skipped. The server's latest relevant
 run passed **247 network + 61 selected engine cases**. Fourteen root tooling tests
 pass. These checks do not establish complete gameplay or Steam Deck support.

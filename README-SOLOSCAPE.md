@@ -5,7 +5,7 @@ experimental controller support. JDK 21, JDK 8 and the upstream cache are instal
 Both upstream builds pass, doctor passes, and the server reaches world readiness.
 The controller prototype supports camera, precise walking, LT aiming, LB/RB target
 cycling, scene highlights, inventory and dialogue controls, plus an optional direct
-movement mode, world action menus, loot pickup, bank/shop panes, a controller keyboard, equipment/prayer/spell focus and a View/Select main-tab radial; see
+movement mode, world action menus, loot pickup, bank/shop panes, a controller keyboard, equipment/prayer/spell focus, a View/Select main-tab radial, Start/Menu quick actions, production controls, additional tab focus and scalable overlays; see
 [controller testing instructions](docs/CONTROLLER_TESTING.md) to enable it.
 
 The [proposed roadmap](docs/ROADMAP.md) is the working task list.
