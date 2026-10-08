@@ -13,7 +13,7 @@ launcher lock and process sessions, not broad process-name kills. Preserve saves
 in the upstream default location. Never automatically SIGKILL during shutdown.
 
 Bootstrap initially left the server unchanged. The opt-in direct movement build
-adds an authenticated directional instruction and server movement mode; persistence
+adds authenticated directional/cancel instructions and a server movement mode; persistence
 and ordinary walking remain unchanged. Wildcard upstream
 binding remains a documented limitation. A later narrow bind-host option should
 default to loopback and allow explicit LAN hosting. Preserve authoritative

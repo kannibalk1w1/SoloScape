@@ -2,7 +2,7 @@
 
 The experimental **disabled-by-default** RuneLite plugin now supports right-stick
 camera, left-stick walking, A-button world interaction, inventory navigation and
-dialogue controls and an optional direct movement toggle. Direct mode uses a
+dialogue controls, world action menus/loot and an optional direct movement toggle. Direct mode uses a
 small matching server protocol extension; destination mode remains the default. The user confirmed camera
 panning and the movement tile overlay work. This usability build adds precise walking, LT aiming, stable focus, LB/RB target
 cycling and gold scene highlights. Gameplay feel remains the next check.
@@ -104,7 +104,7 @@ Built-in Deck control access and mappings still need physical hardware validatio
   Action IDs come from the actual 634 builders, not RuneLite's generic enum.
   Destination mode uses the ordinary dispatcher; opt-in direct movement uses
   the explicit SoloScape directional protocol documented below.
-- Forty-seven client tests pass without skips: math/state, actual camera bridge,
+- Fifty-eight client tests pass without skips: math/state, actual camera bridge,
   projection/collision/focus scoring, lifecycle/action-edge tests, three native
   pathfinder/gate tests, eleven UI navigation/native-widget tests and real SDL
   virtual-controller polling. SDL checks both
@@ -129,8 +129,10 @@ SoloScape owns `patches/client/0001-controller-camera.patch` and
 `patches/client/0003-controller-movement-tiles.patch` and
 `patches/client/0004-controller-inventory-dialogue.patch` and
 `patches/client/0005-controller-world-usability.patch` and
-`patches/client/0006-controller-direct-movement.patch`. The matching server change
-is `patches/server/0001-controller-direct-movement.patch`. Source builds apply both stacks
+`patches/client/0006-controller-direct-movement.patch` and
+`patches/client/0007-controller-world-actions-loot.patch`. Matching server changes
+are `patches/server/0001-controller-direct-movement.patch` and
+`patches/server/0002-controller-world-cancel.patch`. Source builds apply both stacks
 automatically before compiling. To apply separately:
 
 ```bash
@@ -248,3 +250,44 @@ cd upstream/game-server
 bash gradlew --no-daemon :network:test :engine:test \
   --tests '*Movement*' --tests '*DecoderTest' :game:shadowJar
 ```
+
+## World action menus, loot and cancel (2026-10-08)
+
+Both jars are rebuilt. Quit the existing game/launcher cleanly and restart with
+`./scripts/dev-run.sh --no-build` to load the new client and server.
+
+- Aim at an NPC/object and press **X**. The list uses its current native options.
+  **D-pad** selects, **A** confirms once and **B** backs out. Movement input is
+  suppressed while the list is open. Existing destination paths may finish;
+  direct movement stops issuing intent. Inventory/dialogue still take priority.
+- Aim at dropped loot: the gold footprint and A prompt use its default **Take**
+  action. **LB/RB** cycles nearby targets, including every visible pile entry
+  beyond the three rendered models. Ties are sorted consistently. Stack quantity
+  is shown in the target name; stale/despawned items invalidate menus/actions.
+- Outside an action list, **B** sends position-free server cancellation. It stops
+  a normal approach, movement or interaction without walking toward an old tile.
+  In a list the first B only backs out; press again to cancel the world action.
+  Normal forced/busy actions retain the same delay gate as ordinary walking.
+- Test X on a multi-option NPC, a tree/door, moving NPCs, disappearing loot and
+  several items on one tile. Confirm button holds never repeat actions, mouse
+  actions still work, and direct/destination modes resume only on fresh walking
+  intent after cancellation. Test Y/dialogue takeover while a world list is open.
+
+Native action IDs come from the actual builders: NPC 25/20/44/46/60, object
+3/4/9/59/1007 and ground item 21/10/47/22/5. Ground items come from the client's
+visible pile table, so targets reflect items the client knows about. X includes
+secondary native actions; A re-enumerates and revalidates before dispatch.
+Server opcode 86 has no payload, clears ordinary movement/interaction and weak
+queued actions, and does not advance a dialogue or run a pending walk trigger.
+
+All 58 client tests, 247 network tests and 59 selected engine tests pass without
+failures/errors/skips. Native tests cover all pile entries, deterministic cycling,
+NPC secondary options and movement, despawn rejection and cancellation packet order.
+Server cancel tests verify no positional movement and preserve forced/nonmovement
+states. UI closing is mocked in these server unit tests; gameplay acceptance is
+still required. Both jars rebuild and patch reproduction matches all 37/14 files.
+Three patch-helper tests and four launcher tests also pass.
+
+Add `--tests '*CancelWorldAction*'` to the server test command above to include
+its handler tests. See `PROJECT_HANDOFF.md` for a portable status summary and
+`ROADMAP.md` for the proposed task list.

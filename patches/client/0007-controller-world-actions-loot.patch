@@ -1,0 +1,633 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1081,6 +1081,9 @@
+     @Override
+     public boolean interactController(ControllerTarget target) { return ControllerWorld.interact(target); }
+ 
++    @Override public ControllerTarget[] getControllerWorldActions(ControllerTarget target) { return ControllerWorld.actions(target); }
++    @Override public void cancelControllerWorldAction() { ControllerDirectMovement.cancelAction(); }
++
+     @Override
+     public int getCameraScale() {
+         return Class132.anInt1906;
+diff --git a/client/src/ControllerDirectMovement.java b/client/src/ControllerDirectMovement.java
+--- a/client/src/ControllerDirectMovement.java
++++ b/client/src/ControllerDirectMovement.java
+@@ -4,6 +4,7 @@
+ final class ControllerDirectMovement
+ {
+     private static final Class351 PACKET = new Class351(85, 3);
++    private static final Class351 CANCEL = new Class351(86, 0);
+     private static int direction = -1;
+     private static boolean run, blocked;
+     private static long lastSent;
+@@ -33,6 +34,16 @@
+         direction = -1; lastSent = 0; run = false;
+     }
+ 
++    static void cancelAction()
++    {
++        stop();
++        if (!ControllerWorld.ready() || Class348_Sub23_Sub2.aClass77_9029 == null) return;
++        Class348_Sub47 packet = Class286_Sub3.method2148(CANCEL, Class348_Sub23_Sub2.aClass77_9029, -100);
++        Class348_Sub42_Sub14.method3243(123, packet);
++        ControllerWorld.clearWalkMarker();
++        ControllerWorld.reset();
++    }
++
+     static void menuAction()
+     {
+         if (direction >= 0) { stop(); blocked = true; }
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -11,6 +11,7 @@
+     private static long lastWalk = Long.MIN_VALUE;
+     private static net.runelite.api.coords.WorldPoint walkMarker;
+     private static final int[] NPC_ACTIONS = {25, 20, 44, 46, 60};
++    private static final int[] GROUND_ACTIONS = {21, 10, 47, 22, 5};
+     private static final int[] OBJECT_ACTIONS = {3, 4, 9, 59, 1007};
+ 
+     static boolean ready()
+@@ -89,7 +90,9 @@
+         Player p = Class132.aPlayer_1907;
+         double px = (p.x >> 9) + .5, py = (p.y >> 9) + .5;
+         candidates.removeIf(t -> !Double.isFinite(WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false)));
+-        candidates.sort(Comparator.comparingDouble(t -> WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false)));
++        candidates.sort(Comparator.<ControllerTarget>comparingDouble(t -> WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false))
++            .thenComparingInt(ControllerTarget::kind).thenComparingLong(t -> t.identifier)
++            .thenComparingInt(t -> t.x).thenComparingInt(t -> t.y));
+         // Preserve explicit focus while it remains valid, even if a closer target enters the cone.
+         ControllerTarget retained = null;
+         for (ControllerTarget candidate : candidates)
+@@ -105,7 +108,9 @@
+         if (reachable.isEmpty()) return null;
+         if (direction == 0 || retained == null) return reachable.get(direction < 0 ? reachable.size() - 1 : 0);
+         // Sort independently of current focus so repeated bumper presses traverse all candidates.
+-        reachable.sort(Comparator.comparingDouble(t -> WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false)));
++        reachable.sort(Comparator.<ControllerTarget>comparingDouble(t -> WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false))
++            .thenComparingInt(ControllerTarget::kind).thenComparingLong(t -> t.identifier)
++            .thenComparingInt(t -> t.x).thenComparingInt(t -> t.y));
+         int index = -1;
+         for (int i = 0; i < reachable.size(); i++) if (reachable.get(i).sameEntity(previous)) index = i;
+         return reachable.get(Math.floorMod(index + direction, reachable.size()));
+@@ -116,7 +121,7 @@
+         if (!ready() || target == null) return false;
+         Player p = Class132.aPlayer_1907;
+         // Re-enumerate immediately: despawns, transforms, plane/region changes and options invalidate focus.
+-        for (ControllerTarget current : candidates())
++        for (ControllerTarget current : candidates(true))
+         {
+             if (current.sameEntity(target) && current.option.equals(target.option) && java.util.Objects.equals(current.name, target.name) && nearby(p, current) && reachable(current))
+             {
+@@ -129,7 +134,19 @@
+         return false;
+     }
+ 
+-    private static List<ControllerTarget> candidates()
++    static ControllerTarget[] actions(ControllerTarget target)
++    {
++        if (!ready() || target == null) return new ControllerTarget[0];
++        List<ControllerTarget> result = new ArrayList<>();
++        for (ControllerTarget current : candidates(true))
++            if (current.sameSubject(target) && java.util.Objects.equals(current.name, target.name)
++                && nearby(Class132.aPlayer_1907, current)) result.add(current);
++        return result.toArray(new ControllerTarget[0]);
++    }
++
++    private static List<ControllerTarget> candidates() { return candidates(false); }
++
++    private static List<ControllerTarget> candidates(boolean allActions)
+     {
+         List<ControllerTarget> result = new ArrayList<>();
+         Player p = Class132.aPlayer_1907;
+@@ -152,26 +169,27 @@
+                         if (def != null && def.interactive)
+                         {
+                             int option = defaultOption(def.op, def.aByte107);
+-                            if (option >= 0) result.add(target(def.name, def.op[option], NPC_ACTIONS[option], npc.anInt10290, x, y, size, size));
++                            addOptions(result, def.name, def.op, NPC_ACTIONS, option, npc.anInt10290, x, y, size, size, allActions);
+                         }
+                     }
+                 }
+                 entry = (Class348_Sub22) Class282.aClass356_3654.method3482(0);
+             }
+         }
+-        if (ChatMessage.aClass357ArrayArrayArray2029 == null) return result;
+         for (int x = Math.max(0, px - 5); x <= Math.min(Class367_Sub4.anInt7319 - 1, px + 5); x++)
+             for (int y = Math.max(0, py - 5); y <= Math.min(Class348_Sub40_Sub3.anInt9109 - 1, py + 5); y++)
+             {
+-                addObject(result, r_Sub2.method3297(p.plane, x, y), x, y);
+-                addObject(result, Class348_Sub40_Sub32.method3135(p.plane, x, y), x, y);
+-                addObject(result, Class177.method1353(p.plane, x, y, Interface10.class), x, y);
+-                addObject(result, Class348_Sub16_Sub3.method2878(p.plane, x, y), x, y);
++                addGroundItems(result, x, y, allActions);
++                if (ChatMessage.aClass357ArrayArrayArray2029 == null) continue;
++                addObject(result, r_Sub2.method3297(p.plane, x, y), x, y, allActions);
++                addObject(result, Class348_Sub40_Sub32.method3135(p.plane, x, y), x, y, allActions);
++                addObject(result, Class177.method1353(p.plane, x, y, Interface10.class), x, y, allActions);
++                addObject(result, Class348_Sub16_Sub3.method2878(p.plane, x, y), x, y, allActions);
+             }
+         return result;
+     }
+ 
+-    private static void addObject(List<ControllerTarget> result, Object object, int x, int y)
++    private static void addObject(List<ControllerTarget> result, Object object, int x, int y, boolean allActions)
+     {
+         if (!(object instanceof Interface10)) return;
+         Interface10 obj = (Interface10) object;
+@@ -182,8 +200,40 @@
+         int rotation = obj.method41(-32228);
+         int width = (rotation & 1) == 0 ? def.anInt961 : def.anInt926;
+         int height = (rotation & 1) == 0 ? def.anInt926 : def.anInt961;
+-        if (option >= 0) result.add(target(def.aString884, def.aStringArray913[option], OBJECT_ACTIONS[option],
+-            Class348_Sub40_Sub21.method3107((byte) 95, obj, y, x), x, y, width, height));
++        addOptions(result, def.aString884, def.aStringArray913, OBJECT_ACTIONS, option,
++            Class348_Sub40_Sub21.method3107((byte) 95, obj, y, x), x, y, width, height, allActions);
++    }
++
++    private static void addGroundItems(List<ControllerTarget> result, int x, int y, boolean allActions)
++    {
++        if (Class130.aClass356_1895 == null || Exception_Sub1.aClass255_112 == null) return;
++        int key = Class132.aPlayer_1907.plane << 28 | (y + Class90.regionTileY) << 14 | (x + za_Sub2.regionTileX);
++        Class348_Sub37 pile = (Class348_Sub37) Class130.aClass356_1895.method3480(key, -6008);
++        if (pile == null) return;
++        java.util.Set<Integer> seen = new java.util.HashSet<>();
++        Node head = pile.aClass262_6998.aClass348_3334;
++        // The client's visible pile table includes every item, not just the three rendered models.
++        for (Node node = head.next; node != head; node = node.next)
++        {
++            Class348_Sub34 item = (Class348_Sub34) node;
++            if (!seen.add(item.anInt6973) || item.anInt6971 <= 0) continue;
++            ObjType def = Exception_Sub1.aClass255_112.getItemDefinitions(-115, item.anInt6973);
++            if (def == null || def.op == null) continue;
++            int option = def.op.length > 2 && def.op[2] != null && !def.op[2].isEmpty() ? 2 : defaultOption(def.op, -1);
++            String name = def.name + (item.anInt6971 > 1 ? " (" + item.anInt6971 + ")" : "");
++            addOptions(result, name, def.op, GROUND_ACTIONS, option, item.anInt6973, x, y, 1, 1, allActions);
++        }
++    }
++
++    private static void addOptions(List<ControllerTarget> result, String name, String[] options, int[] actions,
++                                   int preferred, long id, int x, int y, int width, int height, boolean all)
++    {
++        if (options == null) return;
++        if (preferred >= 0 && preferred < options.length && options[preferred] != null && !options[preferred].isEmpty())
++            result.add(target(name, options[preferred], actions[preferred], id, x, y, width, height));
++        if (all) for (int i = 0; i < Math.min(actions.length, options.length); i++)
++            if (i != preferred && options[i] != null && !options[i].isEmpty())
++                result.add(target(name, options[i], actions[i], id, x, y, width, height));
+     }
+ 
+     private static int defaultOption(String[] options, int attackPolicy)
+@@ -192,7 +242,7 @@
+         String attack = Class274.aClass274_3506.method2063(Class348_Sub33.anInt6967, 544);
+         for (int i = 0; i < Math.min(5, options.length); i++)
+             if (options[i] != null && !options[i].isEmpty() && (attackPolicy != 0 && attackPolicy != 1 || !options[i].equalsIgnoreCase(attack))) return i;
+-        if (attackPolicy != 0) for (int i = 0; i < Math.min(5, options.length); i++)
++        for (int i = 0; i < Math.min(5, options.length); i++)
+             if (options[i] != null && !options[i].isEmpty()) return i;
+         return -1;
+     }
+@@ -212,6 +262,7 @@
+ 
+     private static boolean reachable(ControllerTarget t)
+     {
++        if (t.kind() == 3) return reachable(t.x, t.y, 1, 1, -3, 0, 0) || reachable(t.x, t.y, 1, 1, -2, 0, 0);
+         for (int action : NPC_ACTIONS) if (t.action == action)
+         {
+             Class348_Sub22 entry = (Class348_Sub22) Class282.aClass356_3654.method3480(t.identifier, -6008);
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -362,6 +362,8 @@
+     public ControllerTarget findControllerTarget(double facingX, double facingY, ControllerTarget previous) { return null; }
+     public ControllerTarget cycleControllerTarget(double x, double y, ControllerTarget previous, int direction) { return findControllerTarget(x, y, previous); }
+     public boolean interactController(ControllerTarget target) { return false; }
++    public ControllerTarget[] getControllerWorldActions(ControllerTarget target) { return new ControllerTarget[0]; }
++    public void cancelControllerWorldAction() {}
+ 
+     public static final class ControllerTarget
+     {
+@@ -382,8 +384,23 @@
+         }
+         public boolean sameEntity(ControllerTarget other)
+         {
+-            return other != null && action == other.action && identifier == other.identifier
+-                && plane == other.plane && baseX == other.baseX && baseY == other.baseY;
++            return sameSubject(other) && action == other.action;
++        }
++        public int kind()
++        {
++            switch (action)
++            {
++                case 25: case 20: case 44: case 46: case 60: return 1; // NPC
++                case 3: case 4: case 9: case 59: case 1007: return 2; // Object
++                case 21: case 10: case 47: case 22: case 5: return 3; // Ground item
++                default: return 0;
++            }
++        }
++        public boolean sameSubject(ControllerTarget other)
++        {
++            return other != null && kind() == other.kind() && identifier == other.identifier
++                && plane == other.plane && baseX == other.baseX && baseY == other.baseY
++                && (kind() != 3 || x == other.x && y == other.y);
+         }
+         public boolean same(ControllerTarget other)
+         {
+diff --git a/client/src/net/runelite/client/input/controller/WorldControls.java b/client/src/net/runelite/client/input/controller/WorldControls.java
+--- a/client/src/net/runelite/client/input/controller/WorldControls.java
++++ b/client/src/net/runelite/client/input/controller/WorldControls.java
+@@ -16,19 +16,33 @@
+         ControllerTarget find(double x, double y, ControllerTarget previous);
+         default ControllerTarget cycle(double x, double y, ControllerTarget previous, int direction) { return find(x, y, previous); }
+         boolean interact(ControllerTarget target);
+-    }
++        default ControllerTarget[] actions(ControllerTarget target) { return new ControllerTarget[0]; }
++        default void cancel() {}
++    }
++    private static final int FACE = 1 | 2 | 4;
++    private static final int DIRECTIONS = (1 << 11) | (1 << 12) | (1 << 13) | (1 << 14);
++    private static final ControllerTarget[] EMPTY = new ControllerTarget[0];
+     private final Gateway gateway;
+     private volatile ControllerTarget target;
+     private boolean armed, haveAim, moving, walkingPaused, directMode;
+     private long lastFind, lastWalk;
+     private double facingX, facingY = 1, moveX, moveY;
+     private float pausedX, pausedY;
++    private volatile ControllerTarget[] menu = EMPTY;
++    private volatile int menuIndex;
++    private ControllerTarget menuSubject;
++    private boolean menuArmed;
++    private int heldDirection;
++    private long repeatAt, menuChecked;
+ 
+     public WorldControls(Gateway gateway) { this.gateway = gateway; }
+-    public ControllerTarget getTarget() { return target; }
++    public ControllerTarget getTarget() { ControllerTarget[] current = menu; return current.length > 0 ? current[Math.min(menuIndex, current.length - 1)] : target; }
++    public ControllerTarget[] getMenu() { return menu.clone(); }
++    public int getMenuIndex() { return menuIndex; }
+ 
+     public void reset()
+     {
++        closeMenu();
+         target = null; armed = haveAim = moving = walkingPaused = false;
+         lastFind = lastWalk = 0; facingX = 0; facingY = 1;
+         gateway.stopDirect();
+@@ -50,8 +64,31 @@
+         if (!armed)
+         {
+             // Neutral is needed for focus/reconnect recovery, not after every interaction.
+-            if (neutral && (state.buttonsHeld & 1) == 0) armed = true;
++            if (neutral && (state.buttonsHeld & FACE) == 0) armed = true;
+             else return;
++        }
++        if (menu.length > 0)
++        {
++            updateMenu(state, x, y, now);
++            return;
++        }
++        if ((state.buttonsPressed & 2) != 0)
++        {
++            gateway.stopDirect(); gateway.cancel(); target = null;
++            pauseWalking(x, y);
++            return;
++        }
++        if ((state.buttonsPressed & 4) != 0)
++        {
++            gateway.stopDirect(); gateway.resetWalk();
++            ControllerTarget[] options = target == null ? EMPTY : gateway.actions(target);
++            if (options.length > 0)
++            {
++                menuSubject = target; menu = options; menuIndex = 0; menuArmed = false;
++                heldDirection = 0; repeatAt = 0; menuChecked = now;
++            }
++            pauseWalking(x, y);
++            return;
+         }
+         double dx = WorldInput.worldX(x, y, gateway.yaw()), dy = WorldInput.worldY(x, y, gateway.yaw());
+         boolean aimChanged = false;
+@@ -70,7 +107,7 @@
+         boolean aiming = state.leftTrigger > 0.35f;
+         if (walkingPaused && (neutral || Math.hypot(x - pausedX, y - pausedY) > 0.35)) walkingPaused = false;
+         if (neutral || aiming) { moving = false; gateway.resetWalk(); }
+-        if (directMode && (neutral || aiming || walkingPaused || (state.buttonsHeld & 1) != 0))
++        if (directMode && (neutral || aiming || walkingPaused || (state.buttonsHeld & FACE) != 0))
+         {
+             gateway.stopDirect();
+             if (neutral) gateway.direct(0, 0, false); // Re-arm after a mouse menu action.
+@@ -87,7 +124,7 @@
+             // Act on the focus already displayed; never silently substitute a different target.
+             if (target != null && gateway.interact(target))
+             {
+-                walkingPaused = true; pausedX = x; pausedY = y; moving = false;
++                pauseWalking(x, y);
+             }
+             return;
+         }
+@@ -96,7 +133,7 @@
+             target = gateway.find(facingX, facingY, aimChanged ? null : target);
+             lastFind = now;
+         }
+-        if (!neutral && !aiming && !walkingPaused && (state.buttonsHeld & 1) == 0)
++        if (!neutral && !aiming && !walkingPaused && (state.buttonsHeld & FACE) == 0)
+         {
+             if (directMode)
+             {
+@@ -111,4 +148,55 @@
+             }
+         }
+     }
++    private void pauseWalking(float x, float y)
++    {
++        walkingPaused = true; pausedX = x; pausedY = y; moving = false;
++    }
++
++    private void closeMenu()
++    {
++        menu = EMPTY; menuSubject = null; menuIndex = 0; menuArmed = false;
++        heldDirection = 0; repeatAt = menuChecked = 0;
++    }
++
++    private void updateMenu(GamepadState state, float x, float y, long now)
++    {
++        gateway.stopDirect();
++        if ((state.buttonsPressed & 2) != 0)
++        {
++            closeMenu(); pauseWalking(x, y); return; // First B backs out; next B cancels the world action.
++        }
++        if (now - menuChecked >= 75_000_000L)
++        {
++            ControllerTarget[] fresh = gateway.actions(menuSubject);
++            boolean same = fresh.length == menu.length;
++            for (int i = 0; same && i < fresh.length; i++)
++                same = fresh[i].sameEntity(menu[i]) && fresh[i].option.equals(menu[i].option)
++                    && java.util.Objects.equals(fresh[i].name, menu[i].name);
++            if (!same) { closeMenu(); pauseWalking(x, y); armed = false; return; }
++            menu = fresh; menuChecked = now;
++        }
++        if (!menuArmed)
++        {
++            if ((state.buttonsHeld & (FACE | DIRECTIONS)) == 0) menuArmed = true;
++            else return;
++        }
++        int mask = state.buttonsHeld & DIRECTIONS;
++        if (Integer.bitCount(mask) == 1)
++        {
++            int direction = Integer.numberOfTrailingZeros(mask);
++            if (direction != heldDirection || now >= repeatAt)
++            {
++                repeatAt = now + (direction == heldDirection ? 100_000_000L : 350_000_000L);
++                menuIndex = Math.max(0, Math.min(menu.length - 1, menuIndex + (direction == 11 || direction == 13 ? -1 : 1)));
++            }
++            heldDirection = direction;
++        }
++        else { heldDirection = 0; repeatAt = 0; }
++        if ((state.buttonsPressed & 1) != 0)
++        {
++            gateway.interact(menu[menuIndex]); // Native adapter revalidates even between snapshot updates.
++            closeMenu(); pauseWalking(x, y);
++        }
++    }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+@@ -28,7 +28,27 @@
+         GameClient.ControllerTarget target = plugin.getTarget();
+         if (target == null) return null;
+         String label = "A: " + target.option + " " + target.name;
+-        String help = "LT: aim  |  LB / RB: change target";
++        GameClient.ControllerTarget[] menu = plugin.getWorld().getMenu();
++        if (menu.length > 0)
++        {
++            String help = "D-pad: choose  |  A: confirm  |  B: back";
++            int width = graphics.getFontMetrics().stringWidth(help) + 12;
++            for (GameClient.ControllerTarget action : menu)
++                width = Math.max(width, graphics.getFontMetrics().stringWidth(action.option + " " + action.name) + 24);
++            int height = 24 * (menu.length + 1);
++            graphics.setColor(new Color(0, 0, 0, 210));
++            graphics.fillRect(0, 0, width, height);
++            for (int i = 0; i < menu.length; i++)
++            {
++                boolean selected = i == plugin.getWorld().getMenuIndex();
++                graphics.setColor(selected ? new Color(255, 215, 75) : Color.WHITE);
++                graphics.drawString((selected ? "> " : "  ") + menu[i].option + " " + menu[i].name, 6, i * 24 + 17);
++            }
++            graphics.setColor(new Color(255, 215, 75));
++            graphics.drawString(help, 6, menu.length * 24 + 17);
++            return new Dimension(width, height);
++        }
++        String help = "LT: aim  |  LB / RB: target  |  X: actions  |  B: cancel";
+         int width = Math.max(graphics.getFontMetrics().stringWidth(label), graphics.getFontMetrics().stringWidth(help)) + 12;
+         graphics.setColor(new Color(0, 0, 0, 180));
+         graphics.fillRect(0, 0, width, 44);
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -56,6 +56,8 @@
+         public void walk(double x, double y) { client.walkController(x, y); }
+         public ControllerTarget find(double x, double y, ControllerTarget previous) { return client.findControllerTarget(x, y, previous); }
+         public ControllerTarget cycle(double x, double y, ControllerTarget previous, int direction) { return client.cycleControllerTarget(x, y, previous, direction); }
++        public ControllerTarget[] actions(ControllerTarget target) { return client.getControllerWorldActions(target); }
++        public void cancel() { client.cancelControllerWorldAction(); }
+         public boolean interact(ControllerTarget target) { return client.interactController(target); }
+     });
+ 	private final GamepadState state = new GamepadState();
+@@ -94,6 +96,8 @@
+ 	boolean isActive() { return active; }
+ 
+ 	ControllerTarget getTarget() { return active && !ui.active() ? world.getTarget() : null; }
++
++	WorldControls getWorld() { return world; }
+ 
+ 	UiControls getUi() { return ui; }
+ 
+diff --git a/client/test/ControllerDirectMovementTest.java b/client/test/ControllerDirectMovementTest.java
+--- a/client/test/ControllerDirectMovementTest.java
++++ b/client/test/ControllerDirectMovementTest.java
+@@ -79,4 +79,14 @@
+         Class240.anInt4674 = 10; Class305.aBoolean3870 = true;
+         ControllerDirectMovement.update(1, 0, true); assertEquals(sent, Class348_Sub42_Sub14.anInt9630);
+     }
++    @Test public void worldCancelQueuesExplicitStopBeforePositionFreeCancel()
++    {
++        ControllerDirectMovement.update(1, 0, false); packet(1, 0, false);
++        ControllerDirectMovement.cancelAction(); packet(0, 0, false);
++        Class348_Sub47 cancel = (Class348_Sub47) Class348_Sub40_Sub13.aClass262_9201.aClass348_3334.next;
++        byte[] bytes = cancel.aClass348_Sub49_Sub2_7116.data;
++        assertEquals(86, (bytes[0] - decode.method781((byte) -85)) & 255);
++        assertEquals(0, cancel.anInt7122); assertEquals(1, cancel.anInt7119);
++        cancel.method2715((byte) 91);
++    }
+ }
+diff --git a/client/test/net/runelite/client/input/controller/WorldControlsTest.java b/client/test/net/runelite/client/input/controller/WorldControlsTest.java
+--- a/client/test/net/runelite/client/input/controller/WorldControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/WorldControlsTest.java
+@@ -11,6 +11,9 @@
+         boolean ready = true, valid = true;
+         int walks, actions, finds, yaw, cycles, direction, directUpdates, stops;
+         boolean running;
++        int cancels;
++        ControllerTarget acted;
++        ControllerTarget[] options;
+         double aimX, aimY;
+         ControllerTarget previous;
+         double x, y;
+@@ -23,7 +26,9 @@
+         public void walk(double x, double y) { walks++; this.x = x; this.y = y; }
+         public ControllerTarget find(double x, double y, ControllerTarget previous) { finds++; aimX = x; aimY = y; this.previous = previous; return selected; }
+         public ControllerTarget cycle(double x, double y, ControllerTarget previous, int direction) { cycles++; this.direction = direction; return selected; }
+-        public boolean interact(ControllerTarget target) { if (!valid) return false; actions++; return true; }
++        public ControllerTarget[] actions(ControllerTarget target) { return options == null ? new ControllerTarget[] {selected} : options; }
++        public void cancel() { cancels++; }
++        public boolean interact(ControllerTarget target) { acted = target; if (!valid) return false; actions++; return true; }
+     }
+ 
+     @Test public void throttlesMovementAndReleasingStickStopsNewRequests()
+@@ -184,4 +189,58 @@
+         controls.reset(); controls.update(state, .18f, 80_000_001, true);
+         assertEquals(1, game.directUpdates);
+     }
++    @Test public void xMenuSelectsSecondaryActionAndSuppressesHeldMovement()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        ControllerTarget trade = new ControllerTarget("Tree", "Trade", 4, 100, 5, 6, 0, 1000, 1000);
++        game.options = new ControllerTarget[] {game.selected, trade};
++        controls.update(state, .18f, 1, true);
++        state.leftX = 1; state.updateButtons(4); controls.update(state, .18f, 20_000_001, true);
++        assertEquals(2, controls.getMenu().length); assertEquals(0, game.directUpdates);
++        state.updateButtons(0); controls.update(state, .18f, 30_000_001, true);
++        state.updateButtons(1 << 12); controls.update(state, .18f, 40_000_001, true);
++        assertEquals(1, controls.getMenuIndex()); assertSame(trade, controls.getTarget());
++        state.updateButtons(1); controls.update(state, .18f, 50_000_001, true);
++        assertSame(trade, game.acted); assertEquals(1, game.actions); assertEquals(0, controls.getMenu().length);
++        state.updateButtons(1); controls.update(state, .18f, 60_000_001, true);
++        assertEquals(1, game.actions); assertEquals(0, game.directUpdates);
++    }
++
++    @Test public void firstBLeavesMenuAndNextBCancelsWorldWithoutResumingHeldStick()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1);
++        state.leftX = 1; state.updateButtons(4); controls.update(state, .18f, 20_000_001);
++        state.updateButtons(2); controls.update(state, .18f, 30_000_001);
++        assertEquals(0, controls.getMenu().length); assertEquals(0, game.cancels);
++        state.updateButtons(0); controls.update(state, .18f, 40_000_001);
++        state.updateButtons(2); controls.update(state, .18f, 50_000_001);
++        assertEquals(1, game.cancels); assertNull(controls.getTarget());
++        state.updateButtons(2); controls.update(state, .18f, 60_000_001);
++        assertEquals(1, game.cancels); assertEquals(0, game.walks);
++    }
++
++    @Test public void staleMenuClosesInsteadOfSelectingAReplacedOption()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1);
++        state.updateButtons(4); controls.update(state, .18f, 20_000_001);
++        state.updateButtons(0); controls.update(state, .18f, 30_000_001);
++        game.options = new ControllerTarget[0];
++        state.updateButtons(1); controls.update(state, .18f, 100_000_001);
++        assertEquals(0, game.actions); assertEquals(0, controls.getMenu().length);
++    }
++
++    @Test public void openingMenuRequiresReleasedButtonsAndResetDropsIt()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1);
++        state.updateButtons(4 | 1); controls.update(state, .18f, 20_000_001);
++        assertEquals(0, game.actions); assertEquals(1, controls.getMenu().length);
++        state.updateButtons(1); controls.update(state, .18f, 30_000_001);
++        assertEquals(0, game.actions);
++        controls.reset(); assertEquals(0, controls.getMenu().length);
++        state.updateButtons(4); controls.update(state, .18f, 40_000_001);
++        assertEquals(0, controls.getMenu().length);
++    }
+ }
+diff --git a/client/test/ControllerWorldActionsTest.java b/client/test/ControllerWorldActionsTest.java
+new file mode 100644
+--- /dev/null
++++ b/client/test/ControllerWorldActionsTest.java
+@@ -0,0 +1,82 @@
++import com.GameClient.ControllerTarget;
++import java.lang.reflect.Field;
++import org.junit.Before;
++import org.junit.After;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++/** Real visible-item table and native NPC options; no cache downloads or sockets. */
++public class ControllerWorldActionsTest extends ControllerWorldTest
++{
++    private IterableHashTable oldItems, oldNpcs;
++    private ObjTypeList oldDefs;
++    private Class357[][][] oldScene;
++    private ReferenceCache cache;
++    private Class348_Sub37 pile;
++
++    @Before public void actionsSetup() throws Exception
++    {
++        oldItems = Class130.aClass356_1895; oldNpcs = Class282.aClass356_3654;
++        oldDefs = Exception_Sub1.aClass255_112; oldScene = ChatMessage.aClass357ArrayArrayArray2029;
++        Class130.aClass356_1895 = new IterableHashTable(64); Class282.aClass356_3654 = new IterableHashTable(64);
++        ChatMessage.aClass357ArrayArrayArray2029 = null;
++        Class132.aPlayer_1907.x = Class132.aPlayer_1907.y = 64 * 512 + 256;
++        Exception_Sub1.aClass255_112 = new ObjTypeList(null, 0, true, null, null, null);
++        Field field = ObjTypeList.class.getDeclaredField("aClass60_3278"); field.setAccessible(true);
++        cache = (ReferenceCache) field.get(Exception_Sub1.aClass255_112);
++        pile = new Class348_Sub37();
++        int key = (65 + Class90.regionTileY) << 14 | (64 + za_Sub2.regionTileX);
++        Class130.aClass356_1895.method3483((byte) 120, key, pile);
++    }
++    @After public void actionsRestore()
++    {
++        Class130.aClass356_1895 = oldItems; Class282.aClass356_3654 = oldNpcs;
++        Exception_Sub1.aClass255_112 = oldDefs; ChatMessage.aClass357ArrayArrayArray2029 = oldScene;
++    }
++    private void item(int id, int quantity)
++    {
++        ObjType def = new ObjType(); def.id = id; def.name = "Loot " + id;
++        def.op = new String[] {"Inspect", null, "Take", null, null};
++        cache.method582(def, id, (byte) -100);
++        pile.aClass262_6998.method1999(new Class348_Sub34(id, quantity), -20180);
++    }
++    @Test public void lootUsesTakeAndAllPileEntriesCanBeCycled()
++    {
++        for (int i = 100; i < 105; i++) item(i, 1);
++        ControllerTarget first = ControllerWorld.findTarget(0, 1, null);
++        assertNotNull(first); assertEquals("Take", first.option); assertEquals(47, first.action);
++        java.util.Set<Long> ids = new java.util.HashSet<>(); ids.add(first.identifier);
++        ControllerTarget next = first;
++        for (int i = 0; i < 4; i++) { next = ControllerWorld.findTarget(0, 1, next, 1); ids.add(next.identifier); }
++        assertEquals(5, ids.size()); // Includes items beyond the three rendered pile models.
++        ControllerTarget[] actions = ControllerWorld.actions(first);
++        assertEquals(2, actions.length); assertEquals("Take", actions[0].option); assertEquals("Inspect", actions[1].option);
++    }
++    @Test public void disappearedLootAndOtherTilesCannotReuseActions()
++    {
++        item(100, 12);
++        ControllerTarget first = ControllerWorld.findTarget(0, 1, null);
++        assertTrue(first.name.contains("12"));
++        ControllerTarget elsewhere = new ControllerTarget(first.name, first.option, first.action, first.identifier, 64, 66, first.plane, first.baseX, first.baseY);
++        assertFalse(first.sameSubject(elsewhere));
++        pile.aClass262_6998.method1996(100);
++        assertEquals(0, ControllerWorld.actions(first).length);
++        assertFalse(ControllerWorld.interact(first));
++    }
++    @Test public void npcActionsIncludeSecondaryAndAttackAndFollowTheSameMovingNpc()
++    {
++        Npc npc = new Npc(); npc.definition = new NPCType(); npc.definition.name = "Guide";
++        npc.definition.op = new String[] {"Talk-to", "Trade", "Attack", null, null};
++        npc.anInt10290 = 7; npc.x = 64 * 512 + 256; npc.y = 66 * 512 + 256;
++        Class282.aClass356_3654.method3483((byte) 120, 7, new Class348_Sub22(npc));
++        ControllerTarget target = ControllerWorld.findTarget(0, 1, null);
++        assertEquals("Talk-to", target.option);
++        ControllerTarget[] actions = ControllerWorld.actions(target);
++        assertEquals(3, actions.length); assertEquals(20, actions[1].action); assertEquals(44, actions[2].action);
++        assertTrue(target.sameSubject(actions[2])); assertFalse(target.sameEntity(actions[2]));
++        npc.y += 512;
++        assertEquals(67, ControllerWorld.actions(target)[0].y);
++        npc.definition.op[1] = null;
++        assertEquals(2, ControllerWorld.actions(target).length);
++    }
++}

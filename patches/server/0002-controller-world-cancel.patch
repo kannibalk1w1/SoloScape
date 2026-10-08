@@ -1,0 +1,157 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/InstructionHandlers.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/InstructionHandlers.kt
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/InstructionHandlers.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/InstructionHandlers.kt
+@@ -81,6 +81,7 @@
+             is ExamineNpc -> examineNPC.invoke(instruction, player)
+             is ExamineObject -> examineObject.invoke(instruction, player)
+             is ChangeDisplayMode -> changeDisplayMode.invoke(instruction, player)
++            is CancelWorldAction -> CancelWorldActionHandler.handle(player)
+             is DirectMovement -> DirectMovementHandler.handle(player, instruction)
+             is Walk -> walk.invoke(instruction, player)
+             is WorldMapClick -> worldMapClick.invoke(instruction, player)
+diff --git a/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/Decoders.kt b/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/Decoders.kt
+--- a/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/Decoders.kt
++++ b/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/Decoders.kt
+@@ -91,5 +91,6 @@
+     array[37] = FloorItemExamineDecoder()
+     array[71] = UnknownDecoder()
+     array[85] = DirectMovementDecoder()
++    array[86] = CancelWorldActionDecoder()
+     return array
+ }
+diff --git a/network/src/main/kotlin/world/gregs/voidps/network/client/instruction/CancelWorldAction.kt b/network/src/main/kotlin/world/gregs/voidps/network/client/instruction/CancelWorldAction.kt
+new file mode 100644
+--- /dev/null
++++ b/network/src/main/kotlin/world/gregs/voidps/network/client/instruction/CancelWorldAction.kt
+@@ -0,0 +1,6 @@
++package world.gregs.voidps.network.client.instruction
++
++import world.gregs.voidps.network.client.Instruction
++
++/** SoloScape B-button cancellation of a normal walk or interaction. */
++data object CancelWorldAction : Instruction
+diff --git a/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/decode/CancelWorldActionDecoder.kt b/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/decode/CancelWorldActionDecoder.kt
+new file mode 100644
+--- /dev/null
++++ b/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/decode/CancelWorldActionDecoder.kt
+@@ -0,0 +1,10 @@
++package world.gregs.voidps.network.login.protocol.decode
++
++import kotlinx.io.Source
++import world.gregs.voidps.network.client.instruction.CancelWorldAction
++import world.gregs.voidps.network.login.protocol.Decoder
++
++/** SoloScape opcode 86 has no payload and carries no client position. */
++class CancelWorldActionDecoder : Decoder(0) {
++    override suspend fun decode(packet: Source) = CancelWorldAction
++}
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandler.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandler.kt
+new file mode 100644
+--- /dev/null
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandler.kt
+@@ -0,0 +1,24 @@
++package world.gregs.voidps.engine.client.instruction.handle
++
++import world.gregs.voidps.engine.client.ui.closeInterfaces
++import world.gregs.voidps.engine.entity.character.mode.EmptyMode
++import world.gregs.voidps.engine.entity.character.mode.interact.Interact
++import world.gregs.voidps.engine.entity.character.mode.move.Movement
++import world.gregs.voidps.engine.entity.character.player.Player
++
++object CancelWorldActionHandler {
++    fun handle(player: Player) {
++        // Match ordinary walking's busy gate; do not break forced actions such as agility.
++        if (player.contains("delay")) return
++        if (player.mode is Interact) player.clearAnim()
++        player.closeInterfaces()
++        player.clearWatch()
++        player.queue.clearWeak()
++        player.suspension = null
++        player.clearWalkTrigger()
++        if (player.mode is Movement) {
++            player.mode = EmptyMode
++            player.steps.clear()
++        }
++    }
++}
+diff --git a/network/src/test/kotlin/world/gregs/voidps/network/login/protocol/CancelWorldActionDecoderTest.kt b/network/src/test/kotlin/world/gregs/voidps/network/login/protocol/CancelWorldActionDecoderTest.kt
+new file mode 100644
+--- /dev/null
++++ b/network/src/test/kotlin/world/gregs/voidps/network/login/protocol/CancelWorldActionDecoderTest.kt
+@@ -0,0 +1,19 @@
++package world.gregs.voidps.network.login.protocol
++
++import io.ktor.utils.io.core.*
++import kotlinx.coroutines.test.runTest
++import org.junit.jupiter.api.Assertions.*
++import org.junit.jupiter.api.Test
++import world.gregs.voidps.cache.secure.Huffman
++import world.gregs.voidps.network.client.instruction.CancelWorldAction
++
++class CancelWorldActionDecoderTest {
++    @Test fun `cancel is opcode 86 with no client position and preserves direct opcode 85`() = runTest {
++        val decoders = decoders(Huffman())
++        assertEquals(0, decoders[86]!!.length)
++        val packet = ByteReadPacket(byteArrayOf())
++        assertSame(CancelWorldAction, decoders[86]!!.decode(packet))
++        assertTrue(packet.isEmpty)
++        assertEquals(3, decoders[85]!!.length)
++    }
++}
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandlerTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandlerTest.kt
+new file mode 100644
+--- /dev/null
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandlerTest.kt
+@@ -0,0 +1,52 @@
++package world.gregs.voidps.engine.client.instruction.handle
++
++import io.mockk.*
++import org.junit.jupiter.api.Assertions.*
++import org.junit.jupiter.api.BeforeEach
++import org.junit.jupiter.api.AfterEach
++import org.junit.jupiter.api.Test
++import org.koin.test.mock.declareMock
++import org.rsmod.game.pathfinder.*
++import world.gregs.voidps.engine.client.ui.closeInterfaces
++import world.gregs.voidps.engine.entity.character.mode.EmptyMode
++import world.gregs.voidps.engine.entity.character.mode.Mode
++import world.gregs.voidps.engine.entity.character.mode.move.Movement
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.script.KoinMock
++import world.gregs.voidps.type.Tile
++
++class CancelWorldActionHandlerTest : KoinMock() {
++    private lateinit var player: Player
++    @BeforeEach fun setup() {
++        declareMock<StepValidator>(); declareMock<LineValidator>(); declareMock<PathFinder>()
++        player = Player(tile = Tile(64, 64))
++        mockkStatic("world.gregs.voidps.engine.client.ui.InterfacesKt")
++        every { player.closeInterfaces() } returns true
++    }
++    @AfterEach fun restore() { unmockkStatic("world.gregs.voidps.engine.client.ui.InterfacesKt") }
++    @Test fun `cancel clears the current approach queue and watch without moving the player`() {
++        player.mode = Movement(player)
++        player.steps.queueStep(Tile(70, 64))
++        player["face_entity"] = Any()
++        var triggered = false
++        player.walkTrigger { triggered = true }
++        CancelWorldActionHandler.handle(player)
++        assertSame(EmptyMode, player.mode); assertTrue(player.steps.isEmpty())
++        assertEquals(Tile(64, 64), player.tile); assertNull(player.walkTrigger); assertFalse(triggered)
++        verify(exactly = 1) { player.closeInterfaces() }
++    }
++    @Test fun `forced busy action is preserved`() {
++        val forced = Movement(player)
++        player.mode = forced; player.steps.queueStep(Tile(65, 64), noCollision = true)
++        player["delay"] = -1
++        CancelWorldActionHandler.handle(player)
++        assertSame(forced, player.mode); assertFalse(player.steps.isEmpty())
++        verify(exactly = 0) { player.closeInterfaces() }
++    }
++    @Test fun `nonmovement modes are not replaced or stripped of their steps`() {
++        val mode = object : Mode { override fun tick() {} }
++        player.mode = mode; player.steps.queueStep(Tile(65, 64))
++        CancelWorldActionHandler.handle(player)
++        assertSame(mode, player.mode); assertFalse(player.steps.isEmpty())
++    }
++}

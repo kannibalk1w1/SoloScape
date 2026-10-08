@@ -132,3 +132,22 @@ restart. Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.
   player saves or currently running game processes were changed.
 - In-game direct movement, stop latency, interaction ownership, region edges and
   Steam Deck acceptance require a full client/server restart and physical testing.
+
+## World menus, loot and cancellation (2026-10-08)
+
+- Client patch 0007 adds X native action lists, D-pad/A/B list input, all visible
+  loot-pile entries and A Take targeting. Entity/option/quantity freshness is checked.
+- Equal-score target cycling now uses deterministic tie-breakers; a native five-item
+  pile test exposed and verifies the fix for alternating between only two entries.
+- Server patch 0002 adds position-free cancel opcode 86 for normal approaches and
+  interactions, respecting busy/forced modes. Direct stop is sent before cancel.
+- 58 client, 247 network and 59 selected engine tests pass with zero failures,
+  errors or skips. Both Shadow jars rebuild; cancel classes are present in the server jar.
+- Fresh, upgrade, reverse and idempotent source reproduction matches 37 client
+  and 14 server files. Three patch-helper and four launcher tests also pass.
+- Server UI close is mocked in cancellation unit tests; actual in-game cancellation,
+  menu layout, loot pickup and inventory/dialogue coexistence remain for acceptance.
+- User confirmed optional direct movement feels good. No current game processes,
+  player saves or game cache were changed during this build.
+- `ROADMAP.md` and `PROJECT_HANDOFF.md` capture the proposed next work and current
+  status for review/discussion. They do not mark unplayed features as accepted.

@@ -78,3 +78,23 @@ neutral input before movement resumes. Direct mode's green tile shows the next
 collision-checked local step intent, rather than a server-confirmed destination.
 Tile timing and eight-way movement remain; no client prediction or continuous
 sub-tile server positioning is introduced.
+
+## World lists, ground items and explicit cancellation
+
+X opens a frozen action list for the displayed subject. D-pad changes selection,
+A dispatches one selected native action and B backs out. Fresh lists are checked
+every 75ms; option/identity/name/quantity changes close the list, while a moving
+NPC's updated coordinates retain its subject identity. The native adapter always
+re-enumerates before dispatch. UI priority and focus/disconnect resets clear lists.
+
+Ground candidates use every item in the client's visible pile table, not just
+rendered models. A prefers native Take (operation index 2). Identity includes
+item ID, plane, scene coordinates and region base. Deterministic kind/ID/coordinate
+tie-breakers make equal-score items cycle reliably. Native -3/-2 path strategies
+validate loot approach; server gameplay logic remains authoritative.
+
+World B stops direct intent and sends explicit opcode 86 without a position.
+The server observes the normal delay gate, cancels ordinary movement/interaction,
+clears watch/weak actions/suspension and removes pending walk triggers. It does not
+replace nonmovement modes. B inside a list backs out first; dialogue/inventory B
+keep their established context-specific behavior.

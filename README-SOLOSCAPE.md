@@ -5,8 +5,11 @@ experimental controller support. JDK 21, JDK 8 and the upstream cache are instal
 Both upstream builds pass, doctor passes, and the server reaches world readiness.
 The controller prototype supports camera, precise walking, LT aiming, LB/RB target
 cycling, scene highlights, inventory and dialogue controls, plus an optional direct
-movement mode; see
+movement mode, world action menus and loot pickup; see
 [controller testing instructions](docs/CONTROLLER_TESTING.md) to enable it.
+
+The [proposed roadmap](docs/ROADMAP.md) is the working task list.
+The [current-state handoff](docs/PROJECT_HANDOFF.md) can be taken into ChatGPT for discussion.
 
 The branch is `soloscape/bootstrap`. Source checkouts under `upstream/` are
 ignored; tracked SoloScape patches reproduce the client changes and the server
