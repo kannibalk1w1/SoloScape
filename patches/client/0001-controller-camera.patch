@@ -1,0 +1,750 @@
+diff --git a/client/build.gradle.kts b/client/build.gradle.kts
+index bda0af8..7103c8e 100644
+--- a/client/build.gradle.kts
++++ b/client/build.gradle.kts
+@@ -23,6 +23,8 @@ repositories {
+ }
+ 
+ dependencies {
++    implementation("net.java.dev.jna:jna:5.19.1")
++    testImplementation("junit:junit:4.13.2")
+     implementation("org.apache.commons:commons-csv:1.9.0")
+     implementation("org.apache.commons:commons-lang3:3.0")
+     implementation("org.apache.commons:commons-text:1.9")
+@@ -53,6 +55,9 @@ java {
+             resources.srcDirs("resources", "src")
+             resources.exclude("**/*.java")
+         }
++        test {
++            java.srcDirs("test")
++        }
+     }
+     toolchain {
+         languageVersion.set(JavaLanguageVersion.of(8))
+@@ -66,6 +71,10 @@ application {
+     mainClass = "Loader"
+ }
+ 
++tasks.test {
++    systemProperty("controllerNativeTest", providers.gradleProperty("controllerNativeTest").getOrElse("false"))
++}
++
+ tasks.shadowJar {
+     archiveBaseName.set("void-client")
+     archiveClassifier.set("")
+diff --git a/client/resources/META-INF/soloscape-controller-NOTICES.txt b/client/resources/META-INF/soloscape-controller-NOTICES.txt
+new file mode 100644
+index 0000000..cf5aa5d
+--- /dev/null
++++ b/client/resources/META-INF/soloscape-controller-NOTICES.txt
+@@ -0,0 +1,11 @@
++SoloScape controller prototype
++
++JNA 5.19.1 (net.java.dev.jna:jna)
++https://github.com/java-native-access/jna
++Copyright (c) JNA contributors. Licensed under Apache License 2.0 for this use.
++The upstream JNA licence declaration is included as META-INF/LICENSE.
++https://www.apache.org/licenses/LICENSE-2.0
++
++SDL2 is a separately installed system dependency, not bundled in this client.
++https://github.com/libsdl-org/SDL/tree/SDL2
++SDL2 uses the zlib licence; retain its licence if bundling it in a future release.
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+index 8a8bbf5..476263f 100644
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1038,6 +1038,11 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+         return Class5.anInt4638;
+     }
+ 
++    @Override
++    public void setControllerCameraInput(float yawDegreesPerSecond, float pitchDegreesPerSecond) {
++        ControllerCamera.setInput(yawDegreesPerSecond, pitchDegreesPerSecond);
++    }
++
+     @Override
+     public int getCameraScale() {
+         return Class132.anInt1906;
+diff --git a/client/src/Canvas_Sub1.java b/client/src/Canvas_Sub1.java
+index 661c952..d4e03fd 100644
+--- a/client/src/Canvas_Sub1.java
++++ b/client/src/Canvas_Sub1.java
+@@ -53,6 +53,7 @@ final class Canvas_Sub1 extends Canvas {
+                     Class192.anInt2578 += i_5_;
+                 }
+                 Class76.aFloat1287 += Class348_Sub27.aFloat6898 * (float) l / 6.0F;
++                ControllerCamera.apply(l);
+                 Class239_Sub2.method1725(262144);
+             }
+         } catch (RuntimeException runtimeexception) {
+diff --git a/client/src/ControllerCamera.java b/client/src/ControllerCamera.java
+new file mode 100644
+index 0000000..9682177
+--- /dev/null
++++ b/client/src/ControllerCamera.java
+@@ -0,0 +1,25 @@
++import net.runelite.client.input.controller.CameraIntent;
++
++/** Narrow bridge into the existing normal camera update. All calls use the client thread. */
++final class ControllerCamera
++{
++	private static final CameraIntent input = new CameraIntent();
++
++	static void setInput(float yawDegreesPerSecond, float pitchDegreesPerSecond)
++	{
++		input.set(yawDegreesPerSecond, pitchDegreesPerSecond, System.nanoTime());
++	}
++
++	static void apply(long elapsedMillis)
++	{
++		// Leave login screens, cutscenes and other scripted/free-camera modes alone.
++		if (Class240.anInt4674 != 10 || (Class348_Sub40_Sub21.anInt9282 != 1 && Class348_Sub40_Sub21.anInt9282 != 5)) return;
++		long now = System.nanoTime();
++		float yaw = input.yawDelta(elapsedMillis, now);
++		float pitch = input.pitchDelta(elapsedMillis, now);
++		Class314.aFloat3938 += yaw;
++		Class76.aFloat1287 += pitch;
++		if (yaw != 0 || pitch != 0) Class369_Sub3_Sub1.aBoolean10174 = true;
++		// Canvas_Sub1 calls the client's normal wrap/pitch clamp immediately afterward.
++	}
++}
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+index f484655..2741582 100644
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -339,6 +339,11 @@ public abstract class GameClient extends Applet {
+         return 7000;
+     }
+ 
++    /** Sets only controller camera intent. Call on the client thread; zero clears it. */
++    public void setControllerCameraInput(float yawDegreesPerSecond, float pitchDegreesPerSecond)
++    {
++    }
++
+     public int getTileHeight(int localX, int localY, int plane)
+     {
+         return 0;
+diff --git a/client/src/net/runelite/client/input/controller/CameraIntent.java b/client/src/net/runelite/client/input/controller/CameraIntent.java
+new file mode 100644
+index 0000000..e8644da
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/CameraIntent.java
+@@ -0,0 +1,42 @@
++package net.runelite.client.input.controller;
++
++/** Controller contribution only: never writes or resets mouse/keyboard velocities. */
++public final class CameraIntent
++{
++	private static final float ANGLE_UNITS_PER_DEGREE = 16384f / 360f;
++	private static final long INPUT_TIMEOUT_NANOS = 100_000_000L;
++	private static final long MAX_FRAME_MILLIS = 50;
++	private float yawRate, pitchRate;
++	private long updated;
++
++	public void set(float yawDegreesPerSecond, float pitchDegreesPerSecond, long now)
++	{
++		yawRate = Float.isFinite(yawDegreesPerSecond) ? yawDegreesPerSecond : 0;
++		pitchRate = Float.isFinite(pitchDegreesPerSecond) ? pitchDegreesPerSecond : 0;
++		updated = now;
++	}
++
++	public void clear()
++	{
++		yawRate = pitchRate = 0;
++	}
++
++	public float yawDelta(long millis, long now)
++	{
++		return delta(yawRate, millis, now);
++	}
++
++	public float pitchDelta(long millis, long now)
++	{
++		return delta(pitchRate, millis, now);
++	}
++
++	private float delta(float rate, long millis, long now)
++	{
++		if (now - updated < 0 || now - updated >= INPUT_TIMEOUT_NANOS)
++		{
++			return 0;
++		}
++		return rate * ANGLE_UNITS_PER_DEGREE * Math.max(0, Math.min(MAX_FRAME_MILLIS, millis)) / 1000f;
++	}
++}
+diff --git a/client/src/net/runelite/client/input/controller/GamepadState.java b/client/src/net/runelite/client/input/controller/GamepadState.java
+new file mode 100644
+index 0000000..abbb85f
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/GamepadState.java
+@@ -0,0 +1,23 @@
++package net.runelite.client.input.controller;
++
++/** Reused buffer. SDL standard axes: right/down positive; triggers from zero to one. */
++public final class GamepadState
++{
++	public boolean connected;
++	public float leftX, leftY, rightX, rightY, leftTrigger, rightTrigger;
++	public int buttonsHeld, buttonsPressed, buttonsReleased;
++
++	void updateButtons(int held)
++	{
++		buttonsPressed = held & ~buttonsHeld;
++		buttonsReleased = buttonsHeld & ~held;
++		buttonsHeld = held;
++	}
++
++	public void clear()
++	{
++		connected = false;
++		leftX = leftY = rightX = rightY = leftTrigger = rightTrigger = 0;
++		buttonsHeld = buttonsPressed = buttonsReleased = 0;
++	}
++}
+diff --git a/client/src/net/runelite/client/input/controller/SdlGamepad.java b/client/src/net/runelite/client/input/controller/SdlGamepad.java
+new file mode 100644
+index 0000000..4df3a3f
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/SdlGamepad.java
+@@ -0,0 +1,135 @@
++package net.runelite.client.input.controller;
++
++import com.sun.jna.Memory;
++import com.sun.jna.Native;
++import com.sun.jna.Pointer;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++/** SDL ownership and polling stay on the client thread. No AWT event synthesis. */
++public final class SdlGamepad implements AutoCloseable
++{
++	private static final Logger log = LoggerFactory.getLogger(SdlGamepad.class);
++	private static final int INIT_GAMECONTROLLER = 0x2000;
++	private static final int BUTTON_COUNT = 15;
++	private Pointer controller;
++	private boolean initialized;
++	private String name;
++
++	/** Lazy binding: a disabled plugin never loads SDL. */
++	static final class Sdl
++	{
++		static { Native.register("SDL2"); }
++		static native int SDL_InitSubSystem(int flags);
++		static native void SDL_QuitSubSystem(int flags);
++		static native void SDL_GetVersion(Pointer version);
++		static native Pointer SDL_GetError();
++		static native int SDL_SetHint(String name, String value);
++		static native int SDL_NumJoysticks();
++		static native int SDL_IsGameController(int index);
++		static native Pointer SDL_GameControllerOpen(int index);
++		static native void SDL_GameControllerClose(Pointer controller);
++		static native int SDL_GameControllerGetAttached(Pointer controller);
++		static native Pointer SDL_GameControllerName(Pointer controller);
++		static native Pointer SDL_GameControllerMapping(Pointer controller);
++		static native void SDL_free(Pointer pointer);
++		static native void SDL_GameControllerUpdate();
++		static native int SDL_GameControllerEventState(int state);
++		static native int SDL_JoystickEventState(int state);
++		static native short SDL_GameControllerGetAxis(Pointer controller, int axis);
++		static native byte SDL_GameControllerGetButton(Pointer controller, int button);
++	}
++
++	public void init()
++	{
++		if (initialized) return;
++		try (Memory version = new Memory(3))
++		{
++			Sdl.SDL_GetVersion(version);
++			int major = version.getByte(0) & 255;
++			int minor = version.getByte(1) & 255;
++			int patch = version.getByte(2) & 255;
++			if (major != 2 || (minor == 0 && patch < 22))
++			{
++				throw new IllegalStateException("Install SDL2 2.0.22+ for controller support");
++			}
++			log.info("SoloScape controller provider: SDL {}.{}.{}", major, minor, patch);
++		}
++		// SDL owns no window here. The plugin gates input with the real AWT canvas focus.
++		Sdl.SDL_SetHint("SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", "1");
++		if (Sdl.SDL_InitSubSystem(INIT_GAMECONTROLLER) != 0)
++		{
++			throw new IllegalStateException("SDL controller initialization: " + Sdl.SDL_GetError().getString(0));
++		}
++		initialized = true;
++		// We poll state, not SDL events. Avoid filling an unused SDL event queue.
++		Sdl.SDL_GameControllerEventState(0);
++		Sdl.SDL_JoystickEventState(0);
++	}
++
++	public void poll(GamepadState state)
++	{
++		if (!initialized) throw new IllegalStateException("Controller provider not initialized");
++		Sdl.SDL_GameControllerUpdate();
++		if (controller != null && Sdl.SDL_GameControllerGetAttached(controller) == 0)
++		{
++			log.info("SoloScape controller disconnected: {}", name);
++			closeController();
++			state.clear();
++		}
++		if (controller == null)
++		{
++			int count = Sdl.SDL_NumJoysticks();
++			for (int i = 0; i < count; i++)
++			{
++				if (Sdl.SDL_IsGameController(i) == 0) continue;
++				controller = Sdl.SDL_GameControllerOpen(i);
++				if (controller == null) continue;
++				state.clear();
++				name = Sdl.SDL_GameControllerName(controller).getString(0, "UTF-8");
++				Pointer mapping = Sdl.SDL_GameControllerMapping(controller);
++				String guid = "unknown";
++				if (mapping != null)
++				{
++					try { guid = mapping.getString(0, "UTF-8").split(",", 2)[0]; }
++					finally { Sdl.SDL_free(mapping); }
++				}
++				log.info("SoloScape controller connected: {} (GUID {})", name, guid);
++				break;
++			}
++		}
++		if (controller == null)
++		{
++			state.clear();
++			return;
++		}
++		state.connected = true;
++		state.leftX = StickMath.normalize(Sdl.SDL_GameControllerGetAxis(controller, 0));
++		state.leftY = StickMath.normalize(Sdl.SDL_GameControllerGetAxis(controller, 1));
++		state.rightX = StickMath.normalize(Sdl.SDL_GameControllerGetAxis(controller, 2));
++		state.rightY = StickMath.normalize(Sdl.SDL_GameControllerGetAxis(controller, 3));
++		state.leftTrigger = Math.max(0, StickMath.normalize(Sdl.SDL_GameControllerGetAxis(controller, 4)));
++		state.rightTrigger = Math.max(0, StickMath.normalize(Sdl.SDL_GameControllerGetAxis(controller, 5)));
++		int buttons = 0;
++		for (int i = 0; i < BUTTON_COUNT; i++)
++		{
++			if (Sdl.SDL_GameControllerGetButton(controller, i) != 0) buttons |= 1 << i;
++		}
++		state.updateButtons(buttons);
++	}
++
++	private void closeController()
++	{
++		if (controller != null) Sdl.SDL_GameControllerClose(controller);
++		controller = null;
++		name = null;
++	}
++
++	@Override
++	public void close()
++	{
++		closeController();
++		if (initialized) Sdl.SDL_QuitSubSystem(INIT_GAMECONTROLLER);
++		initialized = false;
++	}
++}
+diff --git a/client/src/net/runelite/client/input/controller/StickMath.java b/client/src/net/runelite/client/input/controller/StickMath.java
+new file mode 100644
+index 0000000..839c30b
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/StickMath.java
+@@ -0,0 +1,28 @@
++package net.runelite.client.input.controller;
++
++/** Pure input math, independent of native polling and rendering. */
++public final class StickMath
++{
++	private StickMath() {}
++
++	public static float normalize(short raw)
++	{
++		return raw < 0 ? raw / 32768f : raw / 32767f;
++	}
++
++	/** Shared radial scale preserves direction and caps diagonals at unit magnitude. */
++	public static float deadzoneScale(float x, float y, float deadzone)
++	{
++		if (!Float.isFinite(x) || !Float.isFinite(y) || !Float.isFinite(deadzone))
++		{
++			return 0;
++		}
++		deadzone = Math.max(0, Math.min(0.95f, deadzone));
++		float magnitude = (float) Math.sqrt(x * x + y * y);
++		if (magnitude <= deadzone || magnitude == 0)
++		{
++			return 0;
++		}
++		return (Math.min(magnitude, 1) - deadzone) / ((1 - deadzone) * magnitude);
++	}
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+new file mode 100644
+index 0000000..7da56c6
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -0,0 +1,28 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import net.runelite.client.config.Config;
++import net.runelite.client.config.ConfigGroup;
++import net.runelite.client.config.ConfigItem;
++import net.runelite.client.config.Range;
++
++@ConfigGroup("soloscapecontroller")
++public interface SoloScapeControllerConfig extends Config
++{
++	@Range(min = 0, max = 90)
++	@ConfigItem(keyName = "deadzone", name = "Stick deadzone (%)", description = "Radial right-stick deadzone.", position = 0)
++	default int deadzone() { return 18; }
++
++	@Range(min = 10, max = 360)
++	@ConfigItem(keyName = "yawSpeed", name = "Camera turn speed", description = "Degrees per second at full stick tilt.", position = 1)
++	default int yawSpeed() { return 120; }
++
++	@Range(min = 10, max = 180)
++	@ConfigItem(keyName = "pitchSpeed", name = "Camera pitch speed", description = "Degrees per second at full stick tilt.", position = 2)
++	default int pitchSpeed() { return 70; }
++
++	@ConfigItem(keyName = "invertY", name = "Invert vertical camera", description = "Reverse the right-stick vertical direction.", position = 3)
++	default boolean invertY() { return false; }
++
++	@ConfigItem(keyName = "debug", name = "Controller diagnostics", description = "Log stick values at most once a second.", position = 4)
++	default boolean debug() { return false; }
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+new file mode 100644
+index 0000000..d175adc
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -0,0 +1,102 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import com.GameClient;
++import com.google.inject.Provides;
++import java.awt.Canvas;
++import javax.inject.Inject;
++import lombok.extern.slf4j.Slf4j;
++import net.runelite.api.events.ClientTick;
++import net.runelite.client.callback.ClientThread;
++import net.runelite.client.config.ConfigManager;
++import net.runelite.client.eventbus.Subscribe;
++import net.runelite.client.input.controller.GamepadState;
++import net.runelite.client.input.controller.SdlGamepad;
++import net.runelite.client.input.controller.StickMath;
++import net.runelite.client.plugins.Plugin;
++import net.runelite.client.plugins.PluginDescriptor;
++
++@PluginDescriptor(
++	name = "SoloScape Controller",
++	description = "Experimental native controller detection and right-stick camera",
++	tags = {"controller", "gamepad", "soloscape", "steam deck"},
++	enabledByDefault = false,
++	loadWhenOutdated = true
++)
++@Slf4j
++public class SoloScapeControllerPlugin extends Plugin
++{
++	@Inject private GameClient client;
++	@Inject private ClientThread clientThread;
++	@Inject private SoloScapeControllerConfig config;
++	private final GamepadState state = new GamepadState();
++	private SdlGamepad gamepad;
++	private boolean failed;
++	private volatile boolean active;
++	private long lastDebug;
++
++	@Provides
++	SoloScapeControllerConfig provideConfig(ConfigManager configManager)
++	{
++		return configManager.getConfig(SoloScapeControllerConfig.class);
++	}
++
++	@Override
++	protected void startUp()
++	{
++		clientThread.invoke(() -> { reset(); failed = false; active = true; });
++	}
++
++	@Override
++	protected void shutDown()
++	{
++		active = false;
++		clientThread.invoke(this::reset);
++	}
++
++	private void reset()
++	{
++		active = false;
++		client.setControllerCameraInput(0, 0);
++		state.clear();
++		if (gamepad != null) gamepad.close();
++		gamepad = null;
++	}
++
++	@Subscribe
++	public void onClientTick(ClientTick event)
++	{
++		if (!active || failed) return;
++		try
++		{
++			if (gamepad == null)
++			{
++				gamepad = new SdlGamepad();
++				gamepad.init();
++				log.info("SoloScape controller enabled; waiting for an SDL-mapped gamepad");
++			}
++			gamepad.poll(state);
++			Canvas canvas = client.getCanvas();
++			if (!state.connected || canvas == null || !canvas.isFocusOwner() || !client.hasLocalPlayer())
++			{
++				client.setControllerCameraInput(0, 0);
++				return;
++			}
++			float scale = StickMath.deadzoneScale(state.rightX, state.rightY, config.deadzone() / 100f);
++			float yaw = state.rightX * scale;
++			float pitch = state.rightY * scale * (config.invertY() ? 1 : -1);
++			client.setControllerCameraInput(yaw * config.yawSpeed(), pitch * config.pitchSpeed());
++			long now = System.nanoTime();
++			if (config.debug() && now - lastDebug >= 1_000_000_000L)
++			{
++				lastDebug = now;
++				log.info("SoloScape camera stick after deadzone: ({}, {})", yaw, pitch);
++			}
++		}
++		catch (RuntimeException | LinkageError ex)
++		{
++			failed = true;
++			reset();
++			log.warn("Controller support unavailable. Install SDL2 2.0.22+ and check device permissions, then toggle the plugin to retry.", ex);
++		}
++	}
++}
+diff --git a/client/test/ControllerCameraTest.java b/client/test/ControllerCameraTest.java
+new file mode 100644
+index 0000000..e19c37a
+--- /dev/null
++++ b/client/test/ControllerCameraTest.java
+@@ -0,0 +1,73 @@
++import org.junit.After;
++import org.junit.Before;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++/** Exercises the actual adapter into the client's normal camera intent fields. */
++public class ControllerCameraTest
++{
++	private int gameState, cameraMode;
++	private float yaw, pitch, mouseYaw, mousePitch;
++	private boolean activity;
++
++	@Before public void setup()
++	{
++		gameState = Class240.anInt4674;
++		cameraMode = Class348_Sub40_Sub21.anInt9282;
++		yaw = Class314.aFloat3938;
++		pitch = Class76.aFloat1287;
++		mouseYaw = Class205.aFloat2687;
++		mousePitch = Class348_Sub27.aFloat6898;
++		activity = Class369_Sub3_Sub1.aBoolean10174;
++		Class240.anInt4674 = 10;
++		Class348_Sub40_Sub21.anInt9282 = 1;
++		Class314.aFloat3938 = 1000;
++		Class76.aFloat1287 = 2000;
++		Class205.aFloat2687 = 7;
++		Class348_Sub27.aFloat6898 = -3;
++		Class369_Sub3_Sub1.aBoolean10174 = false;
++	}
++
++	@After public void restore()
++	{
++		ControllerCamera.setInput(0, 0);
++		Class240.anInt4674 = gameState;
++		Class348_Sub40_Sub21.anInt9282 = cameraMode;
++		Class314.aFloat3938 = yaw;
++		Class76.aFloat1287 = pitch;
++		Class205.aFloat2687 = mouseYaw;
++		Class348_Sub27.aFloat6898 = mousePitch;
++		Class369_Sub3_Sub1.aBoolean10174 = activity;
++	}
++
++	@Test public void addsControllerInputWithoutChangingExistingInputVelocities()
++	{
++		ControllerCamera.setInput(120, 70);
++		ControllerCamera.apply(20);
++		assertEquals(1000 + 120 * 16384f / 360 / 50, Class314.aFloat3938, 0.001);
++		assertEquals(2000 + 70 * 16384f / 360 / 50, Class76.aFloat1287, 0.001);
++		assertEquals(7, Class205.aFloat2687, 0);
++		assertEquals(-3, Class348_Sub27.aFloat6898, 0);
++		assertTrue(Class369_Sub3_Sub1.aBoolean10174);
++		ControllerCamera.setInput(0, 0);
++		float after = Class314.aFloat3938;
++		ControllerCamera.apply(20);
++		assertEquals(after, Class314.aFloat3938, 0);
++	}
++
++	@Test public void doesNotChangeLoginOrScriptedCamera()
++	{
++		ControllerCamera.setInput(120, 70);
++		Class240.anInt4674 = 0;
++		ControllerCamera.apply(20);
++		assertEquals(1000, Class314.aFloat3938, 0);
++		Class240.anInt4674 = 10;
++		for (int mode : new int[] {0, 2, 3, 4})
++		{
++			Class348_Sub40_Sub21.anInt9282 = mode;
++			ControllerCamera.apply(20);
++			assertEquals(1000, Class314.aFloat3938, 0);
++			assertEquals(2000, Class76.aFloat1287, 0);
++		}
++	}
++}
+diff --git a/client/test/net/runelite/client/input/controller/ControllerMathTest.java b/client/test/net/runelite/client/input/controller/ControllerMathTest.java
+new file mode 100644
+index 0000000..e8ed15c
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/ControllerMathTest.java
+@@ -0,0 +1,76 @@
++package net.runelite.client.input.controller;
++
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class ControllerMathTest
++{
++	@Test public void fullAxisRangeIsSymmetric()
++	{
++		assertEquals(-1, StickMath.normalize(Short.MIN_VALUE), 0);
++		assertEquals(1, StickMath.normalize(Short.MAX_VALUE), 0);
++		assertEquals(0, StickMath.normalize((short) 0), 0);
++	}
++
++	@Test public void radialDeadzoneHasNoDriftAndPreservesDirection()
++	{
++		assertEquals(0, StickMath.deadzoneScale(0.1f, 0.1f, 0.18f), 0);
++		assertEquals(0, StickMath.deadzoneScale(0.18f, 0, 0.18f), 0);
++		float scale = StickMath.deadzoneScale(0.6f, -0.8f, 0.18f);
++		assertEquals(0.6, 0.6f * scale, 0.00001);
++		assertEquals(-0.8, -0.8f * scale, 0.00001);
++		float diagonal = StickMath.deadzoneScale(1, 1, 0.18f);
++		assertEquals(1, Math.hypot(diagonal, diagonal), 0.00001);
++		assertEquals(0.5, 0.59f * StickMath.deadzoneScale(0.59f, 0, 0.18f), 0.00001);
++	}
++
++	@Test public void invalidInputCannotPoisonCamera()
++	{
++		assertEquals(0, StickMath.deadzoneScale(Float.NaN, 0, 0.18f), 0);
++		assertEquals(0, StickMath.deadzoneScale(0, Float.POSITIVE_INFINITY, 0.18f), 0);
++		CameraIntent intent = new CameraIntent();
++		intent.set(Float.NaN, Float.POSITIVE_INFINITY, 100);
++		assertEquals(0, intent.yawDelta(20, 101), 0);
++		assertEquals(0, intent.pitchDelta(20, 101), 0);
++	}
++
++	@Test public void cameraSpeedDoesNotDependOnFrameRate()
++	{
++		CameraIntent intent = new CameraIntent();
++		intent.set(120, -70, 0);
++		assertEquals(intent.yawDelta(20, 1), 4 * intent.yawDelta(5, 1), 0.00001);
++		assertEquals(120 * 16384f / 360 / 50, intent.yawDelta(20, 1), 0.00001);
++		assertTrue(intent.pitchDelta(20, 1) < 0);
++	}
++
++	@Test public void staleInputAndHitchesCannotLeaveCameraSpinning()
++	{
++		CameraIntent intent = new CameraIntent();
++		intent.set(120, 70, 0);
++		assertEquals(intent.yawDelta(50, 1), intent.yawDelta(5000, 1), 0);
++		assertEquals(0, intent.yawDelta(-1, 1), 0);
++		assertEquals(0, intent.yawDelta(20, 100_000_000), 0);
++		intent.set(120, 70, 100_000_001);
++		assertTrue(intent.yawDelta(20, 100_000_002) > 0);
++		intent.clear();
++		assertEquals(0, intent.yawDelta(20, 100_000_002), 0);
++		assertEquals(0, intent.pitchDelta(20, 100_000_002), 0);
++	}
++
++	@Test public void buttonEdgesAreSingleUpdatesAndDisconnectClearsEverything()
++	{
++		GamepadState state = new GamepadState();
++		state.updateButtons(1);
++		assertEquals(1, state.buttonsPressed);
++		state.updateButtons(1);
++		assertEquals(0, state.buttonsPressed);
++		state.updateButtons(0);
++		assertEquals(1, state.buttonsReleased);
++		state.rightX = 1;
++		state.connected = true;
++		state.clear();
++		assertFalse(state.connected);
++		assertEquals(0, state.rightX, 0);
++		assertEquals(0, state.buttonsHeld | state.buttonsPressed | state.buttonsReleased);
++	}
++}
+diff --git a/client/test/net/runelite/client/input/controller/SdlGamepadTest.java b/client/test/net/runelite/client/input/controller/SdlGamepadTest.java
+new file mode 100644
+index 0000000..c4358ef
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/SdlGamepadTest.java
+@@ -0,0 +1,63 @@
++package net.runelite.client.input.controller;
++
++import com.sun.jna.Native;
++import com.sun.jna.Pointer;
++import org.junit.Assume;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++/** Opt-in integration test using SDL's actual native virtual controller backend. */
++public class SdlGamepadTest
++{
++	static final class VirtualSdl
++	{
++		static { Native.register("SDL2"); }
++		static native int SDL_JoystickAttachVirtual(int type, int axes, int buttons, int hats);
++		static native int SDL_JoystickDetachVirtual(int index);
++		static native Pointer SDL_JoystickOpen(int index);
++		static native void SDL_JoystickClose(Pointer joystick);
++		static native int SDL_JoystickSetVirtualAxis(Pointer joystick, int axis, short value);
++		static native int SDL_JoystickSetVirtualButton(Pointer joystick, int button, byte value);
++	}
++
++	@Test public void nativeHotplugPollingAndUnplugClearState()
++	{
++		Assume.assumeTrue("Pass -PcontrollerNativeTest=true with SDL2 installed", Boolean.getBoolean("controllerNativeTest"));
++		try (SdlGamepad provider = new SdlGamepad())
++		{
++			provider.init();
++			GamepadState state = new GamepadState();
++			provider.poll(state);
++			Assume.assumeFalse("Unplug real gamepads for the virtual-device test", state.connected);
++			int index = VirtualSdl.SDL_JoystickAttachVirtual(1, 6, 15, 0);
++			assertTrue(index >= 0);
++			Pointer joystick = VirtualSdl.SDL_JoystickOpen(index);
++			assertNotNull(joystick);
++			try
++			{
++				provider.poll(state);
++				assertTrue("Recognize a newly attached mapped controller", state.connected);
++				assertEquals(0, VirtualSdl.SDL_JoystickSetVirtualAxis(joystick, 2, Short.MAX_VALUE));
++				assertEquals(0, VirtualSdl.SDL_JoystickSetVirtualAxis(joystick, 3, Short.MIN_VALUE));
++				assertEquals(0, VirtualSdl.SDL_JoystickSetVirtualButton(joystick, 0, (byte) 1));
++				provider.poll(state);
++				assertEquals(1, state.rightX, 0);
++				assertEquals(-1, state.rightY, 0);
++				assertEquals(1, state.buttonsPressed);
++				provider.poll(state);
++				assertEquals(0, state.buttonsPressed);
++				assertEquals(0, VirtualSdl.SDL_JoystickDetachVirtual(index));
++				index = -1;
++				provider.poll(state);
++				assertFalse(state.connected);
++				assertEquals(0, state.rightX, 0);
++				assertEquals(0, state.buttonsHeld);
++			}
++			finally
++			{
++				VirtualSdl.SDL_JoystickClose(joystick);
++				if (index >= 0) VirtualSdl.SDL_JoystickDetachVirtual(index);
++			}
++		}
++	}
++}

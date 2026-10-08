@@ -34,6 +34,8 @@ def java_version(executable):
 
 def doctor():
     errors = []
+    if shutil.which("flock") is None:
+        errors.append("Install util-linux (flock) for safe client patch application.")
     for name, expected in PINNED.items():
         repo = ROOT / "upstream" / name
         if not (repo / ".git").is_dir():
@@ -137,6 +139,7 @@ def launch(skip_build=False):
         server_java = os.environ.get("SERVER_JAVA", "java")
         client_java = os.environ.get("CLIENT_JAVA", "java")
         if not skip_build:
+            subprocess.run(["bash", str(ROOT / "scripts/apply-client-patches.sh")], check=True)
             build(SERVER, server_java, ":game:shadowJar")
             # Gradle 8 runs on JDK 21; upstream requests a separate Java 8 toolchain.
             build(CLIENT, server_java, ":client:shadowJar")

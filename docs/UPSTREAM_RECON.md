@@ -77,6 +77,10 @@ Archived 667 repositories have not been cloned or modified.
 
 ## Client choice and insertion paths
 
+This section records the initial upstream baseline. SoloScape now has the input
+provider and right-stick camera patch described in `CONTROLLER_TESTING.md`; the
+baseline's missing gamepad support has been addressed without server changes.
+
 Use **runelite-client**. Both clients target 634, but the selected repository has
 recent development plus actual plugin/input/event/overlay integrations. This
 decision is based on source inspection, not its name.

@@ -24,7 +24,9 @@ Passed:
   use localhost; stop server after client exit; never launch client after server
   startup failure; gracefully stop server after readiness timeout; interrupt
   cleanup stops both children. The first test covers readiness and client exit.
-- All three upstream working trees remain clean at the documented commit pins.
+- Initial baseline inspection/build used clean upstream working trees at the
+  documented pins. The client now intentionally has the tracked controller patch;
+  the server and plain 634-client remain unchanged.
 - Host doctor port probe: port 43594 available. The restricted execution sandbox
   itself denies local socket access; doctor reports that as an environment error.
 - `dev-run.sh --no-build` fails before creating game processes when prerequisites
@@ -42,7 +44,9 @@ Blocked/unverified:
 - `/proc/bus/input/devices` shows keyboard, mouse/touchpad and virtual input
   devices; no Steam Deck or identifiable physical gamepad. A virtual fake mouse
   exposes `js0`, demonstrating that a joystick node alone does not prove a pad.
-- No controller provider or controller feature is implemented or validated.
+- Controller detection/right-stick camera implementation builds and passes nine
+  tests, including real native SDL virtual-controller polling/hotplug. Physical
+  controller and Deck acceptance remain pending; see `CONTROLLER_TESTING.md`.
 - No exhaustive dependency/bundled-native licence audit or distributable package.
 
 Reproduce the implemented checks:

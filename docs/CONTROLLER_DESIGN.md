@@ -1,9 +1,11 @@
 # Controller prototype design
 
-Status: design and source paths only; no controller implementation or hardware
-validation yet. See `UPSTREAM_RECON.md` for concrete insertion points/blockers.
+Status: the input buffer, SDL2 provider and right-stick camera prototype are built
+and tested. See `CONTROLLER_TESTING.md` for enablement and current validation.
+Physical controller/Steam Deck validation remains pending. The movement, world
+interaction and inventory sections below describe subsequent work.
 
-The plugin will own one reusable state buffer containing axes/triggers and
+The plugin owns one reusable state buffer containing axes/triggers and
 pressed/held/released button masks. Poll once per input update, clear state on
 disconnect/focus loss, release native resources on plugin shutdown, and dispatch
 game actions only on the client thread. Keep existing keyboard/mouse listeners.
@@ -31,7 +33,8 @@ X opens existing context actions if practical; B returns to world mode. Mouse
 remains usable. Existing drag-grid code is a rendering reference, not evidence
 of complete widget/action APIs.
 
-Test pure deadzone/projection/grid calculations when implemented. Hardware tests
+Deadzone, camera intent and input-state calculations have automated tests. Test
+projection/grid calculations when implemented. Hardware tests
 must cover Steam Deck, a standard Xbox-style pad if available, hotplug, unplug
 while moving and keyboard/mouse coexistence. Avoid per-frame log/allocation
-spam. No controller dependency has yet been selected or added.
+spam. SDL2/JNA was selected; see `CONTROLLER_DEPENDENCIES.md` for the decision.

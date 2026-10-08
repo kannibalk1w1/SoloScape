@@ -25,10 +25,10 @@ add unused `soloscape.*` settings yet. Reuse existing camera integration, walkin
 menu dispatch and inventory overlays. Native gamepad library selection and small
 bridges into obfuscated code require successful unchanged gameplay first.
 
-When controller work begins, keep changes as small client commits and record
-their upstream base. Root tooling must not overwrite dirty checkouts. A
-maintained fork or patch workflow can then be chosen around actual changes;
-no empty framework or speculative patch system is needed now.
+The first client change is recorded as `patches/client/0001-controller-camera.patch`
+against the pinned upstream base. Source builds apply it idempotently and refuse
+conflicting local edits. See `CONTROLLER_TESTING.md`. The patch contains source,
+tests and notices, with no game assets. Keep subsequent changes small.
 
 The first playable milestone has not been achieved. Validation order:
 
