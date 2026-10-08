@@ -1,0 +1,75 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt
+index f17c23b..fb8a6a4 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt
+@@ -88,6 +88,10 @@ class FileStorage(
+                 offers.counter = int()
+             }
+         }
++        // Old or interrupted snapshots may contain newer offers than their counter file.
++        val highest = (offers.buyByItem.values + offers.sellByItem.values)
++            .flatMap { it.values }.flatten().maxOfOrNull { it.id } ?: 0
++        offers.counter = maxOf(offers.counter, highest)
+         offers.removeInactive(days)
+         return offers
+     }
+@@ -109,16 +113,18 @@ class FileStorage(
+     }
+ 
+     override fun saveOffers(offers: OpenOffers) {
++        // Allocate IDs durably before publishing item files; gaps are safe, reused IDs are not.
++        val file = directory.resolve(Settings["storage.grand.exchange.offers.path"])
++        Config.atomicFileWriter(file) {
++            writePair("counter", offers.counter)
++        }
++
+         val buy = directory.resolve(Settings["storage.grand.exchange.offers.buy.path"])
+         check(buy.isDirectory || buy.mkdirs()) { "Unable to create exchange buy-offer storage." }
+         saveOffers(buy, offers.buyByItem)
+         val sell = directory.resolve(Settings["storage.grand.exchange.offers.sell.path"])
+         check(sell.isDirectory || sell.mkdirs()) { "Unable to create exchange sell-offer storage." }
+         saveOffers(sell, offers.sellByItem)
+-        val file = directory.resolve(Settings["storage.grand.exchange.offers.path"])
+-        Config.atomicFileWriter(file) {
+-            writePair("counter", offers.counter)
+-        }
+     }
+ 
+     private fun saveOffers(directory: File, byItem: Map<String, TreeMap<Int, MutableList<OpenOffer>>>) {
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/FileStorageTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/FileStorageTest.kt
+index 3c4efe3..1a607bf 100644
+--- a/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/FileStorageTest.kt
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/FileStorageTest.kt
+@@ -9,6 +9,8 @@ import world.gregs.voidps.engine.data.Storage
+ import world.gregs.voidps.engine.data.StorageTest
+ import java.io.File
+ import kotlin.test.assertTrue
++import kotlin.test.assertEquals
++import world.gregs.voidps.engine.data.Settings
+ 
+ class FileStorageTest : StorageTest() {
+ 
+@@ -63,6 +65,23 @@ class FileStorageTest : StorageTest() {
+         assertTrue(storage.clans().isEmpty())
+     }
+ 
++    @Test
++    fun `New offer ids exceed loaded offers even if counter snapshot is old`() {
++        val previous = Settings.load(emptyMap()).clone() as java.util.Properties
++        try {
++        Settings.load(mapOf("storage.grand.exchange.offers.buy.path" to "grand_exchange/buy/", "storage.grand.exchange.offers.sell.path" to "grand_exchange/sell/", "storage.grand.exchange.offers.path" to "grand_exchange/counter.toml"))
++        val buy = directory.resolve(Settings["storage.grand.exchange.offers.buy.path"])
++        buy.mkdirs()
++        buy.resolve("coins.toml").writeText("[123]\nprice = 1\nremaining = 2\ncoins = 2\naccount = \"fixture\"\nlast_active = 1\n")
++        val counter = directory.resolve(Settings["storage.grand.exchange.offers.path"])
++        counter.parentFile.mkdirs()
++        counter.writeText("counter = 7\n")
++        assertEquals(124, storage.offers(0).id())
++        counter.delete()
++        assertEquals(124, storage.offers(0).id())
++        } finally { Settings.clear(); Settings.load(previous) }
++    }
++
+     @AfterEach
+     fun teardown() {
+         directory.listFiles()?.forEach { it.delete() }

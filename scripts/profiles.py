@@ -465,3 +465,62 @@ def restore_profile(uid, backup_name):
         profile = recovery_profile(uid, backup_name)
         return profile.restore(backup_name, recovery=True)
     return profile.restore(backup_name)
+
+
+def import_world_copy(source, label, account, password=''):
+    """Import an already stopped world copy, retaining all accounts and exchange files.
+
+    Refuses the upstream mutable world: the user must supply an independent copy.
+    Empty credentials retain normal native login, never reset a stored password hash.
+    """
+    source = Path(source)
+    if source.is_symlink() or not source.is_dir():
+        raise ValueError('Choose a regular stopped-world saves directory copy.')
+    original = (ROOT / 'upstream/game-server/data').resolve()
+    if source.resolve().is_relative_to(original):
+        raise ValueError('Import a stopped-world copy outside upstream/game-server/data; the original world is never imported directly.')
+    if not isinstance(account, str) or not ACCOUNT.fullmatch(account) or not account.strip():
+        raise ValueError('Select a valid primary account from this world copy.')
+    if not isinstance(password, str) or len(password) > 20 or any(ord(c) < 32 or ord(c) > 126 for c in password):
+        raise ValueError('Optional login password must use up to 20 printable ASCII characters.')
+    files = []
+    for path in source.rglob('*'):
+        if path.is_symlink():
+            raise ValueError('World copy contains a symbolic link.')
+        if path.is_file() and not (path.name.startswith('.save-') and path.name.endswith('.tmp')):
+            if path.stat().st_size > MAX_FILE:
+                raise ValueError('World copy contains an oversized file.')
+            files.append(path)
+    if len(files) > MAX_FILES or sum(p.stat().st_size for p in files) > MAX_BACKUP:
+        raise ValueError('World copy exceeds the backup size limit.')
+    primary = source / (account.lower() + '.toml')
+    if not primary.is_file():
+        raise ValueError('The selected account is missing from this world copy.')
+    contents = {}
+    fingerprints = {}
+    for path in files:
+        stat = path.stat()
+        fingerprints[path] = (stat.st_size, stat.st_mtime_ns)
+        data = path.read_bytes()
+        if len(data) != stat.st_size or path.stat().st_mtime_ns != stat.st_mtime_ns:
+            raise ValueError('World copy changed during import; use a stopped, stable copy.')
+        relative = path.relative_to(source)
+        if len(relative.parts) == 1 and relative.suffix == '.toml':
+            validate_save(data, account if path == primary else None)
+        contents[relative] = data
+    if any((path.stat().st_size, path.stat().st_mtime_ns) != saved for path, saved in fingerprints.items()):
+        raise ValueError('World copy changed during import; use a stopped, stable copy.')
+    profile = create(label, account, password=password)
+    try:
+        with profile.lock():
+            for relative, data in contents.items():
+                target = profile.state / 'saves' / relative
+                private_directory(target.parent)
+                with target.open('xb') as out:
+                    os.fchmod(out.fileno(), 0o600)
+                    out.write(data);out.flush();os.fsync(out.fileno())
+            profile._backup('imported-stopped-world-copy')
+        return profile
+    except BaseException:
+        shutil.rmtree(profile.directory)
+        raise

@@ -25,6 +25,7 @@ class LauncherTests(unittest.TestCase):
                            ('CLIENT', self.root/'upstream/runelite-client'), ('RUNTIME', self.root/'.runtime'), ('READY_TIMEOUT', 1)]:
             self.patches.append(patch.object(local_dev, key, value))
         self.patches.append(patch.object(profiles, 'PROFILES', self.root/'profiles'))
+        self.patches.append(patch.object(launcher_backend, 'SETTINGS', self.root/'launcher-settings.json'))
         for item in self.patches:
             item.start();self.addCleanup(item.stop)
         for directory, name in [(local_dev.SERVER/'game','void-server-test.jar'), (local_dev.CLIENT/'client','void-client-test.jar')]:
@@ -39,6 +40,15 @@ class LauncherTests(unittest.TestCase):
         self.env.start();self.addCleanup(self.env.stop)
         local_dev.write_build_stamp(local_dev.jar(local_dev.SERVER/'game','void-server-*.jar'), local_dev.jar(local_dev.CLIENT/'client','void-client-*.jar'))
         self.profile = profiles.create('Disposable', 'Tester')
+
+    def test_launcher_settings_persist_and_invalid_port_does_not_overwrite(self):
+        backend=launcher_backend.Backend()
+        self.assertEqual(backend.dispatch({'action':'settings'})['port'],43594)
+        backend.dispatch({'action':'settings','save':True,'port':43595})
+        self.assertEqual(launcher_backend.Backend().dispatch({'action':'settings'})['port'],43595)
+        before=launcher_backend.SETTINGS.read_bytes()
+        with self.assertRaises(ValueError):backend.dispatch({'action':'settings','save':True,'port':True})
+        self.assertEqual(launcher_backend.SETTINGS.read_bytes(),before)
 
     def wait_for(self, predicate):
         deadline=time.monotonic()+4

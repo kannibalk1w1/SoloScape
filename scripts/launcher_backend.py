@@ -13,6 +13,7 @@ import profile_session
 import profiles
 
 MAX_REQUEST = 16384
+SETTINGS = local_dev.ROOT / ".runtime/launcher-settings.json"
 
 
 class Backend:
@@ -34,6 +35,22 @@ class Backend:
 
     def dispatch(self, request):
         action = request.get('action')
+        if action == 'settings':
+            if request.get('save', False):
+                port = self.port(request)
+                profiles.private_directory(SETTINGS.parent)
+                profiles.atomic_json(SETTINGS, {'format': 1, 'port': port})
+                return {'port': port}
+            if SETTINGS.is_symlink():
+                raise ValueError('Launcher settings cannot be a symbolic link.')
+            if not SETTINGS.exists():
+                return {'port': 43594}
+            if SETTINGS.stat().st_size > MAX_REQUEST:
+                raise ValueError('Launcher settings are damaged; preserve the file and reset its port.')
+            settings = json.loads(SETTINGS.read_text())
+            if not isinstance(settings, dict) or settings.get('format') != 1:
+                raise ValueError('Launcher settings format is unsupported.')
+            return {'port': self.port(settings)}
         if action == 'list':
             return {'profiles': profiles.list_profiles(), 'session': self.current()}
         if action == 'status':

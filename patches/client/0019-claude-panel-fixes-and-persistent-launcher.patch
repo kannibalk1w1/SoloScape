@@ -1,0 +1,230 @@
+diff --git a/client/src/net/runelite/client/input/controller/PanelControls.java b/client/src/net/runelite/client/input/controller/PanelControls.java
+index ce860fb..6ec2eae 100644
+--- a/client/src/net/runelite/client/input/controller/PanelControls.java
++++ b/client/src/net/runelite/client/input/controller/PanelControls.java
+@@ -15,11 +15,13 @@ public final class PanelControls
+     private boolean armed, closing, exitRequested, selectionRequested;
+     private Rectangle scrollAnchor;
+ 
++    private UiState.Widget scrollSubject;
++    private int scrollDirection;
+     public PanelControls(UiControls.Gateway gateway) { this.gateway = gateway; }
+     public void reset()
+     {
+         state = null; focus = context = null; pane = contextIndex = heldDirection = 0;
+-        armed = closing = exitRequested = selectionRequested = false; repeatAt = scrollFrame = closingUntil = 0; scrollAnchor = null;
++        armed = closing = exitRequested = selectionRequested = false; repeatAt = scrollFrame = closingUntil = 0; scrollAnchor = null;scrollSubject=null;
+     }
+     public UiState.Panel state() { return state; }
+     public int pane() { return pane; }
+@@ -51,7 +53,21 @@ public final class PanelControls
+         focus = find(previous);
+         if (scrollAnchor != null && state.frame != scrollFrame)
+         {
+-            focus = closest(scrollAnchor); scrollAnchor = null;
++            UiState.Widget candidate=null;
++            if(scrollSubject!=null && scrollSubject.child>=0)
++            {
++                UiState.Widget retained=find(scrollSubject);
++                if(retained!=null)candidate=neighbor(retained,state.panes[pane].widgets,scrollDirection);
++                if(candidate==null)
++                    for(UiState.Widget widget:state.panes[pane].widgets)
++                    {
++                        int delta=widget.child-scrollSubject.child;
++                        if(widget.id==scrollSubject.id && (scrollDirection==12?delta>0:delta<0)
++                            && (candidate==null||Math.abs(delta)<Math.abs(candidate.child-scrollSubject.child)))candidate=widget;
++                    }
++                if(candidate==null)candidate=retained;
++            }
++            focus=candidate!=null?candidate:closest(scrollAnchor);scrollAnchor=null;scrollSubject=null;
+         }
+         if (focus == null && previous != null) focus = closest(previous.bounds);
+         if (focus == null && state.panes[pane].widgets.length > 0) focus = state.panes[pane].widgets[0];
+@@ -80,7 +96,7 @@ public final class PanelControls
+         {
+             pane = Math.floorMod(pane + ((input.buttonsPressed & LB) != 0 ? -1 : 1), state.panes.length);
+             focus = state.panes[pane].widgets.length == 0 ? null : state.panes[pane].widgets[0];
+-            heldDirection = 0; scrollAnchor = null;
++            heldDirection = 0; scrollAnchor = null;scrollSubject=null;
+         }
+         int direction = direction(input, now);
+         if (context != null)
+@@ -90,8 +106,8 @@ public final class PanelControls
+             if ((input.buttonsPressed & A) != 0)
+             {
+                 UiState.Action action = context.actions[contextIndex];
+-                if (gateway.invoke(context, action) && action.type == 13) selectionRequested = true;
+-                context = null; armed = false;
++                if (gateway.invoke(context, action)) {if(action.type == 13) selectionRequested = true;context = null;}
++                armed = false;
+             }
+             return true;
+         }
+@@ -101,7 +117,7 @@ public final class PanelControls
+             if (next != null) focus = next;
+             else if ((direction == 11 || direction == 12) && gateway.scroll(focus, direction))
+             {
+-                scrollAnchor = new Rectangle(focus.bounds); scrollFrame = state.frame;
++                scrollAnchor = new Rectangle(focus.bounds); scrollFrame = state.frame;scrollSubject=focus;scrollDirection=direction;
+             }
+         }
+         if ((input.buttonsPressed & X) != 0 && focus != null && focus.actions.length>0)
+@@ -121,7 +137,8 @@ public final class PanelControls
+         if(state==null || focus==null || (direction!=11&&direction!=12))return false;
+         UiState.Widget next=neighbor(focus,state.panes[pane].widgets,direction);
+         boolean moved=next!=null;
+-        if(moved)focus=next;else moved=gateway.scroll(focus,direction);
++        if(moved)focus=next;else
++        { moved=gateway.scroll(focus,direction);if(moved){scrollAnchor=new Rectangle(focus.bounds);scrollFrame=state.frame;scrollSubject=focus;scrollDirection=direction;} }
+         context=null;armed=false;return moved;
+     }
+     public boolean mouseFocus(UiState.Widget expected,boolean menu)
+@@ -132,6 +149,8 @@ public final class PanelControls
+             { pane=p;focus=current;context=menu&&current.actions.length>0?current:null;contextIndex=0;armed=false;return true; }
+         return false;
+     }
++    public void focusAction(UiState.Action action)
++    {if(context!=null)for(int i=0;i<context.actions.length;i++)if(context.actions[i].type==action.type&&context.actions[i].operation==action.operation)contextIndex=i;}
+     private UiState.Widget find(UiState.Widget old)
+     {
+         if (old != null) for (UiState.Widget w : state.panes[pane].widgets)
+diff --git a/client/src/net/runelite/client/input/controller/UiControls.java b/client/src/net/runelite/client/input/controller/UiControls.java
+index 79ee247..00f6696 100644
+--- a/client/src/net/runelite/client/input/controller/UiControls.java
++++ b/client/src/net/runelite/client/input/controller/UiControls.java
+@@ -100,7 +100,15 @@ public final class UiControls
+     public boolean mouseInvoke(UiState.Widget expected,UiState.Action action,long now)
+     {
+         if (!mouseFocus(expected,false) || action==null) return false;
+-        if (!gateway.invoke(expected,action)) return false;
++        if (!gateway.invoke(expected,action))
++        {
++            if(mouseFocus(expected,true))
++            {
++                if(panel.active())panel.focusAction(action);
++                else for(int i=0;i<context.actions.length;i++)if(context.actions[i].type==action.type&&context.actions[i].operation==action.operation)contextIndex=i;
++            }
++            return false;
++        }
+         if (action.type==13)
+         { reset(); if ((gateway.selectionMask()&32)!=0 && gateway.openTargetInventory()) focusInventory(now); }
+         return true;
+@@ -214,8 +222,8 @@ public final class UiControls
+             if (direction != 0) contextIndex = clamp(contextIndex + (direction == 11 || direction == 13 ? -1 : 1), context.actions.length);
+             if ((input.buttonsPressed & A) != 0)
+             {
+-                if (contextIndex < context.actions.length) gateway.invoke(context, context.actions[contextIndex]);
+-                context = null; armed = false;
++                if (contextIndex < context.actions.length && gateway.invoke(context, context.actions[contextIndex])) context = null;
++                armed = false;
+             }
+             return true;
+         }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index f679473..3e42c11 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -224,7 +224,7 @@ public class SoloScapeControllerPlugin extends Plugin
+         if(!customPanelActive() || System.nanoTime()>panelRequestUntil || !(event.getType() instanceof Number))return;
+         int type=((Number)event.getType()).intValue();String message=event.getMessage();
+         if((type==0||type==109||type==27||type==28||type==29)&&message!=null)
+-        { panelFeedback=message.replaceAll("<[^>]*>","");panelFeedbackUntil=System.nanoTime()+5_000_000_000L;panelRequestUntil=0; }
++        { panelFeedback="Game: "+message.replaceAll("<[^>]*>","");panelFeedbackUntil=System.nanoTime()+5_000_000_000L;panelRequestUntil=0; }
+     }
+ 
+     private void applyPreset()
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+index f8e4c4f..aa0043a 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+@@ -47,7 +47,7 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+             draw.drawString(fit(draw,title,box.width-32),box.x+(int)(16*scale),box.y+(int)(32*scale));
+             draw.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,Math.max(10,(int)(13*scale))));
+             int page=view.page(widgets,focus),pages=Math.max(1,(widgets.length+view.pageSize-1)/view.pageSize);
+-            draw.setColor(new Color(170,188,200));draw.drawString("Page "+(page+1)+" / "+pages,view.content.x,box.y+(int)(50*scale));
++            draw.setColor(new Color(170,188,200));draw.drawString("Visible page "+(page+1)+" / "+pages,view.content.x,box.y+(int)(50*scale));
+             for(UiState.Widget widget:widgets)
+             {
+                 if(!view.visible(widget))continue;
+@@ -140,7 +140,7 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+     @Override public MouseEvent mouseReleased(MouseEvent event){if(captured){event.consume();captured=false;}return event;}
+     @Override public MouseEvent mouseClicked(MouseEvent event){if(clicked){event.consume();clicked=false;}return event;}
+     @Override public MouseEvent mouseDragged(MouseEvent event){if(captured)event.consume();return event;}
+-    @Override public MouseEvent mouseMoved(MouseEvent event){return event;}
++    @Override public MouseEvent mouseMoved(MouseEvent event){if(plugin.customPanelActive()&&hit.bounds.contains(event.getPoint()))event.consume();return event;}
+     @Override public MouseEvent mouseEntered(MouseEvent event){return event;}
+     @Override public MouseEvent mouseExited(MouseEvent event){return event;}
+ }
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+index 3e8a766..63636b7 100644
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -86,7 +86,7 @@ public final class SoloScapeLauncher
+         diagnostics.addActionListener(e -> diagnose());
+         settings.addActionListener(e -> settings());
+         frame.setVisible(true); list.requestFocusInWindow();
+-        refresh = new javax.swing.Timer(1000, e -> poll()); refresh.start(); poll();
++        refresh = new javax.swing.Timer(1000, e -> poll()); refresh.start(); request(command("settings"), result -> {port=result.getAsJsonObject().get("port").getAsInt();poll();});
+         startController();
+     }
+ 
+@@ -189,7 +189,8 @@ public final class SoloScapeLauncher
+         JSpinner number = new JSpinner(new SpinnerNumberModel(port, 1, 65535, 1));
+         JPanel fields = new JPanel(new GridLayout(0, 1, 6, 6)); fields.add(new JLabel("Local game port (use another free port for an independent world)")); fields.add(number);
+         fields.add(new JLabel("Gameplay controller settings remain in the SoloScape Controller plugin."));
+-        if (JOptionPane.showConfirmDialog(frame, fields, "Launcher Settings", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) port = (Integer) number.getValue();
++        if (JOptionPane.showConfirmDialog(frame, fields, "Launcher Settings", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
++        { JsonObject cmd=command("settings");cmd.addProperty("port",(Integer)number.getValue());cmd.addProperty("save",true);request(cmd,result -> {port=result.getAsJsonObject().get("port").getAsInt();status.setText("Launcher settings saved.");}); }
+     }
+     private void close()
+     {
+@@ -232,6 +233,6 @@ public final class SoloScapeLauncher
+         final JsonObject data; final String id, label; final boolean saved, damaged;
+         CharacterRow(JsonObject row) { data=row; id=row.get("id").getAsString(); label=row.get("label").getAsString(); saved=row.get("saved").getAsBoolean(); damaged=row.has("error")&&!row.get("error").isJsonNull(); }
+         @Override public String toString() { return label + (damaged ? " • Needs recovery" : saved ? " • Continue" : " • New"); }
+-        String description() { StringBuilder text=new StringBuilder(label+"\n\n"); for(String field:new String[]{"account","created","last_played","saved_at","location","error"}) if(data.has(field)&&!data.get(field).isJsonNull()) text.append(field.replace('_',' ')).append(": ").append(data.get(field).isJsonPrimitive()?data.get(field).getAsString():data.get(field)).append("\n\n"); return text.toString(); }
++        String description() { StringBuilder text=new StringBuilder(label+"\n\n"); for(String field:new String[]{"account","created","last_played","saved_at","location","storage_bytes","backup_count","retention","error"}) if(data.has(field)&&!data.get(field).isJsonNull()) text.append(field.replace('_',' ')).append(": ").append(data.get(field).isJsonPrimitive()?data.get(field).getAsString():data.get(field)).append("\n\n"); return text.toString(); }
+     }
+ }
+diff --git a/client/test/net/runelite/client/input/controller/UiControlsTest.java b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+index ca79086..027d963 100644
+--- a/client/test/net/runelite/client/input/controller/UiControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+@@ -16,6 +16,7 @@ public class UiControlsTest
+         UiState state;
+         int opens, actions, cancels, closes;
+         boolean inventoryRequested;
++        PanelConfirmation confirmation;
+         UiState.Widget acted;
+         UiState.Action action;
+         Fake()
+@@ -27,7 +28,7 @@ public class UiControlsTest
+         public UiState snapshot() { return state; }
+         public UiState snapshot(boolean inventory) { inventoryRequested = inventory; return state; }
+         public boolean openInventory() { opens++; return true; }
+-        public boolean invoke(UiState.Widget widget, UiState.Action action) { actions++; acted = widget; this.action = action; return true; }
++        public boolean invoke(UiState.Widget widget, UiState.Action action) { if(confirmation!=null&&!confirmation.allow(widget,action,System.nanoTime()))return false;actions++; acted = widget; this.action = action; return true; }
+         public void cancelSelection() { cancels++; }
+         public void cancelDialogue() { closes++; }
+     }
+@@ -44,6 +45,20 @@ public class UiControlsTest
+         return ui;
+     }
+ 
++    @Test public void destructiveContextConfirmationRepeatsChosenDropRatherThanEating()
++    {
++        Fake game=new Fake();game.confirmation=new PanelConfirmation();GamepadState input=new GamepadState();UiControls ui=enter(game,input);
++        press(ui,input,4,20);press(ui,input,1<<12,30);assertEquals("Drop",ui.context().actions[ui.contextIndex()].label);
++        press(ui,input,1,40);assertEquals(0,game.actions);assertNotNull(ui.context());
++        press(ui,input,1,50);assertEquals(1,game.actions);assertEquals("Drop",game.action.label);assertNull(ui.context());
++    }
++    @Test public void blockedMouseDropKeepsItsActionForControllerConfirmation()
++    {
++        Fake game=new Fake();game.confirmation=new PanelConfirmation();GamepadState input=new GamepadState();UiControls ui=enter(game,input);
++        UiState.Widget item=ui.focus();assertFalse(ui.mouseInvoke(item,item.actions[1],20));assertNotNull(ui.context());
++        press(ui,input,1,30);assertEquals(1,game.actions);assertEquals("Drop",game.action.label);
++    }
++
+     @Test public void inventoryDescriptionsAreRequestedOnlyForEntryAndFocusIncludingRadialHandoff()
+     {
+         Fake game = new Fake(); GamepadState input = new GamepadState();

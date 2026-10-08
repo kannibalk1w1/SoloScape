@@ -126,6 +126,27 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(source.read_bytes(),native_save())
         self.assertEqual(len(profiles.list_profiles()),1)
 
+    def test_world_copy_migration_preserves_accounts_exchange_and_authentication_bytes(self):
+        source=Path(self.temp.name)/'stopped-world';source.mkdir()
+        (source/'tester.toml').write_bytes(native_save());(source/'other.toml').write_bytes(native_save('Other'))
+        exchange=source/'grand_exchange';exchange.mkdir();(exchange/'counter.toml').write_text('counter = 123\n')
+        migrated=profiles.import_world_copy(source,'Migrated','Tester','existing-pass')
+        self.assertEqual((migrated.state/'saves/tester.toml').read_bytes(),native_save())
+        self.assertEqual((migrated.state/'saves/other.toml').read_bytes(),native_save('Other'))
+        self.assertEqual((migrated.state/'saves/grand_exchange/counter.toml').read_bytes(),(exchange/'counter.toml').read_bytes())
+        self.assertEqual((source/'tester.toml').read_bytes(),native_save())
+        self.assertEqual(json.loads((migrated.directory/'login.json').read_text())['password'],'existing-pass')
+        self.assertEqual(len(profiles.list_backups(migrated.manifest['id'])),1)
+
+    def test_world_migration_refuses_original_paths_and_unsafe_copies(self):
+        with patch.object(profiles,'ROOT',Path(self.temp.name)):
+            source=Path(self.temp.name)/'upstream/game-server/data/saves';source.mkdir(parents=True)
+            with self.assertRaises(ValueError):profiles.import_world_copy(source,'Unsafe','Tester')
+        source=Path(self.temp.name)/'copied-world';source.mkdir();(source/'tester.toml').write_bytes(native_save())
+        (source/'linked').symlink_to(self.save)
+        with self.assertRaises(ValueError):profiles.import_world_copy(source,'Unsafe','Tester')
+        self.assertEqual(len(profiles.list_profiles()),1)
+
     def test_derived_logs_and_cache_are_not_backed_up_but_failed_saves_are(self):
         (self.profile.state/'temp/derived.map').write_bytes(b'cache')
         (self.profile.state/'logs/session.log').write_text('logs')
