@@ -35,6 +35,7 @@ need an in-game acceptance pass after restarting both client and server.
 
 | Input | Behavior |
 | --- | --- |
+| View/Select | Toggle the 16-slot main-tab radial; left stick highlights, A opens, B cancels |
 | Right stick | Native camera yaw/pitch, configurable speed, deadzone and inversion |
 | Left stick, destination mode | Camera-relative, collision-checked one-to-three-tile walks |
 | Left stick, direct mode | Held eight-way server directional intent; gentle tilt walks, full tilt requests running |
@@ -135,14 +136,14 @@ Both Shadow jars are rebuilt:
 
 Current checks pass with zero failures or errors:
 
-- **61 client test cases (58 distinct methods)**, with one SDL virtual-device test
+- **71 client test cases (68 distinct methods)**, with one SDL virtual-device test
   deliberately skipped in this batch. Native camera,
   pathfinder, widget tests, world-menu input, actual loot tables, NPC options,
   12-item cycling, blocked-pile starvation, cache freshness and encrypted
   directional/cancel packet encoding are covered. Earlier SDL validation passed.
 - **247 network tests** and **61 selected engine movement/decoder/cancel tests**, without skips.
 - Three patch-helper tests and four simulated launcher lifecycle tests.
-- Client/server source reproduction matches all **37 / 14** affected files on
+- Client/server source reproduction matches all **41 / 14** affected files on
   fresh bases, upgrades, sequential reverse application and repeated application.
 
 These establish automated behavior, not Steam Deck performance or complete
@@ -216,3 +217,29 @@ range/line-of-sight targeting needs its own policy before controller combat work
 These are not implemented by the review-fix batch. Restart both client and server
 with `./scripts/dev-run.sh --no-build` after quitting the current session to use
 both rebuilt jars, then complete M0 (including a real save roundtrip).
+
+
+## Tab radial proof of concept
+
+Client patch 0009 adds a reversible **Tab radial menu** setting (default on within
+SoloScape Controller). View/Select toggles a 16-sector wheel; left stick selects,
+A opens and B cancels. D-pad or bumpers cycle without held-button repeat. Existing
+Y inventory focus remains; choosing Inventory on the wheel enters that focus too.
+The wheel consumes controller movement/camera/actions, resets world focus, and
+requires neutral/released input before gameplay resumes. Already queued destination
+walking can finish; direct movement is stopped.
+
+Tabs use the actual fixed (548) and resized (746) native button IDs and ordinary
+widget operation dispatch. Hidden, stale or replaced buttons cannot dispatch;
+dialogues block the wheel. There are no new server packets. The Objectives slot
+maps to the layout's native objectives/familiar position and is available only if
+its native button is visible/actionable. Native logout remains separate.
+
+This prototype switches existing tabs; only Inventory has controller navigation
+inside it today. Other opened tabs still use their existing mouse controls. The
+renderer was visually checked at 765×503 and 1280×800 on a plain background; it
+has not yet been accepted in-game. The README includes that labelled preview.
+
+Public development repository: `https://github.com/kannibalk1w1/SoloScape`.
+The project remains maintainer-directed; see `CONTRIBUTING.md`. Cache acquisition
+is documented in `CACHE_SETUP.md`; no assets, saves or runtime files are published.

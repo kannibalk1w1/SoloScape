@@ -39,6 +39,7 @@ not a prerequisite for a good console RuneScape experience.
 - [x] BASE-08 Preserve changes in reproducible client/server patches and pass current tests.
 - [ ] BASE-09 Accept the newest interaction build in-game; see M0 below.
 - [x] BASE-10 Fix review findings H1/M2/M3: B content cleanup and per-geometry target checks, with regression tests.
+- [x] BASE-11 Build a reversible 16-slot home-tab radial proof of concept; native tab screens remain.
 
 ## M0 — finish the first reliable controller playable
 
@@ -55,6 +56,7 @@ Priority: now. Depends on the current built client and server.
 - [ ] M0-09 Check banker/shopkeeper targeting across counters and border-guard crossings in both movement modes.
 - [ ] M0-10 Test dialogue B while a walking step is interpolating.
 - [ ] M0-11 Resolve Claude review follow-ups before expanding features: server capabilities/jar mismatch detection, exception recovery and idle snapshot cost. See `CLAUDE_REVIEW.md`.
+- [ ] M0-12 Accept View/Select tab radial in both layouts: all available tabs, held input, Inventory handoff, focus/reconnect and dialogue priority.
 
 Acceptance: controller walking, camera, action selection, loot, inventory and dialogue
 work together, and the character survives a clean restart with expected state.

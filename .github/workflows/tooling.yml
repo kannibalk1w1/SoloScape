@@ -1,0 +1,25 @@
+name: Tooling checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  tooling:
+    name: Tooling checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Root tooling tests
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
+      - name: Shell syntax
+        run: |
+          for script in scripts/*.sh; do bash -n "$script"; done
+      - name: Patch syntax
+        run: |
+          for patch in patches/client/*.patch patches/server/*.patch; do git apply --numstat "$patch" > /dev/null; done
+      - name: Whitespace
+        run: git log -1 --check --oneline

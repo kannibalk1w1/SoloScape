@@ -321,3 +321,33 @@ and forced-action callback preservation. UI closing remains mocked.
 Both Shadow jars rebuild. Fresh/upgrade/reverse/idempotent patch reproduction
 matches 37 client and 14 server files. All seven root tooling tests pass. Physical
 controller and save-roundtrip acceptance still require restarting both processes.
+
+
+## Home-tab radial proof of concept (2026-10-08)
+
+Enable SoloScape Controller; **Tab radial menu** is on by default and can be turned
+back off. On Xbox/Deck layouts use **View/Select** (the left small menu button).
+SDL's mapped Back button is used; it is not the face-button B.
+
+1. Tap View/Select to open the wheel. If the stick was already held to walk,
+   release it once before aiming on the wheel.
+2. Tilt the left stick to highlight one of 16 tab slots. Alternatively, press
+   D-pad left/up or LB for previous, right/down or RB for next.
+3. Press A to open the highlighted native tab. Inventory also enters existing
+   D-pad inventory focus. Other tab contents retain mouse controls for now.
+4. B or View/Select closes the wheel without choosing. Hidden/unavailable tabs
+   are dimmed; failed opens retain the wheel with a message.
+5. After closing, release held controls and neutral the stick before moving again.
+
+Check fixed/resized layouts, all available slots, hidden/tutorial-locked tabs,
+opening while walking, A/B held during opening, dialogue priority, focus loss,
+disconnect and disable/re-enable. Test that wheel selection does not move the
+player or invoke a world interaction. Direct input stops on opening; a queued
+legacy destination can finish. Mouse tab switching remains available.
+
+Patch 0009 includes seven wheel state tests and three native UI tests, including
+actual ordinary tab operation packet dispatch. The full client run has 71 cases
+(68 distinct methods), zero failures/errors and one deliberately skipped SDL
+virtual-device case. The client Shadow jar rebuilds. Patch reproduction matches
+41 client files on upgrade/fresh/reverse/idempotent runs. Renderer previews at
+765×503 and 1280×800 were inspected; physical/in-game acceptance remains pending.

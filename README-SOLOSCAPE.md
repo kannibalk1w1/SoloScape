@@ -5,7 +5,7 @@ experimental controller support. JDK 21, JDK 8 and the upstream cache are instal
 Both upstream builds pass, doctor passes, and the server reaches world readiness.
 The controller prototype supports camera, precise walking, LT aiming, LB/RB target
 cycling, scene highlights, inventory and dialogue controls, plus an optional direct
-movement mode, world action menus and loot pickup; see
+movement mode, world action menus, loot pickup and a View/Select main-tab radial; see
 [controller testing instructions](docs/CONTROLLER_TESTING.md) to enable it.
 
 The [proposed roadmap](docs/ROADMAP.md) is the working task list.
@@ -43,7 +43,8 @@ X11/XWayland are required. Gradle wrappers resolve dependencies over the network
 on the first build. No system Gradle installation is needed.
 
 Alternatively copy `config/local.env.example` to `config/local.env` and set executable paths.
-Supply the compatible modified upstream cache in
+Follow [cache download and extraction instructions](docs/CACHE_SETUP.md), then
+supply the compatible modified upstream cache in
 `upstream/game-server/data/cache/`, including its index files. No scripts download
 proprietary game assets. Do not commit cache data, saves or game resources.
 
@@ -78,9 +79,8 @@ MEGA folder. See [cache provenance](docs/CACHE_SETUP.md). Cache and archive rema
 ignored by Git.
 
 The user reports that launch/gameplay and physical controller camera panning work.
-The user confirmed the walking/aiming usability pass feels better. Direct movement
-is an optional controller setting and needs a full client/server restart for this
-build, then an in-game feel check. Save roundtrip and Steam Deck acceptance remain
+The user confirmed the walking/aiming usability pass feels better. Direct movement is optional and the user reports it feels good. The latest tab
+radial and world-menu build needs an in-game acceptance pass after restarting. Save roundtrip and Steam Deck acceptance remain
 pending. Dependency/binary licence inventory is required
 before a distributable package.
 

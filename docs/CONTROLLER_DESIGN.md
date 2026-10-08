@@ -103,3 +103,20 @@ Cleanup can unmorph the player or install a content exit route; that new route i
 preserved. Nonmovement modes are preserved unless content cleanup replaces them.
 B inside a list backs out first; dialogue/inventory B keep their established
 context-specific behavior.
+
+
+## Home-tab radial prototype
+
+View/Select enters a 16-slot custom overlay ahead of inventory/world input. It
+suppresses controller camera and world actions, stops direct intent and consumes
+the closing frame. Held walking must neutral before selecting, and face buttons
+must release before confirmation. Stick angle selects clockwise from Inventory
+at top, with a centre deadzone and three-degree boundary hysteresis. D-pad/bumpers
+provide press-edge cycling. A dispatches once; B/View close without dispatch.
+
+HomeTab maps the pinned fixed/resized tab buttons. ControllerUi records their
+actual rendered widgets, bounds and native options. It validates freshness,
+visibility and identity again on opening, and uses the existing native dispatcher.
+No new server protocol is needed. Availability is refreshed every 100ms while
+open; dialogues block it. Inventory selection hands into existing UiControls;
+other tab contents remain native mouse-operated screens in this proof of concept.

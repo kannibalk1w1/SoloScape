@@ -173,3 +173,24 @@ restart. Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.
 - Current game processes, player saves and cache were not changed. Both processes
   need restarting for gameplay acceptance. The roadmap now includes extra review
   checks; capability negotiation, error recovery and idle UI cost remain proposals.
+
+
+## Home-tab radial and public repository preparation (2026-10-08)
+
+- Client patch 0009 adds View/Select, a 16-slot tab wheel, analog/D-pad/bumper
+  selection, A/B input, native availability checks and a config toggle.
+- Seven state tests cover all sectors, confirmation once, held input, unavailable
+  tabs, cancel/toggle, reset/dialogue blocking, wrap and angular hysteresis.
+- Three native UI tests cover all fixed/resized IDs, hidden/replaced buttons,
+  dialogue blocking and actual ordinary tab operation packet dispatch.
+- Full client tests: 71 cases (68 distinct methods), zero failures/errors, one SDL
+  virtual-device case deliberately skipped. Shadow jar builds successfully.
+- Upgrade/fresh/reverse/idempotent reproduction matches all 41 client files.
+  Seven root tooling tests pass. Server source/jar is unchanged by this prototype;
+  latest server evidence remains 247 network plus 61 selected engine cases.
+- Actual renderer previews inspected at 765×503 and 1280×800, using a plain
+  background; no gameplay acceptance claimed. Current game and saves untouched.
+- Public setup docs now explain the maintainer-linked cache source, verified
+  archive, extraction path and client/server download distinction. Upstream README
+  link was checked through GitHub's API. Public contribution policy preserves
+  maintainer control; no original-material licence grant was inferred.
