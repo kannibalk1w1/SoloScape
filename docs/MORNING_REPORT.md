@@ -1,8 +1,8 @@
 # SoloScape — combined morning report, 8 October 2026
 
-Both approved autonomous controller sprints are **implemented and verified** on
+Both approved autonomous controller sprints are **implemented, verified and pushed** on
 [overnight/controller-sprint](https://github.com/kannibalk1w1/SoloScape/tree/overnight/controller-sprint).
-The first ran approximately 17:40–18:55 UTC; the second began at 19:02 UTC.
+The first ran approximately 17:40–18:55 UTC; the second ran approximately 19:02–19:34 UTC.
 This report combines the earlier work with the new batch. The original report is
 preserved in [MORNING_REPORT_SPRINT_1.md](MORNING_REPORT_SPRINT_1.md).
 
@@ -10,6 +10,11 @@ Your running game, cache, accounts, saves and local control preferences were lef
 alone. Public `main` remains at the earlier radial prototype, `07e789b`; these
 changes are on the development branch for review and gameplay acceptance.
 The local Orca checkout remains `soloscape/bootstrap`, tracking that branch.
+
+Second-sprint implementation: [`c8a7031`](https://github.com/kannibalk1w1/SoloScape/commit/c8a7031224e6490b8bc4db84ba505fb4852fb6b6).
+Its [GitHub tooling run](https://github.com/kannibalk1w1/SoloScape/actions/runs/37832832337) passed.
+The preceding sprint/handoff head was `7ad3051`; its tooling run also passed.
+The combined report and roadmap are included on the same development branch.
 
 ## Current project state
 
