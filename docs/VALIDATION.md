@@ -222,3 +222,7 @@ Actual Claude performed a bounded planning audit, implementation review and fix 
 Quick-wheel and keyboard renderer previews were inspected at 765×503 and 1280×800, including 100% and 150% scaling. Published images are plain-background renderer artifacts, not game screenshots. No game process was started/stopped and no cache/player/save files were modified. Physical controller, production cache/CS2 op availability, native modal closing, real save persistence, Deck performance and suspend behavior remain unaccepted.
 
 Second-sprint implementation `c8a7031` is pushed; [GitHub Tooling checks](https://github.com/kannibalk1w1/SoloScape/actions/runs/37832832337) pass. Public main was verified unchanged at `07e789b`. The local build stamp was updated only after final test/build and exact export verification; no processes were launched.
+
+## Console alpha completion checkpoint
+
+Client 139 cases (one optional SDL skip), root tooling 37, config 74, networking 249, selected engine 49 and one full isolated native progression route pass. Client/server shadow jars and complete patch stacks match across 78/28 source files. Private New→Continue verifies native rendered login, current-session capabilities, normal shutdown/save, field preservation and four verified backups while original mutable path fingerprints remain unchanged. Python compile, shellcheck and git whitespace checks pass. See MORNING_REPORT.md and ALPHA_SAVE_VALIDATION.md for scope and physical acceptance limits.

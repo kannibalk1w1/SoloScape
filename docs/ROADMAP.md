@@ -45,6 +45,10 @@ not a prerequisite for a good console RuneScape experience.
 
 Both autonomous controller sprints are implemented on `overnight/controller-sprint`: reliability; bank/shop quantities/search; equipment/prayer/spell targeting; eight explicit quick-action slots; common production amount/smithing/tanning/jewellery controls; Combat/Skills/Quests/selected Settings handoff; scalable controller overlays, glyph labels, menu-button settings and a guide. Evidence: 121 client cases, 14 root cases, full 59/14-file patch exports; see `MORNING_REPORT.md`. Physical gameplay/save/Deck acceptance remains pending. M1-04/05/06/07/09/10 and M2 stay open where their full scope exceeds these increments.
 
+## Console alpha checkpoint
+
+The larger approved alpha builds on both sprints: isolated profiles and verified generation recovery; graphical launcher; reusable custom panels and four independently reversible screens; eight bindings/presets/run thresholds; current-session capability negotiation and interruption guards; isolated native progression and graphical save/reload validation. See [approved alpha task list](CONSOLE_ALPHA_TASKS.md) and the combined morning report for precise evidence and limitations. Next priority is physical controller/Deck acceptance and concrete usability fixes, followed by measured performance, broader content auditing and packaging.
+
 ## M0 — finish the first reliable controller playable
 
 Priority: now. Depends on the current built client and server.
@@ -59,7 +63,7 @@ Priority: now. Depends on the current built client and server.
 - [ ] M0-08 Test world B while morphed and during content cleanup/exit; confirm recovery without losing the exit route.
 - [ ] M0-09 Check banker/shopkeeper targeting across counters and border-guard crossings in both movement modes.
 - [ ] M0-10 Test dialogue B while a walking step is interpolating.
-- [x] M0-11 Implement review follow-ups: explicit matched-server guard, jar/patch fingerprints, exception recovery and idle snapshot cost. Automatic server capability negotiation remains proposed.
+- [x] M0-11 Implement review follow-ups: explicit matched-server guard, jar/patch fingerprints, exception recovery and idle snapshot cost. Automatic server capability negotiation is implemented in the alpha.
 - [ ] M0-12 Accept View/Select tab radial in both layouts: all available tabs, held input, Inventory handoff, focus/reconnect and dialogue priority.
 
 Acceptance: controller walking, camera, action selection, loot, inventory and dialogue
@@ -79,7 +83,7 @@ equipment/prayer/spells → targeting/quick actions → special interfaces.
 - [ ] M1-07 Add configurable quick slots for food, potions, prayers, spells and supported special attacks. **Implemented:** eight assignable food/potion/prayer/spell slots; special attacks and physical acceptance remain.
 - [x] M1-08 Support number/text entry, including a Deck-friendly keyboard path, without advancing unrelated dialogues.
 - [ ] M1-09 Audit special interfaces such as smithing/crafting lists, quest choices and familiar/Dungeoneering panels; implement the highest-use gaps. **Implemented:** common make-amount, smithing, tanning, silver and jewellery paths; niche interfaces and acceptance remain.
-- [ ] M1-10 Add remapping/presets and document button precedence across world, menus and widgets. **Implemented:** three auxiliary menu bindings, overlap feedback, defaults/Reset and documented precedence; full remapping/presets remain.
+- [x] M1-10 Add remapping/presets and document button precedence across world, menus and widgets. **Implemented:** eight separate bindings, overlap/neutral guards, Xbox/PlayStation/Deck presets, defaults and documented precedence. Logical overlay hints still need automatic physical-label substitution after remapping (M2-07).
 
 Acceptance: a normal session of gathering, fighting, looting, banking and buying supplies
 can be completed without a mouse, with an intentional mouse/trackpad fallback for any remaining niche interface.
@@ -105,15 +109,15 @@ without knowing desktop RuneScape shortcuts or reading implementation details.
 Priority: high, before long-term progression. Depends on M0 save validation; can
 advance alongside M1 where work is independent.
 
-- [ ] M3-01 Define world/profile/character ownership and which state is saved per world or per player.
-- [ ] M3-02 Add New Character, Continue, save selection and character metadata.
-- [ ] M3-03 Add versioned backups, validated restore, corruption handling and migration rules; test copies before touching real saves.
-- [ ] M3-04 Provide a launcher that hides normal local service startup and auto-connects to the chosen save.
-- [ ] M3-05 Implement Save & Quit with visible completion and recoverable startup/shutdown errors.
-- [ ] M3-06 Make loopback the default bind; expose explicit audited private-host configuration.
-- [ ] M3-07 Define true solo pause versus menu overlays and host/join behavior; prototype only where simulation ownership is clear.
+- [x] M3-01 Define world/profile/character ownership and which state is saved per world or per player.
+- [x] M3-02 Add New Character, Continue, save selection and character metadata.
+- [x] M3-03 Add versioned backups, validated restore, corruption handling and migration rules; test copies before touching real saves.
+- [x] M3-04 Provide a launcher that hides normal local service startup and auto-connects to the chosen save.
+- [x] M3-05 Implement Save & Quit with visible completion and recoverable startup/shutdown errors.
+- [x] M3-06 Make loopback the default bind; expose explicit audited private-host configuration.
+- [x] M3-07 Investigate true solo pause versus menu overlays and host/join behavior; record stage/clock/network/shutdown requirements. **Investigation delivered; working pause remains deferred.**
 - [ ] M3-08 Validate abrupt client closure and interrupted startup; preserve saves and avoid orphan processes.
-- [ ] M3-09 Show actionable cache/runtime/configuration errors in the launcher and keep diagnostics accessible.
+- [x] M3-09 Show actionable cache/runtime/configuration errors in the launcher and keep diagnostics accessible.
 
 Acceptance: launch → Continue → play → Save & Quit → restart works without a terminal,
 and a tested backup can restore a character/world after a simulated failure.

@@ -4,10 +4,10 @@ A local, single-player-first RuneScape revision-634 project, exploring native
 controller play and a console-style experience for Steam Deck. Built as a tracked
 patch layer over the pinned 2011Scape/Void server and RuneLite-style client.
 
-**Stage: early playable controller prototype.** Local gameplay works and the owner
+**Stage: playable console alpha on the development branch.** Local gameplay works and the owner
 has confirmed camera, movement feedback and optional direct movement feel good.
 There is no packaged release yet. Steam Deck performance, full interface coverage,
-upstream content completeness and a real save roundtrip still need acceptance.
+upstream content completeness and physical interface play still need acceptance. Isolated native save/reload and a gathering–production–combat route are verified.
 
 This is a public, **maintainer-directed** development repository. Feedback and small,
 agreed contributions are welcome. Scope and merges remain with the maintainer;
@@ -30,7 +30,10 @@ please discuss larger changes before starting. See [contributing](CONTRIBUTING.m
 - Equipment/prayer/spell focus and native item/spell targeting with explicit cancel.
 - A separate eight-slot quick-action wheel for explicitly assigned food, potions, prayers and spells.
 - Production amount presets, smithing/tanning/jewellery navigation, scaled controller overlays, Xbox/PlayStation labels and configurable menu buttons.
-- Reproducible client/server patches and a supervised local development launcher.
+- Reversible custom inventory/equipment/bank/shop screens backed by native actions.
+- Eight action bindings, conflict checks, Xbox/PlayStation/Deck presets and run thresholds.
+- Graphical New/Continue launcher, isolated world profiles, verified backups and recovery.
+- Session capability negotiation, interruption guards and reproducible client/server patches.
 
 ![Actual radial renderer on a plain background](docs/images/tab-radial-preview.png)
 
@@ -55,20 +58,19 @@ cd SoloScape
    [cache setup guide](docs/CACHE_SETUP.md). It includes the upstream-maintainer
    download link, verified archive name, extraction path and recorded SHA-256.
    The server cache is not bundled and is not fetched by simply launching the game.
-3. Run `./scripts/doctor.sh`, then `./scripts/dev-run.sh` for the first build/launch.
+3. Run `./scripts/doctor.sh`, then `./scripts/dev-run.sh` for the first build/launch. After building, `./scripts/launcher.sh` opens the graphical profile launcher; see [launcher instructions](docs/ALPHA_LAUNCHER.md).
 4. Enable **SoloScape Controller** in the client's plugin list. **Tab radial menu**
    is on by default within that plugin; **Direct movement** is optional; enable **SoloScape server features** only for
    the patched server to use direct movement and position-free cancellation.
    **Native interface navigation** defaults on and can be disabled independently.
-   **Quick-action wheel** defaults on: Start/Menu opens; all slots begin empty and X assigns the currently focused supported action. Overlay size, button labels and three menu bindings are in the same plugin settings.
+   **Quick-action wheel** defaults on: Start/Menu opens; all slots begin empty and X assigns the currently focused supported action. Overlay size, button labels, eight bindings, presets and separate custom-screen toggles are in the same plugin settings.
 5. Read the [controls and acceptance checklist](docs/CONTROLLER_TESTING.md).
 
 After a successful build, `./scripts/dev-run.sh --no-build` uses existing jars.
 A successful source build records patch/base and jar hashes. Rebuild both when
 updating patches; missing or mismatched stamps reject `--no-build` with a rebuild
 instruction.
-The launcher connects the client to localhost, but upstream binds broadly;
-restrict access to port 43594 when using it for local play.
+The patched server defaults to IPv4 loopback; the profile launcher always binds and connects locally. Direct movement additionally requires a current-session capability acknowledgement.
 
 ## Current state and proposed work
 
@@ -81,7 +83,7 @@ restrict access to port 43594 when using it for local play.
 
 The overnight sprint is on [`overnight/controller-sprint`](https://github.com/kannibalk1w1/SoloScape/tree/overnight/controller-sprint); see the [morning report](docs/MORNING_REPORT.md). Public `main` retains the earlier baseline until review.
 
-Next: play the bank/shop/quick-action/production build, verify a real save restart, then fix acceptance findings and work on save/Deck lifecycle. Larger ambitions—solo adaptations, original graphics, persistent AI
+Next: physically accept the custom-screen/profile build, fix recorded usability issues, then measure Deck performance and suspend behavior. Larger ambitions—solo adaptations, original graphics, persistent AI
 adventurers, a local economy, selected backports and private co-op—remain proposals,
 not implemented features or promised releases.
 

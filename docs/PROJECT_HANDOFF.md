@@ -4,6 +4,16 @@ Updated: 8 October 2026. This document is self-contained: it can be uploaded or
 pasted into ChatGPT alongside `ROADMAP.md` without granting access to the repository.
 The roadmap is a proposal for discussion, not approval to implement every feature.
 
+## Console alpha checkpoint
+
+The approved large autonomous alpha is implemented on `overnight/controller-sprint`. The earlier two controller sprints remain part of this build. Graphical launcher: New/Continue, progress, diagnostics, persisted port and graceful owned Save & Quit. Each character/profile owns its independent world generation, logs, cache-derived files and private client settings. Backups include world saves/exchange state, verify checksums and native character structure, and restore into new generations. Damaged metadata recovery preserves originals. A CLI imports independent stopped-world copies without changing authentication hashes.
+
+Four optional custom text-first screens replace the visible inventory/equipment/bank/shop surfaces independently. They preserve fresh native identity, quantities, permissions and item/spell selection, support mouse/trackpad input and destructive confirmation, and display native feedback. Equipment includes fresh native bonus text. Eight logical actions can be remapped; presets cover Xbox, PlayStation and Deck defaults. Direct movement requires a current-session nonce capability acknowledgement. Input gaps over 750 ms clear intention and require neutral input.
+
+Evidence: 139 client cases (one optional SDL skip), 37 tooling cases, 74 config, 249 networking, 49 selected engine cases and one full native gathering→cooking→combat→save/load route. Private graphical New→Continue sessions also verify rendered native login, capability negotiation, normal shutdown and unchanged original mutable paths. These are automated/disposable checks, not physical controller or Deck acceptance.
+
+True world pause is investigated but remains unexposed: clock/stage separation, guest handling and shutdown tests are required. Custom screens currently use item names rather than artwork. Import uses a CLI; text entry for launcher New Character uses the desktop keyboard. Backups/history remain retained, with disk-use visibility but no automatic pruning. There is no packaged release, complete content audit or completed hardware acceptance. Read [combined report](MORNING_REPORT.md), [alpha tasks](CONSOLE_ALPHA_TASKS.md), and [pause investigation](ALPHA_SOLO_PAUSE_INVESTIGATION.md).
+
 ## What we are building
 
 SoloScape is a local, single-player-first RuneScape RPG based on revision 634

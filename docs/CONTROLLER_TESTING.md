@@ -433,3 +433,18 @@ Settings also offer **Controller overlay size (75–175%)**, **Xbox/PlayStation 
 - Lifecycle: focus loss, reconnect, plugin/interface disable/re-enable, native mouse takeover, clean character save/restart and physical Deck performance/suspend.
 
 121 client cases and 14 tooling cases pass; one native SDL case is skipped. Actual physical play, cache operation availability and persistence remain pending. Priority is entry/dialogue or modal UI, then active wheel, then focused tab/inventory, then world input; neither wheel can open over a dialogue/entry/modal. Each closing input is consumed before world control can resume.
+
+## Console alpha acceptance additions
+
+Use `./scripts/launcher.sh` for disposable new profiles; set a free local port in Launcher Settings if another world is running. The controller plugin/settings are private per profile.
+
+- Enable each custom inventory/equipment/bank/shop toggle separately, then disable it and confirm native fallback.
+- Test D-pad pages and LB/RB panes, native bank Search, quantities and shop insufficient-funds feedback. “Visible page” describes the rendered native window; continue scrolling for more bank rows.
+- Choose Drop/Destroy through X, press A once and confirm nothing happens, then A again and verify only the chosen action. B cancels confirmation. Repeat mouse action → controller confirmation.
+- Test mouse wheel/right click/drag/hover inside custom surfaces and ordinary mouse interaction outside them.
+- Inspect worn items and equipment bonus text; check live item/spell targeting and stale stock/stack changes.
+- Apply each preset, remap actions, deliberately overlap bindings and verify warning/no controller actions. Restore defaults and test neutral rearming.
+- Verify direct movement with the matched server, older-server fallback and fresh reconnect acknowledgement. Suspend/focus loss must not replay held actions.
+- Save & Quit, Continue, backup/restore a disposable profile, and recover a deliberately damaged disposable profile manifest. Preserve real characters.
+
+Custom screens are early text-first layouts. True world pause is not enabled. Physical Deck/Gaming Mode, performance and suspend acceptance remain outstanding.
