@@ -378,3 +378,10 @@ Test the explicit server-features toggle, direct opt-out stop, normal B fallback
 focus rearming after a transient error and clean rebuild/restart. Do not enable
 custom packets against an unpatched server. Automated tests cover custom packet
 suppression, one direct stop and the native fallback packet/path-head coordinates.
+
+
+## Bank and shop focus (patch 0011)
+
+Open a bank, deposit box or shop normally. Controller focus activates automatically after held buttons/stick are released. D-pad navigates the visible grid; up/down at its edge scrolls the native container. LB/RB switches Bank/Stock, Inventory, and Controls / tabs panes. A uses the first withdrawal/deposit action, Buy or Sell; X lists all native quantities/actions, including Info/Value. B backs out of that list, then closes the interface. Bank tabs, deposit-carried/worn, note/swap toggles and other actionable buttons are in Controls / tabs. Server messages provide transaction feedback.
+
+Test full/empty banks and shops, mixed stack quantities, note mode, buying with insufficient funds, selling with full stock, tab switches, grid scrolling, mouse scroll takeover and fixed/resized layouts. This build has automated native-widget and state-machine checks, but gameplay is not yet accepted. Deposit/Withdraw-X and search still require native keyboard entry until the next controller-entry batch; bank PIN remains native.
