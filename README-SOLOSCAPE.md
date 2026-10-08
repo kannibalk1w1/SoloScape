@@ -4,12 +4,13 @@ Bootstrap for a local RuneScape revision-634 experience, with Steam Deck native
 experimental controller support. JDK 21, JDK 8 and the upstream cache are installed locally.
 Both upstream builds pass, doctor passes, and the server reaches world readiness.
 The controller prototype supports camera, precise walking, LT aiming, LB/RB target
-cycling, scene highlights, inventory and dialogue controls; see
+cycling, scene highlights, inventory and dialogue controls, plus an optional direct
+movement mode; see
 [controller testing instructions](docs/CONTROLLER_TESTING.md) to enable it.
 
 The branch is `soloscape/bootstrap`. Source checkouts under `upstream/` are
-ignored; the server remains unmodified and the client uses a tracked SoloScape
-patch. See [reconnaissance](docs/UPSTREAM_RECON.md),
+ignored; tracked SoloScape patches reproduce the client changes and the server
+directional movement extension. See [reconnaissance](docs/UPSTREAM_RECON.md),
 [architecture](docs/ARCHITECTURE.md) and the original [brief](docs/KICKOFF.md).
 
 For a fresh workspace, clone these public repositories into the named directories
@@ -50,7 +51,7 @@ proprietary game assets. Do not commit cache data, saves or game resources.
 ./scripts/dev-run.sh --no-build
 ```
 
-The launcher applies the tracked client patch, builds `:game:shadowJar` and
+The launcher applies the tracked client/server patches, builds `:game:shadowJar` and
 `:client:shadowJar`, starts the server,
 waits for its loaded-world message and launches the client explicitly at
 `127.0.0.1:43594`. Logs stream to the terminal and `.runtime/server.log` /
@@ -74,8 +75,10 @@ MEGA folder. See [cache provenance](docs/CACHE_SETUP.md). Cache and archive rema
 ignored by Git.
 
 The user reports that launch/gameplay and physical controller camera panning work.
-Movement/interaction gameplay checks and save roundtrip remain pending. Next step
-is testing inventory and dialogue controls on hardware. Dependency/binary licence inventory is required
+The user confirmed the walking/aiming usability pass feels better. Direct movement
+is an optional controller setting and needs a full client/server restart for this
+build, then an in-game feel check. Save roundtrip and Steam Deck acceptance remain
+pending. Dependency/binary licence inventory is required
 before a distributable package.
 
 Tooling validation: ShellCheck, Python compilation and four simulated-process

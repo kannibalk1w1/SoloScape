@@ -1,0 +1,424 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1053,6 +1053,9 @@
+     @Override
+     public void resetControllerWorld() { ControllerWorld.reset(); }
+ 
++    @Override public void directControllerMovement(double x, double y, boolean run) { ControllerDirectMovement.update(x, y, run); }
++    @Override public void stopControllerDirectMovement() { ControllerDirectMovement.stop(); }
++
+     @Override
+     public void clearControllerWalkMarker() { ControllerWorld.clearWalkMarker(); }
+ 
+diff --git a/client/src/Class325.java b/client/src/Class325.java
+--- a/client/src/Class325.java
++++ b/client/src/Class325.java
+@@ -396,6 +396,7 @@
+                     if (i_76_ >= 2000) i_76_ -= 2000;
+                     long l = (class348_sub42_sub12.aLong9605);
+                     if (net.runelite.client.game.GameEventBridgeHooks.postMenuOptionClicked(i_74_, i_75_, class348_sub42_sub12.aString9593, class348_sub42_sub12.aString9601, net.runelite.api.MenuAction.of(i_76_), i_77_, -1)) return;
++                    ControllerDirectMovement.menuAction();
+                     if (i_76_ == 19) {
+                         if (Class192.anInt2581 <= 0 || !Class182.aClass346_2449.method2696(82, -125) || !Class182.aClass346_2449.method2696(81, -126)) {
+                             Class348_Sub47 class348_sub47 = Class348_Sub14.method2807(i_75_, i_74_, (byte) -110, i_77_);
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -44,6 +44,17 @@
+             return null;
+         }
+         return walkMarker;
++    }
++
++    static void markDirectDestination(int dx, int dy)
++    {
++        Player p = Class132.aPlayer_1907;
++        Class361 map = Class348_Sub45.aClass361Array7108[p.plane];
++        int x = p.x >> 9, y = p.y >> 9;
++        if (!WorldInput.canStep(map.anIntArrayArray4438, x - map.anInt4453, y - map.anInt4441, dx, dy))
++        { clearWalkMarker(); return; }
++        Class248.anInt3203 = x + dx; Class97.anInt1548 = y + dy;
++        walkMarker = new net.runelite.api.coords.WorldPoint(x + dx + za_Sub2.regionTileX, y + dy + Class90.regionTileY, p.plane);
+     }
+ 
+     static boolean walk(double dx, double dy)
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -352,6 +352,8 @@
+     public void cancelControllerSelection() {}
+     public void cancelControllerDialogue() {}
+ 
++    public void directControllerMovement(double x, double y, boolean run) {}
++    public void stopControllerDirectMovement() {}
+     public void resetControllerWorld() {}
+     public void clearControllerWalkMarker() {}
+     public net.runelite.api.coords.WorldPoint getControllerWalkDestination() { return null; }
+diff --git a/client/src/net/runelite/client/input/controller/WorldControls.java b/client/src/net/runelite/client/input/controller/WorldControls.java
+--- a/client/src/net/runelite/client/input/controller/WorldControls.java
++++ b/client/src/net/runelite/client/input/controller/WorldControls.java
+@@ -11,13 +11,15 @@
+         int yaw();
+         void resetWalk();
+         void walk(double x, double y);
++        default void direct(double x, double y, boolean run) {}
++        default void stopDirect() {}
+         ControllerTarget find(double x, double y, ControllerTarget previous);
+         default ControllerTarget cycle(double x, double y, ControllerTarget previous, int direction) { return find(x, y, previous); }
+         boolean interact(ControllerTarget target);
+     }
+     private final Gateway gateway;
+     private volatile ControllerTarget target;
+-    private boolean armed, haveAim, moving, walkingPaused;
++    private boolean armed, haveAim, moving, walkingPaused, directMode;
+     private long lastFind, lastWalk;
+     private double facingX, facingY = 1, moveX, moveY;
+     private float pausedX, pausedY;
+@@ -29,11 +31,18 @@
+     {
+         target = null; armed = haveAim = moving = walkingPaused = false;
+         lastFind = lastWalk = 0; facingX = 0; facingY = 1;
++        gateway.stopDirect();
+         gateway.resetWalk();
+     }
+ 
+     public void update(GamepadState state, float deadzone, long now)
+     {
++        update(state, deadzone, now, false);
++    }
++
++    public void update(GamepadState state, float deadzone, long now, boolean direct)
++    {
++        if (direct != directMode) { reset(); directMode = direct; }
+         if (!gateway.ready()) { reset(); return; }
+         float scale = StickMath.deadzoneScale(state.leftX, state.leftY, deadzone);
+         float x = state.leftX * scale, y = state.leftY * scale;
+@@ -61,6 +70,11 @@
+         boolean aiming = state.leftTrigger > 0.35f;
+         if (walkingPaused && (neutral || Math.hypot(x - pausedX, y - pausedY) > 0.35)) walkingPaused = false;
+         if (neutral || aiming) { moving = false; gateway.resetWalk(); }
++        if (directMode && (neutral || aiming || walkingPaused || (state.buttonsHeld & 1) != 0))
++        {
++            gateway.stopDirect();
++            if (neutral) gateway.direct(0, 0, false); // Re-arm after a mouse menu action.
++        }
+         int bumpers = state.buttonsPressed & ((1 << 9) | (1 << 10));
+         if (bumpers != 0)
+         {
+@@ -84,6 +98,12 @@
+         }
+         if (!neutral && !aiming && !walkingPaused && (state.buttonsHeld & 1) == 0)
+         {
++            if (directMode)
++            {
++                gateway.direct(dx, dy, Math.hypot(x, y) >= .9);
++                moving = true;
++                return;
++            }
+             boolean changed = !moving || Math.hypot(dx - moveX, dy - moveY) > 0.35;
+             if (changed || lastWalk == 0 || now - lastWalk >= 150_000_000L)
+             {
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -27,4 +27,7 @@
+ 	default boolean debug() { return false; }
+     @ConfigItem(keyName = "showMovementTiles", name = "Show movement tiles", description = "Outline your tile and the controller's requested walking destination.", position = 5)
+     default boolean showMovementTiles() { return true; }
++
++    @ConfigItem(keyName = "directMovement", name = "Direct movement", description = "Experimental directional walking: hold the stick to move, release to stop. Requires the SoloScape server. Turn off for destination walking.", position = 6)
++    default boolean directMovement() { return false; }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -51,6 +51,8 @@
+         public boolean ready() { return client.isControllerWorldReady(); }
+         public int yaw() { return client.getCameraYaw(); }
+         public void resetWalk() { client.resetControllerWorld(); }
++        public void direct(double x, double y, boolean run) { client.directControllerMovement(x, y, run); }
++        public void stopDirect() { client.stopControllerDirectMovement(); }
+         public void walk(double x, double y) { client.walkController(x, y); }
+         public ControllerTarget find(double x, double y, ControllerTarget previous) { return client.findControllerTarget(x, y, previous); }
+         public ControllerTarget cycle(double x, double y, ControllerTarget previous, int direction) { return client.cycleControllerTarget(x, y, previous, direction); }
+@@ -140,7 +142,7 @@
+ 			else
+ 			{
+ 				if (!client.isControllerWorldReady()) client.clearControllerWalkMarker();
+-				world.update(state, config.deadzone() / 100f, now);
++				world.update(state, config.deadzone() / 100f, now, config.directMovement());
+ 			}
+ 			if (config.debug() && now - lastDebug >= 1_000_000_000L)
+ 			{
+diff --git a/client/test/net/runelite/client/input/controller/WorldControlsTest.java b/client/test/net/runelite/client/input/controller/WorldControlsTest.java
+--- a/client/test/net/runelite/client/input/controller/WorldControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/WorldControlsTest.java
+@@ -9,7 +9,8 @@
+     private static final class Fake implements WorldControls.Gateway
+     {
+         boolean ready = true, valid = true;
+-        int walks, actions, finds, yaw, cycles, direction;
++        int walks, actions, finds, yaw, cycles, direction, directUpdates, stops;
++        boolean running;
+         double aimX, aimY;
+         ControllerTarget previous;
+         double x, y;
+@@ -17,6 +18,8 @@
+         public boolean ready() { return ready; }
+         public int yaw() { return yaw; }
+         public void resetWalk() {}
++        public void direct(double x, double y, boolean run) { if (x != 0 || y != 0) directUpdates++; this.running = run; }
++        public void stopDirect() { stops++; }
+         public void walk(double x, double y) { walks++; this.x = x; this.y = y; }
+         public ControllerTarget find(double x, double y, ControllerTarget previous) { finds++; aimX = x; aimY = y; this.previous = previous; return selected; }
+         public ControllerTarget cycle(double x, double y, ControllerTarget previous, int direction) { cycles++; this.direction = direction; return selected; }
+@@ -140,4 +143,45 @@
+         assertFalse(npc.sameEntity(new ControllerTarget("Guide", "Talk-to", 25, 3, 6, 6, 0, 1000, 1000)));
+         assertFalse(npc.sameEntity(new ControllerTarget("Guide", "Talk-to", 25, 2, 6, 6, 0, 1100, 1000)));
+     }
++    @Test public void directToggleUsesIntentAndStopsOnReleaseOrAim()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1, true);
++        state.leftY = -1; controls.update(state, .18f, 20_000_001, true);
++        assertEquals(1, game.directUpdates); assertTrue(game.running); assertEquals(0, game.walks);
++        int stops = game.stops;
++        state.leftY = 0; controls.update(state, .18f, 40_000_001, true);
++        assertTrue(game.stops > stops); assertEquals(1, game.directUpdates);
++        state.leftY = -.5f; controls.update(state, .18f, 60_000_001, true);
++        assertEquals(2, game.directUpdates); assertFalse(game.running);
++        state.leftTrigger = 1; controls.update(state, .18f, 80_000_001, true);
++        assertEquals(2, game.directUpdates); assertTrue(game.stops > stops + 1);
++    }
++
++    @Test public void togglingBackStopsDirectAndRequiresReleasedInput()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1, true); state.leftX = 1;
++        controls.update(state, .18f, 20_000_001, true);
++        int stops = game.stops;
++        controls.update(state, .18f, 40_000_001, false);
++        assertTrue(game.stops > stops); assertEquals(0, game.walks);
++        state.leftX = 0; controls.update(state, .18f, 60_000_001, false);
++        state.leftX = 1; controls.update(state, .18f, 80_000_001, false);
++        assertEquals(1, game.walks); assertEquals(1, game.directUpdates);
++    }
++
++    @Test public void directResetAndInteractionStopHeldIntent()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1, true); state.leftY = -1;
++        controls.update(state, .18f, 20_000_001, true);
++        int stops = game.stops;
++        state.updateButtons(1); controls.update(state, .18f, 40_000_001, true);
++        assertTrue(game.stops > stops); assertEquals(1, game.actions);
++        state.updateButtons(0); controls.update(state, .18f, 60_000_001, true);
++        assertEquals(1, game.directUpdates);
++        controls.reset(); controls.update(state, .18f, 80_000_001, true);
++        assertEquals(1, game.directUpdates);
++    }
+ }
+diff --git a/client/src/ControllerDirectMovement.java b/client/src/ControllerDirectMovement.java
+new file mode 100644
+--- /dev/null
++++ b/client/src/ControllerDirectMovement.java
+@@ -0,0 +1,49 @@
++import net.runelite.client.input.controller.DirectInput;
++
++/** SoloScape protocol extension: directional intent, not a menu action or predicted position. */
++final class ControllerDirectMovement
++{
++    private static final Class351 PACKET = new Class351(85, 3);
++    private static int direction = -1;
++    private static boolean run, blocked;
++    private static long lastSent;
++
++    static void update(double x, double y, boolean running)
++    {
++        int next = DirectInput.direction(x, y, direction);
++        if (next < 0) { stop(); blocked = false; return; }
++        if (!ControllerWorld.ready() || blocked) { stop(); return; }
++        long now = System.nanoTime();
++        if (next != direction || running != run || now - lastSent >= 200_000_000L)
++        {
++            send(DirectInput.dx(next), DirectInput.dy(next), running);
++            lastSent = now;
++        }
++        direction = next; run = running;
++        ControllerWorld.markDirectDestination(DirectInput.dx(direction), DirectInput.dy(direction));
++    }
++
++    static void stop()
++    {
++        if (direction >= 0)
++        {
++            if (Class240.anInt4674 == 10 && Class348_Sub23_Sub2.aClass77_9029 != null) send(0, 0, false);
++            ControllerWorld.clearWalkMarker();
++        }
++        direction = -1; lastSent = 0; run = false;
++    }
++
++    static void menuAction()
++    {
++        if (direction >= 0) { stop(); blocked = true; }
++    }
++
++    private static void send(int x, int y, boolean running)
++    {
++        Class348_Sub47 packet = Class286_Sub3.method2148(PACKET, Class348_Sub23_Sub2.aClass77_9029, -100);
++        packet.aClass348_Sub49_Sub2_7116.writeByte(false, x);
++        packet.aClass348_Sub49_Sub2_7116.writeByte(false, y);
++        packet.aClass348_Sub49_Sub2_7116.writeByte(false, running ? 1 : 0);
++        Class348_Sub42_Sub14.method3243(123, packet);
++    }
++}
+diff --git a/client/src/net/runelite/client/input/controller/DirectInput.java b/client/src/net/runelite/client/input/controller/DirectInput.java
+new file mode 100644
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/DirectInput.java
+@@ -0,0 +1,22 @@
++package net.runelite.client.input.controller;
++
++/** Eight-way directional intent; angular hysteresis avoids toggling at sector boundaries. */
++public final class DirectInput
++{
++    private static final double SECTOR = Math.PI / 4;
++    private DirectInput() {}
++
++    public static int direction(double x, double y, int previous)
++    {
++        if (!Double.isFinite(x) || !Double.isFinite(y) || Math.hypot(x, y) < .001) return -1;
++        double angle = Math.atan2(y, x);
++        if (previous >= 0 && previous < 8)
++        {
++            double difference = Math.atan2(Math.sin(angle - previous * SECTOR), Math.cos(angle - previous * SECTOR));
++            if (Math.abs(difference) <= SECTOR / 2 + Math.toRadians(7)) return previous;
++        }
++        return Math.floorMod((int) Math.round(angle / SECTOR), 8);
++    }
++    public static int dx(int direction) { return direction < 0 ? 0 : (int) Math.round(Math.cos(direction * SECTOR)); }
++    public static int dy(int direction) { return direction < 0 ? 0 : (int) Math.round(Math.sin(direction * SECTOR)); }
++}
+diff --git a/client/test/ControllerDirectMovementTest.java b/client/test/ControllerDirectMovementTest.java
+new file mode 100644
+--- /dev/null
++++ b/client/test/ControllerDirectMovementTest.java
+@@ -0,0 +1,82 @@
++import org.junit.Before;
++import org.junit.After;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++/** Exercise the real packet encoder/queue and cancellation gate without a live connection. */
++public class ControllerDirectMovementTest
++{
++    private Player oldPlayer;
++    private Class361[] oldMaps;
++    private Class262 oldQueue;
++    private Isaac oldIsaac;
++    private int oldState, oldCamera, oldSize, oldBytes, oldDestX, oldDestY;
++    private boolean oldMenu, oldSelection;
++    private Isaac decode;
++
++    @Before public void setup()
++    {
++        oldPlayer = Class132.aPlayer_1907; oldMaps = Class348_Sub45.aClass361Array7108;
++        oldQueue = Class348_Sub40_Sub13.aClass262_9201; oldIsaac = Class348_Sub23_Sub2.aClass77_9029;
++        oldState = Class240.anInt4674; oldCamera = Class348_Sub40_Sub21.anInt9282;
++        oldSize = Class348_Sub34.anInt6969; oldBytes = Class348_Sub42_Sub14.anInt9630;
++        oldDestX = Class248.anInt3203; oldDestY = Class97.anInt1548;
++        oldMenu = Class305.aBoolean3870; oldSelection = r.aBoolean9722;
++        Class132.aPlayer_1907 = new Player();
++        Class132.aPlayer_1907.x = Class132.aPlayer_1907.y = 64 * 512 + 256;
++        Class361 map = new Class361(); map.anIntArrayArray4438 = new int[128][128];
++        Class348_Sub45.aClass361Array7108 = new Class361[] {map, map, map, map};
++        Class348_Sub40_Sub13.aClass262_9201 = new Class262();
++        Class348_Sub23_Sub2.aClass77_9029 = new Isaac(new int[4]); decode = new Isaac(new int[4]);
++        Class240.anInt4674 = 10; Class348_Sub40_Sub21.anInt9282 = 1;
++        Class305.aBoolean3870 = r.aBoolean9722 = false;
++        ControllerDirectMovement.update(0, 0, false);
++    }
++    @After public void restore()
++    {
++        ControllerDirectMovement.stop(); ControllerWorld.clearWalkMarker();
++        Class132.aPlayer_1907 = oldPlayer; Class348_Sub45.aClass361Array7108 = oldMaps;
++        Class348_Sub40_Sub13.aClass262_9201 = oldQueue; Class348_Sub23_Sub2.aClass77_9029 = oldIsaac;
++        Class240.anInt4674 = oldState; Class348_Sub40_Sub21.anInt9282 = oldCamera;
++        Class348_Sub34.anInt6969 = oldSize; Class348_Sub42_Sub14.anInt9630 = oldBytes;
++        Class248.anInt3203 = oldDestX; Class97.anInt1548 = oldDestY;
++        Class305.aBoolean3870 = oldMenu; r.aBoolean9722 = oldSelection;
++    }
++    private void packet(int x, int y, boolean run)
++    {
++        Class348_Sub47 packet = (Class348_Sub47) Class348_Sub40_Sub13.aClass262_9201.aClass348_3334.next;
++        assertNotSame(Class348_Sub40_Sub13.aClass262_9201.aClass348_3334, packet);
++        packet.method2715((byte) 91);
++        byte[] bytes = packet.aClass348_Sub49_Sub2_7116.data;
++        assertEquals(85, (bytes[0] - decode.method781((byte) -85)) & 255);
++        assertEquals(3, packet.anInt7122); assertEquals(4, packet.anInt7119);
++        assertEquals(x, bytes[1]); assertEquals(y, bytes[2]); assertEquals(run ? 1 : 0, bytes[3]);
++    }
++    @Test public void changedIntentAndReleaseUseDedicatedPacketsAndStopOnlyOnce()
++    {
++        ControllerDirectMovement.update(1, 0, false); packet(1, 0, false);
++        int sent = Class348_Sub42_Sub14.anInt9630;
++        ControllerDirectMovement.update(1, 0, false); assertEquals(sent, Class348_Sub42_Sub14.anInt9630);
++        ControllerDirectMovement.update(0, -1, true); packet(0, -1, true);
++        ControllerDirectMovement.stop(); packet(0, 0, false);
++        sent = Class348_Sub42_Sub14.anInt9630;
++        ControllerDirectMovement.stop(); assertEquals(sent, Class348_Sub42_Sub14.anInt9630);
++    }
++    @Test public void menuActionStopsIntentAndHeldStickCannotOverrideIt()
++    {
++        ControllerDirectMovement.update(1, 0, false); packet(1, 0, false);
++        ControllerDirectMovement.menuAction(); packet(0, 0, false);
++        int sent = Class348_Sub42_Sub14.anInt9630;
++        ControllerDirectMovement.update(0, 1, true); assertEquals(sent, Class348_Sub42_Sub14.anInt9630);
++        ControllerDirectMovement.update(0, 0, false);
++        ControllerDirectMovement.update(0, 1, true); packet(0, 1, true);
++    }
++    @Test public void loginAndBlockedWorldCannotStartDirectionalInput()
++    {
++        Class240.anInt4674 = 0;
++        int sent = Class348_Sub42_Sub14.anInt9630;
++        ControllerDirectMovement.update(1, 0, true); assertEquals(sent, Class348_Sub42_Sub14.anInt9630);
++        Class240.anInt4674 = 10; Class305.aBoolean3870 = true;
++        ControllerDirectMovement.update(1, 0, true); assertEquals(sent, Class348_Sub42_Sub14.anInt9630);
++    }
++}
+diff --git a/client/test/net/runelite/client/input/controller/DirectInputTest.java b/client/test/net/runelite/client/input/controller/DirectInputTest.java
+new file mode 100644
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/DirectInputTest.java
+@@ -0,0 +1,30 @@
++package net.runelite.client.input.controller;
++
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class DirectInputTest
++{
++    @Test public void allEightDirectionsKeepUnitSteps()
++    {
++        for (int d = 0; d < 8; d++)
++        {
++            int x = DirectInput.dx(d), y = DirectInput.dy(d);
++            assertEquals(d, DirectInput.direction(x, y, -1));
++            assertEquals(1, Math.max(Math.abs(x), Math.abs(y)));
++        }
++    }
++    @Test public void sectorBoundariesHaveHysteresis()
++    {
++        assertEquals(0, DirectInput.direction(Math.cos(Math.toRadians(25)), Math.sin(Math.toRadians(25)), 0));
++        assertEquals(1, DirectInput.direction(Math.cos(Math.toRadians(31)), Math.sin(Math.toRadians(31)), 0));
++        assertEquals(0, DirectInput.direction(Math.cos(Math.toRadians(-25)), Math.sin(Math.toRadians(-25)), 0));
++        assertEquals(7, DirectInput.direction(Math.cos(Math.toRadians(-31)), Math.sin(Math.toRadians(-31)), 0));
++    }
++    @Test public void neutralAndInvalidInputStop()
++    {
++        assertEquals(-1, DirectInput.direction(0, 0, 2));
++        assertEquals(-1, DirectInput.direction(Double.NaN, 1, 2));
++        assertEquals(0, DirectInput.dx(-1)); assertEquals(0, DirectInput.dy(-1));
++    }
++}

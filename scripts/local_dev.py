@@ -140,6 +140,7 @@ def launch(skip_build=False):
         client_java = os.environ.get("CLIENT_JAVA", "java")
         if not skip_build:
             subprocess.run(["bash", str(ROOT / "scripts/apply-client-patches.sh")], check=True)
+            subprocess.run(["bash", str(ROOT / "scripts/apply-server-patches.sh")], check=True)
             build(SERVER, server_java, ":game:shadowJar")
             # Gradle 8 runs on JDK 21; upstream requests a separate Java 8 toolchain.
             build(CLIENT, server_java, ":client:shadowJar")

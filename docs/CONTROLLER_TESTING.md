@@ -2,7 +2,8 @@
 
 The experimental **disabled-by-default** RuneLite plugin now supports right-stick
 camera, left-stick walking, A-button world interaction, inventory navigation and
-dialogue controls. The server/protocol are unchanged. The user confirmed camera
+dialogue controls and an optional direct movement toggle. Direct mode uses a
+small matching server protocol extension; destination mode remains the default. The user confirmed camera
 panning and the movement tile overlay work. This usability build adds precise walking, LT aiming, stable focus, LB/RB target
 cycling and gold scene highlights. Gameplay feel remains the next check.
 
@@ -61,7 +62,8 @@ Restart is required to load the new code if an older client is still open.
 | Camera pitch speed | 70°/s | Vertical speed at full tilt |
 | Invert vertical camera | Off | Reverse vertical direction |
 | Controller diagnostics | Off | Log processed stick values at most once per second |
-| Show movement tiles | On | Green walking destination and light blue player tile |
+| Show movement tiles | On | Green walking destination/next direct step and light blue player tile |
+| Direct movement | Off | Hold a direction to move; release to stop on the next server movement update |
 
 No native code loads until the plugin is enabled. It polls the first available
 SDL-mapped controller, retains that device while attached, and scans again after
@@ -100,8 +102,9 @@ Built-in Deck control access and mappings still need physical hardware validatio
   changes. Duplicate destinations are suppressed. Existing mouse destinations can override controller destinations.
 - Nearby NPC/object actions use `Class325.method2599`, the normal menu dispatcher.
   Action IDs come from the actual 634 builders, not RuneLite's generic enum.
-  No click emulation or invented server packets are used.
-- Thirty-eight client tests pass without skips: math/state, actual camera bridge,
+  Destination mode uses the ordinary dispatcher; opt-in direct movement uses
+  the explicit SoloScape directional protocol documented below.
+- Forty-seven client tests pass without skips: math/state, actual camera bridge,
   projection/collision/focus scoring, lifecycle/action-edge tests, three native
   pathfinder/gate tests, eleven UI navigation/native-widget tests and real SDL
   virtual-controller polling. SDL checks both
@@ -125,7 +128,9 @@ SoloScape owns `patches/client/0001-controller-camera.patch` and
 `patches/client/0002-controller-world.patch` and
 `patches/client/0003-controller-movement-tiles.patch` and
 `patches/client/0004-controller-inventory-dialogue.patch` and
-`patches/client/0005-controller-world-usability.patch`. Source builds apply the patch stack
+`patches/client/0005-controller-world-usability.patch` and
+`patches/client/0006-controller-direct-movement.patch`. The matching server change
+is `patches/server/0001-controller-direct-movement.patch`. Source builds apply both stacks
 automatically before compiling. To apply separately:
 
 ```bash
@@ -134,7 +139,8 @@ automatically before compiling. To apply separately:
 
 Application is idempotent and refuses conflicting edits rather than resetting
 the checkout. The initial upstream checkout now intentionally has controller
-changes; all server source remains unchanged. `--no-build` uses the existing jar.
+changes. Direct mode also modifies the server with a tracked patch.
+`--no-build` uses the existing jars.
 
 To run tests, with `SERVER_JAVA` and `CLIENT_JAVA` configured:
 
@@ -201,3 +207,44 @@ walking, footprint scoring, LT, camera panning, bumper edges, interaction recove
 and entity identity. Existing native pathfinder, widget and real SDL tests pass.
 The Shadow jar rebuilt successfully. Physical ease of use and scene label placement
 still need an in-game check; LT does not cancel a path already queued.
+
+## Try optional direct movement (2026-10-08)
+
+Both client and server jars have been rebuilt. Quit the existing game/launcher
+cleanly and relaunch `./scripts/dev-run.sh --no-build` so both processes load the
+new code. Enable **SoloScape Controller → Direct movement**. Leave it unchecked
+for the previous destination controls; switching does not require another restart.
+Release the stick and A after switching or returning focus.
+
+- Hold the left stick: movement continues in eight camera-relative directions.
+  Gentle tilt walks; full tilt requests running when energy/equipment permit.
+- Release it: directional input stops at the next server movement update. A step
+  already transmitted/rendering can finish; the game still uses 600ms ticks.
+- Hold LT to aim without walking; LB/RB cycles gold targets and A acts on one.
+- Walk into walls and diagonal corners; movement must stay collision checked.
+  Turn while held and test region edges, energy depletion, inventory/dialogue,
+  camera panning, focus loss and unplugging. No path should continue after stop.
+- While holding the stick, click a mouse destination or interaction. That action
+  takes over; direct input resumes only after the stick returns to neutral.
+- Uncheck **Direct movement** and verify the previous one-to-three-tile destination
+  walking returns, including its short queued-path finish after release.
+
+Tests pass with zero failures/errors/skips: 47 client tests, 246 network tests
+and 56 selected engine movement/decoder tests. New checks cover real encrypted
+opcode/payload encoding, directional sectors, mouse takeover, toggle/release/A/LT
+behavior, native decoder validation, server collision gates, per-tick steps, run
+preferences/energy, timeout and late-stop handling. Both Shadow jars contain the
+new classes. Client/server patches reproduce 36/9 files exactly; fresh, upgrade,
+reverse and repeated application pass. Physical gameplay feel remains unverified.
+
+Apply the server patch separately with `./scripts/apply-server-patches.sh`.
+To repeat server checks using the configured JDK 21:
+
+```bash
+source config/local.env
+export JAVA_HOME="$(dirname "$(dirname "$SERVER_JAVA")")"
+export GRADLE_USER_HOME="$PWD/.gradle"
+cd upstream/game-server
+bash gradlew --no-daemon :network:test :engine:test \
+  --tests '*Movement*' --tests '*DecoderTest' :game:shadowJar
+```

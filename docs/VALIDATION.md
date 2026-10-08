@@ -112,3 +112,23 @@ restart. Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.
   patched files exactly. Repeated application succeeds.
 - User reported controller gameplay works but walking/aiming/interaction is hard.
   This usability pass still needs their in-game feel and visual placement check.
+
+## Optional direct movement (2026-10-08)
+
+- Client patch 0006 adds **Direct movement**, default off; changing it stops the
+  previous mode and requires neutral before resuming. Legacy walking is preserved.
+- Server patch 0001 decodes directional opcode 85 and takes local, collision-checked
+  steps on existing 600ms ticks. Stop clears only direct movement. Freshness timeout
+  is 750ms, checked each tick. No absolute positions are accepted from the client.
+- Gentle tilt walks; full tilt requests running with normal energy/equipment limits
+  while preserving the run-toggle preference. Native menu actions stop direct input
+  and require neutral before the stick takes over again.
+- 47 client, 246 network and 56 selected engine tests pass with zero failures,
+  errors or skips. Both Shadow jars rebuilt and new class entries verified.
+- Client/server patch reproduction matches 36/9 files exactly. Fresh, upgrade,
+  reverse and idempotent application pass; three patch-helper and four launcher
+  tests, Python compilation and server patch-script ShellCheck pass.
+- First server test run downloaded missing upstream JUnit dependencies. No cache,
+  player saves or currently running game processes were changed.
+- In-game direct movement, stop latency, interaction ownership, region edges and
+  Steam Deck acceptance require a full client/server restart and physical testing.

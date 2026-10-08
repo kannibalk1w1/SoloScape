@@ -56,7 +56,7 @@ def main():
                 return 1
             print(f"Applied: {patch.name}")
         return 0
-    print("Patch conflict: local changes were preserved. Inspect the client checkout.", file=sys.stderr)
+    print("Patch conflict: local changes were preserved. Inspect the upstream checkout.", file=sys.stderr)
     return 1
 
 
