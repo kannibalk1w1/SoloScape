@@ -1,0 +1,211 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1047,6 +1047,12 @@
+     public void resetControllerWorld() { ControllerWorld.reset(); }
+ 
+     @Override
++    public void clearControllerWalkMarker() { ControllerWorld.clearWalkMarker(); }
++
++    @Override
++    public net.runelite.api.coords.WorldPoint getControllerWalkDestination() { return ControllerWorld.walkDestination(); }
++
++    @Override
+     public boolean isControllerWorldReady() { return ControllerWorld.ready(); }
+ 
+     @Override
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -9,6 +9,7 @@
+ {
+     private static final int[] pathX = new int[128], pathY = new int[128];
+     private static long lastWalk = Long.MIN_VALUE;
++    private static net.runelite.api.coords.WorldPoint walkMarker;
+     private static final int[] NPC_ACTIONS = {25, 20, 44, 46, 60};
+     private static final int[] OBJECT_ACTIONS = {3, 4, 9, 59, 1007};
+ 
+@@ -23,6 +24,27 @@
+     }
+ 
+     static void reset() { lastWalk = Long.MIN_VALUE; }
++
++    static void clearWalkMarker() { walkMarker = null; }
++
++    static net.runelite.api.coords.WorldPoint walkDestination()
++    {
++        if (walkMarker == null) return null;
++        if (!ready()) { clearWalkMarker(); return null; }
++        Player p = Class132.aPlayer_1907;
++        int x = walkMarker.getX() - za_Sub2.regionTileX;
++        int y = walkMarker.getY() - Class90.regionTileY;
++        // Mouse walks, arrival, plane changes and region rebuilds invalidate the marker.
++        if (p.plane != walkMarker.getPlane() || x < 0 || y < 0
++            || x >= Class367_Sub4.anInt7319 || y >= Class348_Sub40_Sub3.anInt9109
++            || Class248.anInt3203 != x || Class97.anInt1548 != y
++            || ((p.x >> 9) == x && (p.y >> 9) == y))
++        {
++            clearWalkMarker();
++            return null;
++        }
++        return walkMarker;
++    }
+ 
+     static boolean walk(double dx, double dy)
+     {
+@@ -40,6 +62,7 @@
+         dispatch(new ControllerTarget("", "Walk here", 19, 0, destX, destY,
+             player.plane, za_Sub2.regionTileX, Class90.regionTileY));
+         lastWalk = world;
++        walkMarker = new net.runelite.api.coords.WorldPoint(destX + za_Sub2.regionTileX, destY + Class90.regionTileY, player.plane);
+         return true;
+     }
+ 
+@@ -67,6 +90,7 @@
+         {
+             if (current.same(target) && current.option.equals(target.option) && java.util.Objects.equals(current.name, target.name) && reachable(current))
+             {
++                clearWalkMarker();
+                 dispatch(current);
+                 reset();
+                 return true;
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -346,6 +346,8 @@
+ 
+     /** World controller actions run on the client thread through the native dispatcher. */
+     public void resetControllerWorld() {}
++    public void clearControllerWalkMarker() {}
++    public net.runelite.api.coords.WorldPoint getControllerWalkDestination() { return null; }
+     public boolean isControllerWorldReady() { return false; }
+     public boolean walkController(double directionX, double directionY) { return false; }
+     public ControllerTarget findControllerTarget(double facingX, double facingY, ControllerTarget previous) { return null; }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -25,4 +25,6 @@
+ 
+ 	@ConfigItem(keyName = "debug", name = "Controller diagnostics", description = "Log stick values at most once a second.", position = 4)
+ 	default boolean debug() { return false; }
++    @ConfigItem(keyName = "showMovementTiles", name = "Show movement tiles", description = "Outline your tile and the controller's requested walking destination.", position = 5)
++    default boolean showMovementTiles() { return true; }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -33,6 +33,7 @@
+ 	@Inject private SoloScapeControllerConfig config;
+ 	@Inject private OverlayManager overlayManager;
+ 	@Inject private SoloScapeControllerOverlay overlay;
++	@Inject private SoloScapeMovementOverlay movementOverlay;
+     private final WorldControls world = new WorldControls(new WorldControls.Gateway()
+     {
+         public boolean ready() { return client.isControllerWorldReady(); }
+@@ -58,6 +59,7 @@
+ 	protected void startUp()
+ 	{
+ 		overlayManager.add(overlay);
++		overlayManager.add(movementOverlay);
+ 		clientThread.invoke(() -> { reset(); failed = false; active = true; });
+ 	}
+ 
+@@ -66,12 +68,15 @@
+ 	{
+ 		active = false;
+ 		overlayManager.remove(overlay);
++		overlayManager.remove(movementOverlay);
+ 		clientThread.invoke(this::reset);
+ 	}
+ 
++	boolean isActive() { return active; }
++
+ 	ControllerTarget getTarget() { return active ? world.getTarget() : null; }
+ 
+-	private void resetWorld() { world.reset(); }
++	private void resetWorld() { world.reset(); client.clearControllerWalkMarker(); }
+ 
+ 	private void reset()
+ 	{
+@@ -109,6 +114,7 @@
+ 			float pitch = state.rightY * scale * (config.invertY() ? 1 : -1);
+ 			client.setControllerCameraInput(yaw * config.yawSpeed(), pitch * config.pitchSpeed());
+ 			long now = System.nanoTime();
++			if (!client.isControllerWorldReady()) client.clearControllerWalkMarker();
+ 			world.update(state, config.deadzone() / 100f, now);
+ 			if (config.debug() && now - lastDebug >= 1_000_000_000L)
+ 			{
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeMovementOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeMovementOverlay.java
+new file mode 100644
+index 0000000..f5d7b65
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeMovementOverlay.java
+@@ -0,0 +1,68 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import com.GameClient;
++import java.awt.BasicStroke;
++import java.awt.Color;
++import java.awt.Dimension;
++import java.awt.Graphics2D;
++import java.awt.Polygon;
++import javax.inject.Inject;
++import net.runelite.api.Perspective;
++import net.runelite.api.coords.LocalPoint;
++import net.runelite.api.coords.WorldPoint;
++import net.runelite.client.ui.overlay.Overlay;
++import net.runelite.client.ui.overlay.OverlayLayer;
++import net.runelite.client.ui.overlay.OverlayPosition;
++import net.runelite.client.ui.overlay.OverlayUtil;
++
++/** Ground tiles stay anchored in the scene as the camera moves. */
++public final class SoloScapeMovementOverlay extends Overlay
++{
++    private static final Color DESTINATION = new Color(90, 255, 135);
++    private static final Color DESTINATION_FILL = new Color(90, 255, 135, 65);
++    private static final Color PLAYER = new Color(110, 210, 255, 180);
++    private static final Color PLAYER_FILL = new Color(110, 210, 255, 20);
++    private static final BasicStroke BORDER = new BasicStroke(2);
++    private final SoloScapeControllerPlugin plugin;
++    private final GameClient client;
++    private final SoloScapeControllerConfig config;
++
++    @Inject
++    SoloScapeMovementOverlay(SoloScapeControllerPlugin plugin, GameClient client, SoloScapeControllerConfig config)
++    {
++        super(plugin);
++        this.plugin = plugin;
++        this.client = client;
++        this.config = config;
++        setPosition(OverlayPosition.DYNAMIC);
++        setLayer(OverlayLayer.UNDER_WIDGETS);
++    }
++
++    @Override
++    public Dimension render(Graphics2D graphics)
++    {
++        if (!plugin.isActive() || !config.showMovementTiles() || !client.isControllerWorldReady()
++            || client.getCanvas() == null || !client.getCanvas().isFocusOwner()) return null;
++        // This is the validated destination from the native walk adapter, not stick prediction.
++        WorldPoint destination = client.getControllerWalkDestination();
++        if (destination == null) return null;
++        LocalPoint local = LocalPoint.fromWorld(client, destination);
++        if (local == null) return null;
++        Graphics2D draw = (Graphics2D) graphics.create();
++        try
++        {
++            // Native player coordinates use 512 units per tile; RuneLite uses 128.
++            LocalPoint player = LocalPoint.fromScene(client.getLocalPlayerLocalX() >> 9, client.getLocalPlayerLocalY() >> 9);
++            renderTile(draw, player, PLAYER, PLAYER_FILL);
++            renderTile(draw, local, DESTINATION, DESTINATION_FILL);
++        }
++        finally { draw.dispose(); }
++        return null;
++    }
++
++    private void renderTile(Graphics2D graphics, LocalPoint tile, Color outline, Color fill)
++    {
++        Polygon polygon = Perspective.getCanvasTilePoly(client, tile);
++        if (polygon != null) OverlayUtil.renderPolygon(graphics, polygon, outline, fill, BORDER);
++    }
++}

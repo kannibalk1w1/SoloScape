@@ -20,7 +20,10 @@ and interaction still need their gameplay check. Inventory focus is next.
 4. Release both sticks and A once after login/reconnect/focus regain. Move the
    **left stick** to walk relative to the camera. Try a wall and a diagonal corner;
    the character should stop before blocked tiles. Release the stick: new requests
-   stop, but the short path already queued can finish.
+   stop, but the short path already queued can finish. A bright green tile marks
+   the actual requested destination, and a light blue outline marks your current
+   tile while walking. The destination stays visible until arrival or another
+   action overrides it.
 5. Aim the left stick toward a nearby NPC/object, then release it. The overlay
    shows **A: action target**. Press **A** (Xbox / Deck; bottom face button on other
    pads) to perform that displayed action once. Release A and neutralize the left
@@ -42,6 +45,7 @@ Restart is required to load the new code if an older client is still open.
 | Camera pitch speed | 70°/s | Vertical speed at full tilt |
 | Invert vertical camera | Off | Reverse vertical direction |
 | Controller diagnostics | Off | Log processed stick values at most once per second |
+| Show movement tiles | On | Green walking destination and light blue player tile |
 
 No native code loads until the plugin is enabled. It polls the first available
 SDL-mapped controller, retains that device while attached, and scans again after
@@ -98,7 +102,8 @@ not implemented in this build.
 
 The checkout remains at upstream base `297bc8a4861755b676855664d32859054779c067`.
 SoloScape owns `patches/client/0001-controller-camera.patch` and
-`patches/client/0002-controller-world.patch`. Source builds apply the patch stack
+`patches/client/0002-controller-world.patch` and
+`patches/client/0003-controller-movement-tiles.patch`. Source builds apply the patch stack
 automatically before compiling. To apply separately:
 
 ```bash
@@ -123,3 +128,15 @@ bash gradlew --no-daemon \
 
 Native virtual-device tests require SDL2 and no connected physical gamepads.
 Without the opt-in property, the native integration test is skipped; pure tests run.
+
+## Movement tile overlay (2026-10-08)
+
+The overlay uses the collision-checked destination recorded by the native walk
+adapter. It projects ground tile polygons through the existing perspective code
+and renders under UI widgets. It clears on arrival, a different mouse destination,
+A interaction, loss of focus/controller, plugin shutdown and invalid world state.
+Neutralizing the stick keeps the destination visible while the queued walk finishes.
+
+The client jar rebuilt and all 20 existing client tests passed without skips.
+Patch 0003 reproduces the source exactly as an upgrade or fresh patch stack.
+Visual placement, colours and camera tracking still need an in-game check.

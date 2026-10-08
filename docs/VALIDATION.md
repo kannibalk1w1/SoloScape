@@ -71,3 +71,12 @@ restart. Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.
   checked independently. Local conflicts are detected before changing source.
 - Physical movement/interaction, focus recovery and Steam Deck acceptance remain
   pending. See `CONTROLLER_TESTING.md` for the gameplay checklist.
+
+## Movement tile overlay (2026-10-08)
+
+- Patch 0003 adds enabled-by-default ground markers for the actual controller
+  destination and current player tile, using existing perspective/overlay APIs.
+- Client Shadow jar rebuilt; all 20 existing client tests pass without skips.
+- Existing-build upgrade and fresh patch-stack reproduction match all 23 patched
+  files; sequential reverse application succeeds and application is idempotent.
+- In-game visual verification remains pending.
