@@ -1,8 +1,9 @@
-# First controller build: detection + right-stick camera
+# Controller build: camera, movement and world interaction
 
-The first controller feature is built. It is an experimental **disabled-by-default**
-RuneLite plugin, not yet the full controller scheme. The server/protocol are
-unchanged. Left-stick movement, A interaction and inventory focus are next steps.
+The experimental **disabled-by-default** RuneLite plugin now supports right-stick
+camera, left-stick walking and A-button world interaction. The server/protocol are
+unchanged. The user has confirmed physical right-stick panning works; movement
+and interaction still need their gameplay check. Inventory focus is next.
 
 ## Try this build
 
@@ -16,9 +17,20 @@ unchanged. Left-stick movement, A interaction and inventory focus are next steps
    it. Open its settings using the usual plugin configuration button.
 3. Connect an SDL-mapped gamepad, log in, and click the game canvas so it owns
    focus. Move the **right stick** to rotate/pitch the camera.
-4. Test keyboard/mouse camera controls as well, then unplug the controller while
-   holding the right stick. Camera input should stop. Reconnect and try again.
-5. Disable the plugin to return to ordinary client input.
+4. Release both sticks and A once after login/reconnect/focus regain. Move the
+   **left stick** to walk relative to the camera. Try a wall and a diagonal corner;
+   the character should stop before blocked tiles. Release the stick: new requests
+   stop, but the short path already queued can finish.
+5. Aim the left stick toward a nearby NPC/object, then release it. The overlay
+   shows **A: action target**. Press **A** (Xbox / Deck; bottom face button on other
+   pads) to perform that displayed action once. Release A and neutralize the left
+   stick before walking again, so movement does not immediately cancel the action.
+   Try an NPC conversation, a tree and a door. Right-stick rotation also changes
+   targeting direction. A currently handles world actions, not dialogue choices.
+6. Test ordinary mouse walking/interaction and camera controls. Unplug while
+   moving, switch focus while holding A, then reconnect/refocus. Input should stop
+   and held world inputs must not resume until the stick and A are released.
+7. Disable the plugin to return to ordinary client input.
 
 The already-built jar is `upstream/runelite-client/client/build/libs/void-client-0.2.0_a2.jar`.
 Restart is required to load the new code if an older client is still open.
@@ -34,8 +46,11 @@ Restart is required to load the new code if an older client is still open.
 No native code loads until the plugin is enabled. It polls the first available
 SDL-mapped controller, retains that device while attached, and scans again after
 disconnect. Device name/GUID and connection changes appear in `.runtime/client.log`.
-No actions are bound to controller buttons yet; their edge state is available for
-later features.
+A uses SDL button 0 and dispatches only on its press edge. Targets are within
+3.5 tiles and a forward cone; a small retention bias stabilizes focus. The client
+checks native pathfinding (maximum eight path steps) and revalidates the displayed
+target immediately before dispatch. Selected spells/items, open context menus
+and scripted camera modes block world actions.
 
 SDL2 **2.0.22+** must be installed on Linux (`libSDL2-2.0.so.0`). This machine's
 SDL **2.32.74** successfully runs the native tests. If SDL is missing or fails,
@@ -58,20 +73,33 @@ Built-in Deck control access and mappings still need physical hardware validatio
 - Canvas focus/player presence checks and a 100ms stale-input watchdog. Per-frame
   camera contribution caps elapsed time at 50ms to avoid jumps after a hitch.
 - Login/scripted/free-camera modes do not receive controller camera updates.
-- Nine tests pass: six input/state/math tests, two tests against the actual game
-  camera bridge, and one real SDL virtual-controller integration test (not skipped).
-  The latter checks hotplug, both right-stick axes, button edges and unplug reset.
+- Camera-relative walking projects two to four tiles ahead and checks the exact
+  revision-634 collision masks, including both side tiles for diagonals. Native
+  walking requests are limited to one per 150ms and duplicate destinations are
+  suppressed. Existing mouse destinations can override controller destinations.
+- Nearby NPC/object actions use `Class325.method2599`, the normal menu dispatcher.
+  Action IDs come from the actual 634 builders, not RuneLite's generic enum.
+  No click emulation or invented server packets are used.
+- Twenty client tests pass without skips: math/state, actual camera bridge,
+  projection/collision/focus scoring, lifecycle/action-edge tests, three native
+  pathfinder/gate tests and real SDL virtual-controller polling. SDL checks both
+  sticks, A edges, hotplug and unplug reset.
+- Three patch-stack tests cover fresh application, upgrade/idempotence and
+  preserving conflicting local edits.
 - Client Shadow jar builds with the plugin, JNA dispatch resources and notices.
 - Patch reproduces modified files exactly on the pinned base and is reversible.
 
-Physical gamepad/Deck feel, focus behaviour in Gaming Mode and visual camera
-limits still require manual testing. Native test results do not establish those.
+The user confirmed camera panning. Movement/interaction feel, Gaming Mode focus
+and Deck acceptance still require manual testing. Native tests do not establish
+those. Inventory navigation, dialogue confirmation and context/back bindings are
+not implemented in this build.
 
 ## Reproduce the source change
 
 The checkout remains at upstream base `297bc8a4861755b676855664d32859054779c067`.
-SoloScape owns `patches/client/0001-controller-camera.patch`. Source builds apply
-it automatically before compiling. To apply separately:
+SoloScape owns `patches/client/0001-controller-camera.patch` and
+`patches/client/0002-controller-world.patch`. Source builds apply the patch stack
+automatically before compiling. To apply separately:
 
 ```bash
 ./scripts/apply-client-patches.sh

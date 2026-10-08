@@ -1,0 +1,821 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+index 476263f..1243423 100644
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1043,6 +1043,23 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+         ControllerCamera.setInput(yawDegreesPerSecond, pitchDegreesPerSecond);
+     }
+ 
++    @Override
++    public void resetControllerWorld() { ControllerWorld.reset(); }
++
++    @Override
++    public boolean isControllerWorldReady() { return ControllerWorld.ready(); }
++
++    @Override
++    public boolean walkController(double x, double y) { return ControllerWorld.walk(x, y); }
++
++    @Override
++    public ControllerTarget findControllerTarget(double x, double y, ControllerTarget previous) {
++        return ControllerWorld.findTarget(x, y, previous);
++    }
++
++    @Override
++    public boolean interactController(ControllerTarget target) { return ControllerWorld.interact(target); }
++
+     @Override
+     public int getCameraScale() {
+         return Class132.anInt1906;
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+index 2741582..3753049 100644
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -344,6 +344,31 @@ public abstract class GameClient extends Applet {
+     {
+     }
+ 
++    /** World controller actions run on the client thread through the native dispatcher. */
++    public void resetControllerWorld() {}
++    public boolean isControllerWorldReady() { return false; }
++    public boolean walkController(double directionX, double directionY) { return false; }
++    public ControllerTarget findControllerTarget(double facingX, double facingY, ControllerTarget previous) { return null; }
++    public boolean interactController(ControllerTarget target) { return false; }
++
++    public static final class ControllerTarget
++    {
++        public final String name, option;
++        public final int action, x, y, plane, baseX, baseY;
++        public final long identifier;
++        public ControllerTarget(String name, String option, int action, long identifier,
++                                int x, int y, int plane, int baseX, int baseY)
++        {
++            this.name = name; this.option = option; this.action = action; this.identifier = identifier;
++            this.x = x; this.y = y; this.plane = plane; this.baseX = baseX; this.baseY = baseY;
++        }
++        public boolean same(ControllerTarget other)
++        {
++            return other != null && action == other.action && identifier == other.identifier
++                && x == other.x && y == other.y && plane == other.plane && baseX == other.baseX && baseY == other.baseY;
++        }
++    }
++
+     public int getTileHeight(int localX, int localY, int plane)
+     {
+         return 0;
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+index 7da56c6..3922989 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -9,7 +9,7 @@ import net.runelite.client.config.Range;
+ public interface SoloScapeControllerConfig extends Config
+ {
+ 	@Range(min = 0, max = 90)
+-	@ConfigItem(keyName = "deadzone", name = "Stick deadzone (%)", description = "Radial right-stick deadzone.", position = 0)
++	@ConfigItem(keyName = "deadzone", name = "Stick deadzone (%)", description = "Radial deadzone for both sticks.", position = 0)
+ 	default int deadzone() { return 18; }
+ 
+ 	@Range(min = 10, max = 360)
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index d175adc..12b56e1 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -1,6 +1,7 @@
+ package net.runelite.client.plugins.soloscapecontroller;
+ 
+ import com.GameClient;
++import com.GameClient.ControllerTarget;
+ import com.google.inject.Provides;
+ import java.awt.Canvas;
+ import javax.inject.Inject;
+@@ -12,12 +13,14 @@ import net.runelite.client.eventbus.Subscribe;
+ import net.runelite.client.input.controller.GamepadState;
+ import net.runelite.client.input.controller.SdlGamepad;
+ import net.runelite.client.input.controller.StickMath;
++import net.runelite.client.input.controller.WorldControls;
++import net.runelite.client.ui.overlay.OverlayManager;
+ import net.runelite.client.plugins.Plugin;
+ import net.runelite.client.plugins.PluginDescriptor;
+ 
+ @PluginDescriptor(
+ 	name = "SoloScape Controller",
+-	description = "Experimental native controller detection and right-stick camera",
++	description = "Native controller camera, camera-relative walking and nearby world interaction",
+ 	tags = {"controller", "gamepad", "soloscape", "steam deck"},
+ 	enabledByDefault = false,
+ 	loadWhenOutdated = true
+@@ -28,6 +31,17 @@ public class SoloScapeControllerPlugin extends Plugin
+ 	@Inject private GameClient client;
+ 	@Inject private ClientThread clientThread;
+ 	@Inject private SoloScapeControllerConfig config;
++	@Inject private OverlayManager overlayManager;
++	@Inject private SoloScapeControllerOverlay overlay;
++    private final WorldControls world = new WorldControls(new WorldControls.Gateway()
++    {
++        public boolean ready() { return client.isControllerWorldReady(); }
++        public int yaw() { return client.getCameraYaw(); }
++        public void resetWalk() { client.resetControllerWorld(); }
++        public void walk(double x, double y) { client.walkController(x, y); }
++        public ControllerTarget find(double x, double y, ControllerTarget previous) { return client.findControllerTarget(x, y, previous); }
++        public boolean interact(ControllerTarget target) { return client.interactController(target); }
++    });
+ 	private final GamepadState state = new GamepadState();
+ 	private SdlGamepad gamepad;
+ 	private boolean failed;
+@@ -43,6 +57,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 	@Override
+ 	protected void startUp()
+ 	{
++		overlayManager.add(overlay);
+ 		clientThread.invoke(() -> { reset(); failed = false; active = true; });
+ 	}
+ 
+@@ -50,18 +65,25 @@ public class SoloScapeControllerPlugin extends Plugin
+ 	protected void shutDown()
+ 	{
+ 		active = false;
++		overlayManager.remove(overlay);
+ 		clientThread.invoke(this::reset);
+ 	}
+ 
++	ControllerTarget getTarget() { return active ? world.getTarget() : null; }
++
++	private void resetWorld() { world.reset(); }
++
+ 	private void reset()
+ 	{
+ 		active = false;
+ 		client.setControllerCameraInput(0, 0);
++		resetWorld();
+ 		state.clear();
+ 		if (gamepad != null) gamepad.close();
+ 		gamepad = null;
+ 	}
+ 
++
+ 	@Subscribe
+ 	public void onClientTick(ClientTick event)
+ 	{
+@@ -79,6 +101,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 			if (!state.connected || canvas == null || !canvas.isFocusOwner() || !client.hasLocalPlayer())
+ 			{
+ 				client.setControllerCameraInput(0, 0);
++				resetWorld();
+ 				return;
+ 			}
+ 			float scale = StickMath.deadzoneScale(state.rightX, state.rightY, config.deadzone() / 100f);
+@@ -86,6 +109,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 			float pitch = state.rightY * scale * (config.invertY() ? 1 : -1);
+ 			client.setControllerCameraInput(yaw * config.yawSpeed(), pitch * config.pitchSpeed());
+ 			long now = System.nanoTime();
++			world.update(state, config.deadzone() / 100f, now);
+ 			if (config.debug() && now - lastDebug >= 1_000_000_000L)
+ 			{
+ 				lastDebug = now;
+diff --git a/client/test/net/runelite/client/input/controller/SdlGamepadTest.java b/client/test/net/runelite/client/input/controller/SdlGamepadTest.java
+index c4358ef..4a6c16e 100644
+--- a/client/test/net/runelite/client/input/controller/SdlGamepadTest.java
++++ b/client/test/net/runelite/client/input/controller/SdlGamepadTest.java
+@@ -37,10 +37,14 @@ public class SdlGamepadTest
+ 			{
+ 				provider.poll(state);
+ 				assertTrue("Recognize a newly attached mapped controller", state.connected);
++				assertEquals(0, VirtualSdl.SDL_JoystickSetVirtualAxis(joystick, 0, Short.MAX_VALUE));
++				assertEquals(0, VirtualSdl.SDL_JoystickSetVirtualAxis(joystick, 1, Short.MIN_VALUE));
+ 				assertEquals(0, VirtualSdl.SDL_JoystickSetVirtualAxis(joystick, 2, Short.MAX_VALUE));
+ 				assertEquals(0, VirtualSdl.SDL_JoystickSetVirtualAxis(joystick, 3, Short.MIN_VALUE));
+ 				assertEquals(0, VirtualSdl.SDL_JoystickSetVirtualButton(joystick, 0, (byte) 1));
+ 				provider.poll(state);
++				assertEquals(1, state.leftX, 0);
++				assertEquals(-1, state.leftY, 0);
+ 				assertEquals(1, state.rightX, 0);
+ 				assertEquals(-1, state.rightY, 0);
+ 				assertEquals(1, state.buttonsPressed);
+@@ -50,6 +54,8 @@ public class SdlGamepadTest
+ 				index = -1;
+ 				provider.poll(state);
+ 				assertFalse(state.connected);
++				assertEquals(0, state.leftX, 0);
++				assertEquals(0, state.leftY, 0);
+ 				assertEquals(0, state.rightX, 0);
+ 				assertEquals(0, state.buttonsHeld);
+ 			}
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+new file mode 100644
+index 0000000..a27ab52
+--- /dev/null
++++ b/client/src/ControllerWorld.java
+@@ -0,0 +1,191 @@
++import com.GameClient.ControllerTarget;
++import java.util.ArrayList;
++import java.util.Comparator;
++import java.util.List;
++import net.runelite.client.input.controller.WorldInput;
++
++/** Revision-634 adapter. All calls are on the client thread; no new packet formats. */
++final class ControllerWorld
++{
++    private static final int[] pathX = new int[128], pathY = new int[128];
++    private static long lastWalk = Long.MIN_VALUE;
++    private static final int[] NPC_ACTIONS = {25, 20, 44, 46, 60};
++    private static final int[] OBJECT_ACTIONS = {3, 4, 9, 59, 1007};
++
++    static boolean ready()
++    {
++        return Class240.anInt4674 == 10 && Class132.aPlayer_1907 != null
++            && Class132.aPlayer_1907.method2436((byte) 70) == 1
++            && (Class348_Sub40_Sub21.anInt9282 == 1 || Class348_Sub40_Sub21.anInt9282 == 5)
++            && !r.aBoolean9722 && !Class305.aBoolean3870
++            && Class348_Sub45.aClass361Array7108 != null
++            && Class348_Sub45.aClass361Array7108[Class132.aPlayer_1907.plane] != null;
++    }
++
++    static void reset() { lastWalk = Long.MIN_VALUE; }
++
++    static boolean walk(double dx, double dy)
++    {
++        if (!ready() || !Double.isFinite(dx) || !Double.isFinite(dy) || Math.hypot(dx, dy) < 0.001) return false;
++        Player player = Class132.aPlayer_1907;
++        Class361 map = Class348_Sub45.aClass361Array7108[player.plane];
++        int x = player.anIntArray10320[0], y = player.anIntArray10317[0];
++        long tile = WorldInput.destination(map.anIntArrayArray4438, x - map.anInt4453, y - map.anInt4441, dx, dy);
++        int destX = WorldInput.x(tile) + map.anInt4453, destY = WorldInput.y(tile) + map.anInt4441;
++        if (destX == x && destY == y) return false;
++        long world = WorldInput.pack(destX + za_Sub2.regionTileX, destY + Class90.regionTileY);
++        if (world == lastWalk && Class248.anInt3203 == destX && Class97.anInt1548 == destY) return false;
++        // Check an exact destination through native pathfinding before invoking ordinary Walk here.
++        if (!reachable(destX, destY, 1, 1, -4, 0, 0)) return false;
++        dispatch(new ControllerTarget("", "Walk here", 19, 0, destX, destY,
++            player.plane, za_Sub2.regionTileX, Class90.regionTileY));
++        lastWalk = world;
++        return true;
++    }
++
++    static ControllerTarget findTarget(double facingX, double facingY, ControllerTarget previous)
++    {
++        if (!ready() || !Double.isFinite(facingX) || !Double.isFinite(facingY)) return null;
++        List<ControllerTarget> candidates = candidates();
++        Player p = Class132.aPlayer_1907;
++        int px = p.anIntArray10320[0], py = p.anIntArray10317[0];
++        candidates.removeIf(t -> !Double.isFinite(WorldInput.targetScore(t.x - px, t.y - py, facingX, facingY, t.same(previous))));
++        candidates.sort(Comparator.comparingDouble(t -> WorldInput.targetScore(t.x - px, t.y - py, facingX, facingY, t.same(previous))));
++        // Bound pathfinding work even in densely populated scenes.
++        for (int i = 0; i < Math.min(8, candidates.size()); i++)
++            if (reachable(candidates.get(i))) return candidates.get(i);
++        return null;
++    }
++
++    static boolean interact(ControllerTarget target)
++    {
++        if (!ready() || target == null) return false;
++        Player p = Class132.aPlayer_1907;
++        if (Math.hypot(target.x - p.anIntArray10320[0], target.y - p.anIntArray10317[0]) > 3.5) return false;
++        // Re-enumerate immediately: despawns, transforms, plane/region changes and options invalidate focus.
++        for (ControllerTarget current : candidates())
++        {
++            if (current.same(target) && current.option.equals(target.option) && java.util.Objects.equals(current.name, target.name) && reachable(current))
++            {
++                dispatch(current);
++                reset();
++                return true;
++            }
++        }
++        return false;
++    }
++
++    private static List<ControllerTarget> candidates()
++    {
++        List<ControllerTarget> result = new ArrayList<>();
++        Player p = Class132.aPlayer_1907;
++        int px = p.anIntArray10320[0], py = p.anIntArray10317[0];
++        if (Class282.aClass356_3654 != null)
++        {
++            // Iterate the native table without rewriting the renderer's NPC snapshot.
++            Class348_Sub22 entry = (Class348_Sub22) Class282.aClass356_3654.method3484(0);
++            while (entry != null)
++            {
++                Npc npc = entry.aNpc_6859;
++                if (npc != null && npc.plane == p.plane && npc.definition != null)
++                {
++                    int x = npc.anIntArray10320[0], y = npc.anIntArray10317[0];
++                    if (Math.hypot(x - px, y - py) <= 3.5)
++                    {
++                        NPCType def = npc.definition;
++                        if (def.multinpcs != null) def = def.method794(Class318_Sub1_Sub3_Sub3.aClass170_10209, -1);
++                        if (def != null && def.interactive)
++                        {
++                            int option = defaultOption(def.op, def.aByte107);
++                            if (option >= 0) result.add(target(def.name, def.op[option], NPC_ACTIONS[option], npc.anInt10290, x, y));
++                        }
++                    }
++                }
++                entry = (Class348_Sub22) Class282.aClass356_3654.method3482(0);
++            }
++        }
++        if (ChatMessage.aClass357ArrayArrayArray2029 == null) return result;
++        for (int x = Math.max(0, px - 3); x <= Math.min(Class367_Sub4.anInt7319 - 1, px + 3); x++)
++            for (int y = Math.max(0, py - 3); y <= Math.min(Class348_Sub40_Sub3.anInt9109 - 1, py + 3); y++)
++            {
++                if (Math.hypot(x - px, y - py) > 3.5) continue;
++                addObject(result, r_Sub2.method3297(p.plane, x, y), x, y);
++                addObject(result, Class348_Sub40_Sub32.method3135(p.plane, x, y), x, y);
++                addObject(result, Class177.method1353(p.plane, x, y, Interface10.class), x, y);
++                addObject(result, Class348_Sub16_Sub3.method2878(p.plane, x, y), x, y);
++            }
++        return result;
++    }
++
++    private static void addObject(List<ControllerTarget> result, Object object, int x, int y)
++    {
++        if (!(object instanceof Interface10)) return;
++        Interface10 obj = (Interface10) object;
++        Class51 def = Class348_Sub40_Sub12.aClass263_9195.method2005(0, obj.method42(-100));
++        if (def.anIntArray945 != null) def = def.method480(Class318_Sub1_Sub3_Sub3.aClass170_10209, (byte) 47);
++        if (def == null) return;
++        int option = defaultOption(def.aStringArray913, -1);
++        if (option >= 0) result.add(target(def.aString884, def.aStringArray913[option], OBJECT_ACTIONS[option],
++            Class348_Sub40_Sub21.method3107((byte) 95, obj, y, x), x, y));
++    }
++
++    private static int defaultOption(String[] options, int attackPolicy)
++    {
++        if (options == null) return -1;
++        String attack = Class274.aClass274_3506.method2063(Class348_Sub33.anInt6967, 544);
++        for (int i = 0; i < Math.min(5, options.length); i++)
++            if (options[i] != null && !options[i].isEmpty() && (attackPolicy != 0 && attackPolicy != 1 || !options[i].equalsIgnoreCase(attack))) return i;
++        if (attackPolicy != 0) for (int i = 0; i < Math.min(5, options.length); i++)
++            if (options[i] != null && !options[i].isEmpty()) return i;
++        return -1;
++    }
++
++    private static ControllerTarget target(String name, String option, int action, long id, int x, int y)
++    {
++        return new ControllerTarget(name, option, action, id, x, y, Class132.aPlayer_1907.plane, za_Sub2.regionTileX, Class90.regionTileY);
++    }
++
++    private static boolean reachable(ControllerTarget t)
++    {
++        for (int action : NPC_ACTIONS) if (t.action == action)
++        {
++            Class348_Sub22 entry = (Class348_Sub22) Class282.aClass356_3654.method3480(t.identifier, -6008);
++            if (entry == null || entry.aNpc_6859 == null) return false;
++            int size = entry.aNpc_6859.method2436((byte) 70);
++            return reachable(t.x, t.y, size, size, -2, 0, 0);
++        }
++        int shape = (int) t.identifier >> 14 & 31;
++        int rotation = (int) t.identifier >> 20 & 3;
++        if (shape != 10 && shape != 11 && shape != 22) return reachable(t.x, t.y, 0, 0, shape, rotation, 0);
++        Class51 def = Class348_Sub40_Sub12.aClass263_9195.method2005(0, (int) (t.identifier >>> 32) & 0x7fffffff);
++        int width = (rotation & 1) == 0 ? def.anInt961 : def.anInt926;
++        int height = (rotation & 1) == 0 ? def.anInt926 : def.anInt961;
++        int access = def.anInt914;
++        if (rotation != 0) access = (access << rotation & 15) + (access >> (4 - rotation));
++        return reachable(t.x, t.y, width, height, 0, 0, access);
++    }
++
++    static boolean reachable(int x, int y, int width, int height, int shape, int rotation, int access)
++    {
++        Player p = Class132.aPlayer_1907;
++        int px = p.anIntArray10320[0], py = p.anIntArray10317[0];
++        if (x < 0 || y < 0 || x >= Class367_Sub4.anInt7319 || y >= Class348_Sub40_Sub3.anInt9109) return false;
++        int count = Class59_Sub2_Sub2.method574(x, 1, height, pathY, false, (byte) 120,
++            shape, px, py, pathX, y, Class348_Sub45.aClass361Array7108[p.plane], width, access, rotation);
++        if (count < 0) return false;
++        int distance = 0;
++        for (int i = 0; i < count; i++)
++        {
++            distance += Math.max(Math.abs(pathX[i] - px), Math.abs(pathY[i] - py));
++            px = pathX[i]; py = pathY[i];
++        }
++        return distance <= 8;
++    }
++
++    private static void dispatch(ControllerTarget t)
++    {
++        Class325.method2599((byte) 109, new Class348_Sub42_Sub12(t.option, t.name, -1, t.action, -1,
++            t.identifier, t.x, t.y, true, false, 0, false), 0, 0);
++        Class369_Sub3_Sub1.aBoolean10174 = true;
++    }
++}
+diff --git a/client/src/net/runelite/client/input/controller/WorldInput.java b/client/src/net/runelite/client/input/controller/WorldInput.java
+new file mode 100644
+index 0000000..b3a2d97
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/WorldInput.java
+@@ -0,0 +1,73 @@
++package net.runelite.client.input.controller;
++
++/** Camera-relative movement and revision-634 collision rules, independent of the client. */
++public final class WorldInput
++{
++    private WorldInput() {}
++
++    public static double worldX(float right, float down, int yaw)
++    {
++        double angle = yaw * (Math.PI * 2 / 16384);
++        return right * Math.cos(angle) + down * Math.sin(angle);
++    }
++
++    public static double worldY(float right, float down, int yaw)
++    {
++        double angle = yaw * (Math.PI * 2 / 16384);
++        return right * Math.sin(angle) - down * Math.cos(angle);
++    }
++
++    private static boolean clear(int[][] flags, int x, int y, int mask)
++    {
++        return flags != null && x >= 0 && x < flags.length && flags[x] != null
++            && y >= 0 && y < flags[x].length && (flags[x][y] & mask) == 0;
++    }
++
++    public static boolean canStep(int[][] flags, int x, int y, int dx, int dy)
++    {
++        if (Math.abs(dx) > 1 || Math.abs(dy) > 1 || (dx == 0 && dy == 0)) return false;
++        // Same destination masks and diagonal side checks as Class5_Sub1.method187.
++        if (dx != 0 && !clear(flags, x + dx, y, dx < 0 ? 0x42240000 : 0x60240000)) return false;
++        if (dy != 0 && !clear(flags, x, y + dy, dy < 0 ? 0x40a40000 : 0x48240000)) return false;
++        if (dx != 0 && dy != 0)
++        {
++            int mask = dx < 0 ? (dy < 0 ? 0x43a40000 : 0x4e240000)
++                : (dy < 0 ? 0x60e40000 : 0x78240000);
++            return clear(flags, x + dx, y + dy, mask);
++        }
++        return true;
++    }
++
++    /** Returns the last directly reachable tile, packed as x/y, without corner cutting. */
++    public static long destination(int[][] flags, int x, int y, double dx, double dy)
++    {
++        if (!Double.isFinite(dx) || !Double.isFinite(dy)) return pack(x, y);
++        double length = Math.hypot(dx, dy);
++        if (length == 0) return pack(x, y);
++        int originX = x, originY = y;
++        int distance = Math.max(2, Math.min(4, (int) Math.ceil(length * 4)));
++        for (int step = 1; step <= distance; step++)
++        {
++            int nextX = originX + (int) Math.round(dx / length * step);
++            int nextY = originY + (int) Math.round(dy / length * step);
++            if (nextX == x && nextY == y) continue;
++            if (!canStep(flags, x, y, nextX - x, nextY - y)) break;
++            x = nextX; y = nextY;
++        }
++        return pack(x, y);
++    }
++
++    public static long pack(int x, int y) { return ((long) x << 32) | (y & 0xffffffffL); }
++    public static int x(long tile) { return (int) (tile >> 32); }
++    public static int y(long tile) { return (int) tile; }
++
++    /** Nearby forward cone, with hysteresis so similarly ranked targets do not flicker. */
++    public static double targetScore(double dx, double dy, double facingX, double facingY, boolean retained)
++    {
++        double distance = Math.hypot(dx, dy);
++        if (distance > 3.5) return Double.POSITIVE_INFINITY;
++        double dot = distance < 0.001 ? 1 : (dx * facingX + dy * facingY) / distance;
++        if (dot < 0.35) return Double.POSITIVE_INFINITY;
++        return distance + (1 - dot) * 1.5 - (retained ? 0.65 : 0);
++    }
++}
+diff --git a/client/src/net/runelite/client/input/controller/WorldControls.java b/client/src/net/runelite/client/input/controller/WorldControls.java
+new file mode 100644
+index 0000000..0058c2a
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/WorldControls.java
+@@ -0,0 +1,67 @@
++package net.runelite.client.input.controller;
++
++import com.GameClient.ControllerTarget;
++
++/** Input lifecycle, rate limiting and action edges; the gateway runs native game actions. */
++public final class WorldControls
++{
++    public interface Gateway
++    {
++        boolean ready();
++        int yaw();
++        void resetWalk();
++        void walk(double x, double y);
++        ControllerTarget find(double x, double y, ControllerTarget previous);
++        boolean interact(ControllerTarget target);
++    }
++
++    private final Gateway gateway;
++    private volatile ControllerTarget target;
++    private boolean armed;
++    private long lastUpdate;
++    private float aimX, aimY = -1;
++
++    public WorldControls(Gateway gateway) { this.gateway = gateway; }
++    public ControllerTarget getTarget() { return target; }
++
++    public void reset()
++    {
++        target = null; armed = false; lastUpdate = 0; aimX = 0; aimY = -1;
++        gateway.resetWalk();
++    }
++
++    public void update(GamepadState state, float deadzone, long now)
++    {
++        if (!gateway.ready()) { reset(); return; }
++        float scale = StickMath.deadzoneScale(state.leftX, state.leftY, deadzone);
++        float x = state.leftX * scale, y = state.leftY * scale;
++        boolean neutral = x == 0 && y == 0;
++        if (!armed)
++        {
++            // Never resume held movement/A after reconnect, focus regain or interaction.
++            if (neutral && (state.buttonsHeld & 1) == 0) armed = true;
++            else return;
++        }
++        int yaw = gateway.yaw();
++        double dx = WorldInput.worldX(x, y, yaw), dy = WorldInput.worldY(x, y, yaw);
++        if (!neutral)
++        {
++            float length = (float) Math.hypot(x, y);
++            aimX = x / length; aimY = y / length;
++        }
++        else gateway.resetWalk();
++        if ((state.buttonsPressed & 1) != 0)
++        {
++            // Act only on the focus already shown; native code revalidates it immediately.
++            if (target != null && gateway.interact(target)) armed = false;
++            lastUpdate = now;
++            return;
++        }
++        if (lastUpdate == 0 || now - lastUpdate >= 150_000_000L)
++        {
++            lastUpdate = now;
++            target = gateway.find(WorldInput.worldX(aimX, aimY, yaw), WorldInput.worldY(aimX, aimY, yaw), target);
++            if (!neutral) gateway.walk(dx, dy);
++        }
++    }
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+new file mode 100644
+index 0000000..9dbeed9
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+@@ -0,0 +1,38 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import com.GameClient;
++import java.awt.Color;
++import java.awt.Dimension;
++import java.awt.Graphics2D;
++import javax.inject.Inject;
++import net.runelite.client.ui.overlay.Overlay;
++import net.runelite.client.ui.overlay.OverlayPosition;
++import net.runelite.client.ui.overlay.OverlayLayer;
++
++/** Explicit focus feedback before A invokes an action. */
++public final class SoloScapeControllerOverlay extends Overlay
++{
++    private final SoloScapeControllerPlugin plugin;
++    @Inject
++    SoloScapeControllerOverlay(SoloScapeControllerPlugin plugin)
++    {
++        super(plugin);
++        this.plugin = plugin;
++        setPosition(OverlayPosition.TOP_LEFT);
++        setLayer(OverlayLayer.ABOVE_WIDGETS);
++    }
++
++    @Override
++    public Dimension render(Graphics2D graphics)
++    {
++        GameClient.ControllerTarget target = plugin.getTarget();
++        if (target == null) return null;
++        String label = "A: " + target.option + " " + target.name;
++        int width = graphics.getFontMetrics().stringWidth(label) + 12;
++        graphics.setColor(new Color(0, 0, 0, 180));
++        graphics.fillRect(0, 0, width, 24);
++        graphics.setColor(Color.WHITE);
++        graphics.drawString(label, 6, 17);
++        return new Dimension(width, 24);
++    }
++}
+diff --git a/client/test/ControllerWorldTest.java b/client/test/ControllerWorldTest.java
+new file mode 100644
+index 0000000..a2f81e4
+--- /dev/null
++++ b/client/test/ControllerWorldTest.java
+@@ -0,0 +1,71 @@
++import org.junit.After;
++import org.junit.Before;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++/** Real revision-634 pathfinder and world-input gates; no networking or game assets. */
++public class ControllerWorldTest
++{
++    private Player oldPlayer;
++    private Class361[] oldMaps;
++    private int oldState, oldCamera, oldWidth, oldHeight;
++    private boolean oldMenu, oldSelection;
++    private Class361 map;
++
++    @Before public void setup()
++    {
++        oldPlayer = Class132.aPlayer_1907; oldMaps = Class348_Sub45.aClass361Array7108;
++        oldState = Class240.anInt4674; oldCamera = Class348_Sub40_Sub21.anInt9282;
++        oldWidth = Class367_Sub4.anInt7319; oldHeight = Class348_Sub40_Sub3.anInt9109;
++        oldMenu = Class305.aBoolean3870; oldSelection = r.aBoolean9722;
++        Player p = new Player(); p.anIntArray10320[0] = 64; p.anIntArray10317[0] = 64; p.plane = 0;
++        Class132.aPlayer_1907 = p;
++        map = new Class361(); map.anIntArrayArray4438 = new int[128][128];
++        for (int i = 0; i < 128; i++)
++        {
++            map.anIntArrayArray4438[0][i] = map.anIntArrayArray4438[127][i] = -1;
++            map.anIntArrayArray4438[i][0] = map.anIntArrayArray4438[i][127] = -1;
++        }
++        Class348_Sub45.aClass361Array7108 = new Class361[] {map, map, map, map};
++        Class367_Sub4.anInt7319 = Class348_Sub40_Sub3.anInt9109 = 128;
++        Class240.anInt4674 = 10; Class348_Sub40_Sub21.anInt9282 = 1;
++        Class305.aBoolean3870 = r.aBoolean9722 = false;
++    }
++
++    @After public void restore()
++    {
++        ControllerWorld.reset();
++        Class132.aPlayer_1907 = oldPlayer; Class348_Sub45.aClass361Array7108 = oldMaps;
++        Class240.anInt4674 = oldState; Class348_Sub40_Sub21.anInt9282 = oldCamera;
++        Class367_Sub4.anInt7319 = oldWidth; Class348_Sub40_Sub3.anInt9109 = oldHeight;
++        Class305.aBoolean3870 = oldMenu; r.aBoolean9722 = oldSelection;
++    }
++
++    @Test public void nativePathfinderChecksExactDestinationsAndBoundedDetours()
++    {
++        assertTrue(ControllerWorld.ready());
++        assertTrue(ControllerWorld.reachable(68, 64, 1, 1, -4, 0, 0));
++        map.anIntArrayArray4438[68][64] = -1;
++        assertFalse(ControllerWorld.reachable(68, 64, 1, 1, -4, 0, 0));
++        assertFalse(ControllerWorld.reachable(80, 64, 1, 1, -4, 0, 0));
++        assertFalse(ControllerWorld.reachable(-1, 64, 1, 1, -4, 0, 0));
++    }
++
++    @Test public void nativeInteractionReachabilityCannotCrossAnImpassableWall()
++    {
++        assertTrue(ControllerWorld.reachable(66, 64, 1, 1, -2, 0, 0));
++        for (int y = 0; y < 128; y++) map.anIntArrayArray4438[65][y] = -1;
++        assertFalse(ControllerWorld.reachable(66, 64, 1, 1, -2, 0, 0));
++    }
++
++    @Test public void loginScriptedCameraSelectionAndMenusBlockWorldActions()
++    {
++        Class240.anInt4674 = 0; assertFalse(ControllerWorld.ready());
++        assertFalse(ControllerWorld.walk(1, 0));
++        Class240.anInt4674 = 10; Class348_Sub40_Sub21.anInt9282 = 2; assertFalse(ControllerWorld.ready());
++        Class348_Sub40_Sub21.anInt9282 = 1; r.aBoolean9722 = true; assertFalse(ControllerWorld.ready());
++        r.aBoolean9722 = false; Class305.aBoolean3870 = true; assertFalse(ControllerWorld.ready());
++        Class305.aBoolean3870 = false; assertTrue(ControllerWorld.ready());
++        assertFalse(ControllerWorld.interact(null));
++    }
++}
+diff --git a/client/test/net/runelite/client/input/controller/WorldInputTest.java b/client/test/net/runelite/client/input/controller/WorldInputTest.java
+new file mode 100644
+index 0000000..370529e
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/WorldInputTest.java
+@@ -0,0 +1,52 @@
++package net.runelite.client.input.controller;
++
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class WorldInputTest
++{
++    @Test public void cameraRelativeDirectionsMatchProjectionAtCardinalAngles()
++    {
++        assertEquals(0, WorldInput.worldX(0, -1, 0), 1e-6);
++        assertEquals(1, WorldInput.worldY(0, -1, 0), 1e-6);
++        assertEquals(-1, WorldInput.worldX(0, -1, 4096), 1e-6);
++        assertEquals(0, WorldInput.worldY(0, -1, 4096), 1e-6);
++        assertEquals(-1, WorldInput.worldY(0, -1, 8192), 1e-6);
++        assertEquals(1, WorldInput.worldX(0, -1, 12288), 1e-6);
++        assertEquals(1, WorldInput.worldY(1, 0, 4096), 1e-6);
++    }
++
++    @Test public void projectionStopsAtWallsAndSceneEdges()
++    {
++        int[][] map = new int[12][12];
++        assertEquals(WorldInput.pack(9, 5), WorldInput.destination(map, 5, 5, 1, 0));
++        map[7][5] = 0x20000000; // west-facing wall on east destination
++        assertEquals(WorldInput.pack(6, 5), WorldInput.destination(map, 5, 5, 1, 0));
++        assertEquals(WorldInput.pack(11, 5), WorldInput.destination(map, 10, 5, 1, 0));
++        assertEquals(WorldInput.pack(5, 5), WorldInput.destination(map, 5, 5, Double.NaN, 1));
++    }
++
++    @Test public void diagonalsNeverCutCornersAndCheckAllDirections()
++    {
++        for (int dx : new int[] {-1, 1}) for (int dy : new int[] {-1, 1})
++        {
++            int[][] map = new int[12][12];
++            assertTrue(WorldInput.canStep(map, 5, 5, dx, dy));
++            map[5 + dx][5] = 0x40000000;
++            assertFalse(WorldInput.canStep(map, 5, 5, dx, dy));
++            map[5 + dx][5] = 0;
++            map[5][5 + dy] = 0x40000000;
++            assertFalse(WorldInput.canStep(map, 5, 5, dx, dy));
++            map[5][5 + dy] = 0;
++            map[5 + dx][5 + dy] = 0x40000000;
++            assertFalse(WorldInput.canStep(map, 5, 5, dx, dy));
++        }
++    }
++
++    @Test public void focusRejectsBehindAndFarAwayTargetsAndRetainsCloseCompetition()
++    {
++        assertTrue(Double.isInfinite(WorldInput.targetScore(0, -1, 0, 1, false)));
++        assertTrue(Double.isInfinite(WorldInput.targetScore(0, 4, 0, 1, false)));
++        assertTrue(WorldInput.targetScore(.3, 2, 0, 1, true) < WorldInput.targetScore(0, 2, 0, 1, false));
++    }
++}
+diff --git a/client/test/net/runelite/client/input/controller/WorldControlsTest.java b/client/test/net/runelite/client/input/controller/WorldControlsTest.java
+new file mode 100644
+index 0000000..191af22
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/WorldControlsTest.java
+@@ -0,0 +1,86 @@
++package net.runelite.client.input.controller;
++
++import com.GameClient.ControllerTarget;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class WorldControlsTest
++{
++    private static final class Fake implements WorldControls.Gateway
++    {
++        boolean ready = true, valid = true;
++        int walks, actions, finds, yaw;
++        double x, y;
++        ControllerTarget selected = new ControllerTarget("Tree", "Chop", 3, 100, 5, 6, 0, 1000, 1000);
++        public boolean ready() { return ready; }
++        public int yaw() { return yaw; }
++        public void resetWalk() {}
++        public void walk(double x, double y) { walks++; this.x = x; this.y = y; }
++        public ControllerTarget find(double x, double y, ControllerTarget previous) { finds++; return selected; }
++        public boolean interact(ControllerTarget target) { if (!valid) return false; actions++; return true; }
++    }
++
++    @Test public void throttlesMovementAndReleasingStickStopsNewRequests()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1);
++        state.leftY = -1;
++        controls.update(state, .18f, 150_000_001);
++        assertEquals(1, game.walks); assertEquals(1, game.y, 1e-6);
++        controls.update(state, .18f, 160_000_001);
++        assertEquals(1, game.walks);
++        controls.update(state, .18f, 300_000_001);
++        assertEquals(2, game.walks);
++        state.leftY = 0;
++        controls.update(state, .18f, 450_000_001);
++        assertEquals(2, game.walks);
++    }
++
++    @Test public void heldInputsCannotResumeAfterFocusLossOrReconnect()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1); controls.reset();
++        state.leftX = 1; state.updateButtons(1);
++        controls.update(state, .18f, 200_000_001);
++        assertEquals(0, game.walks); assertEquals(0, game.actions); assertNull(controls.getTarget());
++        state.leftX = 0; state.updateButtons(0);
++        controls.update(state, .18f, 400_000_001);
++        state.leftX = 1;
++        controls.update(state, .18f, 600_000_001);
++        assertEquals(1, game.walks);
++    }
++
++    @Test public void aActsOnceOnShownFocusAndRequiresNeutralBeforeWalkingAgain()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1);
++        ControllerTarget shown = controls.getTarget();
++        game.selected = new ControllerTarget("Door", "Open", 3, 200, 5, 7, 0, 1000, 1000);
++        state.leftX = 1; state.updateButtons(1);
++        controls.update(state, .18f, 20_000_001);
++        assertEquals(1, game.actions); assertSame(shown, controls.getTarget()); assertEquals(1, game.finds);
++        state.updateButtons(1);
++        controls.update(state, .18f, 200_000_001);
++        assertEquals(1, game.actions); assertEquals(0, game.walks);
++        state.updateButtons(0);
++        controls.update(state, .18f, 400_000_001);
++        assertEquals(0, game.walks);
++        state.leftX = 0;
++        controls.update(state, .18f, 600_000_001);
++        state.leftX = 1;
++        controls.update(state, .18f, 800_000_001);
++        assertEquals(1, game.walks);
++    }
++
++    @Test public void invalidTargetAndScriptedStateDispatchNothing()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1); game.valid = false;
++        state.updateButtons(1);
++        controls.update(state, .18f, 20_000_001);
++        assertEquals(0, game.actions);
++        game.ready = false; state.leftY = -1;
++        controls.update(state, .18f, 200_000_001);
++        assertNull(controls.getTarget()); assertEquals(0, game.walks);
++    }
++}

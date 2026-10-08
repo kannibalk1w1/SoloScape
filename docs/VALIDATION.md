@@ -60,3 +60,14 @@ python3 scripts/test_local_dev.py
 
 Next acceptance test is client rendering, local login and persisted character
 restart. Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.
+
+## Movement and A interaction build (2026-10-08)
+
+- User confirmed physical controller camera panning works.
+- Left-stick walking and nearby NPC/object A actions built as patch 0002.
+- Twenty client tests pass with zero skips/errors, including native SDL axes/A
+  and the actual revision-634 pathfinder. Shadow jar rebuilt successfully.
+- Three patch-stack tests pass; fresh source reproduction and camera-build upgrade
+  checked independently. Local conflicts are detected before changing source.
+- Physical movement/interaction, focus recovery and Steam Deck acceptance remain
+  pending. See `CONTROLLER_TESTING.md` for the gameplay checklist.

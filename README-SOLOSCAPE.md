@@ -1,9 +1,9 @@
 # SoloScape 2011+
 
 Bootstrap for a local RuneScape revision-634 experience, with Steam Deck native
-controller support planned. JDK 21, JDK 8 and the upstream cache are installed locally.
+experimental controller support. JDK 21, JDK 8 and the upstream cache are installed locally.
 Both upstream builds pass, doctor passes, and the server reaches world readiness.
-The first right-stick camera controller prototype is built; see
+The controller prototype supports camera panning, walking and A interaction; see
 [controller testing instructions](docs/CONTROLLER_TESTING.md) to enable it.
 
 The branch is `soloscape/bootstrap`. Source checkouts under `upstream/` are
@@ -72,9 +72,9 @@ The cache was downloaded with explicit user authorization from upstream's linked
 MEGA folder. See [cache provenance](docs/CACHE_SETUP.md). Cache and archive remain
 ignored by Git.
 
-The user reports that launch/gameplay work. Physical controller camera behaviour
-and save roundtrip remain unverified. Next step is testing the right-stick camera
-on hardware, then left-stick movement. Dependency/binary licence inventory is required
+The user reports that launch/gameplay and physical controller camera panning work.
+Movement/interaction gameplay checks and save roundtrip remain pending. Next step
+is testing movement and A interaction on hardware, then inventory navigation. Dependency/binary licence inventory is required
 before a distributable package.
 
 Tooling validation: ShellCheck, Python compilation and four simulated-process

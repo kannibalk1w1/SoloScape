@@ -1,9 +1,9 @@
 # Controller prototype design
 
-Status: the input buffer, SDL2 provider and right-stick camera prototype are built
-and tested. See `CONTROLLER_TESTING.md` for enablement and current validation.
-Physical controller/Steam Deck validation remains pending. The movement, world
-interaction and inventory sections below describe subsequent work.
+Status: SDL2 input, right-stick camera, left-stick walking and A world interaction
+are built and tested. The user confirmed camera panning. See
+`CONTROLLER_TESTING.md` for controls and validation. Movement/interaction gameplay
+and Steam Deck acceptance remain pending; inventory navigation is subsequent work.
 
 The plugin owns one reusable state buffer containing axes/triggers and
 pressed/held/released button masks. Poll once per input update, clear state on
@@ -16,15 +16,17 @@ coordinates or scripted camera states. Deadzone, inversion and speed become
 named settings only when the implementation uses them.
 
 Left stick projects a short camera-relative tile destination through the normal
-walking/pathfinding adapter. Start experiments near deadzone 0.18, projection
-2–5 tiles and updates 100–200ms apart. Deduplicate destinations; validate
+walking/pathfinding adapter. The current build uses deadzone 0.18, projection
+2–4 tiles and updates 150ms apart. Deduplicate destinations; validate
 collision and diagonal movement. Returning to deadzone stops issuing requests;
 the already queued path may finish. Immediate movement cancellation needs a
 verified existing action, not an invented controller protocol packet.
 
 World mode: A invokes the focused nearby NPC/object's normal default action.
-Start with a small distance/cone, exclude unreachable/invalid targets, retain
-stable focus and show the target/action via existing overlays. X/B context/back
+The build uses a 3.5-tile forward cone, a retention bias, bounded native
+pathfinding and a target/action overlay. A revalidates the displayed target and
+dispatches once per press. Returning to neutral after interaction prevents
+walking requests from canceling it. X/B context/back
 are incremental additions. Verify action IDs against the actual 634 dispatcher.
 
 Inventory mode: reuse existing slot bounds and overlays for a visible focus.

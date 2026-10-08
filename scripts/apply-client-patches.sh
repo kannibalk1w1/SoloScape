@@ -14,14 +14,4 @@ fi
 mkdir -p "$root/.runtime"
 exec 9>"$root/.runtime/client-patches.lock"
 flock 9
-for patch in "$root"/patches/client/*.patch; do
-  if git -C "$repo" apply --reverse --check "$patch" 2>/dev/null; then
-    echo "Already applied: $(basename -- "$patch")"
-  elif git -C "$repo" apply --check "$patch"; then
-    git -C "$repo" apply "$patch"
-    echo "Applied: $(basename -- "$patch")"
-  else
-    echo "Patch conflict: $patch. Local changes were preserved; inspect the checkout." >&2
-    exit 1
-  fi
-done
+exec python3 "$root/scripts/apply_client_patches.py" "$repo" "$root"/patches/client/*.patch
