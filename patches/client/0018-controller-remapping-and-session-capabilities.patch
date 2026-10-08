@@ -1,0 +1,463 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+index dcd0440..61497db 100644
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1050,7 +1050,10 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+     @Override public boolean openControllerInventory() { return ControllerUi.openInventory(); }
+     @Override public int getControllerAvailableTabs() { return ControllerUi.availableTabs(); }
+     @Override public boolean openControllerTab(int index) { return ControllerUi.openTab(index); }
+-    @Override public void setControllerServerFeatures(boolean enabled) { ControllerDirectMovement.enableServerFeatures(enabled); }
++    @Override public void setControllerServerFeatures(boolean enabled) { ControllerDirectMovement.enableServerFeatures(enabled && SoloScapeConnection.verified()); }
++    @Override public boolean controllerServerVerified() { return SoloScapeConnection.verified(); }
++    @Override public String controllerServerStatus() { return SoloScapeConnection.status(); }
++    @Override public void updateControllerConnection() { SoloScapeConnection.update(); }
+     @Override public void prepareControllerUi() { ControllerEntry.prepare(); }
+     @Override public boolean editControllerEntry(net.runelite.client.input.controller.EntryState entry, String value) { return ControllerEntry.edit(entry, value); }
+     @Override public boolean submitControllerEntry(net.runelite.client.input.controller.EntryState entry) { return ControllerEntry.submit(entry); }
+diff --git a/client/src/Class132.java b/client/src/Class132.java
+index a1c321d..cb5ea22 100644
+--- a/client/src/Class132.java
++++ b/client/src/Class132.java
+@@ -19,6 +19,7 @@ final class Class132 {
+ 
+     static final void method1138(String string, boolean bool, String string_0_, byte i) {
+         try {
++            SoloScapeConnection.reset();
+             anInt1908++;
+             Class64_Sub3.aString5600 = string;
+             Class186.aString2496 = string_0_;
+diff --git a/client/src/Class318_Sub1_Sub3_Sub5.java b/client/src/Class318_Sub1_Sub3_Sub5.java
+index ed3bcb9..8244c48 100644
+--- a/client/src/Class318_Sub1_Sub3_Sub5.java
++++ b/client/src/Class318_Sub1_Sub3_Sub5.java
+@@ -321,6 +321,7 @@ final class Class318_Sub1_Sub3_Sub5 extends Class318_Sub1_Sub3 {
+ 
+     static final void method2477(String string, String string_37_, byte i, int i_38_, String string_39_, String string_40_, int i_41_, int i_42_, String string_43_) {
+         try {
++            if(SoloScapeConnection.receive(i_41_,string_37_))return;
+             anInt10382++;
+             ChatMessage ChatMessage = Class318_Sub2.aClass147Array6400[99];
+             for (int i_44_ = 99; i_44_ > 0; i_44_--)
+diff --git a/client/src/SoloScapeConnection.java b/client/src/SoloScapeConnection.java
+new file mode 100644
+index 0000000..86cbf6a
+--- /dev/null
++++ b/client/src/SoloScapeConnection.java
+@@ -0,0 +1,18 @@
++import net.runelite.client.input.controller.ServerCapabilities;
++
++/** Ordinary native command transport is compatible with servers that do not implement extensions. */
++final class SoloScapeConnection
++{
++    private static final ServerCapabilities capabilities=new ServerCapabilities();
++    static void reset(){capabilities.reset();ControllerDirectMovement.enableServerFeatures(false);}
++    static boolean verified(){return capabilities.verified();}
++    static String status(){return capabilities.status(System.nanoTime());}
++    static void update()
++    {
++        if(Class240.anInt4674!=10){reset();return;}
++        String command=capabilities.request(System.nanoTime());
++        if(command!=null)Class82.method812(command,false,false,(byte)-79);
++    }
++    static boolean receive(int type,String message)
++    {return type==0&&capabilities.receive(message,System.nanoTime());}
++}
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+index bfdd25f..19992b1 100644
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -353,6 +353,9 @@ public abstract class GameClient extends Applet {
+     public int getControllerAvailableTabs() { return 0; }
+     public boolean openControllerTab(int index) { return false; }
+     public void setControllerServerFeatures(boolean enabled) {}
++    public boolean controllerServerVerified() { return false; }
++    public String controllerServerStatus() { return "Server features unavailable"; }
++    public void updateControllerConnection() {}
+     public void prepareControllerUi() {}
+     public boolean editControllerEntry(net.runelite.client.input.controller.EntryState entry, String value) { return false; }
+     public boolean submitControllerEntry(net.runelite.client.input.controller.EntryState entry) { return false; }
+diff --git a/client/src/net/runelite/client/input/controller/ActionMap.java b/client/src/net/runelite/client/input/controller/ActionMap.java
+new file mode 100644
+index 0000000..c11889f
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/ActionMap.java
+@@ -0,0 +1,31 @@
++package net.runelite.client.input.controller;
++
++/** Maps physical SDL buttons to logical controls without changing the provider's edge history. */
++public final class ActionMap
++{
++    private static final int[] LOGICAL={1,2,4,1<<9,1<<10,8,1<<4,1<<6};
++    private final int[] physical;
++    public ActionMap(int... physical)
++    { if(physical.length!=LOGICAL.length)throw new IllegalArgumentException("Eight bindings required");this.physical=physical.clone(); }
++    public boolean valid()
++    {
++        int used=0;
++        for(int mask:physical){if(Integer.bitCount(mask)!=1 || (mask&~0x7df)!=0 || (used&mask)!=0)return false;used|=mask;}
++        return true;
++    }
++    public boolean same(ActionMap other){return other!=null&&java.util.Arrays.equals(physical,other.physical);}
++    private int translate(int buttons)
++    {
++        int result=buttons & ((1<<11)|(1<<12)|(1<<13)|(1<<14));
++        for(int i=0;i<physical.length;i++)if((buttons&physical[i])!=0)result|=LOGICAL[i];
++        return result;
++    }
++    public void apply(GamepadState raw,GamepadState mapped)
++    {
++        mapped.connected=raw.connected;mapped.leftX=raw.leftX;mapped.leftY=raw.leftY;
++        mapped.rightX=raw.rightX;mapped.rightY=raw.rightY;mapped.leftTrigger=raw.leftTrigger;mapped.rightTrigger=raw.rightTrigger;
++        mapped.buttonsHeld=translate(raw.buttonsHeld);mapped.buttonsPressed=translate(raw.buttonsPressed);mapped.buttonsReleased=translate(raw.buttonsReleased);
++    }
++    public static boolean neutral(GamepadState raw,float deadzone)
++    {return raw.buttonsHeld==0 && raw.leftTrigger<.1f && raw.rightTrigger<.1f && Math.hypot(raw.leftX,raw.leftY)<=deadzone && Math.hypot(raw.rightX,raw.rightY)<=deadzone;}
++}
+diff --git a/client/src/net/runelite/client/input/controller/QuickRadialControls.java b/client/src/net/runelite/client/input/controller/QuickRadialControls.java
+index 352c769..1adcc2b 100644
+--- a/client/src/net/runelite/client/input/controller/QuickRadialControls.java
++++ b/client/src/net/runelite/client/input/controller/QuickRadialControls.java
+@@ -79,7 +79,7 @@ public final class QuickRadialControls
+             else message="Focus food, potion, prayer or spell first";
+             armed=false;
+         }
+-        else if ((input.buttonsPressed&8)!=0) { gateway.restore(selected);message="Slot restored to default";armed=false; }
++        else if ((input.buttonsPressed&8)!=0) { gateway.restore(selected);message="Slot cleared";armed=false; }
+         else if ((input.buttonsPressed&1)!=0)
+         {
+             pending=gateway.binding(selected);armed=false;
+diff --git a/client/src/net/runelite/client/input/controller/ServerCapabilities.java b/client/src/net/runelite/client/input/controller/ServerCapabilities.java
+new file mode 100644
+index 0000000..9d4d32d
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/ServerCapabilities.java
+@@ -0,0 +1,25 @@
++package net.runelite.client.input.controller;
++
++/** Session-bound negotiated extensions. No custom packet is permitted before a fresh acknowledgement. */
++public final class ServerCapabilities
++{
++    private String nonce;
++    private long started;
++    private boolean verified;
++    public void reset(){nonce=null;started=0;verified=false;}
++    public String request(long now)
++    {
++        if(nonce!=null)return null;
++        nonce=java.util.UUID.randomUUID().toString().replace("-","");started=now;
++        return "soloscape_capabilities "+nonce;
++    }
++    public boolean receive(String text,long now)
++    {
++        if(text==null||!text.startsWith("SOLOSCAPE|"))return false;
++        if(nonce!=null && now-started<=10_000_000_000L && text.equals("SOLOSCAPE|1|"+nonce+"|direct,cancel"))verified=true;
++        return true; // Reserved protocol replies do not appear as ordinary game chat.
++    }
++    public boolean verified(){return verified;}
++    public String status(long now)
++    {return verified?"SoloScape server verified":nonce==null?"Waiting for game connection":now-started>10_000_000_000L?"Server features unavailable; using compatible controls":"Checking SoloScape server features";}
++}
+diff --git a/client/src/net/runelite/client/input/controller/WorldControls.java b/client/src/net/runelite/client/input/controller/WorldControls.java
+index 693cc45..34bf596 100644
+--- a/client/src/net/runelite/client/input/controller/WorldControls.java
++++ b/client/src/net/runelite/client/input/controller/WorldControls.java
+@@ -30,6 +30,8 @@ public final class WorldControls
+     public String feedback(long now) { return now<feedbackUntil?feedback:null; }
+     private boolean armed, haveAim, moving, walkingPaused, directMode;
+     private long lastFind, lastWalk;
++    private double runThreshold=.9;
++    public void runThreshold(double value) { runThreshold=Math.max(.5,Math.min(1,value)); }
+     private double facingX, facingY = 1, moveX, moveY;
+     private float pausedX, pausedY;
+     private volatile ControllerTarget[] menu = EMPTY;
+@@ -144,7 +146,7 @@ public final class WorldControls
+         {
+             if (directMode)
+             {
+-                gateway.direct(dx, dy, Math.hypot(x, y) >= .9);
++                gateway.direct(dx, dy, Math.hypot(x, y) >= runThreshold);
+                 moving = true;
+                 return;
+             }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerButton.java b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerButton.java
+index 4a67d53..0a1b001 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerButton.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerButton.java
+@@ -3,7 +3,7 @@ package net.runelite.client.plugins.soloscapecontroller;
+ /** SDL mapped auxiliary buttons; menu bindings can be restored through plugin settings. */
+ public enum ControllerButton
+ {
+-    VIEW(4,"View / Select"), START(6,"Start / Menu"), LEFT_STICK(7,"Left stick click"), RIGHT_STICK(8,"Right stick click"), Y(3,"Y / Triangle");
++    A(0,"A / Cross"), B(1,"B / Circle"), X(2,"X / Square"), LEFT_BUMPER(9,"Left bumper"), RIGHT_BUMPER(10,"Right bumper"), VIEW(4,"View / Select"), START(6,"Start / Menu"), LEFT_STICK(7,"Left stick click"), RIGHT_STICK(8,"Right stick click"), Y(3,"Y / Triangle");
+     public final int mask;
+     private final String label;
+     ControllerButton(int index,String label) { this.mask=1<<index;this.label=label; }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerPreset.java b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerPreset.java
+new file mode 100644
+index 0000000..4821007
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerPreset.java
+@@ -0,0 +1,6 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++public enum ControllerPreset
++{
++    CUSTOM, XBOX, PLAYSTATION, STEAM_DECK
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+index 0d30e84..2c578f5 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -37,7 +37,7 @@ public interface SoloScapeControllerConfig extends Config
+     @ConfigItem(keyName = "interfaceControls", name = "Native interface navigation", description = "Controller focus and keyboard for banks, shops, production, equipment, prayer, spells and supported home tabs. Turn off to use their normal mouse/keyboard controls.", position = 9)
+     default boolean interfaceControls() { return true; }
+ 
+-    @ConfigItem(keyName="quickRadial",name="Quick-action wheel",description="Start opens eight slots. Focus food, potion, prayer or spell, open the wheel and press X to assign it. Y restores the highlighted slot.",position=10)
++    @ConfigItem(keyName="quickRadial",name="Quick-action wheel",description="Start opens eight slots. Focus food, potion, prayer or spell, open the wheel and press X to assign it. Y clears the highlighted slot.",position=10)
+     default boolean quickRadial() { return true; }
+     @ConfigItem(keyName="quickButton",name="Quick wheel button",description="Choose a different button from Home wheel and Inventory. Default: Start / Menu.",position=11)
+     default ControllerButton quickButton() { return ControllerButton.START; }
+@@ -52,7 +52,7 @@ public interface SoloScapeControllerConfig extends Config
+     default ControllerGlyphs glyphs() { return ControllerGlyphs.XBOX; }
+     @ConfigItem(keyName="showGuide",name="Show controller guide",description="Display controls and quick-slot assignment instructions. Turn off when familiar. Settings can be restored using the plugin's Reset button.",position=16)
+     default boolean showGuide() { return false; }
+-    @ConfigItem(keyName="quickSlots",name="Saved quick actions",description="Assigned by the wheel. Reset the plugin or press Y in the wheel to restore defaults.",hidden=true)
++    @ConfigItem(keyName="quickSlots",name="Saved quick actions",description="Assigned by the wheel. Reset the plugin or press Y in the wheel to clear that slot.",hidden=true)
+     default String quickSlots() { return ""; }
+     @ConfigItem(keyName="customInventory",name="Custom inventory screen",description="Readable controller item grid with native actions. Turn off to restore native inventory presentation.",position=17)
+     default boolean customInventory() { return false; }
+@@ -63,4 +63,20 @@ public interface SoloScapeControllerConfig extends Config
+     @ConfigItem(keyName="customShop",name="Custom shop screen",description="Readable stock/sell/control panes using native Buy/Sell and quantity permissions.",position=20)
+     default boolean customShop() { return false; }
+ 
++    @ConfigItem(keyName="preset",name="Controller preset",description="Apply Xbox, PlayStation or Steam Deck defaults once, then select Custom to keep your changes. Presets reset bindings, labels, deadzone, scale and run threshold.",position=21)
++    default ControllerPreset preset() { return ControllerPreset.CUSTOM; }
++    @ConfigItem(keyName="confirmButton",name="Confirm / interact",description="A logical confirm control. Every binding must use a different button.",position=22)
++    default ControllerButton confirmButton() { return ControllerButton.A; }
++    @ConfigItem(keyName="cancelButton",name="Back / cancel",description="B logical back and cancel control.",position=23)
++    default ControllerButton cancelButton() { return ControllerButton.B; }
++    @ConfigItem(keyName="actionsButton",name="Actions / assign",description="X logical action menu and quick-slot assignment control.",position=24)
++    default ControllerButton actionsButton() { return ControllerButton.X; }
++    @ConfigItem(keyName="previousButton",name="Previous target / pane",description="Left bumper logical previous control.",position=25)
++    default ControllerButton previousButton() { return ControllerButton.LEFT_BUMPER; }
++    @ConfigItem(keyName="nextButton",name="Next target / pane",description="Right bumper logical next control.",position=26)
++    default ControllerButton nextButton() { return ControllerButton.RIGHT_BUMPER; }
++    @Range(min=50,max=100)
++    @ConfigItem(keyName="runThreshold",name="Run stick threshold (%)",description="Direct movement runs above this post-deadzone tilt. 100 requires full tilt.",position=27)
++    default int runThreshold() { return 90; }
++
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index 26dcc4c..f679473 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -146,10 +146,14 @@ public class SoloScapeControllerPlugin extends Plugin
+         public boolean interact(ControllerTarget target) { return client.interactController(target); }
+     });
+ 	private final GamepadState state = new GamepadState();
++    private final GamepadState rawState=new GamepadState();
++    private net.runelite.client.input.controller.ActionMap actionMap;
++    private boolean mappingArmed;
++    private ControllerPreset appliedPreset;
+ 	private SdlGamepad gamepad;
+ 	private boolean failed;
+ 	private volatile boolean active;
+-	private long lastDebug, lastAdapterFailure;
++	private long lastDebug, lastAdapterFailure, lastInputTick;
+     private long measuredTicks, measuredNanos, maxTickNanos;
+ 
+ 	@Provides
+@@ -204,7 +208,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 		active = false;
+ 		client.setControllerCameraInput(0, 0);
+ 		resetWorld();
+-		state.clear();
++		state.clear();rawState.clear();mappingArmed=false;actionMap=null;
+ 		ui.reset();
+         radial.reset(); quick.reset();
+         radialFocusTab = -1;confirmation.clear();panelFeedback=null;panelFeedbackUntil=0;
+@@ -223,6 +227,23 @@ public class SoloScapeControllerPlugin extends Plugin
+         { panelFeedback=message.replaceAll("<[^>]*>","");panelFeedbackUntil=System.nanoTime()+5_000_000_000L;panelRequestUntil=0; }
+     }
+ 
++    private void applyPreset()
++    {
++        ControllerPreset preset=config.preset();
++        if(preset==appliedPreset)return;
++        appliedPreset=preset;
++        if(preset==ControllerPreset.CUSTOM)return;
++        String[] keys={"confirmButton","cancelButton","actionsButton","previousButton","nextButton","inventoryButton","homeButton","quickButton"};
++        ControllerButton[] values={ControllerButton.A,ControllerButton.B,ControllerButton.X,ControllerButton.LEFT_BUMPER,ControllerButton.RIGHT_BUMPER,ControllerButton.Y,ControllerButton.VIEW,ControllerButton.START};
++        for(int i=0;i<keys.length;i++)configManager.setConfiguration("soloscapecontroller",keys[i],values[i]);
++        configManager.setConfiguration("soloscapecontroller","glyphs",preset==ControllerPreset.PLAYSTATION?ControllerGlyphs.PLAYSTATION:ControllerGlyphs.XBOX);
++        configManager.setConfiguration("soloscapecontroller","overlayScale",preset==ControllerPreset.STEAM_DECK?125:100);
++        configManager.setConfiguration("soloscapecontroller","deadzone",18);
++        configManager.setConfiguration("soloscapecontroller","runThreshold",90);
++        configManager.setConfiguration("soloscapecontroller","preset",ControllerPreset.CUSTOM);
++        appliedPreset=ControllerPreset.CUSTOM;
++    }
++
+     private boolean pollController()
+     {
+         try
+@@ -233,7 +254,7 @@ public class SoloScapeControllerPlugin extends Plugin
+                 gamepad.init();
+                 log.info("SoloScape controller enabled; waiting for an SDL-mapped gamepad");
+             }
+-            gamepad.poll(state);
++            gamepad.poll(rawState);
+             return true;
+         }
+         catch (RuntimeException | LinkageError ex)
+@@ -253,23 +274,44 @@ public class SoloScapeControllerPlugin extends Plugin
+         if (!pollController()) return;
+         try
+         {
++            long tickNow=System.nanoTime();
++            client.updateControllerConnection();
++            if(lastInputTick!=0 && tickNow-lastInputTick>750_000_000L)
++            {mappingArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();confirmation.clear();}
++            lastInputTick=tickNow;
++            applyPreset();
++            net.runelite.client.input.controller.ActionMap nextMap=new net.runelite.client.input.controller.ActionMap(
++                config.confirmButton().mask,config.cancelButton().mask,config.actionsButton().mask,
++                config.previousButton().mask,config.nextButton().mask,config.inventoryButton().mask,
++                config.homeButton().mask,config.quickButton().mask);
++            boolean changed=!nextMap.same(actionMap);
++            if(changed){actionMap=nextMap;mappingArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();confirmation.clear();}
++            bindingWarning=actionMap.valid()?null:"Controller bindings overlap. Choose distinct buttons or reset plugin settings.";
++            if(!actionMap.valid()){client.setControllerCameraInput(0,0);return;}
++            if(!mappingArmed)
++            {
++                if(!net.runelite.client.input.controller.ActionMap.neutral(rawState,config.deadzone()/100f)){client.setControllerCameraInput(0,0);return;}
++                mappingArmed=true;rawState.buttonsPressed=rawState.buttonsReleased=0;
++            }
++            actionMap.apply(rawState,state);
++            world.runThreshold(config.runThreshold()/100.0);
+             client.setControllerServerFeatures(config.serverFeatures());
+             client.setControllerPanelEnabled(config.interfaceControls());
+             Canvas canvas = client.getCanvas();
+             if (!state.connected || canvas == null || !canvas.isFocusOwner() || !client.hasLocalPlayer())
+             {
+                 client.setControllerCameraInput(0, 0);
+-                resetWorld(); ui.reset(); radial.reset(); quick.reset(); radialFocusTab = -1;
++                resetWorld(); ui.reset(); radial.reset(); quick.reset(); radialFocusTab = -1;mappingArmed=false;
+                 return;
+             }
+             client.prepareControllerUi();
+             long now = System.nanoTime();
+             if ((state.buttonsPressed&2)!=0 || !customPanelActive())confirmation.clear();
+-            radial.trigger(config.homeButton().mask);
+-            quick.trigger(config.quickButton().mask);
+-            ui.inventoryButton(config.inventoryButton().mask);
+-            boolean conflict=config.quickButton()==config.homeButton() || config.quickButton()==config.inventoryButton() || config.homeButton()==config.inventoryButton();
+-            bindingWarning=conflict?"Controller bindings overlap. Choose distinct buttons or reset plugin settings.":null;
++            radial.trigger(1<<4);
++            quick.trigger(1<<6);
++            ui.inventoryButton(8);
++            boolean conflict=false;
++            if(config.serverFeatures()&&!client.controllerServerVerified())bindingWarning=client.controllerServerStatus();
+             if (!config.quickRadial() || conflict || !config.interfaceControls()) quick.reset();
+             if (!conflict && config.quickRadial() && config.interfaceControls() && !radial.active())
+             {
+@@ -307,7 +349,7 @@ public class SoloScapeControllerPlugin extends Plugin
+             else
+             {
+                 if (!client.isControllerWorldReady()) client.clearControllerWalkMarker();
+-                world.update(state, config.deadzone() / 100f, now, config.directMovement() && config.serverFeatures());
++                world.update(state, config.deadzone() / 100f, now, config.directMovement() && config.serverFeatures() && client.controllerServerVerified());
+             }
+         }
+         catch (RuntimeException ex)
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+index 5f74bb9..2ce7841 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+@@ -35,7 +35,7 @@ public final class SoloScapeQuickRadialOverlay extends Overlay
+                 "A: interact · X: actions · LB/RB: targets / panes · B: back / cancel",
+                 plugin.config().homeButton()+": home tabs · "+plugin.config().quickButton()+": quick actions · "+plugin.config().inventoryButton()+": inventory",
+                 "D-pad: UI focus / scroll · Production LB/RB: amount · A: make recipe",
+-                "Quick slots: focus food, potion, prayer or spell; open quick wheel; X: assign · Y: restore",
++                "Quick slots: focus food, potion, prayer or spell; open quick wheel; X: assign · Y: clear",
+                 "All slots start empty · Potion bindings use the lowest available dose · Plugin Reset restores controls"};
+             int max=Math.max(100,client.getCanvas().getWidth()-32),w=0,lineHeight=g.getFontMetrics().getHeight()+5;
+             for(String line:lines) w=Math.max(w,Math.min(max,g.getFontMetrics().stringWidth(plugin.config().glyphs().text(line))+20));
+@@ -69,7 +69,7 @@ public final class SoloScapeQuickRadialOverlay extends Overlay
+             centreFit(g,quick.label(quick.selected()),(int)cx,(int)cy-16,(int)(inner*1.8),true);
+             g.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,Math.max(10,(int)(12*s))));g.setColor(Color.WHITE);
+             centreFit(g,glyphs.text("A: use · B: back"),(int)cx,(int)cy+8,(int)(inner*1.8),true);
+-            centreFit(g,glyphs.text("X: assign · Y: restore"),(int)cx,(int)cy+30,(int)(inner*1.8),true);
++            centreFit(g,glyphs.text("X: assign · Y: clear"),(int)cx,(int)cy+30,(int)(inner*1.8),true);
+             centreFit(g,"QUICK ACTIONS",(int)cx,(int)(cy-radius-14),width-30,true);
+             centreFit(g,quick.message()==null?(quick.canBind()?"Current action ready to assign":"Focus food, potion, prayer or spell to assign"):quick.message(),(int)cx,(int)(cy+radius+23),width-30,true);
+         }
+diff --git a/client/test/net/runelite/client/input/controller/ActionMapTest.java b/client/test/net/runelite/client/input/controller/ActionMapTest.java
+new file mode 100644
+index 0000000..795fd93
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/ActionMapTest.java
+@@ -0,0 +1,36 @@
++package net.runelite.client.input.controller;
++
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class ActionMapTest
++{
++    @Test public void swappedButtonsTranslateEveryEdgeWithoutMutatingProviderHistory()
++    {
++        ActionMap map=new ActionMap(2,1,4,512,1024,8,16,64);
++        assertTrue(map.valid());GamepadState raw=new GamepadState(),out=new GamepadState();
++        raw.connected=true;raw.leftX=.7f;raw.buttonsHeld=2|2048;raw.buttonsPressed=2;raw.buttonsReleased=1;
++        map.apply(raw,out);assertEquals(1|2048,out.buttonsHeld);assertEquals(1,out.buttonsPressed);assertEquals(2,out.buttonsReleased);
++        assertEquals(2,raw.buttonsPressed);assertEquals(.7f,out.leftX,0);
++    }
++    @Test public void overlapGuideDpadAndCompositeBindingsAreRefused()
++    {
++        assertFalse(new ActionMap(1,1,4,512,1024,8,16,64).valid());
++        assertFalse(new ActionMap(32,2,4,512,1024,8,16,64).valid());
++        assertFalse(new ActionMap(2048,2,4,512,1024,8,16,64).valid());
++        assertFalse(new ActionMap(3,2,4,512,1024,8,16,64).valid());
++    }
++    @Test public void remappingRequiresBothSticksTriggersAndButtonsToBeNeutral()
++    {
++        GamepadState raw=new GamepadState();assertTrue(ActionMap.neutral(raw,.18f));
++        raw.rightX=.5f;assertFalse(ActionMap.neutral(raw,.18f));raw.rightX=0;
++        raw.leftTrigger=.5f;assertFalse(ActionMap.neutral(raw,.18f));raw.leftTrigger=0;
++        raw.buttonsHeld=128;assertFalse(ActionMap.neutral(raw,.18f));
++    }
++    @Test public void unboundAuxiliaryButtonsCannotLeakLogicalMenuEvents()
++    {
++        ActionMap map=new ActionMap(1,2,4,512,1024,8,128,256);GamepadState raw=new GamepadState(),out=new GamepadState();
++        raw.buttonsPressed=16|64;map.apply(raw,out);assertEquals(0,out.buttonsPressed);
++        raw.buttonsPressed=128|256;map.apply(raw,out);assertEquals(16|64,out.buttonsPressed);
++    }
++}
+diff --git a/client/test/net/runelite/client/input/controller/ServerCapabilitiesTest.java b/client/test/net/runelite/client/input/controller/ServerCapabilitiesTest.java
+new file mode 100644
+index 0000000..1e04475
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/ServerCapabilitiesTest.java
+@@ -0,0 +1,22 @@
++package net.runelite.client.input.controller;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class ServerCapabilitiesTest
++{
++    @Test public void onlyFreshMatchingProtocolAcknowledgementEnablesCustomPackets()
++    {
++        ServerCapabilities c=new ServerCapabilities();String request=c.request(1);String nonce=request.substring(request.indexOf(' ')+1);
++        assertFalse(c.verified());assertNull(c.request(2));
++        assertTrue(c.receive("SOLOSCAPE|2|"+nonce+"|direct,cancel",3));assertFalse(c.verified());
++        assertTrue(c.receive("SOLOSCAPE|1|wrong|direct,cancel",4));assertFalse(c.verified());
++        assertTrue(c.receive("SOLOSCAPE|1|"+nonce+"|direct,cancel",5));assertTrue(c.verified());
++        c.reset();assertFalse(c.verified());c.request(6);c.receive("SOLOSCAPE|1|"+nonce+"|direct,cancel",7);assertFalse(c.verified());
++    }
++    @Test public void timeoutKeepsCompatibleControlsAndOrdinaryMessagesVisible()
++    {
++        ServerCapabilities c=new ServerCapabilities();String request=c.request(1);String nonce=request.substring(request.indexOf(' ')+1);
++        assertFalse(c.receive("Not enough coins.",2));c.receive("SOLOSCAPE|1|"+nonce+"|direct,cancel",11_000_000_001L);
++        assertFalse(c.verified());assertTrue(c.status(11_000_000_001L).contains("compatible"));
++    }
++}
