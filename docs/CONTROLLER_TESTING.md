@@ -3,8 +3,8 @@
 The experimental **disabled-by-default** RuneLite plugin now supports right-stick
 camera, left-stick walking, A-button world interaction, inventory navigation and
 dialogue controls. The server/protocol are unchanged. The user confirmed camera
-panning and the movement tile overlay work. Inventory and dialogue gameplay
-acceptance is the next check.
+panning and the movement tile overlay work. This usability build adds precise walking, LT aiming, stable focus, LB/RB target
+cycling and gold scene highlights. Gameplay feel remains the next check.
 
 ## Try this build
 
@@ -20,17 +20,21 @@ acceptance is the next check.
    focus. Move the **right stick** to rotate/pitch the camera.
 4. Release both sticks and A once after login/reconnect/focus regain. Move the
    **left stick** to walk relative to the camera. Try a wall and a diagonal corner;
-   the character should stop before blocked tiles. Release the stick: new requests
+   the character should stop before blocked tiles. Gentle tilt walks one tile,
+   medium tilt two and full tilt three. Release the stick: new requests
    stop, but the short path already queued can finish. A bright green tile marks
    the actual requested destination, and a light blue outline marks your current
    tile while walking. The destination stays visible until arrival or another
    action overrides it.
-5. Aim the left stick toward a nearby NPC/object, then release it. The overlay
-   shows **A: action target**. Press **A** (Xbox / Deck; bottom face button on other
-   pads) to perform that displayed action once. Release A and neutralize the left
-   stick before walking again, so movement does not immediately cancel the action.
-   Try an NPC conversation, a tree and a door. Right-stick rotation also changes
-   targeting direction. Dialogue widgets take priority while conversations are open.
+5. **Hold LT** and point the left stick at a nearby NPC/object to aim without
+   issuing walks. A gold footprint and **A: action target** label mark the selection.
+   Tap **LB/RB** to cycle eligible targets in that direction. Release the left
+   stick and pan with the right stick: focus should stay on the same entity.
+   Press **A** to perform the displayed action once. Holding the same walking
+   direction after A pauses movement so it cannot immediately cancel the action;
+   release A and neutralize or change the left-stick direction to walk again.
+   Try an NPC conversation, a tree and a door. Aim-only mode stops new requests;
+   a short walk already queued can still finish. Dialogue widgets take priority.
 6. Test ordinary mouse walking/interaction and camera controls. Unplug while
    moving, switch focus while holding A, then reconnect/refocus. Input should stop
    and held world inputs must not resume until the stick and A are released.
@@ -63,7 +67,8 @@ No native code loads until the plugin is enabled. It polls the first available
 SDL-mapped controller, retains that device while attached, and scans again after
 disconnect. Device name/GUID and connection changes appear in `.runtime/client.log`.
 A uses SDL button 0 and dispatches only on its press edge. Targets are within
-3.5 tiles and a forward cone; a small retention bias stabilizes focus. The client
+five tiles from their footprint edges and a forward cone; valid focus remains
+stable until you change aim or cycle targets. The client
 checks native pathfinding (maximum eight path steps) and revalidates the displayed
 target immediately before dispatch. Selected spells/items, open context menus
 and scripted camera modes block world actions.
@@ -89,14 +94,14 @@ Built-in Deck control access and mappings still need physical hardware validatio
 - Canvas focus/player presence checks and a 100ms stale-input watchdog. Per-frame
   camera contribution caps elapsed time at 50ms to avoid jumps after a hitch.
 - Login/scripted/free-camera modes do not receive controller camera updates.
-- Camera-relative walking projects two to four tiles ahead and checks the exact
+- Camera-relative walking projects one to three tiles ahead from the physical player tile and checks the exact
   revision-634 collision masks, including both side tiles for diagonals. Native
-  walking requests are limited to one per 150ms and duplicate destinations are
-  suppressed. Existing mouse destinations can override controller destinations.
+  continued walking requests are limited to one per 150ms, with immediate direction
+  changes. Duplicate destinations are suppressed. Existing mouse destinations can override controller destinations.
 - Nearby NPC/object actions use `Class325.method2599`, the normal menu dispatcher.
   Action IDs come from the actual 634 builders, not RuneLite's generic enum.
   No click emulation or invented server packets are used.
-- Thirty-one client tests pass without skips: math/state, actual camera bridge,
+- Thirty-eight client tests pass without skips: math/state, actual camera bridge,
   projection/collision/focus scoring, lifecycle/action-edge tests, three native
   pathfinder/gate tests, eleven UI navigation/native-widget tests and real SDL
   virtual-controller polling. SDL checks both
@@ -119,7 +124,8 @@ The checkout remains at upstream base `297bc8a4861755b676855664d32859054779c067`
 SoloScape owns `patches/client/0001-controller-camera.patch` and
 `patches/client/0002-controller-world.patch` and
 `patches/client/0003-controller-movement-tiles.patch` and
-`patches/client/0004-controller-inventory-dialogue.patch`. Source builds apply the patch stack
+`patches/client/0004-controller-inventory-dialogue.patch` and
+`patches/client/0005-controller-world-usability.patch`. Source builds apply the patch stack
 automatically before compiling. To apply separately:
 
 ```bash
@@ -181,3 +187,17 @@ as they do for ordinary walking. No responses are selected automatically.
 All 31 client tests pass with zero skips/errors. Patch reproduction matches all
 30 patched files as an upgrade and fresh stack. In-game item actions, conversation
 controls, focus placement, tab opening and resized layout acceptance remain pending.
+
+## Walking and aiming usability (2026-10-08)
+
+Patch 0005 shortens walking projection, anchors it to the physical player tile,
+adds LT aim-only input and LB/RB cycling, and displays the actual selected entity's
+footprint and action in the scene. Resting aim stays in world space during camera
+panning. Focus identity follows moving NPCs; A revalidates their current position,
+option, name, region and reachability. It never substitutes another entity.
+
+All 38 client tests pass without skips, including seven added checks for gentle
+walking, footprint scoring, LT, camera panning, bumper edges, interaction recovery
+and entity identity. Existing native pathfinder, widget and real SDL tests pass.
+The Shadow jar rebuilt successfully. Physical ease of use and scene label placement
+still need an in-game check; LT does not cancel a path already queued.

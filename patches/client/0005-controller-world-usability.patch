@@ -1,0 +1,600 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1071,6 +1071,11 @@
+     }
+ 
+     @Override
++    public ControllerTarget cycleControllerTarget(double x, double y, ControllerTarget previous, int direction) {
++        return ControllerWorld.findTarget(x, y, previous, direction);
++    }
++
++    @Override
+     public boolean interactController(ControllerTarget target) { return ControllerWorld.interact(target); }
+ 
+     @Override
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -51,7 +51,7 @@
+         if (!ready() || !Double.isFinite(dx) || !Double.isFinite(dy) || Math.hypot(dx, dy) < 0.001) return false;
+         Player player = Class132.aPlayer_1907;
+         Class361 map = Class348_Sub45.aClass361Array7108[player.plane];
+-        int x = player.anIntArray10320[0], y = player.anIntArray10317[0];
++        int x = player.x >> 9, y = player.y >> 9;
+         long tile = WorldInput.destination(map.anIntArrayArray4438, x - map.anInt4453, y - map.anInt4441, dx, dy);
+         int destX = WorldInput.x(tile) + map.anInt4453, destY = WorldInput.y(tile) + map.anInt4441;
+         if (destX == x && destY == y) return false;
+@@ -68,27 +68,46 @@
+ 
+     static ControllerTarget findTarget(double facingX, double facingY, ControllerTarget previous)
+     {
++        return findTarget(facingX, facingY, previous, 0);
++    }
++
++    static ControllerTarget findTarget(double facingX, double facingY, ControllerTarget previous, int direction)
++    {
+         if (!ready() || !Double.isFinite(facingX) || !Double.isFinite(facingY)) return null;
+         List<ControllerTarget> candidates = candidates();
+         Player p = Class132.aPlayer_1907;
+-        int px = p.anIntArray10320[0], py = p.anIntArray10317[0];
+-        candidates.removeIf(t -> !Double.isFinite(WorldInput.targetScore(t.x - px, t.y - py, facingX, facingY, t.same(previous))));
+-        candidates.sort(Comparator.comparingDouble(t -> WorldInput.targetScore(t.x - px, t.y - py, facingX, facingY, t.same(previous))));
+-        // Bound pathfinding work even in densely populated scenes.
+-        for (int i = 0; i < Math.min(8, candidates.size()); i++)
+-            if (reachable(candidates.get(i))) return candidates.get(i);
+-        return null;
++        double px = (p.x >> 9) + .5, py = (p.y >> 9) + .5;
++        candidates.removeIf(t -> !Double.isFinite(WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false)));
++        candidates.sort(Comparator.comparingDouble(t -> WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false)));
++        // Preserve explicit focus while it remains valid, even if a closer target enters the cone.
++        ControllerTarget retained = null;
++        for (ControllerTarget candidate : candidates)
++            if (candidate.sameEntity(previous)) { retained = candidate; break; }
++        boolean retainedReachable = retained != null && reachable(retained);
++        if (direction == 0 && retainedReachable) return retained;
++        List<ControllerTarget> reachable = new ArrayList<>();
++        if (retained != null) candidates.remove(retained);
++        if (retainedReachable) reachable.add(retained);
++        int checks = Math.min(8 - (retained != null ? 1 : 0), candidates.size());
++        for (int i = 0; i < checks; i++)
++            if (reachable(candidates.get(i))) reachable.add(candidates.get(i));
++        if (reachable.isEmpty()) return null;
++        if (direction == 0 || retained == null) return reachable.get(direction < 0 ? reachable.size() - 1 : 0);
++        // Sort independently of current focus so repeated bumper presses traverse all candidates.
++        reachable.sort(Comparator.comparingDouble(t -> WorldInput.areaScore(px, py, t.x, t.y, t.width, t.height, facingX, facingY, false)));
++        int index = -1;
++        for (int i = 0; i < reachable.size(); i++) if (reachable.get(i).sameEntity(previous)) index = i;
++        return reachable.get(Math.floorMod(index + direction, reachable.size()));
+     }
+ 
+     static boolean interact(ControllerTarget target)
+     {
+         if (!ready() || target == null) return false;
+         Player p = Class132.aPlayer_1907;
+-        if (Math.hypot(target.x - p.anIntArray10320[0], target.y - p.anIntArray10317[0]) > 3.5) return false;
+         // Re-enumerate immediately: despawns, transforms, plane/region changes and options invalidate focus.
+         for (ControllerTarget current : candidates())
+         {
+-            if (current.same(target) && current.option.equals(target.option) && java.util.Objects.equals(current.name, target.name) && reachable(current))
++            if (current.sameEntity(target) && current.option.equals(target.option) && java.util.Objects.equals(current.name, target.name) && nearby(p, current) && reachable(current))
+             {
+                 clearWalkMarker();
+                 dispatch(current);
+@@ -103,7 +122,7 @@
+     {
+         List<ControllerTarget> result = new ArrayList<>();
+         Player p = Class132.aPlayer_1907;
+-        int px = p.anIntArray10320[0], py = p.anIntArray10317[0];
++        int px = p.x >> 9, py = p.y >> 9;
+         if (Class282.aClass356_3654 != null)
+         {
+             // Iterate the native table without rewriting the renderer's NPC snapshot.
+@@ -113,15 +132,16 @@
+                 Npc npc = entry.aNpc_6859;
+                 if (npc != null && npc.plane == p.plane && npc.definition != null)
+                 {
+-                    int x = npc.anIntArray10320[0], y = npc.anIntArray10317[0];
+-                    if (Math.hypot(x - px, y - py) <= 3.5)
++                    int size = npc.method2436((byte) 70);
++                    int x = (npc.x >> 9) - size / 2, y = (npc.y >> 9) - size / 2;
++                    if (Math.hypot(x - px, y - py) <= 5 + size)
+                     {
+                         NPCType def = npc.definition;
+                         if (def.multinpcs != null) def = def.method794(Class318_Sub1_Sub3_Sub3.aClass170_10209, -1);
+                         if (def != null && def.interactive)
+                         {
+                             int option = defaultOption(def.op, def.aByte107);
+-                            if (option >= 0) result.add(target(def.name, def.op[option], NPC_ACTIONS[option], npc.anInt10290, x, y));
++                            if (option >= 0) result.add(target(def.name, def.op[option], NPC_ACTIONS[option], npc.anInt10290, x, y, size, size));
+                         }
+                     }
+                 }
+@@ -129,10 +149,9 @@
+             }
+         }
+         if (ChatMessage.aClass357ArrayArrayArray2029 == null) return result;
+-        for (int x = Math.max(0, px - 3); x <= Math.min(Class367_Sub4.anInt7319 - 1, px + 3); x++)
+-            for (int y = Math.max(0, py - 3); y <= Math.min(Class348_Sub40_Sub3.anInt9109 - 1, py + 3); y++)
++        for (int x = Math.max(0, px - 5); x <= Math.min(Class367_Sub4.anInt7319 - 1, px + 5); x++)
++            for (int y = Math.max(0, py - 5); y <= Math.min(Class348_Sub40_Sub3.anInt9109 - 1, py + 5); y++)
+             {
+-                if (Math.hypot(x - px, y - py) > 3.5) continue;
+                 addObject(result, r_Sub2.method3297(p.plane, x, y), x, y);
+                 addObject(result, Class348_Sub40_Sub32.method3135(p.plane, x, y), x, y);
+                 addObject(result, Class177.method1353(p.plane, x, y, Interface10.class), x, y);
+@@ -149,8 +168,11 @@
+         if (def.anIntArray945 != null) def = def.method480(Class318_Sub1_Sub3_Sub3.aClass170_10209, (byte) 47);
+         if (def == null) return;
+         int option = defaultOption(def.aStringArray913, -1);
++        int rotation = obj.method41(-32228);
++        int width = (rotation & 1) == 0 ? def.anInt961 : def.anInt926;
++        int height = (rotation & 1) == 0 ? def.anInt926 : def.anInt961;
+         if (option >= 0) result.add(target(def.aString884, def.aStringArray913[option], OBJECT_ACTIONS[option],
+-            Class348_Sub40_Sub21.method3107((byte) 95, obj, y, x), x, y));
++            Class348_Sub40_Sub21.method3107((byte) 95, obj, y, x), x, y, width, height));
+     }
+ 
+     private static int defaultOption(String[] options, int attackPolicy)
+@@ -164,9 +186,17 @@
+         return -1;
+     }
+ 
+-    private static ControllerTarget target(String name, String option, int action, long id, int x, int y)
+-    {
+-        return new ControllerTarget(name, option, action, id, x, y, Class132.aPlayer_1907.plane, za_Sub2.regionTileX, Class90.regionTileY);
++    private static ControllerTarget target(String name, String option, int action, long id, int x, int y, int width, int height)
++    {
++        return new ControllerTarget(name, option, action, id, x, y, Class132.aPlayer_1907.plane, za_Sub2.regionTileX, Class90.regionTileY, width, height);
++    }
++
++    private static boolean nearby(Player p, ControllerTarget t)
++    {
++        double x = (p.x >> 9) + .5, y = (p.y >> 9) + .5;
++        double dx = Math.max(t.x - x, Math.max(0, x - t.x - t.width));
++        double dy = Math.max(t.y - y, Math.max(0, y - t.y - t.height));
++        return Math.hypot(dx, dy) <= 5;
+     }
+ 
+     private static boolean reachable(ControllerTarget t)
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -358,18 +358,30 @@
+     public boolean isControllerWorldReady() { return false; }
+     public boolean walkController(double directionX, double directionY) { return false; }
+     public ControllerTarget findControllerTarget(double facingX, double facingY, ControllerTarget previous) { return null; }
++    public ControllerTarget cycleControllerTarget(double x, double y, ControllerTarget previous, int direction) { return findControllerTarget(x, y, previous); }
+     public boolean interactController(ControllerTarget target) { return false; }
+ 
+     public static final class ControllerTarget
+     {
+         public final String name, option;
+-        public final int action, x, y, plane, baseX, baseY;
++        public final int action, x, y, plane, baseX, baseY, width, height;
+         public final long identifier;
+         public ControllerTarget(String name, String option, int action, long identifier,
+                                 int x, int y, int plane, int baseX, int baseY)
+         {
++            this(name, option, action, identifier, x, y, plane, baseX, baseY, 1, 1);
++        }
++        public ControllerTarget(String name, String option, int action, long identifier,
++                                int x, int y, int plane, int baseX, int baseY, int width, int height)
++        {
+             this.name = name; this.option = option; this.action = action; this.identifier = identifier;
+             this.x = x; this.y = y; this.plane = plane; this.baseX = baseX; this.baseY = baseY;
++            this.width = Math.max(1, width); this.height = Math.max(1, height);
++        }
++        public boolean sameEntity(ControllerTarget other)
++        {
++            return other != null && action == other.action && identifier == other.identifier
++                && plane == other.plane && baseX == other.baseX && baseY == other.baseY;
+         }
+         public boolean same(ControllerTarget other)
+         {
+diff --git a/client/src/net/runelite/client/input/controller/WorldControls.java b/client/src/net/runelite/client/input/controller/WorldControls.java
+--- a/client/src/net/runelite/client/input/controller/WorldControls.java
++++ b/client/src/net/runelite/client/input/controller/WorldControls.java
+@@ -2,7 +2,7 @@
+ 
+ import com.GameClient.ControllerTarget;
+ 
+-/** Input lifecycle, rate limiting and action edges; the gateway runs native game actions. */
++/** Movement and focus have separate lifecycles; action presses never repeat. */
+ public final class WorldControls
+ {
+     public interface Gateway
+@@ -12,21 +12,23 @@
+         void resetWalk();
+         void walk(double x, double y);
+         ControllerTarget find(double x, double y, ControllerTarget previous);
++        default ControllerTarget cycle(double x, double y, ControllerTarget previous, int direction) { return find(x, y, previous); }
+         boolean interact(ControllerTarget target);
+     }
+-
+     private final Gateway gateway;
+     private volatile ControllerTarget target;
+-    private boolean armed;
+-    private long lastUpdate;
+-    private float aimX, aimY = -1;
++    private boolean armed, haveAim, moving, walkingPaused;
++    private long lastFind, lastWalk;
++    private double facingX, facingY = 1, moveX, moveY;
++    private float pausedX, pausedY;
+ 
+     public WorldControls(Gateway gateway) { this.gateway = gateway; }
+     public ControllerTarget getTarget() { return target; }
+ 
+     public void reset()
+     {
+-        target = null; armed = false; lastUpdate = 0; aimX = 0; aimY = -1;
++        target = null; armed = haveAim = moving = walkingPaused = false;
++        lastFind = lastWalk = 0; facingX = 0; facingY = 1;
+         gateway.resetWalk();
+     }
+ 
+@@ -38,30 +40,55 @@
+         boolean neutral = x == 0 && y == 0;
+         if (!armed)
+         {
+-            // Never resume held movement/A after reconnect, focus regain or interaction.
++            // Neutral is needed for focus/reconnect recovery, not after every interaction.
+             if (neutral && (state.buttonsHeld & 1) == 0) armed = true;
+             else return;
+         }
+-        int yaw = gateway.yaw();
+-        double dx = WorldInput.worldX(x, y, yaw), dy = WorldInput.worldY(x, y, yaw);
++        double dx = WorldInput.worldX(x, y, gateway.yaw()), dy = WorldInput.worldY(x, y, gateway.yaw());
++        boolean aimChanged = false;
++        if (!haveAim)
++        {
++            facingX = WorldInput.worldX(0, -1, gateway.yaw());
++            facingY = WorldInput.worldY(0, -1, gateway.yaw()); haveAim = true;
++        }
+         if (!neutral)
+         {
+-            float length = (float) Math.hypot(x, y);
+-            aimX = x / length; aimY = y / length;
++            double magnitude = Math.hypot(dx, dy), nextX = dx / magnitude, nextY = dy / magnitude;
++            aimChanged = facingX * nextX + facingY * nextY < 0.866; // Deliberate direction change (30 degrees).
++            facingX = nextX; facingY = nextY;
+         }
+-        else gateway.resetWalk();
+-        if ((state.buttonsPressed & 1) != 0)
++        // With the stick at rest, panning the camera leaves the world-space target direction alone.
++        boolean aiming = state.leftTrigger > 0.35f;
++        if (walkingPaused && (neutral || Math.hypot(x - pausedX, y - pausedY) > 0.35)) walkingPaused = false;
++        if (neutral || aiming) { moving = false; gateway.resetWalk(); }
++        int bumpers = state.buttonsPressed & ((1 << 9) | (1 << 10));
++        if (bumpers != 0)
+         {
+-            // Act only on the focus already shown; native code revalidates it immediately.
+-            if (target != null && gateway.interact(target)) armed = false;
+-            lastUpdate = now;
++            if (Integer.bitCount(bumpers) == 1)
++                target = gateway.cycle(facingX, facingY, target, (bumpers & (1 << 9)) != 0 ? -1 : 1);
++            lastFind = now;
++        }
++        else if ((state.buttonsPressed & 1) != 0)
++        {
++            // Act on the focus already displayed; never silently substitute a different target.
++            if (target != null && gateway.interact(target))
++            {
++                walkingPaused = true; pausedX = x; pausedY = y; moving = false;
++            }
+             return;
+         }
+-        if (lastUpdate == 0 || now - lastUpdate >= 150_000_000L)
++        else if (lastFind == 0 || now - lastFind >= 75_000_000L || aimChanged)
+         {
+-            lastUpdate = now;
+-            target = gateway.find(WorldInput.worldX(aimX, aimY, yaw), WorldInput.worldY(aimX, aimY, yaw), target);
+-            if (!neutral) gateway.walk(dx, dy);
++            target = gateway.find(facingX, facingY, aimChanged ? null : target);
++            lastFind = now;
++        }
++        if (!neutral && !aiming && !walkingPaused && (state.buttonsHeld & 1) == 0)
++        {
++            boolean changed = !moving || Math.hypot(dx - moveX, dy - moveY) > 0.35;
++            if (changed || lastWalk == 0 || now - lastWalk >= 150_000_000L)
++            {
++                gateway.walk(dx, dy); lastWalk = now; moveX = dx; moveY = dy; moving = true;
++            }
+         }
+     }
+ }
+diff --git a/client/src/net/runelite/client/input/controller/WorldInput.java b/client/src/net/runelite/client/input/controller/WorldInput.java
+--- a/client/src/net/runelite/client/input/controller/WorldInput.java
++++ b/client/src/net/runelite/client/input/controller/WorldInput.java
+@@ -45,7 +45,7 @@
+         double length = Math.hypot(dx, dy);
+         if (length == 0) return pack(x, y);
+         int originX = x, originY = y;
+-        int distance = Math.max(2, Math.min(4, (int) Math.ceil(length * 4)));
++        int distance = walkDistance(length);
+         for (int step = 1; step <= distance; step++)
+         {
+             int nextX = originX + (int) Math.round(dx / length * step);
+@@ -57,6 +57,21 @@
+         return pack(x, y);
+     }
+ 
++    public static int walkDistance(double magnitude)
++    {
++        if (!Double.isFinite(magnitude) || magnitude <= 0) return 0;
++        return magnitude < 0.55 ? 1 : magnitude < 0.9 ? 2 : 3;
++    }
++
++    /** Distance/heading use the nearest edge of a footprint, rather than its origin tile. */
++    public static double areaScore(double playerX, double playerY, int x, int y, int width, int height,
++                                   double facingX, double facingY, boolean retained)
++    {
++        double dx = Math.max(x, Math.min(x + width, playerX)) - playerX;
++        double dy = Math.max(y, Math.min(y + height, playerY)) - playerY;
++        return targetScore(dx, dy, facingX, facingY, retained);
++    }
++
+     public static long pack(int x, int y) { return ((long) x << 32) | (y & 0xffffffffL); }
+     public static int x(long tile) { return (int) (tile >> 32); }
+     public static int y(long tile) { return (int) tile; }
+@@ -65,9 +80,9 @@
+     public static double targetScore(double dx, double dy, double facingX, double facingY, boolean retained)
+     {
+         double distance = Math.hypot(dx, dy);
+-        if (distance > 3.5) return Double.POSITIVE_INFINITY;
++        if (distance > 5) return Double.POSITIVE_INFINITY;
+         double dot = distance < 0.001 ? 1 : (dx * facingX + dy * facingY) / distance;
+-        if (dot < 0.35) return Double.POSITIVE_INFINITY;
++        if (dot < 0.15) return Double.POSITIVE_INFINITY;
+         return distance + (1 - dot) * 1.5 - (retained ? 0.65 : 0);
+     }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+@@ -28,11 +28,14 @@
+         GameClient.ControllerTarget target = plugin.getTarget();
+         if (target == null) return null;
+         String label = "A: " + target.option + " " + target.name;
+-        int width = graphics.getFontMetrics().stringWidth(label) + 12;
++        String help = "LT: aim  |  LB / RB: change target";
++        int width = Math.max(graphics.getFontMetrics().stringWidth(label), graphics.getFontMetrics().stringWidth(help)) + 12;
+         graphics.setColor(new Color(0, 0, 0, 180));
+-        graphics.fillRect(0, 0, width, 24);
++        graphics.fillRect(0, 0, width, 44);
+         graphics.setColor(Color.WHITE);
+         graphics.drawString(label, 6, 17);
+-        return new Dimension(width, 24);
++        graphics.setColor(new Color(255, 215, 75));
++        graphics.drawString(help, 6, 35);
++        return new Dimension(width, 44);
+     }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -37,6 +37,7 @@
+ 	@Inject private SoloScapeControllerOverlay overlay;
+ 	@Inject private SoloScapeMovementOverlay movementOverlay;
+ 	@Inject private SoloScapeUiOverlay uiOverlay;
++    @Inject private SoloScapeTargetOverlay targetOverlay;
+     private final UiControls ui = new UiControls(new UiControls.Gateway()
+     {
+         public UiState snapshot() { return client.getControllerUiState(); }
+@@ -52,6 +53,7 @@
+         public void resetWalk() { client.resetControllerWorld(); }
+         public void walk(double x, double y) { client.walkController(x, y); }
+         public ControllerTarget find(double x, double y, ControllerTarget previous) { return client.findControllerTarget(x, y, previous); }
++        public ControllerTarget cycle(double x, double y, ControllerTarget previous, int direction) { return client.cycleControllerTarget(x, y, previous, direction); }
+         public boolean interact(ControllerTarget target) { return client.interactController(target); }
+     });
+ 	private final GamepadState state = new GamepadState();
+@@ -72,6 +74,7 @@
+ 		overlayManager.add(overlay);
+ 		overlayManager.add(movementOverlay);
+ 		overlayManager.add(uiOverlay);
++        overlayManager.add(targetOverlay);
+ 		clientThread.invoke(() -> { reset(); failed = false; client.setControllerUiEnabled(true); active = true; });
+ 	}
+ 
+@@ -82,6 +85,7 @@
+ 		overlayManager.remove(overlay);
+ 		overlayManager.remove(movementOverlay);
+ 		overlayManager.remove(uiOverlay);
++        overlayManager.remove(targetOverlay);
+ 		clientThread.invoke(this::reset);
+ 	}
+ 
+diff --git a/client/test/net/runelite/client/input/controller/WorldControlsTest.java b/client/test/net/runelite/client/input/controller/WorldControlsTest.java
+--- a/client/test/net/runelite/client/input/controller/WorldControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/WorldControlsTest.java
+@@ -9,14 +9,17 @@
+     private static final class Fake implements WorldControls.Gateway
+     {
+         boolean ready = true, valid = true;
+-        int walks, actions, finds, yaw;
++        int walks, actions, finds, yaw, cycles, direction;
++        double aimX, aimY;
++        ControllerTarget previous;
+         double x, y;
+         ControllerTarget selected = new ControllerTarget("Tree", "Chop", 3, 100, 5, 6, 0, 1000, 1000);
+         public boolean ready() { return ready; }
+         public int yaw() { return yaw; }
+         public void resetWalk() {}
+         public void walk(double x, double y) { walks++; this.x = x; this.y = y; }
+-        public ControllerTarget find(double x, double y, ControllerTarget previous) { finds++; return selected; }
++        public ControllerTarget find(double x, double y, ControllerTarget previous) { finds++; aimX = x; aimY = y; this.previous = previous; return selected; }
++        public ControllerTarget cycle(double x, double y, ControllerTarget previous, int direction) { cycles++; this.direction = direction; return selected; }
+         public boolean interact(ControllerTarget target) { if (!valid) return false; actions++; return true; }
+     }
+ 
+@@ -50,7 +53,7 @@
+         assertEquals(1, game.walks);
+     }
+ 
+-    @Test public void aActsOnceOnShownFocusAndRequiresNeutralBeforeWalkingAgain()
++    @Test public void aActsOnceOnShownFocusAndPausesHeldWalkingDirection()
+     {
+         Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
+         controls.update(state, .18f, 1);
+@@ -83,4 +86,58 @@
+         controls.update(state, .18f, 200_000_001);
+         assertNull(controls.getTarget()); assertEquals(0, game.walks);
+     }
++    @Test public void triggerAimsWithoutWalkingAndReleaseStartsImmediately()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1);
++        state.leftTrigger = 1; state.leftX = 1;
++        controls.update(state, .18f, 20_000_001);
++        assertEquals(0, game.walks); assertEquals(1, game.aimX, 1e-6); assertNull(game.previous);
++        state.leftTrigger = 0;
++        controls.update(state, .18f, 30_000_001);
++        assertEquals(1, game.walks);
++    }
++
++    @Test public void restingStickKeepsWorldAimWhenCameraPans()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1);
++        game.yaw = 4096;
++        controls.update(state, .18f, 100_000_001);
++        assertEquals(0, game.aimX, 1e-6); assertEquals(1, game.aimY, 1e-6);
++        assertSame(controls.getTarget(), game.previous);
++    }
++
++    @Test public void bumpersCycleOncePerPress()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1);
++        state.updateButtons(1 << 10); controls.update(state, .18f, 20_000_001);
++        assertEquals(1, game.cycles); assertEquals(1, game.direction);
++        state.updateButtons(1 << 10); controls.update(state, .18f, 30_000_001);
++        assertEquals(1, game.cycles);
++        state.updateButtons(1 << 9); controls.update(state, .18f, 40_000_001);
++        assertEquals(2, game.cycles); assertEquals(-1, game.direction);
++    }
++
++    @Test public void newDirectionResumesWalkingWithoutNeedingNeutralAfterAction()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();
++        controls.update(state, .18f, 1); state.leftX = 1; state.updateButtons(1);
++        controls.update(state, .18f, 20_000_001);
++        state.updateButtons(0); controls.update(state, .18f, 200_000_001);
++        assertEquals(0, game.walks);
++        state.leftX = 0; state.leftY = -1;
++        controls.update(state, .18f, 210_000_001);
++        assertEquals(1, game.walks);
++    }
++
++    @Test public void entityIdentitySurvivesNpcMovementButNotRegionOrSpawnChanges()
++    {
++        ControllerTarget npc = new ControllerTarget("Guide", "Talk-to", 25, 2, 5, 6, 0, 1000, 1000);
++        ControllerTarget moved = new ControllerTarget("Guide", "Talk-to", 25, 2, 6, 6, 0, 1000, 1000);
++        assertTrue(npc.sameEntity(moved)); assertFalse(npc.same(moved));
++        assertFalse(npc.sameEntity(new ControllerTarget("Guide", "Talk-to", 25, 3, 6, 6, 0, 1000, 1000)));
++        assertFalse(npc.sameEntity(new ControllerTarget("Guide", "Talk-to", 25, 2, 6, 6, 0, 1100, 1000)));
++    }
+ }
+diff --git a/client/test/net/runelite/client/input/controller/WorldInputTest.java b/client/test/net/runelite/client/input/controller/WorldInputTest.java
+--- a/client/test/net/runelite/client/input/controller/WorldInputTest.java
++++ b/client/test/net/runelite/client/input/controller/WorldInputTest.java
+@@ -19,7 +19,7 @@
+     @Test public void projectionStopsAtWallsAndSceneEdges()
+     {
+         int[][] map = new int[12][12];
+-        assertEquals(WorldInput.pack(9, 5), WorldInput.destination(map, 5, 5, 1, 0));
++        assertEquals(WorldInput.pack(8, 5), WorldInput.destination(map, 5, 5, 1, 0));
+         map[7][5] = 0x20000000; // west-facing wall on east destination
+         assertEquals(WorldInput.pack(6, 5), WorldInput.destination(map, 5, 5, 1, 0));
+         assertEquals(WorldInput.pack(11, 5), WorldInput.destination(map, 10, 5, 1, 0));
+@@ -46,7 +46,21 @@
+     @Test public void focusRejectsBehindAndFarAwayTargetsAndRetainsCloseCompetition()
+     {
+         assertTrue(Double.isInfinite(WorldInput.targetScore(0, -1, 0, 1, false)));
+-        assertTrue(Double.isInfinite(WorldInput.targetScore(0, 4, 0, 1, false)));
++        assertTrue(Double.isInfinite(WorldInput.targetScore(0, 6, 0, 1, false)));
+         assertTrue(WorldInput.targetScore(.3, 2, 0, 1, true) < WorldInput.targetScore(0, 2, 0, 1, false));
+     }
++    @Test public void gentleWalkingUsesOneTileAndFullTiltUsesThree()
++    {
++        int[][] map = new int[12][12];
++        assertEquals(WorldInput.pack(6, 5), WorldInput.destination(map, 5, 5, .2, 0));
++        assertEquals(WorldInput.pack(7, 5), WorldInput.destination(map, 5, 5, .7, 0));
++        assertEquals(WorldInput.pack(8, 5), WorldInput.destination(map, 5, 5, 1, 0));
++    }
++
++    @Test public void largeFootprintsAreScoredByNearestEdge()
++    {
++        assertTrue(Double.isInfinite(WorldInput.targetScore(-6, 0, -1, 0, false)));
++        assertTrue(Double.isFinite(WorldInput.areaScore(10.5, 10.5, 4, 10, 5, 2, -1, 0, false)));
++        assertTrue(Double.isInfinite(WorldInput.areaScore(10.5, 10.5, 4, 10, 5, 2, 1, 0, false)));
++    }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java
+new file mode 100644
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java
+@@ -0,0 +1,62 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import com.GameClient;
++import com.GameClient.ControllerTarget;
++import java.awt.BasicStroke;
++import java.awt.Color;
++import java.awt.Dimension;
++import java.awt.Graphics2D;
++import java.awt.Polygon;
++import java.awt.Rectangle;
++import javax.inject.Inject;
++import net.runelite.api.Perspective;
++import net.runelite.api.coords.LocalPoint;
++import net.runelite.client.ui.overlay.Overlay;
++import net.runelite.client.ui.overlay.OverlayLayer;
++import net.runelite.client.ui.overlay.OverlayPosition;
++import net.runelite.client.ui.overlay.OverlayUtil;
++
++/** The highlighted footprint is the entity that the next A press will act on. */
++public final class SoloScapeTargetOverlay extends Overlay
++{
++    private final SoloScapeControllerPlugin plugin;
++    private final GameClient client;
++
++    @Inject
++    SoloScapeTargetOverlay(SoloScapeControllerPlugin plugin, GameClient client)
++    {
++        super(plugin);
++        this.plugin = plugin;
++        this.client = client;
++        setPosition(OverlayPosition.DYNAMIC);
++        setLayer(OverlayLayer.UNDER_WIDGETS);
++    }
++
++    @Override
++    public Dimension render(Graphics2D graphics)
++    {
++        ControllerTarget target = plugin.getTarget();
++        if (target == null || !client.isControllerWorldReady() || client.getCanvas() == null
++            || !client.getCanvas().isFocusOwner() || target.plane != client.getPlane()
++            || target.baseX != client.getBaseX() || target.baseY != client.getBaseY()) return null;
++        LocalPoint center = new LocalPoint(target.x * 128 + target.width * 64, target.y * 128 + target.height * 64);
++        Polygon footprint = Perspective.getCanvasTileAreaPoly(client, center, target.width, target.height, target.plane, 0);
++        if (footprint == null) return null;
++        Graphics2D draw = (Graphics2D) graphics.create();
++        try
++        {
++            Color gold = new Color(255, 215, 75);
++            OverlayUtil.renderPolygon(draw, footprint, gold, new Color(255, 215, 75, 55), new BasicStroke(3));
++            String label = "A: " + target.option + " " + target.name;
++            Rectangle bounds = footprint.getBounds();
++            int width = draw.getFontMetrics().stringWidth(label), height = draw.getFontMetrics().getHeight();
++            int x = bounds.x + (bounds.width - width) / 2, y = bounds.y - 8;
++            draw.setColor(new Color(0, 0, 0, 190));
++            draw.fillRoundRect(x - 5, y - draw.getFontMetrics().getAscent() - 3, width + 10, height + 4, 6, 6);
++            draw.setColor(gold);
++            draw.drawString(label, x, y);
++        }
++        finally { draw.dispose(); }
++        return null;
++    }
++}

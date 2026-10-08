@@ -98,3 +98,17 @@ restart. Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.
   files; reverse application and repeated application succeed.
 - User confirmed movement markers work. Inventory/dialogue gameplay, tab opening,
   fixed/resized slot placement and Steam Deck acceptance remain pending.
+
+## Walking, aiming and interaction usability (2026-10-08)
+
+- Patch 0005 adds one-to-three-tile walks from the physical player tile, LT aim-only,
+  LB/RB target cycling, stable focus during camera panning and gold scene labels.
+- A preserves entity identity across NPC movement and revalidates before dispatch.
+  The held walking direction pauses after interaction; a new direction or neutral
+  resumes movement after A is released.
+- All 38 client tests pass with zero failures/errors/skips; Shadow jar rebuilt.
+  Three patch-stack tests and four launcher tests also pass.
+- Upgrade, sequential reverse and fresh patch-stack reproduction match all 31
+  patched files exactly. Repeated application succeeds.
+- User reported controller gameplay works but walking/aiming/interaction is hard.
+  This usability pass still needs their in-game feel and visual placement check.

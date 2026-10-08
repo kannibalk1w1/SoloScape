@@ -3,7 +3,8 @@
 Bootstrap for a local RuneScape revision-634 experience, with Steam Deck native
 experimental controller support. JDK 21, JDK 8 and the upstream cache are installed locally.
 Both upstream builds pass, doctor passes, and the server reaches world readiness.
-The controller prototype supports camera, walking, inventory and dialogue controls; see
+The controller prototype supports camera, precise walking, LT aiming, LB/RB target
+cycling, scene highlights, inventory and dialogue controls; see
 [controller testing instructions](docs/CONTROLLER_TESTING.md) to enable it.
 
 The branch is `soloscape/bootstrap`. Source checkouts under `upstream/` are
