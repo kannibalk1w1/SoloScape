@@ -385,3 +385,12 @@ suppression, one direct stop and the native fallback packet/path-head coordinate
 Open a bank, deposit box or shop normally. Controller focus activates automatically after held buttons/stick are released. D-pad navigates the visible grid; up/down at its edge scrolls the native container. LB/RB switches Bank/Stock, Inventory, and Controls / tabs panes. A uses the first withdrawal/deposit action, Buy or Sell; X lists all native quantities/actions, including Info/Value. B backs out of that list, then closes the interface. Bank tabs, deposit-carried/worn, note/swap toggles and other actionable buttons are in Controls / tabs. Server messages provide transaction feedback.
 
 Test full/empty banks and shops, mixed stack quantities, note mode, buying with insufficient funds, selling with full stock, tab switches, grid scrolling, mouse scroll takeover and fixed/resized layouts. This build has automated native-widget and state-machine checks, but gameplay is not yet accepted. Deposit/Withdraw-X and search still require native keyboard entry until the next controller-entry batch; bank PIN remains native.
+
+
+## Controller amount/name/search entry (patch 0012)
+
+The native amount, name, string and bank-search prompts now show a controller keyboard. D-pad chooses keys; A inserts; X deletes one character; Y or Done submits; B uses native Escape. Numeric entry rejects values above the signed 32-bit limit. Text entry uses printable ASCII and bounded lengths; physical keyboard entry remains available. Native scripts 1564 and 112 handle edits/submission/cancellation. Bank search uses the native armed key callback and search pipeline.
+
+Validate Withdraw/Deposit-X (including Cancel and a second quantity request), search with several matches/no matches/clearing, mouse/keyboard edits while the controller keyboard is open, hidden/replaced prompts, and held A during opening. B on an amount prompt cancels the native entry; the server retains its ordinary cancellation behavior. No quantity is fabricated on cancellation. Bank PIN remains native.
+
+Bank/shop B recovers after one second if a busy server ignores a close. Scrolling resolves focus after an actual widget render, and item replacement requires release before A can act. The controller pauses camera input while UI modes consume input.

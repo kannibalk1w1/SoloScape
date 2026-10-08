@@ -20,11 +20,13 @@ avoid broad repeat audits. One targeted Claude reliability review completed in a
 
 Reliability batch completed: custom server opcodes now require an explicit opt-in; game-adapter exceptions no longer permanently disconnect the pad; idle inventory snapshots skip item descriptions; dialogue cancellation uses the queued tile; optional diagnostics include SDL polling; the launcher checks matching jar/patch fingerprints and retains previous logs. Automatic server capability negotiation remains future work.
 
-Bank/shop focus batch implemented: automatic main-interface focus; D-pad spatial navigation and edge scrolling; LB/RB item/inventory/control panes; A withdrawal/deposit and Buy/Sell defaults; X native action/quantity lists; B backs out of a list then closes. Focus follows actual rendered widgets and stale item quantities/closed interfaces are rejected. Arbitrary quantities and search still need controller text entry (next batch). Bank PIN entry remains native mouse/keyboard.
+Bank/shop focus batch implemented: automatic main-interface focus; D-pad spatial navigation and edge scrolling; LB/RB item/inventory/control panes; A withdrawal/deposit and Buy/Sell defaults; X native action/quantity lists; B backs out of a list then closes. Focus follows actual rendered widgets and stale item quantities/closed interfaces are rejected. Patch 0012 adds a controller keyboard for arbitrary quantities and native bank search, plus name/string prompts. A enters a key, X deletes, Y submits and B cancels. Native CS2 entry scripts handle dispatch; changed/hidden prompts and changed values are rejected. Bank PIN entry remains native mouse/keyboard.
+
+Claude’s bounded bank/shop review found no unsafe stale-action path, but identified close retry, scrolling redraw and slot-change issues. Patch 0012 fixes these and routes bank tab icons into Controls / tabs. See `CLAUDE_BANK_SHOP_REVIEW.md` for the original findings. Scrollbar-thumb behavior still needs gameplay validation.
 
 ## Verification and limitations
 
-Current bank/shop build: 82 client cases, zero failures/errors, one SDL virtual-device skip; 11 root tooling cases pass. Existing server evidence: 247 network and 61 selected engine cases. Both jar builds have passed; the client jar was rebuilt for this batch.
+Current entry/recovery build: 89 client cases, zero failures/errors, one SDL virtual-device skip; 11 root tooling cases pass. Existing server evidence: 247 network and 61 selected engine cases. Both jar builds have passed; the client jar was rebuilt for this batch.
 Physical controller and Deck acceptance remain separate from automated evidence.
 
 ## How to try the latest completed build
