@@ -1,0 +1,6 @@
+/upstream/
+/.runtime/
+/.gradle/
+/**/__pycache__/
+/config/local.env
+*.log
