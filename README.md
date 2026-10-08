@@ -52,11 +52,14 @@ cd SoloScape
    The server cache is not bundled and is not fetched by simply launching the game.
 3. Run `./scripts/doctor.sh`, then `./scripts/dev-run.sh` for the first build/launch.
 4. Enable **SoloScape Controller** in the client's plugin list. **Tab radial menu**
-   is on by default within that plugin; **Direct movement** is optional.
+   is on by default within that plugin; **Direct movement** is optional; enable **SoloScape server features** only for
+   the patched server to use direct movement and position-free cancellation.
 5. Read the [controls and acceptance checklist](docs/CONTROLLER_TESTING.md).
 
 After a successful build, `./scripts/dev-run.sh --no-build` uses existing jars.
-Rebuild both when updating patches; old/mismatched jars are not currently detected.
+A successful source build records patch/base and jar hashes. Rebuild both when
+updating patches; missing or mismatched stamps reject `--no-build` with a rebuild
+instruction.
 The launcher connects the client to localhost, but upstream binds broadly;
 restrict access to port 43594 when using it for local play.
 

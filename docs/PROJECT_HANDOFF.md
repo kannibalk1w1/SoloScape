@@ -243,3 +243,8 @@ has not yet been accepted in-game. The README includes that labelled preview.
 Public development repository: `https://github.com/kannibalk1w1/SoloScape`.
 The project remains maintainer-directed; see `CONTRIBUTING.md`. Cache acquisition
 is documented in `CACHE_SETUP.md`; no assets, saves or runtime files are published.
+
+
+## Overnight reliability checkpoint (2026-10-08)
+
+Client patch 0010 implements the reliability changes described in `MORNING_REPORT.md` and `PROTOCOL_EXTENSIONS.md`. Client test/build: 76 cases, zero failures/errors, one SDL skip. Root tooling: 11 cases pass. Fresh, upgrade, reverse and repeated patch application reproduce all 41 affected client files. Claude found no blockers; minor follow-ups were applied. Direct movement now requires both Direct movement and SoloScape server features settings. Automatic remote capability negotiation and physical gameplay acceptance remain pending.

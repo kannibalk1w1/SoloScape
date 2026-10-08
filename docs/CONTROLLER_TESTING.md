@@ -351,3 +351,30 @@ actual ordinary tab operation packet dispatch. The full client run has 71 cases
 virtual-device case. The client Shadow jar rebuilds. Patch reproduction matches
 41 client files on upgrade/fresh/reverse/idempotent runs. Renderer previews at
 765×503 and 1280×800 were inspected; physical/in-game acceptance remains pending.
+
+
+## Overnight reliability batch
+
+**SoloScape server features** is now an explicit opt-in, off by default. Enable it
+only when using the patched SoloScape server; enable **Direct movement** as well
+for held directional movement. With server features off, direct mode falls back
+to destination walking and world B uses an ordinary same-tile Walk at the native
+path head. It does not send custom opcodes 85/86. This is an interim compatibility
+setting; automatic server capability negotiation is still proposed.
+
+An adapter RuntimeException resets input/focus and logs its real cause at most
+once per five seconds while SDL polling continues. Provider init/poll failures
+still disable the plugin with provider-specific advice. Diagnostics now report
+controller tick average/maximum microseconds once per second; Deck timings remain
+unmeasured. Idle snapshots skip inventory item descriptions and regex is precompiled.
+
+The launcher records patch/base and jar hashes after a successful source build.
+`--no-build` rejects missing/invalid stamps, changed patches and changed jars with
+an instruction to rebuild. Logs rotate to `server.previous.log` and
+`client.previous.log` before the next session instead of losing the previous logs.
+The current session is not rotated or interrupted by development builds.
+
+Test the explicit server-features toggle, direct opt-out stop, normal B fallback,
+focus rearming after a transient error and clean rebuild/restart. Do not enable
+custom packets against an unpatched server. Automated tests cover custom packet
+suppression, one direct stop and the native fallback packet/path-head coordinates.

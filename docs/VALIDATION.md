@@ -194,3 +194,8 @@ restart. Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.
   archive, extraction path and client/server download distinction. Upstream README
   link was checked through GitHub's API. Public contribution policy preserves
   maintainer control; no original-material licence grant was inferred.
+
+
+## Overnight reliability checkpoint (2026-10-08)
+
+Client patch 0010 implements the reliability changes described in `MORNING_REPORT.md` and `PROTOCOL_EXTENSIONS.md`. Client test/build: 76 cases, zero failures/errors, one SDL skip. Root tooling: 11 cases pass. Fresh, upgrade, reverse and repeated patch application reproduce all 41 affected client files. Claude found no blockers; minor follow-ups were applied. Direct movement now requires both Direct movement and SoloScape server features settings. Automatic remote capability negotiation and physical gameplay acceptance remain pending.

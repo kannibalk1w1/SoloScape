@@ -1,5 +1,7 @@
 """Local source-build launcher. Own only the child processes created here."""
 import fcntl
+import hashlib
+import json
 import errno
 import os
 from pathlib import Path
@@ -127,6 +129,47 @@ def jar(repo, pattern):
     return files[0]
 
 
+def file_hash(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def build_fingerprint(server_jar, client_jar):
+    patches = sorted((ROOT / "patches").glob("*/*.patch"))
+    return {
+        "format": 1,
+        "pins": PINNED,
+        "patches": {str(p.relative_to(ROOT)): file_hash(p) for p in patches},
+        "jars": {"server": file_hash(server_jar), "client": file_hash(client_jar)},
+    }
+
+
+def write_build_stamp(server_jar, client_jar):
+    RUNTIME.mkdir(exist_ok=True)
+    temporary = RUNTIME / "build-stamp.json.tmp"
+    temporary.write_text(json.dumps(build_fingerprint(server_jar, client_jar), indent=2) + "\n")
+    temporary.replace(RUNTIME / "build-stamp.json")
+
+
+def verify_build_stamp(server_jar, client_jar):
+    try:
+        recorded = json.loads((RUNTIME / "build-stamp.json").read_text())
+    except (OSError, ValueError) as exc:
+        raise RuntimeError("No valid build stamp. Run ./scripts/dev-run.sh once to rebuild the matched client/server.") from exc
+    if recorded != build_fingerprint(server_jar, client_jar):
+        raise RuntimeError("Client/server jars or patches changed since the last build. Run ./scripts/dev-run.sh without --no-build.")
+
+
+def rotate_logs():
+    for name in ("server", "client"):
+        current = RUNTIME / f"{name}.log"
+        if current.exists():
+            current.replace(RUNTIME / f"{name}.previous.log")
+
+
 def launch(skip_build=False):
     RUNTIME.mkdir(exist_ok=True)
     with (RUNTIME / "launcher.lock").open("w") as lock:
@@ -146,6 +189,11 @@ def launch(skip_build=False):
             build(CLIENT, server_java, ":client:shadowJar")
         server_jar = jar(SERVER / "game", "void-server-*.jar")
         client_jar = jar(CLIENT / "client", "void-client-*.jar")
+        if skip_build:
+            verify_build_stamp(server_jar, client_jar)
+        else:
+            write_build_stamp(server_jar, client_jar)
+        rotate_logs()
         server = client = None
         offsets = {}
 

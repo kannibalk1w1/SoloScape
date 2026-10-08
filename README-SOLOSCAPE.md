@@ -59,7 +59,7 @@ The launcher applies the tracked client/server patches, builds `:game:shadowJar`
 `:client:shadowJar`, starts the server,
 waits for its loaded-world message and launches the client explicitly at
 `127.0.0.1:43594`. Logs stream to the terminal and `.runtime/server.log` /
-`.runtime/client.log` (replaced each run). Closing the client or Ctrl+C stops
+`.runtime/client.log` (one previous session retained). Closing the client or Ctrl+C stops
 owned children with SIGTERM and waits for normal save/shutdown hooks. A hung
 shutdown is reported and never forcibly killed. There is no separate stop
 script because the foreground launcher owns this lifecycle.
@@ -87,3 +87,10 @@ before a distributable package.
 Tooling validation: ShellCheck, Python compilation and four simulated-process
 lifecycle tests pass. Run `python3 scripts/test_local_dev.py` to repeat them.
 See [validation results](docs/VALIDATION.md) for the limits of those checks.
+
+
+The overnight reliability build adds a local patch/base/jar stamp. Source builds
+write it after success; `--no-build` refuses missing or mismatched stamps. Enable
+**SoloScape server features** only for our patched server, then **Direct movement**
+if desired. With server features off, the controller uses ordinary walking and
+same-tile Walk cancellation. See [protocol extensions](docs/PROTOCOL_EXTENSIONS.md).

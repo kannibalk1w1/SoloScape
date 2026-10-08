@@ -1,0 +1,523 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+index f8b5684..c592a14 100644
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1045,9 +1045,11 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+ 
+     @Override public void setControllerUiEnabled(boolean enabled) { ControllerUi.enable(enabled); }
+     @Override public net.runelite.client.input.controller.UiState getControllerUiState() { return ControllerUi.snapshot(); }
++    @Override public net.runelite.client.input.controller.UiState getControllerUiState(boolean inventory) { return ControllerUi.snapshot(inventory); }
+     @Override public boolean openControllerInventory() { return ControllerUi.openInventory(); }
+     @Override public int getControllerAvailableTabs() { return ControllerUi.availableTabs(); }
+     @Override public boolean openControllerTab(int index) { return ControllerUi.openTab(index); }
++    @Override public void setControllerServerFeatures(boolean enabled) { ControllerDirectMovement.enableServerFeatures(enabled); }
+     @Override public boolean invokeControllerUi(net.runelite.client.input.controller.UiState.Widget widget, net.runelite.client.input.controller.UiState.Action action) { return ControllerUi.invoke(widget, action); }
+     @Override public void cancelControllerSelection() { ControllerUi.cancelSelection(); }
+     @Override public void cancelControllerDialogue() { ControllerUi.cancelDialogue(); }
+diff --git a/client/src/ControllerDirectMovement.java b/client/src/ControllerDirectMovement.java
+index d273fe2..3121428 100644
+--- a/client/src/ControllerDirectMovement.java
++++ b/client/src/ControllerDirectMovement.java
+@@ -6,14 +6,20 @@ final class ControllerDirectMovement
+     private static final Class351 PACKET = new Class351(85, 3);
+     private static final Class351 CANCEL = new Class351(86, 0);
+     private static int direction = -1;
+-    private static boolean run, blocked;
++    private static boolean run, blocked, serverFeatures;
+     private static long lastSent;
+ 
++    static void enableServerFeatures(boolean enabled)
++    {
++        if (serverFeatures && !enabled) stop();
++        serverFeatures = enabled;
++    }
++
+     static void update(double x, double y, boolean running)
+     {
+         int next = DirectInput.direction(x, y, direction);
+         if (next < 0) { stop(); blocked = false; return; }
+-        if (!ControllerWorld.ready() || blocked) { stop(); return; }
++        if (!serverFeatures || !ControllerWorld.ready() || blocked) { stop(); return; }
+         long now = System.nanoTime();
+         if (next != direction || running != run || now - lastSent >= 200_000_000L)
+         {
+@@ -28,7 +34,7 @@ final class ControllerDirectMovement
+     {
+         if (direction >= 0)
+         {
+-            if (Class240.anInt4674 == 10 && Class348_Sub23_Sub2.aClass77_9029 != null) send(0, 0, false);
++            if (serverFeatures && Class240.anInt4674 == 10 && Class348_Sub23_Sub2.aClass77_9029 != null) send(0, 0, false);
+             ControllerWorld.clearWalkMarker();
+         }
+         direction = -1; lastSent = 0; run = false;
+@@ -38,6 +44,7 @@ final class ControllerDirectMovement
+     {
+         stop();
+         if (!ControllerWorld.ready() || Class348_Sub23_Sub2.aClass77_9029 == null) return;
++        if (!serverFeatures) { ControllerUi.cancelWorld(); return; }
+         Class348_Sub47 packet = Class286_Sub3.method2148(CANCEL, Class348_Sub23_Sub2.aClass77_9029, -100);
+         Class348_Sub42_Sub14.method3243(123, packet);
+         ControllerWorld.clearWalkMarker();
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+index 383c849..0280032 100644
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -6,6 +6,7 @@ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Set;
++import java.util.regex.Pattern;
+ import net.runelite.client.input.controller.UiState;
+ import net.runelite.client.input.controller.HomeTab;
+ 
+@@ -15,6 +16,8 @@ final class ControllerUi
+     private static final int INVENTORY = 149 << 16;
+     private static final Map<Long, Seen> visible = new HashMap<>();
+     private static boolean enabled;
++    private static final Pattern TAGS = Pattern.compile("<[^>]*>");
++    private static final UiState.Widget[] NO_INVENTORY = new UiState.Widget[0];
+     // Filled from the pinned server's dialogue.ifaces.toml. Only exposed button actions are supported.
+     private static final Set<Integer> DIALOGUES = new HashSet<>();
+     static
+@@ -30,7 +33,11 @@ final class ControllerUi
+         int frame;
+     }
+ 
+-    static void enable(boolean value) { enabled = value; if (!value) visible.clear(); }
++    static void enable(boolean value)
++    {
++        enabled = value;
++        if (!value) visible.clear();
++    }
+     private static long key(int id, int child) { return ((long) id << 32) | (child & 0xffffffffL); }
+     private static boolean ready() { return enabled && Class240.anInt4674 == 10 && Class132.aPlayer_1907 != null && !Class305.aBoolean3870; }
+ 
+@@ -58,25 +65,31 @@ final class ControllerUi
+ 
+     static boolean hasDialogue()
+     {
+-        if (!enabled) return false;
+-        for (int group : openGroups()) if (DIALOGUES.contains(group)) return true;
++        if (!enabled || Class125.aClass356_4915 == null) return false;
++        // Ready gates call this repeatedly. Inspect live attachments without allocating
++        // a set or caching across an interface close/open in the same frame.
++        for (Class348_Sub41 entry = (Class348_Sub41) Class125.aClass356_4915.method3484(0); entry != null;
++            entry = (Class348_Sub41) Class125.aClass356_4915.method3482(0))
++            if (DIALOGUES.contains(entry.anInt7050)) return true;
+         return false;
+     }
+ 
+-    static UiState snapshot()
++    static UiState snapshot() { return snapshot(true); }
++
++    static UiState snapshot(boolean includeInventory)
+     {
+         if (!ready()) return UiState.EMPTY;
+         long now = System.nanoTime();
+         visible.values().removeIf(s -> now - s.time > 100_000_000L || !isVisible(s.widget));
+         Set<Integer> open = openGroups();
+-        UiState.Widget[] inventory = new UiState.Widget[28];
++        UiState.Widget[] inventory = includeInventory ? new UiState.Widget[28] : NO_INVENTORY;
+         List<UiState.Widget> dialogue = new ArrayList<>();
+         int dialogueId = -1;
+         for (int group : open) if (DIALOGUES.contains(group)) { dialogueId = group; break; }
+         for (Seen seen : visible.values())
+         {
+             Class46 widget = seen.widget;
+-            if (widget.anInt830 == INVENTORY && open.contains(149) && widget.anInt704 >= 0 && widget.anInt704 < 28)
++            if (includeInventory && widget.anInt830 == INVENTORY && open.contains(149) && widget.anInt704 >= 0 && widget.anInt704 < 28)
+                 inventory[widget.anInt704] = describe(seen, false);
+             if (widget.anInt830 >>> 16 == dialogueId)
+             {
+@@ -124,7 +137,7 @@ final class ControllerUi
+         String label = Class368.method3561(op, w, true);
+         if (label != null) actions.add(new UiState.Action(clean(label), op < 5 ? 18 : 1011, op + 1));
+     }
+-    private static String clean(String value) { return value == null ? "" : value.replaceAll("<[^>]*>", "").replace("\u00a0", " ").trim(); }
++    private static String clean(String value) { return value == null ? "" : TAGS.matcher(value).replaceAll("").replace("\u00a0", " ").trim(); }
+ 
+     static boolean openInventory()
+     {
+@@ -233,12 +246,18 @@ final class ControllerUi
+     static void cancelDialogue()
+     {
+         if (!ready() || !hasDialogue()) return;
++        cancelWorld();
++    }
++
++    static void cancelWorld()
++    {
++        if (!ready()) return;
+         cancelSelection();
+         Player p = Class132.aPlayer_1907;
+         // The normal same-tile Walk action closes dialogue/weak queues server-side (Movement.kt).
+         // It does not pick an arbitrary response or advance a destructive confirmation.
+         ControllerWorld.clearWalkMarker();
+         Class325.method2599((byte) 109, new Class348_Sub42_Sub12("Walk here", "", -1, 19, -1, 0,
+-            p.x >> 9, p.y >> 9, true, false, 0, false), 0, 0);
++            p.anIntArray10320[0], p.anIntArray10317[0], true, false, 0, false), 0, 0);
+     }
+ }
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+index ec3bee5..e4dd1db 100644
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -308,6 +308,7 @@ final class ControllerWorld
+         if (t.kind() == 3) return reachable(t.x, t.y, 1, 1, -3, 0, 0) || reachable(t.x, t.y, 1, 1, -2, 0, 0);
+         for (int action : NPC_ACTIONS) if (t.action == action)
+         {
++            if (Class282.aClass356_3654 == null) return false;
+             Class348_Sub22 entry = (Class348_Sub22) Class282.aClass356_3654.method3480(t.identifier, -6008);
+             if (entry == null || entry.aNpc_6859 == null) return false;
+             int size = entry.aNpc_6859.method2436((byte) 70);
+@@ -317,6 +318,7 @@ final class ControllerWorld
+         int rotation = (int) t.identifier >> 20 & 3;
+         if (shape != 10 && shape != 11 && shape != 22) return reachable(t.x, t.y, 0, 0, shape, rotation, 0);
+         Class51 def = Class348_Sub40_Sub12.aClass263_9195.method2005(0, (int) (t.identifier >>> 32) & 0x7fffffff);
++        if (def == null) return false;
+         int width = (rotation & 1) == 0 ? def.anInt961 : def.anInt926;
+         int height = (rotation & 1) == 0 ? def.anInt926 : def.anInt961;
+         int access = def.anInt914;
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+index 985ffa6..32c3938 100644
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -347,9 +347,11 @@ public abstract class GameClient extends Applet {
+     /** World controller actions run on the client thread through the native dispatcher. */
+     public void setControllerUiEnabled(boolean enabled) {}
+     public net.runelite.client.input.controller.UiState getControllerUiState() { return net.runelite.client.input.controller.UiState.EMPTY; }
++    public net.runelite.client.input.controller.UiState getControllerUiState(boolean inventory) { return getControllerUiState(); }
+     public boolean openControllerInventory() { return false; }
+     public int getControllerAvailableTabs() { return 0; }
+     public boolean openControllerTab(int index) { return false; }
++    public void setControllerServerFeatures(boolean enabled) {}
+     public boolean invokeControllerUi(net.runelite.client.input.controller.UiState.Widget widget, net.runelite.client.input.controller.UiState.Action action) { return false; }
+     public void cancelControllerSelection() {}
+     public void cancelControllerDialogue() {}
+diff --git a/client/src/net/runelite/client/input/controller/UiControls.java b/client/src/net/runelite/client/input/controller/UiControls.java
+index 5ca1766..9aac314 100644
+--- a/client/src/net/runelite/client/input/controller/UiControls.java
++++ b/client/src/net/runelite/client/input/controller/UiControls.java
+@@ -6,6 +6,7 @@ public final class UiControls
+     public interface Gateway
+     {
+         UiState snapshot();
++        default UiState snapshot(boolean inventory) { return snapshot(); }
+         boolean openInventory();
+         boolean invoke(UiState.Widget widget, UiState.Action action);
+         void cancelSelection();
+@@ -55,7 +56,7 @@ public final class UiControls
+ 
+     public boolean update(GamepadState input, long now)
+     {
+-        state = gateway.snapshot();
++        state = gateway.snapshot(inventory || (input.buttonsPressed & Y) != 0);
+         if (state.dialogueId != dialogueId)
+         {
+             dialogueId = state.dialogueId; choice = 0; context = null; armed = false;
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+index e3d4fe0..41aa01a 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -32,4 +32,6 @@ public interface SoloScapeControllerConfig extends Config
+     default boolean directMovement() { return false; }
+     @ConfigItem(keyName = "tabRadial", name = "Tab radial menu", description = "View/Select opens the main-tab wheel. Left stick selects, A opens and B cancels.", position = 7)
+     default boolean tabRadial() { return true; }
++    @ConfigItem(keyName = "serverFeatures", name = "SoloScape server features", description = "Enable directional and position-free cancel packets only for the patched SoloScape server. Off uses ordinary walking/cancellation and is safe for older servers.", position = 8)
++    default boolean serverFeatures() { return false; }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index f4d5dae..cde3a38 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -55,6 +55,7 @@ public class SoloScapeControllerPlugin extends Plugin
+     private final UiControls ui = new UiControls(new UiControls.Gateway()
+     {
+         public UiState snapshot() { return client.getControllerUiState(); }
++        public UiState snapshot(boolean inventory) { return client.getControllerUiState(inventory); }
+         public boolean openInventory() { return client.openControllerInventory(); }
+         public boolean invoke(UiState.Widget widget, UiState.Action action) { return client.invokeControllerUi(widget, action); }
+         public void cancelSelection() { client.cancelControllerSelection(); }
+@@ -78,7 +79,8 @@ public class SoloScapeControllerPlugin extends Plugin
+ 	private SdlGamepad gamepad;
+ 	private boolean failed;
+ 	private volatile boolean active;
+-	private long lastDebug;
++	private long lastDebug, lastAdapterFailure;
++    private long measuredTicks, measuredNanos, maxTickNanos;
+ 
+ 	@Provides
+ 	SoloScapeControllerConfig provideConfig(ConfigManager configManager)
+@@ -130,70 +132,100 @@ public class SoloScapeControllerPlugin extends Plugin
+ 		ui.reset();
+         radial.reset();
+         radialInventoryFocus = false;
++		client.setControllerServerFeatures(false);
+ 		client.setControllerUiEnabled(false);
+ 		if (gamepad != null) gamepad.close();
+ 		gamepad = null;
+ 	}
+ 
+ 
+-	@Subscribe
+-	public void onClientTick(ClientTick event)
+-	{
+-		if (!active || failed) return;
+-		try
+-		{
+-			if (gamepad == null)
+-			{
+-				gamepad = new SdlGamepad();
+-				gamepad.init();
+-				log.info("SoloScape controller enabled; waiting for an SDL-mapped gamepad");
+-			}
+-			gamepad.poll(state);
+-			Canvas canvas = client.getCanvas();
+-			if (!state.connected || canvas == null || !canvas.isFocusOwner() || !client.hasLocalPlayer())
+-			{
+-				client.setControllerCameraInput(0, 0);
+-				resetWorld();
+-				ui.reset();
+-                radial.reset();
+-                radialInventoryFocus = false;
+-				return;
+-			}
++    private boolean pollController()
++    {
++        try
++        {
++            if (gamepad == null)
++            {
++                gamepad = new SdlGamepad();
++                gamepad.init();
++                log.info("SoloScape controller enabled; waiting for an SDL-mapped gamepad");
++            }
++            gamepad.poll(state);
++            return true;
++        }
++        catch (RuntimeException | LinkageError ex)
++        {
++            failed = true;
++            reset();
++            log.warn("Controller provider unavailable. Install SDL2 2.0.22+ and check device permissions, then toggle the plugin to retry.", ex);
++            return false;
++        }
++    }
++
++    @Subscribe
++    public void onClientTick(ClientTick event)
++    {
++        if (!active || failed) return;
++        long started = config.debug() ? System.nanoTime() : 0;
++        if (!pollController()) return;
++        try
++        {
++            client.setControllerServerFeatures(config.serverFeatures());
++            Canvas canvas = client.getCanvas();
++            if (!state.connected || canvas == null || !canvas.isFocusOwner() || !client.hasLocalPlayer())
++            {
++                client.setControllerCameraInput(0, 0);
++                resetWorld(); ui.reset(); radial.reset(); radialInventoryFocus = false;
++                return;
++            }
+             long now = System.nanoTime();
+             if (!config.tabRadial()) radial.reset();
+             if (config.tabRadial() && radial.update(state, now))
+             {
+                 client.setControllerCameraInput(0, 0);
+-                resetWorld();
+-                ui.reset();
+-                if (radialInventoryFocus)
++                resetWorld(); ui.reset();
++                if (radialInventoryFocus) { ui.focusInventory(now); radialInventoryFocus = false; }
++                return;
++            }
++            float scale = StickMath.deadzoneScale(state.rightX, state.rightY, config.deadzone() / 100f);
++            float yaw = state.rightX * scale;
++            float pitch = state.rightY * scale * (config.invertY() ? 1 : -1);
++            client.setControllerCameraInput(yaw * config.yawSpeed(), pitch * config.pitchSpeed());
++            if (ui.update(state, now)) resetWorld();
++            else
++            {
++                if (!client.isControllerWorldReady()) client.clearControllerWalkMarker();
++                world.update(state, config.deadzone() / 100f, now, config.directMovement() && config.serverFeatures());
++            }
++        }
++        catch (RuntimeException ex)
++        {
++            // Native world/widget state can change while an adapter enumerates it.
++            // Reset intent and rearm, but keep the device/provider alive.
++            try { client.setControllerCameraInput(0, 0); resetWorld(); }
++            catch (RuntimeException cleanup) { ex.addSuppressed(cleanup); }
++            finally { ui.reset(); radial.reset(); radialInventoryFocus = false; }
++            long now = System.nanoTime();
++            if (lastAdapterFailure == 0 || now - lastAdapterFailure >= 5_000_000_000L)
++            {
++                lastAdapterFailure = now;
++                log.warn("Controller game input reset after an adapter error; device polling remains enabled.", ex);
++            }
++        }
++        finally
++        {
++            if (started != 0)
++            {
++                long elapsed = System.nanoTime() - started;
++                measuredTicks++; measuredNanos += elapsed; maxTickNanos = Math.max(maxTickNanos, elapsed);
++                if (System.nanoTime() - lastDebug >= 1_000_000_000L)
+                 {
+-                    ui.focusInventory(now);
+-                    radialInventoryFocus = false;
++                    lastDebug = System.nanoTime();
++                    log.info("Controller work: {} ticks, average {} us, maximum {} us", measuredTicks,
++                        measuredNanos / measuredTicks / 1000, maxTickNanos / 1000);
++                    measuredTicks = measuredNanos = maxTickNanos = 0;
+                 }
+-                return;
+             }
+-			float scale = StickMath.deadzoneScale(state.rightX, state.rightY, config.deadzone() / 100f);
+-			float yaw = state.rightX * scale;
+-			float pitch = state.rightY * scale * (config.invertY() ? 1 : -1);
+-			client.setControllerCameraInput(yaw * config.yawSpeed(), pitch * config.pitchSpeed());
+-			if (ui.update(state, now)) resetWorld();
+-			else
+-			{
+-				if (!client.isControllerWorldReady()) client.clearControllerWalkMarker();
+-				world.update(state, config.deadzone() / 100f, now, config.directMovement());
+-			}
+-			if (config.debug() && now - lastDebug >= 1_000_000_000L)
+-			{
+-				lastDebug = now;
+-				log.info("SoloScape camera stick after deadzone: ({}, {})", yaw, pitch);
+-			}
+-		}
+-		catch (RuntimeException | LinkageError ex)
+-		{
+-			failed = true;
+-			reset();
+-			log.warn("Controller support unavailable. Install SDL2 2.0.22+ and check device permissions, then toggle the plugin to retry.", ex);
+-		}
+-	}
++            else measuredTicks = measuredNanos = maxTickNanos = 0;
++        }
++    }
+ }
+diff --git a/client/test/ControllerDirectMovementTest.java b/client/test/ControllerDirectMovementTest.java
+index 51546e5..72a9895 100644
+--- a/client/test/ControllerDirectMovementTest.java
++++ b/client/test/ControllerDirectMovementTest.java
+@@ -31,10 +31,12 @@ public class ControllerDirectMovementTest
+         Class240.anInt4674 = 10; Class348_Sub40_Sub21.anInt9282 = 1;
+         Class305.aBoolean3870 = r.aBoolean9722 = false;
+         ControllerDirectMovement.update(0, 0, false);
++        ControllerDirectMovement.enableServerFeatures(true);
+     }
+     @After public void restore()
+     {
+         ControllerDirectMovement.stop(); ControllerWorld.clearWalkMarker();
++        ControllerDirectMovement.enableServerFeatures(false);
+         Class132.aPlayer_1907 = oldPlayer; Class348_Sub45.aClass361Array7108 = oldMaps;
+         Class348_Sub40_Sub13.aClass262_9201 = oldQueue; Class348_Sub23_Sub2.aClass77_9029 = oldIsaac;
+         Class240.anInt4674 = oldState; Class348_Sub40_Sub21.anInt9282 = oldCamera;
+@@ -89,4 +91,44 @@ public class ControllerDirectMovementTest
+         assertEquals(0, cancel.anInt7122); assertEquals(1, cancel.anInt7119);
+         cancel.method2715((byte) 91);
+     }
++    @Test public void disabledServerFeaturesNeverSendDirectionalPackets()
++    {
++        ControllerDirectMovement.enableServerFeatures(false);
++        int sent = Class348_Sub42_Sub14.anInt9630;
++        ControllerDirectMovement.update(1, 0, true);
++        assertEquals(sent, Class348_Sub42_Sub14.anInt9630);
++    }
++    @Test public void disablingServerFeaturesStopsTheExistingIntentOnce()
++    {
++        ControllerDirectMovement.update(1, 0, false); packet(1, 0, false);
++        ControllerDirectMovement.enableServerFeatures(false); packet(0, 0, false);
++        int sent = Class348_Sub42_Sub14.anInt9630;
++        ControllerDirectMovement.enableServerFeatures(false);
++        assertEquals(sent, Class348_Sub42_Sub14.anInt9630);
++    }
++    @Test public void ordinaryCancelUsesWalkPacketAndPathHeadWhenExtensionsAreDisabled()
++    {
++        ControllerDirectMovement.enableServerFeatures(false);
++        Class346 oldKeyboard = Class182.aClass346_2449;
++        try
++        {
++            Class182.aClass346_2449 = new Class346()
++            {
++                void method2695(int i) {} boolean method2696(int i, int j) { return false; }
++                Interface6 method2697(int i) { return null; } void method2698(int i) {}
++            };
++            ControllerUi.enable(true);
++            Class132.aPlayer_1907.anIntArray10320[0] = 65;
++            Class132.aPlayer_1907.anIntArray10317[0] = 66;
++            ControllerDirectMovement.cancelAction();
++            Node head = Class348_Sub40_Sub13.aClass262_9201.aClass348_3334;
++            assertNotSame(head, head.next);
++            Class348_Sub47 walk = (Class348_Sub47) head.next;
++            assertEquals(Class186.aClass351_2495.method3456(200),
++                (walk.aClass348_Sub49_Sub2_7116.data[0] - decode.method781((byte) -85)) & 255);
++            assertSame(head, walk.next);
++            assertEquals(65, Class248.anInt3203); assertEquals(66, Class97.anInt1548);
++        }
++        finally { ControllerUi.enable(false); Class182.aClass346_2449 = oldKeyboard; }
++    }
+ }
+diff --git a/client/test/ControllerUiTest.java b/client/test/ControllerUiTest.java
+index 3e1cf21..d00e9bb 100644
+--- a/client/test/ControllerUiTest.java
++++ b/client/test/ControllerUiTest.java
+@@ -86,6 +86,15 @@ public class ControllerUiTest
+         inventory.method2715((byte) 57);
+         assertFalse(ControllerUi.invoke(expected, new UiState.Action("Eat", 18, 1)));
+     }
++    @Test public void idleSnapshotDoesNotDescribeInventoryItemsButStillDetectsItsTab()
++    {
++        slot.anInt812 = 100; slot.aString752 = "<col=ff0000>Fish</col>";
++        ControllerUi.record(slot, 600, 250, 32, 32);
++        UiState idle = ControllerUi.snapshot(false);
++        assertTrue(idle.hasInventory()); assertEquals(0, idle.inventory.length);
++        UiState focused = ControllerUi.snapshot(true);
++        assertNotNull(focused.inventory[0]); assertEquals("Fish", focused.inventory[0].name);
++    }
+ 
+     private Class46 tab(int group, int component)
+     {
+diff --git a/client/test/net/runelite/client/input/controller/UiControlsTest.java b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+index f306d41..1fb2002 100644
+--- a/client/test/net/runelite/client/input/controller/UiControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+@@ -15,6 +15,7 @@ public class UiControlsTest
+     {
+         UiState state;
+         int opens, actions, cancels, closes;
++        boolean inventoryRequested;
+         UiState.Widget acted;
+         UiState.Action action;
+         Fake()
+@@ -24,6 +25,7 @@ public class UiControlsTest
+             state = new UiState(slots, new UiState.Widget[0], -1);
+         }
+         public UiState snapshot() { return state; }
++        public UiState snapshot(boolean inventory) { inventoryRequested = inventory; return state; }
+         public boolean openInventory() { opens++; return true; }
+         public boolean invoke(UiState.Widget widget, UiState.Action action) { actions++; acted = widget; this.action = action; return true; }
+         public void cancelSelection() { cancels++; }
+@@ -42,6 +44,17 @@ public class UiControlsTest
+         return ui;
+     }
+ 
++    @Test public void inventoryDescriptionsAreRequestedOnlyForEntryAndFocusIncludingRadialHandoff()
++    {
++        Fake game = new Fake(); GamepadState input = new GamepadState();
++        UiControls ui = new UiControls(game);
++        ui.update(input, 1); assertFalse(game.inventoryRequested);
++        input.updateButtons(8); ui.update(input, 2); assertTrue(game.inventoryRequested);
++        input.updateButtons(0); ui.update(input, 3); assertTrue(game.inventoryRequested);
++        input.updateButtons(2); ui.update(input, 4);
++        input.updateButtons(0); ui.update(input, 5); assertFalse(game.inventoryRequested);
++        ui.focusInventory(6); ui.update(input, 7); assertTrue(game.inventoryRequested);
++    }
+     @Test public void gridStopsAtRowAndColumnEdgesAndIncludesEmptySlots()
+     {
+         assertEquals(0, UiControls.moveSlot(0, 11)); assertEquals(3, UiControls.moveSlot(3, 14));

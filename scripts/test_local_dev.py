@@ -76,6 +76,7 @@ m.CLIENT = m.ROOT / "upstream/runelite-client"
 m.RUNTIME = m.ROOT / ".runtime"
 m.READY_TIMEOUT = 0.4 if {case!r} == "timeout" else 3
 m.doctor = lambda: True
+m.write_build_stamp(m.jar(m.SERVER / "game", "void-server-*.jar"), m.jar(m.CLIENT / "client", "void-client-*.jar"))
 signal.signal(signal.SIGTERM, m.interrupted)
 try:
     sys.exit(m.launch(skip_build=True))
@@ -133,6 +134,62 @@ except RuntimeError as e:
         self.assertEqual(process.returncode, 130, output)
         for role in ("server", "client"):
             self.assertEqual((self.root / f"{role}.stopped").read_text(), "graceful")
+
+
+
+class BuildStampTests(unittest.TestCase):
+    def setUp(self):
+        import importlib.util
+        self.temp = tempfile.TemporaryDirectory(prefix="soloscape-stamp-test-")
+        self.addCleanup(self.temp.cleanup)
+        spec = importlib.util.spec_from_file_location("local_dev_stamp", LAUNCHER)
+        self.module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.module)
+        self.module.ROOT = Path(self.temp.name)
+        self.module.RUNTIME = self.module.ROOT / ".runtime"
+        self.server = self.module.ROOT / "server.jar"
+        self.client = self.module.ROOT / "client.jar"
+        self.server.write_bytes(b"server-v1")
+        self.client.write_bytes(b"client-v1")
+        self.patches = self.module.ROOT / "patches/client"
+        self.patches.mkdir(parents=True)
+        self.patch = self.patches / "0001.patch"
+        self.patch.write_text("patch-v1")
+
+    def test_matching_jars_and_stack_are_accepted_but_changed_jars_are_rejected(self):
+        self.module.write_build_stamp(self.server, self.client)
+        self.module.verify_build_stamp(self.server, self.client)
+        self.client.write_bytes(b"older-client")
+        with self.assertRaisesRegex(RuntimeError, "jars or patches changed"):
+            self.module.verify_build_stamp(self.server, self.client)
+
+    def test_changed_or_added_patches_require_rebuild(self):
+        self.module.write_build_stamp(self.server, self.client)
+        self.patch.write_text("patch-v2")
+        with self.assertRaises(RuntimeError):
+            self.module.verify_build_stamp(self.server, self.client)
+        self.module.write_build_stamp(self.server, self.client)
+        (self.patches / "0002.patch").write_text("extra-patch")
+        with self.assertRaises(RuntimeError):
+            self.module.verify_build_stamp(self.server, self.client)
+
+    def test_missing_or_invalid_stamp_is_a_clear_rebuild_request(self):
+        with self.assertRaisesRegex(RuntimeError, "Run ./scripts/dev-run.sh once"):
+            self.module.verify_build_stamp(self.server, self.client)
+        self.module.RUNTIME.mkdir()
+        (self.module.RUNTIME / "build-stamp.json").write_text("broken json")
+        with self.assertRaisesRegex(RuntimeError, "No valid build stamp"):
+            self.module.verify_build_stamp(self.server, self.client)
+
+    def test_rotation_preserves_one_previous_session(self):
+        self.module.RUNTIME.mkdir()
+        for name in ("server", "client"):
+            (self.module.RUNTIME / (name + ".previous.log")).write_text("oldest")
+            (self.module.RUNTIME / (name + ".log")).write_text("latest")
+        self.module.rotate_logs()
+        for name in ("server", "client"):
+            self.assertEqual("latest", (self.module.RUNTIME / (name + ".previous.log")).read_text())
+            self.assertFalse((self.module.RUNTIME / (name + ".log")).exists())
 
 
 if __name__ == "__main__":
