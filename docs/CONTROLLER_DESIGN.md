@@ -91,10 +91,15 @@ Ground candidates use every item in the client's visible pile table, not just
 rendered models. A prefers native Take (operation index 2). Identity includes
 item ID, plane, scene coordinates and region base. Deterministic kind/ID/coordinate
 tie-breakers make equal-score items cycle reliably. Native -3/-2 path strategies
-validate loot approach; server gameplay logic remains authoritative.
+validate loot approach; server gameplay logic remains authoritative. A scan caches
+reachability for up to eight distinct target geometries. Items on a pile share one
+check, and cached geometries remain eligible after the budget is exhausted. The
+cache lasts only for that scan; collision changes are checked again next time.
 
 World B stops direct intent and sends explicit opcode 86 without a position.
 The server observes the normal delay gate, cancels ordinary movement/interaction,
-clears watch/weak actions/suspension and removes pending walk triggers. It does not
-replace nonmovement modes. B inside a list backs out first; dialogue/inventory B
-keep their established context-specific behavior.
+clears watch/weak actions/suspension, then runs the pending walk cleanup once.
+Cleanup can unmorph the player or install a content exit route; that new route is
+preserved. Nonmovement modes are preserved unless content cleanup replaces them.
+B inside a list backs out first; dialogue/inventory B keep their established
+context-specific behavior.

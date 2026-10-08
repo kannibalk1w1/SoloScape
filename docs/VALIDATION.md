@@ -151,3 +151,25 @@ restart. Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.
   player saves or game cache were changed during this build.
 - `ROADMAP.md` and `PROJECT_HANDOFF.md` capture the proposed next work and current
   status for review/discussion. They do not mark unplayed features as accepted.
+
+
+## Claude review fixes (2026-10-08)
+
+- Preserved Claude's independent pre-fix findings in `CLAUDE_REVIEW.md`.
+- Client patch 0008 fixes M2/M3 with per-scan geometry reachability caching, keeping
+  the eight-geometry budget while allowing every item on an evaluated pile.
+- Server patch 0003 fixes H1: B runs walk cleanup once after cancelling the old
+  mode, preserving an exit route installed by that cleanup. Forced busy actions
+  retain their callback.
+- Regression tests pass for 12-item cycling both ways and wrap, a dense blocked
+  pile beside reachable loot, cache expiry, morph-style cleanup, single execution,
+  cleanup-created exit routes and forced-action preservation.
+- Full client run: 61 cases (58 distinct methods), zero failures/errors; one SDL
+  virtual-device case deliberately skipped. This batch did not rerun native SDL.
+- Network: 247 cases; selected engine movement/decoder/cancel: 61 cases. Both
+  have zero failures/errors/skips. Both Shadow jars rebuild and classes verified.
+- Fresh/upgrade/reverse/idempotent patch reproduction matches all 37/14 affected
+  files; real checkout patch helpers are idempotent. Seven root tooling tests pass.
+- Current game processes, player saves and cache were not changed. Both processes
+  need restarting for gameplay acceptance. The roadmap now includes extra review
+  checks; capability negotiation, error recovery and idle UI cost remain proposals.

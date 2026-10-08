@@ -38,6 +38,7 @@ not a prerequisite for a good console RuneScape experience.
 - [x] BASE-07 Build X world menus, complete visible-pile loot targeting and B cancellation.
 - [x] BASE-08 Preserve changes in reproducible client/server patches and pass current tests.
 - [ ] BASE-09 Accept the newest interaction build in-game; see M0 below.
+- [x] BASE-10 Fix review findings H1/M2/M3: B content cleanup and per-geometry target checks, with regression tests.
 
 ## M0 — finish the first reliable controller playable
 
@@ -45,11 +46,15 @@ Priority: now. Depends on the current built client and server.
 
 - [ ] M0-01 Restart both processes and test X on NPCs/objects with multiple native actions.
 - [ ] M0-02 Confirm D-pad selection, one A action per press, B menu back and second B cancel.
-- [ ] M0-03 Drop several items on one tile; cycle all of them, pick one up, and test stack changes/despawns.
+- [ ] M0-03 Drop at least 12 distinct items on one tile; cycle both directions, pick one up, and test stack changes/despawns and a blocked pile near a reachable target.
 - [ ] M0-04 Test direct and destination modes, LT aiming, mouse takeover and held-input recovery.
 - [ ] M0-05 Verify inventory/dialogue priority, fixed/resized layouts and plugin disable/re-enable.
 - [ ] M0-06 Verify a real save roundtrip: location, inventory, equipment, XP and quest variables survive clean exit/restart.
 - [ ] M0-07 Record reproducible gameplay issues and fix blockers before the next feature batch.
+- [ ] M0-08 Test world B while morphed and during content cleanup/exit; confirm recovery without losing the exit route.
+- [ ] M0-09 Check banker/shopkeeper targeting across counters and border-guard crossings in both movement modes.
+- [ ] M0-10 Test dialogue B while a walking step is interpolating.
+- [ ] M0-11 Resolve Claude review follow-ups before expanding features: server capabilities/jar mismatch detection, exception recovery and idle snapshot cost. See `CLAUDE_REVIEW.md`.
 
 Acceptance: controller walking, camera, action selection, loot, inventory and dialogue
 work together, and the character survives a clean restart with expected state.

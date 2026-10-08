@@ -278,7 +278,9 @@ Native action IDs come from the actual builders: NPC 25/20/44/46/60, object
 visible pile table, so targets reflect items the client knows about. X includes
 secondary native actions; A re-enumerates and revalidates before dispatch.
 Server opcode 86 has no payload, clears ordinary movement/interaction and weak
-queued actions, and does not advance a dialogue or run a pending walk trigger.
+queued actions, then runs pending walk cleanup once, matching ordinary walking.
+This cleanup may unmorph the player or start a content exit; it does not advance a
+dialogue. The forced-action delay gate leaves the callback untouched.
 
 All 58 client tests, 247 network tests and 59 selected engine tests pass without
 failures/errors/skips. Native tests cover all pile entries, deterministic cycling,
@@ -291,3 +293,31 @@ Three patch-helper tests and four launcher tests also pass.
 Add `--tests '*CancelWorldAction*'` to the server test command above to include
 its handler tests. See `PROJECT_HANDOFF.md` for a portable status summary and
 `ROADMAP.md` for the proposed task list.
+
+
+## Claude review fixes (2026-10-08)
+
+Client patch 0008 and server patch 0003 address H1, M2 and M3 from
+`CLAUDE_REVIEW.md`. The review itself records the earlier build and remains unchanged.
+
+- Cycle a pile of at least 12 distinct items in both directions and confirm wrap.
+- Put a dense pile behind a wall with a reachable target nearby: the reachable
+  target should remain selectable. Distinct geometry checks are still capped at
+  eight per scan; this is not unlimited targeting across a dense scene.
+- Test Ring of stone/Easter ring followed by world B: the pending unmorph cleanup
+  must run. Also check a content exit that uses a walk trigger.
+- Check banker/shopkeeper targeting across counters, border crossings in both
+  movement modes, and dialogue B while a step is interpolating. These are review
+  hypotheses requiring gameplay checks, not fixes implemented in this batch.
+
+Automated results: 61 client test cases (58 distinct methods), zero failures/errors,
+with the SDL virtual-device case deliberately skipped; it was not revalidated in
+this batch. The new native pathfinder tests exercise 12-item bidirectional cycling,
+blocked-pile starvation and cache expiry between scans. All 247 network and 61
+selected engine cases pass without skips. Cancellation tests verify cleanup once,
+morph-style movement-delay release, preservation of cleanup-created exit steps,
+and forced-action callback preservation. UI closing remains mocked.
+
+Both Shadow jars rebuild. Fresh/upgrade/reverse/idempotent patch reproduction
+matches 37 client and 14 server files. All seven root tooling tests pass. Physical
+controller and save-roundtrip acceptance still require restarting both processes.

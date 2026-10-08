@@ -58,7 +58,7 @@ Ground feedback includes a green requested destination/next direct step, a light
 blue player tile while moving, and a gold target footprint/action label. Focus
 stays stable when the stick rests and the camera rotates. Moving NPCs keep identity;
 ground-item identity includes tile/plane, so an identical item elsewhere is distinct.
-The latest build cycles all visible pile entries, including those beyond the three
+The latest build cycles every entry on an evaluated pile, including those beyond the three
 rendered models, with deterministic tie-breaking for items on the same tile.
 
 Actions use the revision-634 native menu dispatcher and live definitions. Controller
@@ -85,9 +85,10 @@ A plain directional stop cannot cancel a newer mouse walk or interaction.
 
 The latest B world action uses custom opcode **86**, with no payload or client
 position. It clears normal movement/interaction, watch, weak actions and suspension.
-It respects the ordinary busy/delay gate and preserves nonmovement modes; it is
-not an escape from forced actions such as agility. Dialogue B currently uses the
-already-verified ordinary same-tile Walk cancellation path, not opcode 86.
+After clearing the old action it runs pending walk cleanup once, allowing unmorph
+or content exits and preserving any route the callback installs. It respects the
+ordinary busy/delay gate; it is not an escape from forced actions such as agility.
+Dialogue B currently uses the already-verified ordinary same-tile Walk cancellation path, not opcode 86.
 
 Focus loss, disconnect, UI modes, A, LT, shutdown and mode changes stop direct input.
 A native mouse menu action takes over and blocks held direct input until neutral.
@@ -132,12 +133,14 @@ Both Shadow jars are rebuilt:
 - `upstream/runelite-client/client/build/libs/void-client-0.2.0_a2.jar`
 - `upstream/game-server/game/build/libs/void-server-dev.jar`
 
-Current checks pass with zero failures, errors or skips:
+Current checks pass with zero failures or errors:
 
-- **58 client tests**, including real SDL virtual-controller input, native camera,
+- **61 client test cases (58 distinct methods)**, with one SDL virtual-device test
+  deliberately skipped in this batch. Native camera,
   pathfinder, widget tests, world-menu input, actual loot tables, NPC options,
-  deterministic cycling and encrypted directional/cancel packet encoding.
-- **247 network tests** and **59 selected engine movement/decoder/cancel tests**.
+  12-item cycling, blocked-pile starvation, cache freshness and encrypted
+  directional/cancel packet encoding are covered. Earlier SDL validation passed.
+- **247 network tests** and **61 selected engine movement/decoder/cancel tests**, without skips.
 - Three patch-helper tests and four simulated launcher lifecycle tests.
 - Client/server source reproduction matches all **37 / 14** affected files on
   fresh bases, upgrades, sequential reverse application and repeated application.
@@ -195,3 +198,21 @@ ordinary mouse actions. See `docs/CONTROLLER_TESTING.md` for more detailed check
 > Keep the next sprint concrete and playable, preserve existing saves and normal
 > RuneScape mechanics, and flag dependencies or decisions that need resolving.
 > Do not assume access to my repository or invent upstream content completeness.
+
+
+## Independent review and follow-up
+
+Claude reviewed the pre-fix build; its full findings are in `CLAUDE_REVIEW.md`.
+Client patch 0008 and server patch 0003 now fix B discarding content cleanup (H1),
+piles larger than eight items being inaccessible (M2), and a blocked pile hiding
+reachable targets (M3). Reachability is cached per geometry for one scan, capped
+at eight distinct geometries; every item on an evaluated pile shares the result.
+The new build has not yet been accepted in gameplay.
+
+Remaining proposals include server capability negotiation/jar mismatch detection,
+separate SDL and game-adapter exception handling, reducing idle inventory snapshot
+work, and checking dialogue cancellation coordinates and border passages. Combat
+range/line-of-sight targeting needs its own policy before controller combat work.
+These are not implemented by the review-fix batch. Restart both client and server
+with `./scripts/dev-run.sh --no-build` after quitting the current session to use
+both rebuilt jars, then complete M0 (including a real save roundtrip).

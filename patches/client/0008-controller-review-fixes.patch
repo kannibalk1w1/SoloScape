@@ -1,0 +1,156 @@
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+index c885d11..ec3bee5 100644
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -1,7 +1,9 @@
+ import com.GameClient.ControllerTarget;
+ import java.util.ArrayList;
+ import java.util.Comparator;
++import java.util.HashMap;
+ import java.util.List;
++import java.util.Map;
+ import net.runelite.client.input.controller.WorldInput;
+ 
+ /** Revision-634 adapter. All calls are on the client thread; no new packet formats. */
+@@ -97,14 +99,16 @@ final class ControllerWorld
+         ControllerTarget retained = null;
+         for (ControllerTarget candidate : candidates)
+             if (candidate.sameEntity(previous)) { retained = candidate; break; }
+-        boolean retainedReachable = retained != null && reachable(retained);
++        Map<ReachabilityKey, Boolean> paths = new HashMap<>();
++        boolean retainedReachable = retained != null && reachable(retained, paths);
+         if (direction == 0 && retainedReachable) return retained;
+         List<ControllerTarget> reachable = new ArrayList<>();
+         if (retained != null) candidates.remove(retained);
+         if (retainedReachable) reachable.add(retained);
+-        int checks = Math.min(8 - (retained != null ? 1 : 0), candidates.size());
+-        for (int i = 0; i < checks; i++)
+-            if (reachable(candidates.get(i))) reachable.add(candidates.get(i));
++        // Budget distinct geometry, not item count. Continue scanning cached tiles after
++        // the budget is exhausted so every entry in an evaluated pile remains selectable.
++        for (ControllerTarget candidate : candidates)
++            if (reachable(candidate, paths)) reachable.add(candidate);
+         if (reachable.isEmpty()) return null;
+         if (direction == 0 || retained == null) return reachable.get(direction < 0 ? reachable.size() - 1 : 0);
+         // Sort independently of current focus so repeated bumper presses traverse all candidates.
+@@ -260,6 +264,45 @@ final class ControllerWorld
+         return Math.hypot(dx, dy) <= 5;
+     }
+ 
++    private static final class ReachabilityKey
++    {
++        final int kind, x, y, width, height;
++        final long object;
++
++        ReachabilityKey(ControllerTarget t)
++        {
++            kind = t.kind(); x = t.x; y = t.y; width = t.width; height = t.height;
++            // Object identity encodes shape/rotation/definition access restrictions.
++            // NPCs of equal size and all ground items share the same path geometry.
++            object = kind == 2 ? t.identifier : 0;
++        }
++
++        @Override public boolean equals(Object other)
++        {
++            if (!(other instanceof ReachabilityKey)) return false;
++            ReachabilityKey key = (ReachabilityKey) other;
++            return kind == key.kind && x == key.x && y == key.y
++                && width == key.width && height == key.height && object == key.object;
++        }
++
++        @Override public int hashCode()
++        {
++            int hash = (((kind * 31 + x) * 31 + y) * 31 + width) * 31 + height;
++            return hash * 31 + (int) (object ^ (object >>> 32));
++        }
++    }
++
++    private static boolean reachable(ControllerTarget t, Map<ReachabilityKey, Boolean> paths)
++    {
++        ReachabilityKey key = new ReachabilityKey(t);
++        Boolean cached = paths.get(key);
++        if (cached != null) return cached;
++        if (paths.size() >= 8) return false;
++        boolean result = reachable(t);
++        paths.put(key, result);
++        return result;
++    }
++
+     private static boolean reachable(ControllerTarget t)
+     {
+         if (t.kind() == 3) return reachable(t.x, t.y, 1, 1, -3, 0, 0) || reachable(t.x, t.y, 1, 1, -2, 0, 0);
+diff --git a/client/test/ControllerWorldActionsTest.java b/client/test/ControllerWorldActionsTest.java
+index 512d04f..b80576d 100644
+--- a/client/test/ControllerWorldActionsTest.java
++++ b/client/test/ControllerWorldActionsTest.java
+@@ -34,11 +34,15 @@ public class ControllerWorldActionsTest extends ControllerWorldTest
+         Exception_Sub1.aClass255_112 = oldDefs; ChatMessage.aClass357ArrayArrayArray2029 = oldScene;
+     }
+     private void item(int id, int quantity)
++    {
++        item(pile, id, quantity);
++    }
++    private void item(Class348_Sub37 destination, int id, int quantity)
+     {
+         ObjType def = new ObjType(); def.id = id; def.name = "Loot " + id;
+         def.op = new String[] {"Inspect", null, "Take", null, null};
+         cache.method582(def, id, (byte) -100);
+-        pile.aClass262_6998.method1999(new Class348_Sub34(id, quantity), -20180);
++        destination.aClass262_6998.method1999(new Class348_Sub34(id, quantity), -20180);
+     }
+     @Test public void lootUsesTakeAndAllPileEntriesCanBeCycled()
+     {
+@@ -52,6 +56,53 @@ public class ControllerWorldActionsTest extends ControllerWorldTest
+         ControllerTarget[] actions = ControllerWorld.actions(first);
+         assertEquals(2, actions.length); assertEquals("Take", actions[0].option); assertEquals("Inspect", actions[1].option);
+     }
++    @Test public void largePileCyclesEveryItemInBothDirectionsAndWraps()
++    {
++        for (int i = 100; i < 112; i++) item(i, 1);
++        ControllerTarget first = ControllerWorld.findTarget(0, 1, null);
++        assertNotNull(first);
++        for (int direction : new int[] {-1, 1})
++        {
++            java.util.Set<Long> ids = new java.util.HashSet<>();
++            ControllerTarget next = first;
++            for (int i = 0; i < 12; i++)
++            {
++                assertTrue("Repeated item before traversing the whole pile", ids.add(next.identifier));
++                next = ControllerWorld.findTarget(0, 1, next, direction);
++                assertNotNull(next);
++            }
++            assertEquals(12, ids.size());
++            assertTrue(first.sameEntity(next));
++        }
++    }
++    @Test public void blockedLargePileDoesNotHideAReachableTarget()
++    {
++        Class130.aClass356_1895 = new IterableHashTable(64);
++        int blockedKey = (66 + Class90.regionTileY) << 14 | (64 + za_Sub2.regionTileX);
++        Class130.aClass356_1895.method3483((byte) 120, blockedKey, pile);
++        for (int i = 100; i < 112; i++) item(i, 1);
++        Class348_Sub37 accessible = new Class348_Sub37();
++        int accessibleKey = (66 + Class90.regionTileY) << 14 | (66 + za_Sub2.regionTileX);
++        Class130.aClass356_1895.method3483((byte) 120, accessibleKey, accessible);
++        item(accessible, 200, 1);
++        int[][] flags = Class348_Sub45.aClass361Array7108[0].anIntArrayArray4438;
++        for (int x = 63; x <= 65; x++) for (int y = 65; y <= 67; y++) flags[x][y] = -1;
++        ControllerTarget target = ControllerWorld.findTarget(0, 1, null);
++        assertNotNull(target); assertEquals(200L, target.identifier);
++        assertEquals(200L, ControllerWorld.findTarget(0, 1, target, 1).identifier);
++        assertEquals(200L, ControllerWorld.findTarget(0, 1, target, -1).identifier);
++    }
++    @Test public void reachabilityCacheExpiresBetweenTargetScans()
++    {
++        item(100, 1);
++        ControllerTarget target = ControllerWorld.findTarget(0, 1, null);
++        assertNotNull(target);
++        int[][] flags = Class348_Sub45.aClass361Array7108[0].anIntArrayArray4438;
++        for (int x = 0; x < 128; x++) flags[x][65] = -1;
++        assertNull(ControllerWorld.findTarget(0, 1, target));
++        for (int x = 1; x < 127; x++) flags[x][65] = 0;
++        assertNotNull(ControllerWorld.findTarget(0, 1, target));
++    }
+     @Test public void disappearedLootAndOtherTilesCannotReuseActions()
+     {
+         item(100, 12);

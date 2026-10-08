@@ -1,0 +1,66 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandler.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandler.kt
+index dd6749c..927e935 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandler.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandler.kt
+@@ -15,10 +15,11 @@ object CancelWorldActionHandler {
+         player.clearWatch()
+         player.queue.clearWeak()
+         player.suspension = null
+-        player.clearWalkTrigger()
+         if (player.mode is Movement) {
+             player.mode = EmptyMode
+             player.steps.clear()
+         }
++        // Content cleanup may unmorph the player or queue an exit; preserve its new mode/steps.
++        player.walkTrigger()
+     }
+ }
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandlerTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandlerTest.kt
+index 2662bb7..4fc07e7 100644
+--- a/engine/src/test/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandlerTest.kt
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelWorldActionHandlerTest.kt
+@@ -28,19 +28,41 @@ class CancelWorldActionHandlerTest : KoinMock() {
+         player.mode = Movement(player)
+         player.steps.queueStep(Tile(70, 64))
+         player["face_entity"] = Any()
+-        var triggered = false
+-        player.walkTrigger { triggered = true }
++        var triggers = 0
++        player.walkTrigger { triggers++ }
+         CancelWorldActionHandler.handle(player)
+         assertSame(EmptyMode, player.mode); assertTrue(player.steps.isEmpty())
+-        assertEquals(Tile(64, 64), player.tile); assertNull(player.walkTrigger); assertFalse(triggered)
++        assertEquals(Tile(64, 64), player.tile); assertNull(player.walkTrigger); assertEquals(1, triggers)
++        CancelWorldActionHandler.handle(player)
++        assertEquals(1, triggers)
++    }
++    @Test fun `cancel runs morph cleanup even when movement is blocked`() {
++        player["movement_delay"] = Int.MAX_VALUE
++        player.walkTrigger { player["movement_delay"] = 0 }
++        CancelWorldActionHandler.handle(player)
++        assertEquals(0, player["movement_delay", -1])
++        assertNull(player.walkTrigger)
++    }
++    @Test fun `cancel preserves an exit route installed by content cleanup`() {
++        player.mode = Movement(player)
++        val exit = Movement(player)
++        player.walkTrigger {
++            player.mode = exit
++            player.steps.queueStep(Tile(65, 64), noCollision = true)
++        }
++        CancelWorldActionHandler.handle(player)
++        assertSame(exit, player.mode); assertFalse(player.steps.isEmpty())
+         verify(exactly = 1) { player.closeInterfaces() }
+     }
+     @Test fun `forced busy action is preserved`() {
+         val forced = Movement(player)
+         player.mode = forced; player.steps.queueStep(Tile(65, 64), noCollision = true)
+         player["delay"] = -1
++        var triggered = false
++        player.walkTrigger { triggered = true }
+         CancelWorldActionHandler.handle(player)
+         assertSame(forced, player.mode); assertFalse(player.steps.isEmpty())
++        assertFalse(triggered); assertNotNull(player.walkTrigger)
+         verify(exactly = 0) { player.closeInterfaces() }
+     }
+     @Test fun `nonmovement modes are not replaced or stripped of their steps`() {
