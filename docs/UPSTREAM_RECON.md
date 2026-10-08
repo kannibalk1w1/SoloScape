@@ -1,7 +1,8 @@
 # Upstream reconnaissance
 
 Inspected 2026-10-08 from unmodified source checkouts. This is a code audit, not
-a successful gameplay report. No JDK or user-supplied game cache is available.
+a successful gameplay report. JDK 21 and JDK 8 have now been installed locally;
+no user-supplied compatible game cache is available.
 
 ## Pinned repositories
 
@@ -20,8 +21,8 @@ Archived 667 repositories have not been cloned or modified.
 - Revision is **634** in `game/src/main/resources/game.properties`.
 - `buildSrc/src/main/kotlin/shared.gradle.kts` targets Java/JVM 21.
   `gradle/libs.versions.toml` selects Kotlin **2.4.0**; the wrapper selects
-  Gradle **9.6.0**. Availability and successful dependency resolution have not
-  been verified. Do not silently downgrade these pins.
+  Gradle **9.6.0**. Both upstream Gradle distributions downloaded successfully;
+  full build results are recorded in `VALIDATION.md`. Do not silently downgrade pins.
 - Application entry is `Main`, `game/src/main/kotlin/Main.kt`.
   Build `:game:shadowJar` and run the resulting jar with server root as cwd.
   The same cwd is configured by `:game:run`.
@@ -133,7 +134,7 @@ has been added. An exhaustive dependency licence report awaits dependency
 resolution. Historical GE research, bot performance/persistence and complete
 Dungeoneering audits remain later milestones, not fabricated results here.
 
-Build/run, local login, restart persistence, controller detection and Deck
-acceptance are **blocked/unverified**, not passed. Next experiment: install JDK
-21 + JDK 8, supply the cache, pass doctor, build unchanged sources and create a
+Server/client builds now pass unchanged. Local login, restart persistence, controller detection and Deck
+acceptance are **blocked/unverified**, not passed. Next experiment: supply the
+cache, pass doctor, launch the built sources and create a
 test character. Complete the restart checklist before controller implementation.

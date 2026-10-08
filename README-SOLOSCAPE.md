@@ -1,9 +1,9 @@
 # SoloScape 2011+
 
 Bootstrap for a local RuneScape revision-634 experience, with Steam Deck native
-controller support planned. **The game has not yet been built or run here.**
-The workspace has no JDK or supplied cache; controller changes await baseline
-login/restart validation.
+controller support planned. JDK 21 and JDK 8 are installed locally; the compatible
+game cache is still missing. Both upstream server and client now build successfully.
+Controller changes await baseline login/restart validation.
 
 The branch is `soloscape/bootstrap`. Source checkouts under `upstream/` are
 unmodified and ignored. See [reconnaissance](docs/UPSTREAM_RECON.md),
@@ -21,12 +21,21 @@ git -C upstream/runelite-client checkout 297bc8a4861755b676855664d32859054779c06
 git -C upstream/634-client checkout b39d45f49a0480f3f200fe3e31ad0798faf163ab
 ```
 
-Install JDK 21 for the server/build tools and JDK 8 for the client (which still
-uses Java Applet APIs). Python 3, Bash, Git and a Linux graphical session with
+Install project-local JDK 21 for the server/build tools and JDK 8 for the client
+(which still uses Java Applet APIs):
+
+```bash
+./scripts/setup-java.sh
+```
+
+The Linux x86_64 installer uses the [official Adoptium API](https://adoptium.net/en-GB/installation/ci-scripts),
+verifies archive SHA-256 hashes and extracts into ignored `.runtime/jdks/`.
+It creates `config/local.env` if absent and preserves existing configuration.
+It does not change system Java. Python 3, Bash, Git, curl, tar and a Linux graphical session with
 X11/XWayland are required. Gradle wrappers resolve dependencies over the network
 on the first build. No system Gradle installation is needed.
 
-Copy `config/local.env.example` to `config/local.env` and set executable paths.
+Alternatively copy `config/local.env.example` to `config/local.env` and set executable paths.
 Supply the compatible modified upstream cache in
 `upstream/game-server/data/cache/`, including its index files. No scripts download
 proprietary game assets. Do not commit cache data, saves or game resources.
@@ -56,9 +65,9 @@ belong to this world in `upstream/game-server/data/saves/`. Preserve that folder
 when updating source. Confirm restart persistence using the
 [manual checklist](docs/STEAM_DECK_TEST_CHECKLIST.md) before treating it as tested.
 
-Current limits: no confirmed game build, renderer, controller hardware or save
-roundtrip; pinned build-tool/dependency availability not verified; no native
-controller feature yet. Next step is unchanged local gameplay, then the smallest
+Current limits: the compatible cache is missing; renderer, controller hardware
+and save roundtrip remain unverified; no native controller feature yet.
+Next step is unchanged local gameplay, then the smallest
 right-stick camera prototype. Dependency/binary licence inventory is required
 before a distributable package.
 
