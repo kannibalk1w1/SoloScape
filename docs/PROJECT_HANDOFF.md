@@ -178,7 +178,7 @@ ordinary mouse actions. See `docs/CONTROLLER_TESTING.md` for more detailed check
 ## Recommended next steps
 
 1. Accept the newest world action/loot/cancel build and verify a real save restart.
-2. Complete banks and shops, then prayer/spells/equipment and quick combat actions.
+2. Accept the new bank/shop/equipment/prayer/spell controls; then fill remaining interface gaps and add quick combat actions.
 3. Make the UI readable and discoverable at Deck resolution; add glyphs and presets.
 4. Build reliable save/launcher lifecycle, then validate it on actual Steam Deck hardware.
 5. Verify two independent players before changes to global simulation or solo behavior.
