@@ -47,23 +47,14 @@ class Backend:
         if action == 'stop':
             self.cancelled.set()
             return self.current()
-        if action in ('backups', 'backup', 'restore', 'start'):
+        if action == 'backups':
+            return profiles.list_backups(request.get('profile'))
+        if action == 'restore':
+            return profiles.restore_profile(request.get('profile'), request.get('backup', ''))
+        if action in ('backup', 'start'):
             profile = profiles.load(request.get('profile'))
-            if action == 'backups':
-                result = []
-                for path in sorted((profile.directory / 'backups').glob('*.zip'), reverse=True):
-                    try:
-                        if path.is_symlink():
-                            raise ValueError('Symbolic-link backup refused.')
-                        manifest, _ = profile.validate_backup(path)
-                        result.append({'name': path.name, 'created': manifest['created'], 'reason': manifest.get('reason', ''), 'valid': True})
-                    except (ValueError, OSError, KeyError) as exc:
-                        result.append({'name': path.name, 'valid': False, 'error': str(exc)})
-                return result
             if action == 'backup':
                 return {'name': profile.backup().name}
-            if action == 'restore':
-                return profile.restore(request.get('backup', ''))
             if self.worker is not None and self.worker.is_alive():
                 raise RuntimeError('A world is already running in this launcher. Save & Quit before switching characters.')
             port = self.port(request)

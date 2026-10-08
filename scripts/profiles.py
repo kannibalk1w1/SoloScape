@@ -141,7 +141,7 @@ class Profile:
         return self.directory / 'states' / identifier(self.manifest['generation'])
 
     @contextmanager
-    def lock(self):
+    def lock(self, reload=True):
         path = self.directory / 'profile.lock'
         fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
         with os.fdopen(fd, 'a+') as lock:
@@ -149,13 +149,17 @@ class Profile:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError as exc:
                 raise RuntimeError('This character/world is running or another save operation is active.') from exc
-            self.reload()
+            if reload:
+                self.reload()
             yield self
 
     def metadata(self):
         result = {k: self.manifest[k] for k in ('id', 'label', 'account', 'created', 'last_played')}
         save_path = self.state / 'saves' / (self.manifest['account'].lower() + '.toml')
         result.update(saved=False, location=None, saved_at=None, error=None)
+        result['storage_bytes'] = sum(p.stat().st_size for p in self.directory.rglob('*') if p.is_file() and not p.is_symlink())
+        result['backup_count'] = len(list((self.directory / 'backups').glob('*.zip')))
+        result['retention'] = 'Backups and previous generations are kept until explicitly removed.'
         if save_path.exists():
             try:
                 if save_path.is_symlink():
@@ -224,6 +228,7 @@ class Profile:
                 validate_save(data)
             contents[relative] = data
         manifest = {'format': FORMAT, 'profile': self.manifest['id'], 'account': self.manifest['account'],
+                    'metadata': {k: self.manifest[k] for k in ('label', 'created', 'last_played', 'tutorial')},
                     'created': now(), 'reason': reason, 'files': {name: {'sha256': hash_bytes(data), 'size': len(data)} for name, data in contents.items()}}
         try:
             with zipfile.ZipFile(temporary, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
@@ -279,10 +284,18 @@ class Profile:
         except (zipfile.BadZipFile, KeyError, TypeError, json.JSONDecodeError) as exc:
             raise ValueError('Backup is corrupt or has an invalid manifest.') from exc
 
-    def restore(self, backup_name):
+    def restore(self, backup_name, recovery=False):
         if Path(backup_name).name != backup_name or not re.fullmatch(r'[A-Za-z0-9_-]+\.zip', backup_name):
             raise ValueError('Select a backup from this profile.')
-        with self.lock():
+        with self.lock(reload=not recovery):
+            if recovery:
+                recovered_metadata = self.manifest
+                try:
+                    self.reload()
+                except (ValueError, OSError, KeyError):
+                    self.manifest = recovered_metadata
+                else:
+                    raise RuntimeError('This profile was recovered meanwhile. Select its backup again.')
             backup = self.directory / 'backups' / backup_name
             if backup.is_symlink():
                 raise ValueError('Backup cannot be a symbolic link.')
@@ -311,12 +324,26 @@ class Profile:
                 changed['restored_from'] = backup_name
                 # Old generation remains available even if original saves were corrupt.
                 changed['previous_generations'] = self.manifest.get('previous_generations', []) + [self.manifest['generation']]
+                if recovery:
+                    damaged = self.directory / 'profile.json'
+                    if damaged.exists():
+                        if damaged.is_symlink():
+                            raise ValueError('Profile manifest cannot be a symbolic link.')
+                        preserved = self.directory / ('damaged-manifest-' + uuid.uuid4().hex + '.json')
+                        shutil.copyfile(damaged, preserved)
+                        preserved.chmod(0o600)
+                        with preserved.open('rb') as source:
+                            os.fsync(source.fileno())
+                        fsync_directory(self.directory)
                 atomic_json(self.directory / 'profile.json', changed)
                 self.reload()
                 return {'generation': generation, 'restored_from': backup_name, 'files': len(contents)}
             except BaseException:
                 # After a successful atomic switch this is the active world; never remove it.
-                disk = json.loads((self.directory / 'profile.json').read_text())
+                try:
+                    disk = json.loads((self.directory / 'profile.json').read_text())
+                except (OSError, ValueError):
+                    disk = {}
                 if disk.get('generation') != generation:
                     shutil.rmtree(target)
                 raise
@@ -368,9 +395,73 @@ def import_character(source, label):
     data = source.read_bytes()
     save = validate_save(data)
     profile = create(label, save['accountName'], password='')
-    with profile.lock():
-        target = profile.state / 'saves' / (save['accountName'].lower() + '.toml')
-        target.write_bytes(data)
-        target.chmod(0o600)
-        profile._backup('imported-copy')
-    return profile
+    try:
+        with profile.lock():
+            target = profile.state / 'saves' / (save['accountName'].lower() + '.toml')
+            target.write_bytes(data)
+            target.chmod(0o600)
+            profile._backup('imported-copy')
+        return profile
+    except BaseException:
+        shutil.rmtree(profile.directory)
+        raise
+
+
+def recovery_profile(uid, backup_name):
+    """Construct recovery metadata only; never launch a damaged profile through this path."""
+    directory = PROFILES / identifier(uid)
+    if directory.is_symlink() or (directory / 'states').is_symlink():
+        raise ValueError('Profile recovery storage cannot be a symbolic link.')
+    if not isinstance(backup_name, str) or Path(backup_name).name != backup_name or not re.fullmatch(r'[A-Za-z0-9_-]+\.zip', backup_name):
+        raise ValueError('Select a backup from this profile.')
+    backup = directory / 'backups' / backup_name
+    if (directory / 'backups').is_symlink() or backup.is_symlink():
+        raise ValueError('Recovery backup cannot be a symbolic link.')
+    try:
+        with zipfile.ZipFile(backup) as archive:
+            info = archive.getinfo('backup.json')
+            if info.file_size > MAX_FILE:
+                raise ValueError('Backup metadata is too large.')
+            header = json.loads(archive.read(info))
+        if not isinstance(header, dict) or header.get('profile') != uid:
+            raise ValueError('Backup belongs to a different profile.')
+        account = header.get('account')
+        if not isinstance(account, str) or not ACCOUNT.fullmatch(account) or not account.strip():
+            raise ValueError('Recovery backup account is invalid.')
+        metadata = header.get('metadata', {})
+        if not isinstance(metadata, dict):
+            raise ValueError('Recovery metadata is invalid.')
+        profile = object.__new__(Profile)
+        profile.directory = directory
+        profile.manifest = {'format': FORMAT, 'id': uid, 'account': account,
+            'label': str(metadata.get('label', 'Recovered character'))[:48],
+            'created': header.get('created', now()), 'last_played': None,
+            'tutorial': bool(metadata.get('tutorial', False)), 'generation': uuid.uuid4().hex}
+        profile.validate_backup(backup)
+        return profile
+    except (zipfile.BadZipFile, KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise ValueError('Recovery backup metadata is corrupt.') from exc
+
+
+def list_backups(uid):
+    directory = PROFILES / identifier(uid)
+    if directory.is_symlink() or (directory / 'backups').is_symlink():
+        raise ValueError('Backup storage cannot be a symbolic link.')
+    result = []
+    for path in sorted((directory / 'backups').glob('*.zip'), reverse=True):
+        try:
+            profile = recovery_profile(uid, path.name)
+            manifest, _ = profile.validate_backup(path)
+            result.append({'name': path.name, 'created': manifest['created'], 'reason': manifest.get('reason', ''), 'valid': True})
+        except (ValueError, OSError, KeyError) as exc:
+            result.append({'name': path.name, 'valid': False, 'error': str(exc)})
+    return result
+
+
+def restore_profile(uid, backup_name):
+    try:
+        profile = load(uid)
+    except (ValueError, OSError, KeyError):
+        profile = recovery_profile(uid, backup_name)
+        return profile.restore(backup_name, recovery=True)
+    return profile.restore(backup_name)

@@ -82,3 +82,9 @@ is the actual software-rendered disposable world, not a mockup or a controller/h
 acceptance claim.
 
 ![Actual disposable native world](images/alpha-native-private-world.png)
+
+### Damaged profile metadata recovery
+
+The launcher backup list and Restore action now also work when `profile.json` is missing, invalid JSON, or points at a missing generation. Recovery derives the account identity from a fully verified backup belonging to the same profile directory, retains any damaged manifest under a unique private filename, writes a new generation, and atomically installs a new manifest. A locked/running profile is refused. Original generations and private login credentials remain unchanged. Tests use temporary copies and cover damaged/missing manifests, active locks, malformed archives and failed-import cleanup.
+
+Metadata reports total profile storage bytes, backup count and the current retention policy. Backups and previous generations are deliberately retained; there is no automatic deletion of history in this alpha. Disk use must be monitored until an explicit retention interface is added.

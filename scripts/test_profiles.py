@@ -97,6 +97,35 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(json.loads((imported.directory/'login.json').read_text())['password'],'')
         self.assertEqual(len(list((imported.directory/'backups').glob('*.zip'))),1)
 
+    def test_missing_or_damaged_manifest_is_recovered_from_verified_backup_and_preserved(self):
+        backup=self.profile.backup();uid=self.profile.manifest['id'];old=self.profile.state
+        manifest=self.profile.directory/'profile.json';manifest.write_text('broken metadata')
+        self.assertTrue(profiles.list_backups(uid)[0]['valid'])
+        profiles.restore_profile(uid,backup.name)
+        restored=profiles.load(uid)
+        self.assertEqual(restored.manifest['label'],'Test character')
+        self.assertEqual((restored.state/'saves/tester.toml').read_bytes(),native_save())
+        self.assertNotEqual(old,restored.state)
+        self.assertEqual(next(self.profile.directory.glob('damaged-manifest-*.json')).read_text(),'broken metadata')
+        manifest.unlink();profiles.restore_profile(uid,backup.name)
+        self.assertTrue(profiles.load(uid).metadata()['saved'])
+
+    def test_recovery_refuses_active_profile_and_tampered_archive(self):
+        backup=self.profile.backup();uid=self.profile.manifest['id']
+        with self.profile.lock():
+            (self.profile.directory/'profile.json').write_text('broken')
+            with self.assertRaises(RuntimeError):profiles.restore_profile(uid,backup.name)
+        backup.write_bytes(b'not a zip')
+        with self.assertRaises(ValueError):profiles.restore_profile(uid,backup.name)
+        self.assertEqual((self.profile.directory/'profile.json').read_text(),'broken')
+
+    def test_failed_import_removes_only_its_new_profile(self):
+        source=Path(self.temp.name)/'original.toml';source.write_bytes(native_save())
+        with patch.object(profiles.Profile,'_backup',side_effect=OSError('disk full')):
+            with self.assertRaises(OSError):profiles.import_character(source,'Imported')
+        self.assertEqual(source.read_bytes(),native_save())
+        self.assertEqual(len(profiles.list_profiles()),1)
+
     def test_derived_logs_and_cache_are_not_backed_up_but_failed_saves_are(self):
         (self.profile.state/'temp/derived.map').write_bytes(b'cache')
         (self.profile.state/'logs/session.log').write_text('logs')
