@@ -3,7 +3,7 @@
 Bootstrap for a local RuneScape revision-634 experience, with Steam Deck native
 experimental controller support. JDK 21, JDK 8 and the upstream cache are installed locally.
 Both upstream builds pass, doctor passes, and the server reaches world readiness.
-The controller prototype supports camera panning, walking and A interaction; see
+The controller prototype supports camera, walking, inventory and dialogue controls; see
 [controller testing instructions](docs/CONTROLLER_TESTING.md) to enable it.
 
 The branch is `soloscape/bootstrap`. Source checkouts under `upstream/` are
@@ -74,7 +74,7 @@ ignored by Git.
 
 The user reports that launch/gameplay and physical controller camera panning work.
 Movement/interaction gameplay checks and save roundtrip remain pending. Next step
-is testing movement and A interaction on hardware, then inventory navigation. Dependency/binary licence inventory is required
+is testing inventory and dialogue controls on hardware. Dependency/binary licence inventory is required
 before a distributable package.
 
 Tooling validation: ShellCheck, Python compilation and four simulated-process

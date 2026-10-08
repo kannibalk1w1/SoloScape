@@ -80,3 +80,21 @@ restart. Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.
 - Existing-build upgrade and fresh patch-stack reproduction match all 23 patched
   files; sequential reverse application succeeds and application is idempotent.
 - In-game visual verification remains pending.
+
+## Inventory and dialogue controls (2026-10-08)
+
+- Patch 0004 adds Y inventory focus, D-pad grid navigation, A default actions,
+  X action lists, B back, and automatic dialogue focus with A/D-pad/B controls.
+- Captured bounds come from actually rendered native widgets. Native permission
+  flags/action IDs match the existing 634 menu pipeline. Cached widgets are
+  rejected if their ancestors hide, their interface closes, or item data changes.
+- Native tab IDs and dialogue groups match the pinned server interface definitions.
+  Dialogue B uses the existing same-tile Walk action; the Movement handler's
+  interface/suspension cancellation was checked in source.
+- All 31 client tests pass with zero skips/errors; Shadow jar rebuilt successfully.
+  Eleven new tests cover UI modes, edges/repeat, context changes, delayed redraw,
+  actual native permission bits, bounds, ancestors and stale-widget rejection.
+- Existing-build upgrade and fresh patch-stack reproduction match all 30 patched
+  files; reverse application and repeated application succeed.
+- User confirmed movement markers work. Inventory/dialogue gameplay, tab opening,
+  fixed/resized slot placement and Steam Deck acceptance remain pending.

@@ -25,8 +25,8 @@ add unused `soloscape.*` settings yet. Reuse existing camera integration, walkin
 menu dispatch and inventory overlays. Native gamepad library selection and small
 bridges into obfuscated code require successful unchanged gameplay first.
 
-Client changes are recorded as `patches/client/0001-controller-camera.patch` and
-`patches/client/0002-controller-world.patch` against the pinned upstream base.
+Client changes are recorded as the numbered patches in `patches/client/` against
+the pinned upstream base, covering camera, movement, tile markers and UI controls.
 Source builds validate the stack in a disposable tree, apply missing patches
 idempotently and refuse conflicting local edits. See `CONTROLLER_TESTING.md`. The patch contains source,
 tests and notices, with no game assets. Keep subsequent changes small.

@@ -1,9 +1,10 @@
 # Controller prototype design
 
 Status: SDL2 input, right-stick camera, left-stick walking and A world interaction
-are built and tested. The user confirmed camera panning. See
+plus inventory and dialogue controls are built and tested. The user confirmed
+camera panning and the movement tile overlay. See
 `CONTROLLER_TESTING.md` for controls and validation. Movement/interaction gameplay
-and Steam Deck acceptance remain pending; inventory navigation is subsequent work.
+UI gameplay and Steam Deck acceptance remain pending.
 
 The plugin owns one reusable state buffer containing axes/triggers and
 pressed/held/released button masks. Poll once per input update, clear state on
@@ -29,11 +30,17 @@ dispatches once per press. Returning to neutral after interaction prevents
 walking requests from canceling it. X/B context/back
 are incremental additions. Verify action IDs against the actual 634 dispatcher.
 
-Inventory mode: reuse existing slot bounds and overlays for a visible focus.
-D-pad moves focus in the normal inventory grid; A dispatches its default action;
-X opens existing context actions if practical; B returns to world mode. Mouse
-remains usable. Existing drag-grid code is a rendering reference, not evidence
-of complete widget/action APIs.
+Inventory mode: Y opens/focuses the native inventory tab. D-pad moves a yellow
+focus through the four-column grid. The renderer records actual visible slot bounds;
+there is no guessed fixed screen layout. A dispatches the normal default action,
+X opens its normal action list and B backs out. UI modes suppress left-stick walks
+and require neutral inputs before returning to world movement.
+
+Dialogue mode takes priority while a known dialogue interface is open. D-pad
+selects an exposed response, A invokes its native continue/choice action once per
+press, and B uses the existing same-tile Walk action to cancel normal conversations.
+Widget identity, item/quantity, permissions and visibility are revalidated just
+before dispatch. Numeric/text entry and other grids remain subsequent work.
 
 Deadzone, camera intent and input-state calculations have automated tests. Test
 projection/grid calculations when implemented. Hardware tests

@@ -1,9 +1,10 @@
-# Controller build: camera, movement and world interaction
+# Controller build: world, inventory and dialogue controls
 
 The experimental **disabled-by-default** RuneLite plugin now supports right-stick
-camera, left-stick walking and A-button world interaction. The server/protocol are
-unchanged. The user has confirmed physical right-stick panning works; movement
-and interaction still need their gameplay check. Inventory focus is next.
+camera, left-stick walking, A-button world interaction, inventory navigation and
+dialogue controls. The server/protocol are unchanged. The user confirmed camera
+panning and the movement tile overlay work. Inventory and dialogue gameplay
+acceptance is the next check.
 
 ## Try this build
 
@@ -29,11 +30,22 @@ and interaction still need their gameplay check. Inventory focus is next.
    pads) to perform that displayed action once. Release A and neutralize the left
    stick before walking again, so movement does not immediately cancel the action.
    Try an NPC conversation, a tree and a door. Right-stick rotation also changes
-   targeting direction. A currently handles world actions, not dialogue choices.
+   targeting direction. Dialogue widgets take priority while conversations are open.
 6. Test ordinary mouse walking/interaction and camera controls. Unplug while
    moving, switch focus while holding A, then reconnect/refocus. Input should stop
    and held world inputs must not resume until the stick and A are released.
-7. Disable the plugin to return to ordinary client input.
+7. Press **Y** to open/focus the inventory (top face button on other pads).
+   **D-pad** moves the yellow slot outline, including empty slots. Hold a direction
+   for repeated navigation. **A** performs the displayed normal action, such as
+   Eat or Wear. **X** opens the item's action list; D-pad chooses, A confirms,
+   and **B** backs out one level. B or Y exits inventory focus and returns to
+   world controls. Neutralize the left stick before walking again.
+8. Talk to an NPC. **A** continues a page, or confirms the highlighted response;
+   **D-pad** changes the response. **B** closes the conversation through the normal
+   same-tile walking action. Held A must not advance several pages. Try a food
+   item, equipment, an X action list, an empty slot, a choice dialogue and focus
+   loss while A is held. Test fixed/resized layouts and mouse tab changes too.
+9. Disable the plugin to return to ordinary client input.
 
 The already-built jar is `upstream/runelite-client/client/build/libs/void-client-0.2.0_a2.jar`.
 Restart is required to load the new code if an older client is still open.
@@ -84,9 +96,10 @@ Built-in Deck control access and mappings still need physical hardware validatio
 - Nearby NPC/object actions use `Class325.method2599`, the normal menu dispatcher.
   Action IDs come from the actual 634 builders, not RuneLite's generic enum.
   No click emulation or invented server packets are used.
-- Twenty client tests pass without skips: math/state, actual camera bridge,
+- Thirty-one client tests pass without skips: math/state, actual camera bridge,
   projection/collision/focus scoring, lifecycle/action-edge tests, three native
-  pathfinder/gate tests and real SDL virtual-controller polling. SDL checks both
+  pathfinder/gate tests, eleven UI navigation/native-widget tests and real SDL
+  virtual-controller polling. SDL checks both
   sticks, A edges, hotplug and unplug reset.
 - Three patch-stack tests cover fresh application, upgrade/idempotence and
   preserving conflicting local edits.
@@ -95,15 +108,18 @@ Built-in Deck control access and mappings still need physical hardware validatio
 
 The user confirmed camera panning. Movement/interaction feel, Gaming Mode focus
 and Deck acceptance still require manual testing. Native tests do not establish
-those. Inventory navigation, dialogue confirmation and context/back bindings are
-not implemented in this build.
+those. The current UI build handles visible inventory slots and exposed dialogue
+buttons. Number/text entry, bank/shop grids and item/spell targeting in the world
+remain subsequent work. Inventory Use can select an item for another inventory
+slot; B cancels selection when leaving inventory focus.
 
 ## Reproduce the source change
 
 The checkout remains at upstream base `297bc8a4861755b676855664d32859054779c067`.
 SoloScape owns `patches/client/0001-controller-camera.patch` and
 `patches/client/0002-controller-world.patch` and
-`patches/client/0003-controller-movement-tiles.patch`. Source builds apply the patch stack
+`patches/client/0003-controller-movement-tiles.patch` and
+`patches/client/0004-controller-inventory-dialogue.patch`. Source builds apply the patch stack
 automatically before compiling. To apply separately:
 
 ```bash
@@ -140,3 +156,28 @@ Neutralizing the stick keeps the destination visible while the queued walk finis
 The client jar rebuilt and all 20 existing client tests passed without skips.
 Patch 0003 reproduces the source exactly as an upgrade or fresh patch stack.
 Visual placement, colours and camera tracking still need an in-game check.
+
+## Inventory and dialogue build (2026-10-08)
+
+Patch 0004 records real, clipped native widget bounds while rendering, gated by
+plugin enablement. Inventory interface 149 and fixed/resized inventory-tab buttons
+are verified against the pinned server interface definitions. Native permission
+flags expose the same actions as mouse menus. The dispatcher's actual 634 widget
+IDs are 18/1011 for normal operations, 13 for selection, 6 for a selected item on
+another widget, and 16 for dialogue continue/choice buttons.
+
+Actions revalidate the current widget identity, item/quantity, option and open
+interface before dispatch. Hidden ancestors invalidate cached slots immediately.
+Old render records expire after 100ms; a visible inventory with delayed redraw
+keeps controller focus and suppresses actions until fresh bounds arrive. X opens
+a controller action list backed by these normal actions. It does not guess from
+screen coordinates or depend on the disabled inventory-grid plugin's fallback.
+
+Dialogue pages require released face buttons before another action. B uses the
+existing same-tile Walk dispatcher: the server's Movement handler closes normal
+interfaces and dialogue suspensions. Server delays can still prevent cancellation,
+as they do for ordinary walking. No responses are selected automatically.
+
+All 31 client tests pass with zero skips/errors. Patch reproduction matches all
+30 patched files as an upgrade and fresh stack. In-game item actions, conversation
+controls, focus placement, tab opening and resized layout acceptance remain pending.
