@@ -146,6 +146,19 @@ class ProfileTests(unittest.TestCase):
         (source/'linked').symlink_to(self.save)
         with self.assertRaises(ValueError):profiles.import_world_copy(source,'Unsafe','Tester')
         self.assertEqual(len(profiles.list_profiles()),1)
+        with self.assertRaises(ValueError):profiles.import_world_copy(self.profile.state/'saves','Unsafe','Tester')
+
+    def test_import_is_hidden_until_copy_and_verified_backup_finish(self):
+        source=Path(self.temp.name)/'copy';source.mkdir();(source/'tester.toml').write_bytes(native_save())
+        original=profiles.Profile._backup
+        def check(profile,reason):
+            self.assertEqual(len(profiles.list_profiles()),1)
+            return original(profile,reason)
+        with patch.object(profiles.Profile,'_backup',check):
+            imported=profiles.import_world_copy(source,'Imported','Tester')
+        self.assertEqual(len(profiles.list_profiles()),2)
+        self.assertEqual(imported.directory.parent,profiles.PROFILES)
+        self.assertFalse(list(profiles.PROFILES.glob('.import-*')))
 
     def test_derived_logs_and_cache_are_not_backed_up_but_failed_saves_are(self):
         (self.profile.state/'temp/derived.map').write_bytes(b'cache')

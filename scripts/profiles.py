@@ -323,7 +323,7 @@ class Profile:
                 changed['restored_at'] = now()
                 changed['restored_from'] = backup_name
                 # Old generation remains available even if original saves were corrupt.
-                changed['previous_generations'] = self.manifest.get('previous_generations', []) + [self.manifest['generation']]
+                changed['previous_generations'] = ([p.name for p in target.parent.iterdir() if p.name != generation and SAFE_ID.fullmatch(p.name) and p.is_dir() and not p.is_symlink()] if recovery else self.manifest.get('previous_generations', []) + [self.manifest['generation']])
                 if recovery:
                     damaged = self.directory / 'profile.json'
                     if damaged.exists():
@@ -331,6 +331,7 @@ class Profile:
                             raise ValueError('Profile manifest cannot be a symbolic link.')
                         preserved = self.directory / ('damaged-manifest-' + uuid.uuid4().hex + '.json')
                         shutil.copyfile(damaged, preserved)
+                        changed['recovered_from_manifest'] = preserved.name
                         preserved.chmod(0o600)
                         with preserved.open('rb') as source:
                             os.fsync(source.fileno())
@@ -349,14 +350,14 @@ class Profile:
                 raise
 
 
-def create(label, account, password=None, tutorial=False):
+def create(label, account, password=None, tutorial=False, _staging=False):
     if not isinstance(label, str) or not 1 <= len(label.strip()) <= 48:
         raise ValueError('Character label must be 1–48 characters.')
     if not isinstance(account, str) or not ACCOUNT.fullmatch(account) or not account.strip():
         raise ValueError('Account name must be 1–12 letters, numbers, spaces or underscores.')
     private_directory(PROFILES)
     uid, generation = uuid.uuid4().hex, uuid.uuid4().hex
-    directory = PROFILES / uid
+    directory = PROFILES / ('.import-' + uid) / uid if _staging else PROFILES / uid
     private_directory(directory)
     private_directory(directory / 'states')
     state = directory / 'states' / generation
@@ -394,16 +395,17 @@ def import_character(source, label):
         raise ValueError('Choose a regular native character save file.')
     data = source.read_bytes()
     save = validate_save(data)
-    profile = create(label, save['accountName'], password='')
+    profile = create(label, save['accountName'], password='', _staging=True)
     try:
         with profile.lock():
             target = profile.state / 'saves' / (save['accountName'].lower() + '.toml')
             target.write_bytes(data)
             target.chmod(0o600)
             profile._backup('imported-copy')
-        return profile
+        return publish_import(profile)
     except BaseException:
-        shutil.rmtree(profile.directory)
+        if profile.directory.parent.name.startswith(".import-"):
+            shutil.rmtree(profile.directory.parent)
         raise
 
 
@@ -435,7 +437,7 @@ def recovery_profile(uid, backup_name):
         profile.directory = directory
         profile.manifest = {'format': FORMAT, 'id': uid, 'account': account,
             'label': str(metadata.get('label', 'Recovered character'))[:48],
-            'created': header.get('created', now()), 'last_played': None,
+            'created': metadata.get('created', header.get('created', now())), 'last_played': None,
             'tutorial': bool(metadata.get('tutorial', False)), 'generation': uuid.uuid4().hex}
         profile.validate_backup(backup)
         return profile
@@ -477,6 +479,8 @@ def import_world_copy(source, label, account, password=''):
     if source.is_symlink() or not source.is_dir():
         raise ValueError('Choose a regular stopped-world saves directory copy.')
     original = (ROOT / 'upstream/game-server/data').resolve()
+    if source.resolve().is_relative_to(PROFILES.resolve()):
+        raise ValueError('Import an independent stopped-world copy outside active profile storage.')
     if source.resolve().is_relative_to(original):
         raise ValueError('Import a stopped-world copy outside upstream/game-server/data; the original world is never imported directly.')
     if not isinstance(account, str) or not ACCOUNT.fullmatch(account) or not account.strip():
@@ -510,7 +514,7 @@ def import_world_copy(source, label, account, password=''):
         contents[relative] = data
     if any((path.stat().st_size, path.stat().st_mtime_ns) != saved for path, saved in fingerprints.items()):
         raise ValueError('World copy changed during import; use a stopped, stable copy.')
-    profile = create(label, account, password=password)
+    profile = create(label, account, password=password, _staging=True)
     try:
         with profile.lock():
             for relative, data in contents.items():
@@ -520,7 +524,19 @@ def import_world_copy(source, label, account, password=''):
                     os.fchmod(out.fileno(), 0o600)
                     out.write(data);out.flush();os.fsync(out.fileno())
             profile._backup('imported-stopped-world-copy')
-        return profile
+        return publish_import(profile)
     except BaseException:
-        shutil.rmtree(profile.directory)
+        if profile.directory.parent.name.startswith(".import-"):
+            shutil.rmtree(profile.directory.parent)
         raise
+
+
+def publish_import(profile):
+    """Publish only after all copied files and the first verified backup are complete."""
+    staged = profile.directory
+    target = PROFILES / profile.manifest['id']
+    staged.rename(target)
+    profile.directory = target
+    fsync_directory(PROFILES)
+    staged.parent.rmdir()
+    return profile
