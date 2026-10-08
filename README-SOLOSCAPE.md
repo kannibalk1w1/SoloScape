@@ -1,8 +1,8 @@
 # SoloScape 2011+
 
 Bootstrap for a local RuneScape revision-634 experience, with Steam Deck native
-controller support planned. JDK 21 and JDK 8 are installed locally; the compatible
-game cache is still missing. Both upstream server and client now build successfully.
+controller support planned. JDK 21, JDK 8 and the upstream cache are installed locally.
+Both upstream builds pass, doctor passes, and the server reaches world readiness.
 Controller changes await baseline login/restart validation.
 
 The branch is `soloscape/bootstrap`. Source checkouts under `upstream/` are
@@ -65,8 +65,12 @@ belong to this world in `upstream/game-server/data/saves/`. Preserve that folder
 when updating source. Confirm restart persistence using the
 [manual checklist](docs/STEAM_DECK_TEST_CHECKLIST.md) before treating it as tested.
 
-Current limits: the compatible cache is missing; renderer, controller hardware
-and save roundtrip remain unverified; no native controller feature yet.
+The cache was downloaded with explicit user authorization from upstream's linked
+MEGA folder. See [cache provenance](docs/CACHE_SETUP.md). Cache and archive remain
+ignored by Git.
+
+Current limits: renderer, controller hardware and save roundtrip remain unverified;
+no native controller feature yet.
 Next step is unchanged local gameplay, then the smallest
 right-stick camera prototype. Dependency/binary licence inventory is required
 before a distributable package.

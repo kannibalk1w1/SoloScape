@@ -1,9 +1,9 @@
 # Linux / Steam Deck acceptance
 
-All boxes are unchecked; no gameplay/hardware acceptance has run.
+Prerequisite and build checks pass. No gameplay/hardware acceptance has run.
 
-- [ ] Doctor passes with JDK 21 + JDK 8 and compatible user-supplied cache.
-- [ ] Unmodified server/client build successfully at recorded pins.
+- [x] Doctor passes with JDK 21 + JDK 8 and authorized upstream cache.
+- [x] Unmodified server/client build successfully at recorded pins.
 - [ ] `dev-run.sh` waits for loaded world, then opens the localhost client.
 - [ ] New local account can be created; no official server connection occurs.
 - [ ] Record inventory, bank, skill XP and position; logout/quit cleanly.

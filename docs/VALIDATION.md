@@ -12,8 +12,10 @@ Passed:
   `upstream/runelite-client/client/build/libs/void-client-0.2.0_a2.jar`.
 - The unmodified server completes `:game:shadowJar`; its jar is
   `upstream/game-server/game/build/libs/void-server-dev.jar`.
-  Starting that jar from the correct server cwd loads properties then fails at
-  the expected missing `data/cache/main_file_cache.dat2`. No game world starts.
+  With the authorized upstream cache installed, starting that jar from the
+  correct server cwd reaches `Void loaded in 3561ms`. SIGTERM exits with code
+  143 after save hooks log successful writes of zero accounts and empty exchange
+  state. No real character was created, so persistence is still unverified.
   Upstream emits compiler/deprecation warnings; no build errors. Compiling test
   sources as a build dependency is not evidence that upstream tests were run.
 - ShellCheck for `scripts/doctor.sh` and `scripts/dev-run.sh`.
@@ -27,12 +29,14 @@ Passed:
   itself denies local socket access; doctor reports that as an environment error.
 - `dev-run.sh --no-build` fails before creating game processes when prerequisites
   are missing.
+- Downloaded and extracted the latest full cache from the upstream-linked MEGA
+  folder with user authorization; MEGA integrity check and 7-Zip extraction pass.
+  Host doctor now reports **zero errors**. Cache/archive are ignored by Git.
+  Log: `.runtime/cache-smoke.log`. One first-tick timing warning occurred during
+  startup; sustained tick performance has not been measured.
 
 Blocked/unverified:
 
-- No compatible cache was found in this workspace, Downloads or other checked
-  Orca project directories. Doctor passes both Java checks and the host port
-  check, and reports two missing cache files.
 - Real rendering, login and persistence restart have not run. Simulator shutdown
   markers are not proof of real saves.
 - `/proc/bus/input/devices` shows keyboard, mouse/touchpad and virtual input
@@ -50,5 +54,5 @@ python3 scripts/test_local_dev.py
 ./scripts/doctor.sh
 ```
 
-Next actual acceptance test requires user-supplied compatible cache.
-Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.
+Next acceptance test is client rendering, local login and persisted character
+restart. Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.

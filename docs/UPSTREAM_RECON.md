@@ -2,7 +2,8 @@
 
 Inspected 2026-10-08 from unmodified source checkouts. This is a code audit, not
 a successful gameplay report. JDK 21 and JDK 8 have now been installed locally;
-no user-supplied compatible game cache is available.
+the upstream cache has been downloaded with explicit user authorization. Server
+startup now succeeds; see `CACHE_SETUP.md` and `VALIDATION.md`.
 
 ## Pinned repositories
 
@@ -135,6 +136,6 @@ resolution. Historical GE research, bot performance/persistence and complete
 Dungeoneering audits remain later milestones, not fabricated results here.
 
 Server/client builds now pass unchanged. Local login, restart persistence, controller detection and Deck
-acceptance are **blocked/unverified**, not passed. Next experiment: supply the
-cache, pass doctor, launch the built sources and create a
+acceptance remain **unverified**, not passed. Doctor and server startup now pass.
+Next experiment: launch the built sources and create a
 test character. Complete the restart checklist before controller implementation.

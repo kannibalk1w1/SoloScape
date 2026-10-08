@@ -32,7 +32,7 @@ no empty framework or speculative patch system is needed now.
 
 The first playable milestone has not been achieved. Validation order:
 
-1. Supply the compatible cache; JDK 21 + JDK 8 are now installed locally.
+1. Prerequisites complete: JDK 21 + JDK 8 and upstream cache installed; doctor passes.
 2. Build unchanged server/client; confirm local login and clean restart saves.
 3. Validate Linux controller polling/hotplug and choose a licensed provider.
 4. Add right-stick camera; test alongside keyboard/mouse.
