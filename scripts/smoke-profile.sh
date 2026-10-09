@@ -7,4 +7,4 @@ if [[ -f "$root/config/local.env" ]]; then
 fi
 export SERVER_JAVA=${SERVER_JAVA:-java}
 export CLIENT_JAVA=${CLIENT_JAVA:-java}
-exec python3 "$root/scripts/smoke_profile.py"
+exec python3 "$root/scripts/smoke_profile.py" "$@"

@@ -235,3 +235,8 @@ Client: 151 cases, no failures/errors, one existing optional SDL skip. Root: 44 
 Native isolated graphical New/Continue reaches rendered world and verified capabilities, preserves save/load fields and produces four completed-session backups. An observed cancellation before world readiness preserves every saved-world file. Original mutable paths' size/mtime fingerprints remain unchanged. Prepare refuses while that private session is live and succeeds afterward. New/Continue total-session times: 27.407/25.532 seconds (Xvfb/software, includes waits/shutdown; no FPS/latency claim). Python compilation, ShellCheck and whitespace checks pass.
 
 Actual Claude static reviews and follow-up find no remaining blockers after child-parent ownership, native-label, build-lock and startup fixes. Physical controller/Deck, complete real-map quest travel and exhaustive startup cancellation remain unclaimed. See MORNING_REPORT.md, CONSOLE_SESSION_ACCEPTANCE.md and CLAUDE_SESSION_FOLLOWUP.md.
+
+
+## 9 October controller-first adventure checkpoint
+
+Latest: 172 client cases (zero failures/errors, one existing optional SDL skip), 47 root tooling/profile/lifecycle/socket cases and 18 selected game cases pass. Two strengthened actual-map save cases reran within the same selected slice. Matched shadow jars and stamp verify; complete exported stacks reproduce 98 client and 32 server files. See [native adventure validation](ADVENTURE_NATIVE_VALIDATION.md), [route audit](ADVENTURE_ROUTE_AUDIT.md), [task status](ADVENTURE_SPRINT_TASKS.md) and [combined report](MORNING_REPORT.md). Historical counts above remain evidence for their original checkpoints, not newly rerun claims. Hardware acceptance is separate.

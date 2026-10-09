@@ -1,4 +1,6 @@
 import os
+import argparse
+import selectors
 from pathlib import Path
 import subprocess
 import sys
@@ -11,6 +13,9 @@ import signal
 import json
 
 def main():
+    parser=argparse.ArgumentParser(description="Disposable native New/Continue/save and optional adventure UI probe.")
+    parser.add_argument("--adventure",action="store_true",help="Probe real native adventure tabs, local settings and software overlay intervals.")
+    options=parser.parse_args()
     signal.signal(signal.SIGTERM, local_dev.interrupted)
     root=local_dev.ROOT;testroot=root/'.runtime/alpha-tests'/('session-'+str(time.time_ns()));testroot.mkdir(parents=True,exist_ok=True)
     profiles.PROFILES=testroot/'profiles'
@@ -31,19 +36,27 @@ def main():
     harness.mkdir(parents=True,exist_ok=True)
     clientjar=local_dev.jar(local_dev.CLIENT/'client','void-client-*.jar')
     javac=Path(os.environ['CLIENT_JAVA']).with_name('javac')
-    subprocess.run([str(javac),'-cp',str(clientjar),'-d',str(harness),str(root/'scripts/harness/NativeSessionSmoke.java')],check=True)
-    x=original(['Xvfb',':197','-screen','0','1280x800x24'],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+    subprocess.run([str(javac),'-cp',str(clientjar),'-d',str(harness),str(root/'scripts/harness/NativeSessionSmoke.java'),str(root/'scripts/harness/NativeAdventureProbe.java')],check=True)
+    read_display,write_display=os.pipe()
+    x=original(['Xvfb','-displayfd',str(write_display),'-screen','0','1280x800x24'],pass_fds=(write_display,),stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+    os.close(write_display)
     try:
-        time.sleep(.3)
-        if x.poll() is not None:raise RuntimeError(x.stderr.read().decode())
-        os.environ['DISPLAY']=':197'
+        try:
+            with selectors.DefaultSelector() as selector:
+                selector.register(read_display,selectors.EVENT_READ)
+                if not selector.select(10):raise RuntimeError('Private Xvfb display handshake timed out.')
+            display_number=os.read(read_display,128).decode('ascii').strip()
+            if not display_number.isdigit() or x.poll() is not None:raise RuntimeError('Private Xvfb failed to allocate its own display.')
+            os.environ['DISPLAY']=':'+display_number
+        finally:os.close(read_display)
         def popen(argv,**kwargs):
             if '-jar' in argv and any('void-client-' in arg for arg in argv):
                 i=argv.index('-jar');jar=argv[i+1]
-                argv=argv[:i]+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
+                argv=argv[:i]+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
             return original(argv,**kwargs)
-        elapsed=[]
+        elapsed=[];adventure=[]
         for iteration in range(2):
+            if x.poll() is not None:raise RuntimeError('Owned private display exited; refusing another display.')
             session_started=time.monotonic()
             marker.unlink(missing_ok=True)
             with patch.object(subprocess,'Popen',side_effect=popen):
@@ -51,6 +64,9 @@ def main():
             elapsed.append(round(time.monotonic()-session_started,3))
             if code or not marker.exists() or not profile.metadata()['saved']:
                 raise RuntimeError('Native smoke failed; inspect this disposable profile’s logs.')
+            if options.adventure:
+                adventure.append(json.loads(Path(str(marker)+'.adventure.json').read_text()))
+                Path(str(marker)+'.adventure.json').replace(testroot/('adventure-new.json' if iteration==0 else 'adventure-continue.json'))
             saved=profiles.validate_save((profile.state/'saves/alphatest.toml').read_bytes())
             if savebefore is not None:
                 if not all(savebefore[k]==saved[k] for k in ('accountName','experience','inventories','tile')):
@@ -93,7 +109,7 @@ def main():
         print('New/Continue complete-session seconds (includes client readiness and save):',elapsed)
         (testroot/'native-smoke-summary.json').write_text(json.dumps({'new_session_seconds':elapsed[0],'continue_session_seconds':elapsed[1],
             'native_startup_cancel_preserved':True,'original_mutable_paths_unchanged':before==fingerprint(),
-            'note':'Private Xvfb/software session totals, not frame-time or physical controller benchmarks.'},indent=2)+'\n')
+            'adventure':adventure,'note':'Private Xvfb/software session totals, not frame-time or physical controller benchmarks.'},indent=2)+'\n')
         (testroot/'native-smoke-profile.txt').write_text(profile.manifest['id'])
     finally:
         x.terminate();x.wait(timeout=5)

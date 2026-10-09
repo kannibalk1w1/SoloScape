@@ -85,3 +85,10 @@ recorded native bounds for that widget.
   `socket0` implementation, and I only checked Linux behaviour.
 - No physical SDL controller, Steam Deck, GPU or gameplay acceptance is claimed. The harness
   measures a private Xvfb software session only.
+
+
+## Implementation follow-through (Codex, after this review)
+
+The private harness now requires the actual native Exit / Exit to Login label, normalizing whitespace. Inspection confirmed 182:10 is the text-bearing Exit to Login button; Exit to Lobby is a separate component and is never used. Labels and rectangles are recorded together. These controls are excluded from ControllerUi’s recorded actionable set, so a same-frame Seen check cannot be imposed without a production instrumentation change; the harness retains loaded widget identity, visibility, native geometry and label checks on its private display. This remains a bounded integration aid, not production input dispatch.
+
+The repeat also exposed an overly early harness login while native logout still queued server removal. It now waits four seconds after the logout click before one normal login attempt; this validates settled relogin, not immediate reconnect during queued despawn. No server login/logout policy or gameplay code was changed for that timing.

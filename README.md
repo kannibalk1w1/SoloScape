@@ -33,6 +33,8 @@ please discuss larger changes before starting. See [contributing](CONTRIBUTING.m
 - Reversible custom inventory/equipment/bank/shop screens backed by native actions.
 - Eight action bindings, conflict checks, Xbox/PlayStation/Deck presets and run thresholds.
 - Graphical New/Continue launcher, isolated world profiles, verified backups and recovery.
+- Optional custom quest journal, skills, combat, prayer and spellbook screens with native state/details.
+- Controller preferences/first-run setup from Home Settings, special-attack quick binding and source/target return.
 - Session capability negotiation, interruption guards and reproducible client/server patches.
 
 ![Actual radial renderer on a plain background](docs/images/tab-radial-preview.png)
@@ -63,7 +65,7 @@ cd SoloScape
    is on by default within that plugin; **Direct movement** is optional; enable **SoloScape server features** only for
    the patched server to use direct movement and position-free cancellation.
    **Native interface navigation** defaults on and can be disabled independently.
-   **Quick-action wheel** defaults on: Start/Menu opens; all slots begin empty and X assigns the currently focused supported action. Overlay size, button labels, eight bindings, presets and separate custom-screen toggles are in the same plugin settings.
+   **Quick-action wheel** defaults on: Start/Menu opens; all slots begin empty and X assigns the currently focused supported action. Home Settings opens controller preferences and first-run setup; Game Settings inside it opens native graphics/audio. Overlay size, labels, eight bindings, presets and independent custom-screen toggles are also available in plugin settings. New custom adventure screens default off.
 5. Read the [controls and acceptance checklist](docs/CONTROLLER_TESTING.md).
 
 After a successful build, `./scripts/dev-run.sh --no-build` uses existing jars.
@@ -87,10 +89,12 @@ Next: physically accept the custom-screen/profile build, fix recorded usability 
 adventurers, a local economy, selected backports and private co-op—remain proposals,
 not implemented features or promised releases.
 
-Latest automated client run: **121 cases**, zero failures/errors,
-one SDL virtual-device case deliberately skipped. The server's latest relevant
-run passed **247 network + 61 selected engine cases**. Fourteen root tooling tests
-pass. These checks do not establish complete gameplay or Steam Deck support.
+Latest adventure checkpoint: **172 client cases** (zero failures/errors, one optional SDL skip),
+**47 root tooling/profile/lifecycle/socket cases** and **18 selected game cases** pass.
+Actual-map Restless Ghost completion and castle/banking routes include native save/load;
+full Cook/Rune Mysteries travel and physical controller/Deck acceptance remain open.
+See the [adventure task list](docs/ADVENTURE_SPRINT_TASKS.md),
+[combined report](docs/MORNING_REPORT.md) and [native validation](docs/ADVENTURE_NATIVE_VALIDATION.md).
 
 ## Repository contents and contributions
 

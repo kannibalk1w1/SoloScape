@@ -43,7 +43,7 @@ not a prerequisite for a good console RuneScape experience.
 
 ## Overnight controller sprint checkpoint
 
-Both autonomous controller sprints are implemented on `overnight/controller-sprint`: reliability; bank/shop quantities/search; equipment/prayer/spell targeting; eight explicit quick-action slots; common production amount/smithing/tanning/jewellery controls; Combat/Skills/Quests/selected Settings handoff; scalable controller overlays, glyph labels, menu-button settings and a guide. Evidence: 121 client cases, 14 root cases, full 59/14-file patch exports; see `MORNING_REPORT.md`. Physical gameplay/save/Deck acceptance remains pending. M1-04/05/06/07/09/10 and M2 stay open where their full scope exceeds these increments.
+Both autonomous controller sprints are implemented on `overnight/controller-sprint`: reliability; bank/shop quantities/search; equipment/prayer/spell targeting; eight explicit quick-action slots; common production amount/smithing/tanning/jewellery controls; Combat/Skills/Quests/selected Settings handoff; scalable controller overlays, glyph labels, menu-button settings and a guide. Evidence: 121 client cases, 14 root cases, full 59/14-file patch exports; see [archived controller report](MORNING_REPORT_CONTROLLER_SPRINTS.md). Current automation and remaining hardware gates are in MORNING_REPORT.md. Physical controller/Deck acceptance remains pending. M1-04/05/06/07/09/10 and M2 stay open where their full scope exceeds these increments.
 
 ## Console alpha checkpoint
 
@@ -52,6 +52,10 @@ The larger approved alpha builds on both sprints: isolated profiles and verified
 ## Cohesive session checkpoint
 
 The approved 9 October milestone connects Home/tab/modal B ancestry and remembered focus; adds active-pane right-stick scrolling and camera neutral handoff; displays opportunistic native item artwork and remapped physical hints; fixes shared general-store validation; tests Cook's Assistant/commerce/gathering/combat/save progression plus actual Lumbridge walking; strengthens startup preservation and previewed backup retention; provides a build-only setup/update path and archive locking. [Task list](CONSOLE_SESSION_TASKS.md), [combined report](MORNING_REPORT.md), [physical acceptance and performance](CONSOLE_SESSION_ACCEPTANCE.md). Physical acceptance, full real-map quest travel and sustained Deck measurements remain open. This implementation does not automatically complete every broader M0–M4 acceptance item.
+
+## Controller-first adventure checkpoint
+
+The delivered adventure implementation adds a shared readable theme and native artwork reuse; reversible quest journal/skills/combat/prayer/spellbook screens; native state, levels and cache-derived rune requirements; a native special-attack quick binding; controller preferences and first-run setup; selection-source feedback and origin return. Durable owned-JVM locks protect archives/profile storage after launcher death. Actual-map Restless Ghost and castle/banking routes save/reload natively. Repeated native desktop sessions and static Claude review are documented in [adventure tasks](ADVENTURE_SPRINT_TASKS.md), [route audit](ADVENTURE_ROUTE_AUDIT.md) and [native validation](ADVENTURE_NATIVE_VALIDATION.md). Physical controller/Deck acceptance, full Cook/Rune Mysteries travel and sustained hardware measurements remain open.
 
 ## M0 — finish the first reliable controller playable
 
@@ -84,7 +88,7 @@ equipment/prayer/spells → targeting/quick actions → special interfaces.
 - [ ] M1-04 Implement equipment, stats, quest, settings and world-map panel navigation using real widget metadata.
 - [ ] M1-05 Implement prayer/spell navigation, selection state and clear feedback for missing requirements.
 - [ ] M1-06 Finish inventory item-on-item and item/spell-on-world targeting, with explicit cancel and target revalidation.
-- [ ] M1-07 Add configurable quick slots for food, potions, prayers, spells and supported special attacks. **Implemented:** eight assignable food/potion/prayer/spell slots; special attacks and physical acceptance remain.
+- [ ] M1-07 Add configurable quick slots for food, potions, prayers, spells and supported special attacks. **Implemented:** eight assignable food/potion/prayer/spell slots; supported native special-attack assignment is now implemented; physical acceptance remains.
 - [x] M1-08 Support number/text entry, including a Deck-friendly keyboard path, without advancing unrelated dialogues.
 - [ ] M1-09 Audit special interfaces such as smithing/crafting lists, quest choices and familiar/Dungeoneering panels; implement the highest-use gaps. **Implemented:** common make-amount, smithing, tanning, silver and jewellery paths; niche interfaces and acceptance remain.
 - [x] M1-10 Add remapping/presets and document button precedence across world, menus and widgets. **Implemented:** eight separate bindings, overlap/neutral guards, Xbox/PlayStation/Deck presets, defaults and documented precedence. Logical overlay hints still need automatic physical-label substitution after remapping (M2-07).
@@ -98,7 +102,7 @@ Priority: high, after core flows work. Depends on M1 for stable navigation targe
 Original button glyphs/panel designs can be explored earlier without blocking M1.
 
 - [ ] M2-01 Define a consistent UI style: colours, typography, focus outlines, action feedback and spacing.
-- [ ] M2-02 Add controller glyphs, contextual hints and a first-run controls guide.
+- [ ] M2-02 Accept controller glyphs, contextual hints and first-run setup on hardware. **Implemented:** mapped hints, glyph presets and controller preferences/setup guide.
 - [ ] M2-03 Provide readable text/UI scale at 1280×800 and validate resized layouts.
 - [ ] M2-04 Improve dense target selection, loot labels, obstructed/off-screen feedback and failed-action messages.
 - [ ] M2-05 Prototype a radial quick-action menu and compare it with a simple list before choosing a default.
@@ -298,13 +302,12 @@ selected release without the development workspace or undocumented setup steps.
 
 ## Proposed next working queue
 
-1. Accept both sprints in-game: banks/shops, quick slots, production, tabs, targeting and scaled overlays; verify a real save restart.
-2. Fix reproducible gameplay blockers; confirm production cache/CS2 operations and client-opened modal close behavior.
-3. Complete remaining high-use interface gaps and decide special-attack support after combat acceptance.
-4. Finish M2 readability/accessibility acceptance, first-run guide and wider remapping/presets.
-5. M3-01/M3-02/M3-03: save ownership, Continue and backups tested on copies.
-6. Validate Deck lifecycle/performance/suspend, then choose the first complete solo gameplay slice.
-7. Review larger art/AI/economy/backport proposals before authorizing their implementation.
+1. Physically accept the adventure UI: toggles, real quest progress, combat/prayer/spells, source-to-target use/cancel, remapping and Settings → Game Settings → B ancestry.
+2. Fix reproducible awkward transitions and accessibility/scroll issues; validate reconnect and changed-source focus on actual input.
+3. Complete actual-map Cook’s Assistant and Rune Mysteries travel, gates, mill/tower floors and save/restart. Preserve the existing earned-progression fixture.
+4. Measure Deck frame times, loading, memory, battery and suspend/resume against a repeatable route; select measured fixes.
+5. Add safe orphan-owned-session recovery and controller-only launcher name entry, then verify install/update/recovery on a fresh machine.
+6. Audit redistribution licences/dependencies and build a source-compatible Linux/Deck delivery path.
+7. Choose the first fully accepted solo gameplay slice before approving broader art/AI/economy/backport systems.
 
-Continue from demonstrated results rather than treating this document as a fixed
-calendar. Keep each next batch small enough to build, play and reverse.
+Keep implemented preparation separate from physical acceptance. ROADMAP.md is the proposed backlog; the adventure task list records this approved batch.

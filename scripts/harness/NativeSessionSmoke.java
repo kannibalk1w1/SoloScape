@@ -24,8 +24,10 @@ public class NativeSessionSmoke {
       try {
        Files.write(Paths.get(marker+".status"),("state="+Class240.anInt4674+" camera="+Class348_Sub40_Sub21.anInt9282+" player="+(Class132.aPlayer_1907!=null)+" ready="+ControllerWorld.ready()+" tabs="+ControllerUi.availableTabs()+" dialogue="+ControllerUi.hasDialogue()+" dialogueId="+ControllerUi.snapshot().dialogueId+" modal="+ControllerUi.hasModalPanel()+" entry="+ControllerEntry.active()+" menu="+Class305.aBoolean3870+" loading="+Class36.anInt489+" dirty="+Canvas_Sub1.mapRegionDirty).getBytes("UTF-8"));
       } catch(Exception ignored) { }
-      if(System.currentTimeMillis()-started>15000 && ControllerWorld.ready() && ControllerUi.availableTabs()!=0 && SoloScapeConnection.verified()) {
+      if(System.currentTimeMillis()-started>15000 && ((ControllerWorld.ready() && ControllerUi.availableTabs()!=0 && SoloScapeConnection.verified())
+          || Boolean.getBoolean("soloscape.adventure.probe")&&NativeAdventureProbe.active())) {
        try {
+        if(Boolean.getBoolean("soloscape.adventure.probe")&&!NativeAdventureProbe.tick(marker))return true;
         Path path=Paths.get(marker);
         if(!Files.exists(path)) {
          Files.write(path,("state=10\nworldReady=true\nserverCapabilities=verified\nvisibleTabs="+ControllerUi.availableTabs()+"\nsceneX="+Class132.aPlayer_1907.x+"\nsceneY="+Class132.aPlayer_1907.y+"\n").getBytes("UTF-8"));
@@ -34,7 +36,7 @@ public class NativeSessionSmoke {
           BufferedImage image=new Robot().createScreenCapture(area);ImageIO.write(image,"png",new java.io.File(marker+".png"));
          }catch(Exception ex){System.err.println("Private screenshot failed.");}});
         }
-       } catch(Exception ex){System.err.println("Private marker failed.");}
+       } catch(Exception ex){ex.printStackTrace();System.exit(2);}
       }
       return true;
      });
