@@ -47,6 +47,13 @@ def java_version(executable):
     return int(match.group(1))
 
 
+def probe_port(port):
+    """Match Linux Java ServerSocketChannel address reuse, without sharing listeners."""
+    with socket.socket() as probe:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        probe.bind(("127.0.0.1", port))
+
+
 def doctor(port=PORT, require_display=True, output=print, check_port=True):
     errors = []
     if shutil.which("flock") is None:
@@ -88,8 +95,7 @@ def doctor(port=PORT, require_display=True, output=print, check_port=True):
         errors.append("No graphical display. Run from a Linux desktop session (Java 8 AWT needs X11/XWayland).")
     if check_port:
         try:
-            with socket.socket() as probe:
-                probe.bind(("127.0.0.1", port))
+            probe_port(port)
         except OSError as exc:
             if exc.errno in (errno.EPERM, errno.EACCES):
                 errors.append(f"Port {port} probe denied by environment permissions; run doctor with local socket access.")
