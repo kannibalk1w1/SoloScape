@@ -183,6 +183,18 @@ class ProfileTests(unittest.TestCase):
         backups=self.profile.directory/'backups';backups.rename(self.profile.directory/'held-backups');backups.symlink_to(self.profile.directory/'held-backups')
         with self.assertRaises(ValueError):profiles.preview_retention(uid,2)
 
+    def test_retention_protects_the_automatic_backup_used_for_latest_restore(self):
+        origin=self.profile.backup('before-launch')
+        for i in range(4):self.profile.backup('after-clean-shutdown')
+        self.profile.restore(origin.name)
+        old=self.profile.state
+        plan=profiles.preview_retention(self.profile.manifest['id'],2)
+        self.assertNotIn(origin.name,[row['name'] for row in plan['remove']])
+        self.assertEqual(len(plan['remove']),2)
+        profiles.apply_retention(self.profile.manifest['id'],2,plan['token'])
+        self.assertTrue(origin.exists());self.assertEqual(self.profile.state,old)
+        self.assertEqual((old/'saves/tester.toml').read_bytes(),native_save())
+
     def test_derived_logs_and_cache_are_not_backed_up_but_failed_saves_are(self):
         (self.profile.state/'temp/derived.map').write_bytes(b'cache')
         (self.profile.state/'logs/session.log').write_text('logs')

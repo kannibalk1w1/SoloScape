@@ -8,6 +8,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 import local_dev, profile_session, profiles
 from unittest.mock import patch
 import signal
+import json
 
 def main():
     signal.signal(signal.SIGTERM, local_dev.interrupted)
@@ -41,10 +42,13 @@ def main():
                 i=argv.index('-jar');jar=argv[i+1]
                 argv=argv[:i]+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
             return original(argv,**kwargs)
+        elapsed=[]
         for iteration in range(2):
+            session_started=time.monotonic()
             marker.unlink(missing_ok=True)
             with patch.object(subprocess,'Popen',side_effect=popen):
                 code=profile_session.run(profile,threading.Event(),lambda stage,message:print(stage,message,flush=True),port=43595)
+            elapsed.append(round(time.monotonic()-session_started,3))
             if code or not marker.exists() or not profile.metadata()['saved']:
                 raise RuntimeError('Native smoke failed; inspect this disposable profile’s logs.')
             saved=profiles.validate_save((profile.state/'saves/alphatest.toml').read_bytes())
@@ -60,6 +64,36 @@ def main():
         print('Verified backups:',len(list((profile.directory/'backups').glob('*.zip'))))
         print('Original mutable paths unchanged:',before==fingerprint())
         if code or not marker.exists() or not profile.metadata()['saved'] or before!=fingerprint():raise RuntimeError('Native smoke failed; see private profile logs')
+        # Cancel a real native startup while content is still loading. Compare the entire
+        # saved world, including exchange files; never touch the legacy world.
+        saved_world={str(p.relative_to(profile.state/'saves')):p.read_bytes() for p in (profile.state/'saves').rglob('*') if p.is_file()}
+        cancelled=threading.Event()
+        def cancel_loading():
+            deadline=time.monotonic()+60
+            log=profile.directory/'session-logs/server.log'
+            while time.monotonic()<deadline:
+                text=log.read_text(errors='replace') if log.exists() else ''
+                # The current log is truncated before startup. Use cache/content loader output,
+                # never the previous fully-ready log or a fixed delay.
+                if ('MemoryCache' in text or 'DefinitionDecoder' in text) and 'Void loaded in' not in text:
+                    cancelled.set();return
+                time.sleep(.02)
+            cancelled.set()
+        observer=threading.Thread(target=cancel_loading)
+        observer.start()
+        try:
+            code=profile_session.run(profile,cancelled,lambda stage,message:print(stage,message,flush=True),port=43595,client_enabled=False)
+        finally:observer.join(65)
+        log=(profile.directory/'session-logs/server.log').read_text(errors='replace')
+        if 'Void loaded in' in log or not ('MemoryCache' in log or 'DefinitionDecoder' in log):
+            raise RuntimeError('Native early cancellation was not observed; cannot claim this check.')
+        after_cancel={str(p.relative_to(profile.state/'saves')):p.read_bytes() for p in (profile.state/'saves').rglob('*') if p.is_file()}
+        if code or after_cancel!=saved_world or before!=fingerprint():raise RuntimeError('Cancelled native startup changed saved-world bytes.')
+        print('Cancelled native startup preserved entire saved world:',after_cancel==saved_world)
+        print('New/Continue complete-session seconds (includes client readiness and save):',elapsed)
+        (testroot/'native-smoke-summary.json').write_text(json.dumps({'new_session_seconds':elapsed[0],'continue_session_seconds':elapsed[1],
+            'native_startup_cancel_preserved':True,'original_mutable_paths_unchanged':before==fingerprint(),
+            'note':'Private Xvfb/software session totals, not frame-time or physical controller benchmarks.'},indent=2)+'\n')
         (testroot/'native-smoke-profile.txt').write_text(profile.manifest['id'])
     finally:
         x.terminate();x.wait(timeout=5)

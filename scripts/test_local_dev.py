@@ -7,6 +7,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 LAUNCHER = Path(__file__).with_name("local_dev.py")
 FAKE_JAVA = '''#!/usr/bin/env python3
@@ -190,6 +191,26 @@ class BuildStampTests(unittest.TestCase):
         for name in ("server", "client"):
             self.assertEqual("latest", (self.module.RUNTIME / (name + ".previous.log")).read_text())
             self.assertFalse((self.module.RUNTIME / (name + ".log")).exists())
+
+    def test_prepare_failed_build_keeps_previous_stamp_and_never_starts_a_world(self):
+        self.module.write_build_stamp(self.server, self.client)
+        before=(self.module.RUNTIME/'build-stamp.json').read_bytes()
+        with patch.object(self.module,'doctor',return_value=True), \
+             patch.object(self.module.subprocess,'run'), \
+             patch.object(self.module,'build',side_effect=RuntimeError('failed compile')), \
+             patch.object(self.module.subprocess,'Popen') as start:
+            with self.assertRaisesRegex(RuntimeError,'failed compile'):self.module.prepare()
+            start.assert_not_called()
+        self.assertEqual(before,(self.module.RUNTIME/'build-stamp.json').read_bytes())
+
+    def test_prepare_refuses_a_live_development_launcher_without_applying_patches(self):
+        import fcntl
+        self.module.RUNTIME.mkdir()
+        with (self.module.RUNTIME/'launcher.lock').open('w') as lock:
+            fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            with patch.object(self.module.subprocess,'run') as command:
+                with self.assertRaisesRegex(RuntimeError,'launcher is running'):self.module.prepare()
+                command.assert_not_called()
 
 
 if __name__ == "__main__":

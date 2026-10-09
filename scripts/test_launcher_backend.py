@@ -66,6 +66,8 @@ class LauncherTests(unittest.TestCase):
         try:
             self.wait_for(lambda:(self.root/'client.args').exists())
             with self.assertRaises(RuntimeError):self.profile.backup()
+            with self.assertRaisesRegex(RuntimeError,'world or build is active'):
+                with local_dev.build_lock():pass
             args=(self.root/'client.args').read_text()
             self.assertIn('--address 127.0.0.1 --port 43595',args)
             self.assertIn('-Duser.home='+str(self.profile.directory/'client-home'),args)
@@ -79,6 +81,7 @@ class LauncherTests(unittest.TestCase):
             self.assertEqual((self.root/(role+'.stopped')).read_text(),'graceful')
             with self.assertRaises(ProcessLookupError):os.kill(int((self.root/(role+'.pid')).read_text()),0)
         self.profile.backup()  # exclusive lock was released only after cleanup
+        with local_dev.build_lock():pass  # archives can be rebuilt only after child shutdown
 
     def test_cancelled_partial_startup_preserves_saved_world_and_stops_only_owned_server(self):
         from test_profiles import native_save

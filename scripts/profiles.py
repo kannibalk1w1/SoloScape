@@ -555,7 +555,7 @@ def retention_plan(profile, keep=10):
             manifest, _ = profile.validate_backup(path)
         except (ValueError, OSError):
             continue  # damaged/unverified archives are retained for investigation
-        if manifest.get('reason') in ('before-launch', 'after-clean-shutdown'):
+        if manifest.get('reason') in ('before-launch', 'after-clean-shutdown') and path.name != profile.manifest.get('restored_from'):
             records.append({'name': path.name, 'sha256': hash_bytes(path.read_bytes()), 'size': path.stat().st_size})
     remove = records[keep:]
     token = hash_bytes(json.dumps({'profile': profile.manifest['id'], 'generation': profile.manifest['generation'],

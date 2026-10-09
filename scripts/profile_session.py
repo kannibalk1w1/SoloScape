@@ -21,6 +21,11 @@ def owned_environment(profile, port):
 
 
 def run(profile, cancelled, notify, port=43594, client_enabled=True, checked=True):
+    with local_dev.build_lock(shared=True):
+        return _run(profile, cancelled, notify, port, client_enabled, checked)
+
+
+def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=True):
     """Blocking worker. notify(stage, message), cancelled is a threading.Event."""
     if checked:
         if not local_dev.doctor(port=port, require_display=client_enabled, output=lambda *args, **kw: print(*args, file=sys.stderr, **kw)):

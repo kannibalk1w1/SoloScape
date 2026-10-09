@@ -12,6 +12,7 @@ import socket
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
 
 ROOT = Path(__file__).resolve().parent.parent
 SERVER = ROOT / "upstream/game-server"
@@ -26,6 +27,18 @@ PINNED = {
 }
 
 
+@contextmanager
+def build_lock(shared=False):
+    """Keep archives stable while any owned JVM may lazily load/save classes."""
+    RUNTIME.mkdir(exist_ok=True)
+    with (RUNTIME / 'build.lock').open('a+') as lock:
+        try:
+            fcntl.flock(lock, (fcntl.LOCK_SH if shared else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise RuntimeError('An owned world or build is active. Save & Quit before rebuilding, or wait for the build before playing.') from exc
+        yield lock
+
+
 def java_version(executable):
     result = subprocess.run([executable, "-version"], capture_output=True, text=True)
     match = re.search(r'version "(?:1\.)?(\d+)', result.stdout + result.stderr)
@@ -34,7 +47,7 @@ def java_version(executable):
     return int(match.group(1))
 
 
-def doctor(port=PORT, require_display=True, output=print):
+def doctor(port=PORT, require_display=True, output=print, check_port=True):
     errors = []
     if shutil.which("flock") is None:
         errors.append("Install util-linux (flock) for safe client patch application.")
@@ -73,14 +86,15 @@ def doctor(port=PORT, require_display=True, output=print):
         errors.append("External upstream/game-server/game.properties found. This launcher requires the audited internal defaults; move the override aside or audit it first.")
     if require_display and not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
         errors.append("No graphical display. Run from a Linux desktop session (Java 8 AWT needs X11/XWayland).")
-    try:
-        with socket.socket() as probe:
-            probe.bind(("127.0.0.1", port))
-    except OSError as exc:
-        if exc.errno in (errno.EPERM, errno.EACCES):
-            errors.append(f"Port {port} probe denied by environment permissions; run doctor with local socket access.")
-        else:
-            errors.append(f"Port {port} is unavailable: {exc}. Stop the existing listener before launching.")
+    if check_port:
+        try:
+            with socket.socket() as probe:
+                probe.bind(("127.0.0.1", port))
+        except OSError as exc:
+            if exc.errno in (errno.EPERM, errno.EACCES):
+                errors.append(f"Port {port} probe denied by environment permissions; run doctor with local socket access.")
+            else:
+                errors.append(f"Port {port} is unavailable: {exc}. Choose a free port before launching.")
     output("NOTE: patched server binds IPv4 loopback by default; LAN hosting requires an explicit override.")
     output("NOTE: cache presence checks do not prove revision/content compatibility.")
     output("Linux input nodes (not controller identification):", ", ".join(str(p) for p in Path("/dev/input").glob("event*")) or "none visible")
@@ -170,7 +184,40 @@ def rotate_logs():
             current.replace(RUNTIME / f"{name}.previous.log")
 
 
+def prepare():
+    with build_lock():
+        return _prepare()
+
+
+def _prepare():
+    """Build a matched pair without starting a world or touching save directories."""
+    RUNTIME.mkdir(exist_ok=True)
+    with (RUNTIME / "launcher.lock").open("w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RuntimeError("The development launcher is running; close that session before preparing builds.")
+        if not doctor(require_display=False, check_port=False):
+            return 1
+        subprocess.run(["bash", str(ROOT / "scripts/apply-client-patches.sh")], check=True)
+        subprocess.run(["bash", str(ROOT / "scripts/apply-server-patches.sh")], check=True)
+        server_java = os.environ.get("SERVER_JAVA", "java")
+        build(SERVER, server_java, ":game:shadowJar")
+        build(CLIENT, server_java, ":client:shadowJar")
+        server_jar = jar(SERVER / "game", "void-server-*.jar")
+        client_jar = jar(CLIENT / "client", "void-client-*.jar")
+        write_build_stamp(server_jar, client_jar)
+        verify_build_stamp(server_jar, client_jar)
+        print("Matched client/server prepared. Open ./scripts/launcher.sh to choose a local world.")
+        return 0
+
+
 def launch(skip_build=False):
+    with build_lock(shared=skip_build) as lock:
+        return _launch(skip_build, lock)
+
+
+def _launch(skip_build=False, build_guard=None):
     RUNTIME.mkdir(exist_ok=True)
     with (RUNTIME / "launcher.lock").open("w") as lock:
         try:
@@ -193,6 +240,8 @@ def launch(skip_build=False):
             verify_build_stamp(server_jar, client_jar)
         else:
             write_build_stamp(server_jar, client_jar)
+        if build_guard is not None:
+            fcntl.flock(build_guard, fcntl.LOCK_SH)
         rotate_logs()
         server = client = None
         offsets = {}
@@ -248,10 +297,12 @@ if __name__ == "__main__":
     try:
         if sys.argv[1:] == ["doctor"]:
             sys.exit(0 if doctor() else 1)
+        elif sys.argv[1:] == ["prepare"]:
+            sys.exit(prepare())
         elif sys.argv[1:] in (["run"], ["run", "--no-build"]):
             sys.exit(launch("--no-build" in sys.argv))
         else:
-            sys.exit("Usage: local_dev.py doctor | run [--no-build]")
+            sys.exit("Usage: local_dev.py doctor | prepare | run [--no-build]")
     except KeyboardInterrupt:
         sys.exit(130)
     except (OSError, RuntimeError, subprocess.CalledProcessError) as exc:
