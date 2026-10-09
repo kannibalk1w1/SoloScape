@@ -1,0 +1,614 @@
+diff --git a/client/src/ControllerItemImages.java b/client/src/ControllerItemImages.java
+index 30b07e3..9c55f04 100644
+--- a/client/src/ControllerItemImages.java
++++ b/client/src/ControllerItemImages.java
+@@ -8,6 +8,23 @@ final class ControllerItemImages
+     private static final Map<Long,BufferedImage> images=new LinkedHashMap<Long,BufferedImage>(128,.75f,true)
+     {protected boolean removeEldestEntry(Map.Entry<Long,BufferedImage> eldest){return size()>128;}};
+     private static long key(int item,int amount){return ((long)item<<32)|(amount&0xffffffffL);}
++    private static final class NativeImage {
++        final int item,amount;final BufferedImage image;
++        NativeImage(int item,int amount,BufferedImage image){this.item=item;this.amount=amount;this.image=image;}
++    }
++    // Native sprite-cache hits can republish copied pixels after relog without GPU readback.
++    private static final Map<Object,NativeImage> nativeImages=new java.util.WeakHashMap<>();
++    static synchronized void attach(Object sprite,int item,int amount,int[] pixels) {
++        if(sprite==null||item<0||pixels==null||pixels.length!=36*32)return;
++        capture(item,amount,pixels);BufferedImage image=get(item,amount);
++        if(image!=null){nativeImages.put(sprite,new NativeImage(item,amount,image));
++            while(nativeImages.size()>256)nativeImages.remove(nativeImages.keySet().iterator().next());}
++    }
++    static synchronized void reuse(Object sprite,int item,int amount) {
++        NativeImage nativeImage=nativeImages.get(sprite);
++        if(nativeImage!=null && nativeImage.item==item && nativeImage.amount==amount)
++            images.put(key(item,amount),nativeImage.image);
++    }
+     static synchronized void capture(int item,int amount,int[] pixels)
+     {
+         if(item<0||pixels==null||pixels.length!=36*32)return;
+diff --git a/client/src/ControllerPanelDetails.java b/client/src/ControllerPanelDetails.java
+new file mode 100644
+index 0000000..a8b0824
+--- /dev/null
++++ b/client/src/ControllerPanelDetails.java
+@@ -0,0 +1,27 @@
++import java.util.regex.Pattern;
++
++/** Read-only labels from pinned widget metadata and current native values. */
++final class ControllerPanelDetails {
++    private static final Pattern TAGS=Pattern.compile("<[^>]*>");
++    // stats_tab component IDs from the pinned skill.ifaces.toml; native skill-array order.
++    private static final int[] COMPONENTS={200,28,11,193,52,76,93,68,165,101,44,172,84,179,186,36,19,60,118,126,110,142,134,150,158};
++    private static final String[] NAMES={"Attack","Defence","Strength","Constitution","Ranged","Prayer","Magic","Cooking","Woodcutting","Fletching","Fishing","Firemaking","Crafting","Smithing","Mining","Herblore","Agility","Thieving","Slayer","Farming","Runecrafting","Hunter","Construction","Summoning","Dungeoneering"};
++    static String plain(String value) {
++        return value==null?"":TAGS.matcher(value.replaceAll("(?i)<br\\s*/?>","\n")).replaceAll("").replace('\u00a0',' ').trim();
++    }
++    static int skill(int component){for(int i=0;i<COMPONENTS.length;i++)if(COMPONENTS[i]==component)return i;return -1;}
++    static String skillName(int component){int i=skill(component);return i<0?"":NAMES[i];}
++    static String skillDetail(int component) {
++        int i=skill(component);
++        if(i<0||Class256.anIntArray3295==null||Class161.anIntArray2145==null||Class186.anIntArray2497==null
++            ||i>=Class256.anIntArray3295.length||i>=Class161.anIntArray2145.length||i>=Class186.anIntArray2497.length)return "Skill details are loading";
++        return "Level "+Class161.anIntArray2145[i]+" / "+Class256.anIntArray3295[i]+"\nExperience: "+Class186.anIntArray2497[i];
++    }
++    static String status(String raw,int colour) {
++        if(raw!=null&&raw.contains("<str>"))return "Completed objective";
++        if(colour==0x00ff00)return "Completed";
++        if(colour==0xffff00)return "In progress";
++        if(colour==0xff0000)return "Not started";
++        return ""; // Never infer unknown quest state from unrelated colours.
++    }
++}
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+index a8242e9..a3f0bc3 100644
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -225,7 +225,7 @@ final class ControllerUi
+         catch (RuntimeException unavailableDefinition) { return -1; }
+     }
+     private static boolean production(int id) { return id==300 || id==324 || id==438 || id==446 || id==675; }
+-    private static boolean extraModal(int id) { return production(id) || id==742 || id==743 || id==178 || id==275 || id==134; }
++    private static boolean extraModal(int id) { return production(id) || id==742 || id==743 || id==178 || id==275 || id==134 || id==499 || id==741; }
+ 
+     static boolean entryReady() { return panelsEnabled && ready(); }
+     static boolean hasBank() { return openGroups().contains(762); }
+@@ -250,6 +250,7 @@ final class ControllerUi
+     private static UiState.Widget describePanel(Seen seen)
+     {
+         Class46 w = seen.widget;
++        String detail="",status="";
+         String name = clean(w.aString752);
+         if (name.isEmpty()) name = clean(w.aString792);
+         if (w.anInt812 >= 0 && Exception_Sub1.aClass255_112 != null)
+@@ -259,6 +260,13 @@ final class ControllerUi
+         }
+         UiState.Action[] options = actions(w, true);
+         int group = w.anInt830 >>> 16;
++        if(group==320 && !ControllerPanelDetails.skillName(w.anInt830&65535).isEmpty()) {
++            name=ControllerPanelDetails.skillName(w.anInt830&65535);detail=ControllerPanelDetails.skillDetail(w.anInt830&65535);
++        }
++        if(group==190 && w.anInt704>=0)status=ControllerPanelDetails.status(w.aString792,w.anInt749);
++        if(group==275 || group==499 || group==741) {
++            name=ControllerPanelDetails.plain(w.aString792);detail=name;status=ControllerPanelDetails.status(w.aString792,-1);
++        }
+         if (group == 192 || group == 193 || group == 430)
+         {
+             String select = Class239_Sub8.method1753(0,w);
+@@ -316,7 +324,7 @@ final class ControllerUi
+         if (group==916) name=(w.anInt830&65535)==5?"Make 1":(w.anInt830&65535)==6?"Make 5":(w.anInt830&65535)==7?"Make 10":"Make All";
+         if (name.isEmpty()) name = options.length > 0 ? options[0].label : "Item";
+         return new UiState.Widget(w.anInt830, w.anInt704, w.anInt812, w.anInt781,
+-            name, new Rectangle(seen.bounds), options);
++            name, new Rectangle(seen.bounds), options,detail,status);
+     }
+ 
+     private static UiState.Panel panel(Set<Integer> open)
+@@ -357,10 +365,25 @@ final class ControllerUi
+                 && (id != 620 || (w.anInt830 & 65535) == 25 || (w.anInt830 & 65535) == 26)) items.add(widget);
+             else controls.add(widget);
+         }
++        if(id==275 || id==499 || id==741) {
++            Class46[][] loaded=Class348_Sub40_Sub33.aClass46ArrayArray9427;
++            if(loaded!=null && id<loaded.length && loaded[id]!=null) {
++                for(Class46 text:loaded[id]) {
++                    if(text==null || text.anInt774!=4 || !isVisible(text))continue;
++                    int component=text.anInt830&65535;
++                    if(id==275 && (component<16 || component>315))continue;
++                    String value=ControllerPanelDetails.plain(text.aString792);
++                    if(value.isEmpty())continue;
++                    controls.add(new UiState.Widget(text.anInt830,text.anInt704,-1,0,value,
++                        new Rectangle(0,component*32,400,28),new UiState.Action[0],value,ControllerPanelDetails.status(text.aString792,-1)));
++                }
++            }
++        }
+         Comparator<UiState.Widget> order = Comparator.comparingInt((UiState.Widget w) -> w.bounds.y).thenComparingInt(w -> w.bounds.x).thenComparingInt(w -> w.child);
+         items.sort(order); side.sort(order); controls.sort(order);
+         List<UiState.Pane> panes = new ArrayList<>();
+-        String name = id == 620 ? "Shop" : id == 11 ? "Deposit box" : id == 762 ? "Bank" : id == 387 || id == 667 ? "Equipment" : id == 271 ? "Prayer" : id==884?"Combat":id==320?"Skills":id==190 || id==178 || id==275?"Quests":id==261 || id==982 || id==742 || id==743?"Settings":id==134?"Skill guide":id==300?"Smithing":id==324?"Tanning":production(id)?"Crafting":"Spellbook";
++        String name = id == 620 ? "Shop" : id == 11 ? "Deposit box" : id == 762 ? "Bank" : id == 387 || id == 667 ? "Equipment" : id == 271 ? "Prayer" : id==884?"Combat":id==320?"Skills":id==190 || id==178 || id==275?"Quests":id==261 || id==982 || id==742 || id==743?"Settings":id==134 || id==499 || id==741?"Skill guide":id==300?"Smithing":id==324?"Tanning":production(id)?"Crafting":"Spellbook";
++        if(id==275){Class46 title=loadedWidget(275<<16|2);if(title!=null&&!clean(title.aString792).isEmpty())name=clean(title.aString792);}
+         panes.add(new UiState.Pane(!modal || id == 667 || extraModal(id) ? name : id == 620 ? "Stock" : id == 11 ? "Inventory" : "Bank", items.toArray(new UiState.Widget[0])));
+         if (id == 762 || id == 620 || id == 667) panes.add(new UiState.Pane("Inventory", side.toArray(new UiState.Widget[0])));
+         if (modal && !extraModal(id)) panes.add(new UiState.Pane("Controls / tabs", controls.toArray(new UiState.Widget[0])));
+@@ -380,7 +403,8 @@ final class ControllerUi
+             }
+             if(!details.isEmpty())panes.add(new UiState.Pane("Bonuses",details.toArray(new UiState.Widget[0])));
+         }
+-        return new UiState.Panel(id, renderFrame, name, panes.toArray(new UiState.Pane[0]),modal);
++        return new UiState.Panel(id, renderFrame, name, panes.toArray(new UiState.Pane[0]),modal,
++            id==275 || id==499 || id==741 ? controls.toArray(new UiState.Widget[0]):new UiState.Widget[0]);
+     }
+ 
+     static boolean scroll(UiState.Widget expected, int direction)
+diff --git a/client/src/ObjTypeList.java b/client/src/ObjTypeList.java
+index 64cf865..437fcec 100644
+--- a/client/src/ObjTypeList.java
++++ b/client/src/ObjTypeList.java
+@@ -70,10 +70,10 @@ final class ObjTypeList {
+             if (i_2_ != 83) method1935(-83, -37, null, null, false, -49);
+             int[] is = ObjType.renderSprite(i_0_, bool_5_, i, var_ha_3_, var_ha, class324, class154, i_1_, (byte) -102, i_6_);
+             if (is == null) return null;
+-            ControllerItemImages.capture(i_4_,i_0_,is);
+             Class105 class105_9_;
+             if (bool) class105_9_ = var_ha.method3662(36, is, (byte) 94, 0, 36, 32);
+             else class105_9_ = var_ha_3_.method3662(36, is, (byte) 94, 0, 36, 32);
++            if(i_6_<=1 && !bool_5_)ControllerItemImages.attach(class105_9_,i_4_,i_0_,is);
+             if (!bool) {
+                 Class126 class126 = new Class126();
+                 class126.anInt4982 = i;
+@@ -279,7 +279,9 @@ final class ObjTypeList {
+             aClass126_3289.anInt4982 = i_18_;
+             anInt3282++;
+             aClass126_3289.anInt4993 = i;
+-            return (Class105) this.aClass175_3288.method1340(123, aClass126_3289);
++            Class105 sprite=(Class105) this.aClass175_3288.method1340(123, aClass126_3289);
++            if(sprite!=null && i<=1)ControllerItemImages.reuse(sprite,i_16_,i_17_);
++            return sprite;
+         } catch (RuntimeException runtimeexception) {
+             throw Class348_Sub17.method2929(runtimeexception, ("ub.D(" + i + ',' + i_15_ + ',' + i_16_ + ',' + i_17_ + ',' + i_18_ + ',' + i_19_ + ',' + (var_ha != null ? "{...}" : "null") + ',' + (class154 != null ? "{...}" : "null") + ')'));
+         }
+diff --git a/client/src/net/runelite/client/input/controller/PanelPresentation.java b/client/src/net/runelite/client/input/controller/PanelPresentation.java
+index 337e9ab..f445342 100644
+--- a/client/src/net/runelite/client/input/controller/PanelPresentation.java
++++ b/client/src/net/runelite/client/input/controller/PanelPresentation.java
+@@ -9,47 +9,59 @@ public final class PanelPresentation
+     public final int columns, rows, pageSize;
+     public final double scale;
+     public PanelPresentation(int width, int height, double requestedScale)
++    {this(width,height,requestedScale,-1);}
++    public PanelPresentation(int width, int height, double requestedScale,int group)
+     {
+         scale = Math.max(.5, Math.min(requestedScale, Math.min((width-24.0)/720, (height-24.0)/460)));
+         bounds = new Rectangle((width-(int)(720*scale))/2, (height-(int)(460*scale))/2, (int)(720*scale), (int)(460*scale));
+         content = new Rectangle(bounds.x+(int)(16*scale), bounds.y+(int)(58*scale), (int)(500*scale), (int)(336*scale));
+-        columns = 4; rows = 7; pageSize = columns*rows;
++        columns = group==190 || group==275 || group==499 || group==741 || group==884 ? 1 : group==320 ? 3 : 4;
++        rows = 7; pageSize = columns*rows;
+     }
+     public UiState present(UiState nativeState, UiState.Widget selected, boolean inventory, boolean equipment, boolean bank, boolean shop)
++    {return present(nativeState,selected,inventory,equipment,bank,shop,false,false,false,false,false);}
++    public UiState present(UiState nativeState, UiState.Widget selected, boolean inventory, boolean equipment, boolean bank, boolean shop,boolean quests,boolean skills,boolean combat,boolean prayer,boolean spells)
+     {
+-        UiState.Widget[] items = inventory ? grid(nativeState.inventory, 0,false) : nativeState.inventory;
++        UiState.Widget[] items = inventory ? grid(nativeState.inventory, 0,false,4,7) : nativeState.inventory;
+         UiState.Panel panel = nativeState.panel;
+-        if (panel != null && supported(panel.id,equipment,bank,shop))
++        if (panel != null && supported(panel.id,equipment,bank,shop,quests,skills,combat,prayer,spells))
+         {
+-            UiState.Pane[] panes = new UiState.Pane[panel.panes.length];
+-            for (int p=0;p<panes.length;p++)
++            int offset=panel.details.length==0?0:1;
++            UiState.Pane[] panes = new UiState.Pane[panel.panes.length+offset];
++            if(offset!=0)panes[0]=new UiState.Pane(panel.id==275?"Journal":"Details",grid(panel.details,page(panel.details,selected),false));
++            for (int p=0;p<panel.panes.length;p++)
+             {
+                 UiState.Widget[] widgets = panel.panes[p].widgets;
+                 int page = page(widgets, selected);
+-                panes[p] = new UiState.Pane(panel.panes[p].name,grid(widgets,page,panel.panes[p].name.equals("Bonuses")));
++                panes[p+offset] = new UiState.Pane(panel.panes[p].name,grid(widgets,page,panel.panes[p].name.equals("Bonuses")));
+             }
+-            panel = new UiState.Panel(panel.id,panel.frame,panel.name,panes,panel.modal);
++            panel = new UiState.Panel(panel.id,panel.frame,panel.name,panes,panel.modal,panel.details);
+         }
+         return new UiState(items,nativeState.dialogue,nativeState.dialogueId,nativeState.inventoryVisible,panel,nativeState.entry,nativeState.amounts,nativeState.amount);
+     }
+     public static boolean supported(int id, boolean equipment, boolean bank, boolean shop)
+-    { return equipment&&(id==387||id==667) || bank&&(id==762||id==11) || shop&&id==620; }
++    {return supported(id,equipment,bank,shop,false,false,false,false,false);}
++    public static boolean supported(int id, boolean equipment, boolean bank, boolean shop,boolean quests,boolean skills,boolean combat,boolean prayer,boolean spells)
++    { return equipment&&(id==387||id==667) || bank&&(id==762||id==11) || shop&&id==620
++        || quests&&(id==190||id==275||id==178) || skills&&(id==320||id==134||id==499||id==741)
++        ||combat&&id==884 || prayer&&id==271 || spells&&(id==192||id==193||id==430); }
+     public int page(UiState.Widget[] widgets, UiState.Widget selected)
+     {
+         if (selected != null) for (int i=0;i<widgets.length;i++) if (selected.same(widgets[i])) return i/pageSize;
+         return 0;
+     }
+     private UiState.Widget[] grid(UiState.Widget[] widgets,int page,boolean details)
++    {return grid(widgets,page,details,details?2:columns,details?14:rows);}
++    private UiState.Widget[] grid(UiState.Widget[] widgets,int page,boolean details,int cols,int rowCount)
+     {
+         UiState.Widget[] result = new UiState.Widget[widgets.length];
+-        int cols=details?2:columns, rowCount=details?14:rows;
+         int cellWidth = content.width/cols, cellHeight=content.height/rowCount;
+         for (int i=0;i<widgets.length;i++)
+         {
+             UiState.Widget widget=widgets[i]; if (widget==null) continue;
+             // Off-page rows remain in the spatial model so navigation crosses pages naturally.
+             Rectangle position=new Rectangle(content.x+i%cols*cellWidth,content.y+(i/cols-page*rowCount)*cellHeight,cellWidth-4,cellHeight-4);
+-            result[i]=new UiState.Widget(widget.id,widget.child,widget.itemId,widget.quantity,widget.name,position,widget.actions);
++            result[i]=new UiState.Widget(widget.id,widget.child,widget.itemId,widget.quantity,widget.name,position,widget.actions,widget.detail,widget.status);
+         }
+         return result;
+     }
+diff --git a/client/src/net/runelite/client/input/controller/UiState.java b/client/src/net/runelite/client/input/controller/UiState.java
+index 02b2041..c4c1375 100644
+--- a/client/src/net/runelite/client/input/controller/UiState.java
++++ b/client/src/net/runelite/client/input/controller/UiState.java
+@@ -50,9 +50,11 @@ public final class UiState
+         public final long frame;
+         public final boolean modal;
+         public final Pane[] panes;
++        public final Widget[] details;
+         public Panel(int id, String name, Pane[] panes) { this(id, 0, name, panes); }
+         public Panel(int id, long frame, String name, Pane[] panes) { this(id,frame,name,panes,true); }
+-        public Panel(int id, long frame, String name, Pane[] panes, boolean modal) { this.id = id; this.frame = frame; this.name = name; this.panes = panes; this.modal = modal; }
++        public Panel(int id, long frame, String name, Pane[] panes, boolean modal) { this(id,frame,name,panes,modal,new Widget[0]); }
++        public Panel(int id, long frame, String name, Pane[] panes, boolean modal,Widget[] details) { this.id = id; this.frame = frame; this.name = name; this.panes = panes; this.modal = modal;this.details=details; }
+     }
+     public static final class Pane
+     {
+@@ -76,12 +78,16 @@ public final class UiState
+     {
+         public final int id, child, itemId, quantity;
+         public final String name;
++        public final String detail, status;
+         public final Rectangle bounds;
+         public final Action[] actions;
+         public Widget(int id, int child, int itemId, int quantity, String name, Rectangle bounds, Action[] actions)
++        {this(id,child,itemId,quantity,name,bounds,actions,"","");}
++        public Widget(int id, int child, int itemId, int quantity, String name, Rectangle bounds, Action[] actions,String detail,String status)
+         {
+             this.id = id; this.child = child; this.itemId = itemId; this.quantity = quantity;
+             this.name = name; this.bounds = bounds; this.actions = actions;
++            this.detail=detail==null?"":detail;this.status=status==null?"":status;
+         }
+         public boolean same(Widget other)
+         {
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerTheme.java b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerTheme.java
+new file mode 100644
+index 0000000..12d0d82
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerTheme.java
+@@ -0,0 +1,13 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import java.awt.*;
++
++/** Shared readable controller surfaces; colours and type sizes have one source. */
++public final class ControllerTheme {
++    private ControllerTheme(){}
++    public static final Color BACKGROUND=new Color(18,25,32,247), BORDER=new Color(91,112,130),
++        CELL=new Color(33,44,55), SELECTED=new Color(65,90,108), FOCUS=new Color(245,203,98),
++        TEXT=Color.WHITE, MUTED=new Color(170,188,200), COMPLETE=new Color(135,214,158);
++    public static Font body(double scale){return new Font(Font.SANS_SERIF,Font.PLAIN,Math.max(12,(int)(14*scale)));}
++    public static Font heading(double scale){return new Font(Font.SANS_SERIF,Font.BOLD,Math.max(15,(int)(22*scale)));}
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+index 2c578f5..35f2ff8 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -79,4 +79,14 @@ public interface SoloScapeControllerConfig extends Config
+     @ConfigItem(keyName="runThreshold",name="Run stick threshold (%)",description="Direct movement runs above this post-deadzone tilt. 100 requires full tilt.",position=27)
+     default int runThreshold() { return 90; }
+ 
++    @ConfigItem(keyName="customQuests",name="Custom quest journal",description="Readable native quest list and journal with normal native progress/actions. Independent fallback.",position=28)
++    default boolean customQuests(){return false;}
++    @ConfigItem(keyName="customSkills",name="Custom skills screen",description="Readable levels/XP and native skill guides. Independent fallback.",position=29)
++    default boolean customSkills(){return false;}
++    @ConfigItem(keyName="customCombat",name="Custom combat screen",description="Readable native combat styles, retaliation and supported special controls.",position=30)
++    default boolean customCombat(){return false;}
++    @ConfigItem(keyName="customPrayer",name="Custom prayer screen",description="Readable native prayers and quick-prayer controls.",position=31)
++    default boolean customPrayer(){return false;}
++    @ConfigItem(keyName="customSpellbook",name="Custom spellbook screen",description="Readable native spells and selection actions.",position=32)
++    default boolean customSpellbook(){return false;}
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index 5a74f96..4600352 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -51,14 +51,20 @@ public class SoloScapeControllerPlugin extends Plugin
+     private String panelFeedback;
+     private long panelFeedbackUntil, panelRequestUntil;
+     net.runelite.client.input.controller.PanelPresentation panelPresentation()
+-    { return new net.runelite.client.input.controller.PanelPresentation(canvasWidth(),client.getCanvas()==null?503:client.getCanvas().getHeight(),config.overlayScale()/100.0); }
++    { return new net.runelite.client.input.controller.PanelPresentation(canvasWidth(),client.getCanvas()==null?503:client.getCanvas().getHeight(),config.overlayScale()/100.0,ui.focusedPanel()==null?-1:ui.focusedPanel().id); }
++    private boolean customGroup(int group)
++    {return net.runelite.client.input.controller.PanelPresentation.supported(group,config.customEquipment(),config.customBank(),config.customShop(),config.customQuests(),config.customSkills(),config.customCombat(),config.customPrayer(),config.customSpellbook());}
+     private UiState presented(UiState nativeState)
+-    { if(!config.customInventory()&&!config.customEquipment()&&!config.customBank()&&!config.customShop())return nativeState;return panelPresentation().present(nativeState,ui.focus(),config.customInventory(),config.customEquipment(),config.customBank(),config.customShop()); }
++    {
++        if(!config.customInventory() && (nativeState.panel==null || !customGroup(nativeState.panel.id)))return nativeState;
++        net.runelite.client.input.controller.PanelPresentation view=new net.runelite.client.input.controller.PanelPresentation(canvasWidth(),client.getCanvas()==null?503:client.getCanvas().getHeight(),config.overlayScale()/100.0,nativeState.panel==null?-1:nativeState.panel.id);
++        return view.present(nativeState,ui.focus(),config.customInventory(),config.customEquipment(),config.customBank(),config.customShop(),config.customQuests(),config.customSkills(),config.customCombat(),config.customPrayer(),config.customSpellbook());
++    }
+     boolean customPanelActive()
+     {
+         if(!active || quick.active() || radial.active() || ui.entry().active() || ui.inDialogue())return false;
+         UiState.Panel panel=ui.focusedPanel();
+-        return panel==null?config.customInventory()&&ui.inventoryFocused():net.runelite.client.input.controller.PanelPresentation.supported(panel.id,config.customEquipment(),config.customBank(),config.customShop());
++        return panel==null?config.customInventory()&&ui.inventoryFocused():customGroup(panel.id);
+     }
+     String confirmationHint()
+     { String pending=confirmation.prompt(ui.focus(),System.nanoTime());return pending!=null?pending:System.nanoTime()<panelFeedbackUntil?panelFeedback:null; }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+index 3bd8105..a5266bc 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+@@ -17,6 +17,7 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+     private final GameClient client;
+     private final ClientThread clientThread;
+     private volatile HitMap hit = HitMap.EMPTY;
++    private volatile Point hover;
+     private boolean captured, clicked;
+     @Inject SoloScapePanelOverlay(SoloScapeControllerPlugin plugin,GameClient client,ClientThread clientThread)
+     {
+@@ -32,6 +33,10 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+         String title=panel==null?"Inventory":panel.name+" / "+panel.panes[ui.focusedPane()].name;
+         Rectangle[] actions=paint(graphics,presentation,title,widgets,ui.focus(),plugin.confirmationHint(),plugin.config().glyphs(),ui.context()==null?-1:ui.contextIndex(),plugin::hint,widget->client.getControllerItemImage(widget.itemId,widget.quantity));
+         hit=new HitMap(presentation.bounds,presentation.content,widgets,ui.focus(),actions,System.nanoTime());
++        Point pointer=hover;
++        if(pointer!=null)for(UiState.Widget widget:widgets)if(presentation.visible(widget)&&widget.bounds.contains(pointer)) {
++            tooltip(graphics,presentation,pointer,widget.name+(widget.status.isEmpty()?"":" · "+widget.status));break;
++        }
+         return null;
+     }
+     public static Rectangle[] paint(Graphics2D graphics,PanelPresentation view,String title,UiState.Widget[] widgets,UiState.Widget focus,String confirmation,ControllerGlyphs glyphs,int selectedAction)
+@@ -45,19 +50,19 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+         try
+         {
+             Rectangle box=view.bounds;double scale=view.scale;
+-            draw.setColor(new Color(18,25,32,247));draw.fillRoundRect(box.x,box.y,box.width,box.height,16,16);
+-            draw.setColor(new Color(91,112,130));draw.drawRoundRect(box.x,box.y,box.width-1,box.height-1,16,16);
+-            draw.setFont(new Font(Font.SANS_SERIF,Font.BOLD,Math.max(12,(int)(22*scale))));draw.setColor(Color.WHITE);
++            draw.setColor(ControllerTheme.BACKGROUND);draw.fillRoundRect(box.x,box.y,box.width,box.height,16,16);
++            draw.setColor(ControllerTheme.BORDER);draw.drawRoundRect(box.x,box.y,box.width-1,box.height-1,16,16);
++            draw.setFont(ControllerTheme.heading(scale));draw.setColor(Color.WHITE);
+             draw.drawString(fit(draw,title,box.width-32),box.x+(int)(16*scale),box.y+(int)(32*scale));
+-            draw.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,Math.max(10,(int)(13*scale))));
++            draw.setFont(ControllerTheme.body(scale));
+             int page=view.page(widgets,focus),pages=Math.max(1,(widgets.length+view.pageSize-1)/view.pageSize);
+-            draw.setColor(new Color(170,188,200));draw.drawString("Visible page "+(page+1)+" / "+pages,view.content.x,box.y+(int)(50*scale));
++            draw.setColor(ControllerTheme.MUTED);draw.drawString((page>0?"↑ ":"")+"Visible page "+(page+1)+" / "+pages+(page+1<pages?" ↓":""),view.content.x,box.y+(int)(50*scale));
+             for(UiState.Widget widget:widgets)
+             {
+                 if(!view.visible(widget))continue;
+                 Rectangle cell=widget.bounds;boolean selected=widget.same(focus);
+-                draw.setColor(selected?new Color(65,90,108):new Color(33,44,55));draw.fillRoundRect(cell.x,cell.y,cell.width,cell.height,6,6);
+-                if(selected){draw.setColor(new Color(245,203,98));draw.drawRoundRect(cell.x,cell.y,cell.width-1,cell.height-1,6,6);}
++                draw.setColor(selected?ControllerTheme.SELECTED:ControllerTheme.CELL);draw.fillRoundRect(cell.x,cell.y,cell.width,cell.height,6,6);
++                if(selected){draw.setColor(ControllerTheme.FOCUS);draw.drawRoundRect(cell.x,cell.y,cell.width-1,cell.height-1,6,6);}
+                 draw.setColor(widget.itemId>=0?Color.WHITE:new Color(180,192,202));
+                 String name=widget.name;
+                 int inset=Math.max(4,(int)(6*scale));
+@@ -67,19 +72,26 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+                 int labelX=cell.x+inset+(iconWidth==0?0:iconWidth+inset);
+                 draw.drawString(fit(draw,name,cell.x+cell.width-inset-labelX),labelX,cell.y+inset+draw.getFontMetrics().getAscent());
+                 draw.setColor(new Color(166,190,206));
+-                String secondary=widget.itemId>=0?"×"+widget.quantity:widget.actions.length>0?widget.actions[0].label:"";
++                String secondary=widget.itemId>=0?"×"+widget.quantity:!widget.status.isEmpty()?widget.status:widget.actions.length>0?widget.actions[0].label:"";
+                 draw.drawString(fit(draw,secondary,cell.width-inset*2),cell.x+inset,cell.y+cell.height-inset);
+             }
+             int x=view.content.x+view.content.width+(int)(14*scale),y=view.content.y;
+             int width=box.x+box.width-x-(int)(14*scale),line=Math.max(14,draw.getFontMetrics().getHeight()+3);
++            Shape beforeDetails=draw.getClip();
++            draw.clipRect(x,view.content.y,width,view.content.height);
+             if(focus!=null)
+             {
+                 java.awt.image.BufferedImage icon=focus.itemId>=0?images.apply(focus):null;
+                 if(icon!=null){int size=Math.min(width,(int)(54*scale));draw.drawImage(icon,x,y,size,size*32/36,null);y+=size*32/36+line/2;}
+-                draw.setColor(new Color(245,203,98));y=text(draw,focus.name,x,y,width,line);
++                draw.setColor(ControllerTheme.FOCUS);y=text(draw,focus.name,x,y,width,line);
+                 if(focus.itemId>=0){draw.setColor(Color.WHITE);y=text(draw,"Quantity: "+focus.quantity,x,y+line/2,width,line);}
+-                draw.setColor(new Color(170,188,200));y+=line;
+-                y=text(draw,"Native actions",x,y,width,line);
++                if(!focus.status.isEmpty()){draw.setColor(ControllerTheme.COMPLETE);y=text(draw,focus.status,x,y+line/2,width,line);}
++                if(!focus.detail.isEmpty()&&!focus.detail.equals(focus.name)){
++                    draw.setColor(ControllerTheme.MUTED);
++                    for(String row:focus.detail.split("\n")){y=text(draw,row,x,y+line/2,width,line);}
++                }
++                draw.setColor(ControllerTheme.MUTED);y+=line;
++                y=text(draw,focus.actions.length==0?"Read only · RS: scroll":"Actions",x,y,width,line);
+                 draw.setColor(Color.WHITE);
+                 int shown=Math.max(1,(view.content.y+view.content.height-y)/(line+5));
+                 int start=Math.max(0,Math.min(Math.max(0,focus.actions.length-shown),selectedAction-shown+1));
+@@ -88,12 +100,13 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+                     if(y>view.content.y+view.content.height-line)break;
+                     Rectangle actionBox=new Rectangle(x,y,width,line+3);actionBounds[i]=actionBox;
+                     draw.setColor(i==selectedAction?new Color(75,97,110):new Color(34,47,59));draw.fill(actionBox);
+-                    draw.setColor(i==selectedAction?new Color(245,203,98):Color.WHITE);
++                    draw.setColor(i==selectedAction?ControllerTheme.FOCUS:Color.WHITE);
+                     draw.drawString(fit(draw,focus.actions[i].label+(i==start&&start>0?" ↑":i==start+shown-1&&i+1<focus.actions.length?" ↓":""),width-8),x+4,y+draw.getFontMetrics().getAscent());y+=line+5;
+                 }
+             }
+-            draw.setColor(confirmation==null?new Color(190,207,218):new Color(245,203,98));
+-            String hint=confirmation==null?"D-pad: move · RS: scroll · A: use · X / right click: actions · LB/RB: pane · B: back":confirmation;
++            draw.setClip(beforeDetails);
++            draw.setColor(confirmation==null?new Color(190,207,218):ControllerTheme.FOCUS);
++            String hint=confirmation!=null?confirmation:focus!=null&&focus.actions.length==0?"D-pad: move · RS: scroll · LB/RB: pane · B: back":"D-pad: move · RS: scroll · A: use · X / right click: actions · LB/RB: pane · B: back";
+             draw.clipRect(box.x,box.y,box.width,box.height-(int)(8*scale));
+             text(draw,hints.apply(hint),box.x+(int)(16*scale),box.y+box.height-(int)(48*scale),box.width-(int)(32*scale),line);
+         }
+@@ -114,6 +127,18 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+     }
+     private static String fit(Graphics2D draw,String text,int width)
+     { if(draw.getFontMetrics().stringWidth(text)<=width)return text;while(!text.isEmpty()&&draw.getFontMetrics().stringWidth(text+"…")>width)text=text.substring(0,text.length()-1);return text+"…"; }
++    private static void tooltip(Graphics2D graphics,PanelPresentation view,Point pointer,String label) {
++        Graphics2D g=(Graphics2D)graphics.create();
++        try {
++            g.setFont(ControllerTheme.body(view.scale));
++            int width=Math.min(view.bounds.width-16,g.getFontMetrics().stringWidth(label)+16),height=g.getFontMetrics().getHeight()+12;
++            int x=Math.max(view.bounds.x+8,Math.min(pointer.x+12,view.bounds.x+view.bounds.width-width-8));
++            int y=Math.max(view.bounds.y+8,Math.min(pointer.y+12,view.bounds.y+view.bounds.height-height-8));
++            g.setColor(ControllerTheme.BACKGROUND);g.fillRoundRect(x,y,width,height,6,6);
++            g.setColor(ControllerTheme.FOCUS);g.drawRoundRect(x,y,width-1,height-1,6,6);
++            g.setColor(ControllerTheme.TEXT);g.drawString(fit(g,label,width-16),x+8,y+6+g.getFontMetrics().getAscent());
++        } finally {g.dispose();}
++    }
+     private static final class HitMap
+     {
+         static final HitMap EMPTY=new HitMap(new Rectangle(),new Rectangle(),new UiState.Widget[0],null,new Rectangle[0],0);
+@@ -152,7 +177,7 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+     @Override public MouseEvent mouseReleased(MouseEvent event){if(captured){event.consume();captured=false;}return event;}
+     @Override public MouseEvent mouseClicked(MouseEvent event){if(clicked){event.consume();clicked=false;}return event;}
+     @Override public MouseEvent mouseDragged(MouseEvent event){if(captured)event.consume();return event;}
+-    @Override public MouseEvent mouseMoved(MouseEvent event){if(plugin.customPanelActive()&&hit.bounds.contains(event.getPoint()))event.consume();return event;}
++    @Override public MouseEvent mouseMoved(MouseEvent event){hover=event.getPoint();if(plugin.customPanelActive()&&hit.bounds.contains(event.getPoint()))event.consume();return event;}
+     @Override public MouseEvent mouseEntered(MouseEvent event){return event;}
+-    @Override public MouseEvent mouseExited(MouseEvent event){return event;}
++    @Override public MouseEvent mouseExited(MouseEvent event){hover=null;return event;}
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+index 82cce6c..8cd18d7 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+@@ -41,7 +41,7 @@ public final class SoloScapeUiOverlay extends Overlay
+         Graphics2D draw = (Graphics2D) graphics.create();
+         try
+         {
+-            draw.setFont(new java.awt.Font(java.awt.Font.SANS_SERIF,java.awt.Font.PLAIN,Math.max(10,(int)(13*scale))));
++            draw.setFont(ControllerTheme.body(scale));
+             if (ui.entry().active())
+             {
+                 net.runelite.client.input.controller.EntryControls keyboard = ui.entry();
+@@ -50,8 +50,8 @@ public final class SoloScapeUiOverlay extends Overlay
+                 int width = Math.max(440,columns*cellWidth+24), height = rows*cellHeight+106;
+                 double keyboardScale=Math.min(scale,Math.min((canvasWidth-16.0)/(width+8),(canvasHeight-16.0)/(height+8)));
+                 draw.scale(keyboardScale,keyboardScale);draw.setFont(new java.awt.Font(java.awt.Font.SANS_SERIF,java.awt.Font.PLAIN,13));
+-                draw.setColor(new Color(0,0,0,235)); draw.fillRoundRect(8,8,width,height,12,12);
+-                draw.setColor(new Color(255,220,95)); draw.drawString(fit(draw,keyboard.state().prompt,width-24),20,30);
++                draw.setColor(ControllerTheme.BACKGROUND); draw.fillRoundRect(8,8,width,height,12,12);
++                draw.setColor(ControllerTheme.FOCUS); draw.drawString(fit(draw,keyboard.state().prompt,width-24),20,30);
+                 String value = keyboard.state().value;
+                 while (value.length()>0 && draw.getFontMetrics().stringWidth(value+"_")>width-24) value=value.substring(1);
+                 draw.setColor(Color.WHITE); draw.drawString(value+"_",20,54);
+@@ -60,7 +60,7 @@ public final class SoloScapeUiOverlay extends Overlay
+                     int x=20+i%columns*cellWidth,y=66+i/columns*cellHeight;
+                     draw.setColor(i==keyboard.index()?new Color(125,99,35):new Color(55,55,55));
+                     draw.fillRect(x,y,cellWidth-4,cellHeight-4);
+-                    draw.setColor(i==keyboard.index()?new Color(255,220,95):Color.WHITE);
++                    draw.setColor(i==keyboard.index()?ControllerTheme.FOCUS:Color.WHITE);
+                     draw.drawString(keys[i].equals(" ")?"Space":keys[i],x+6,y+20);
+                 }
+                 draw.setColor(Color.WHITE); draw.drawString(prompt,20,86+rows*cellHeight);
+@@ -95,7 +95,7 @@ public final class SoloScapeUiOverlay extends Overlay
+                 {
+                     int row=i-start;
+                     if(i==ui.contextIndex()) {draw.setColor(new Color(110,90,35));draw.fillRect(10,menuY+3+row*rowHeight,menuWidth-4,rowHeight-1);}
+-                    draw.setColor(i==ui.contextIndex()?new Color(255,220,95):Color.WHITE);
++                    draw.setColor(i==ui.contextIndex()?ControllerTheme.FOCUS:Color.WHITE);
+                     String label=menu.actions[i].label+(row==0 && start>0?" ↑":row==shown-1 && start+shown<menu.actions.length?" ↓":"");
+                     draw.drawString(fit(draw,label,menuWidth-16),16,menuY+5+draw.getFontMetrics().getAscent()+row*rowHeight);
+                 }
+diff --git a/client/test/ControllerItemImagesTest.java b/client/test/ControllerItemImagesTest.java
+index 91f5595..572643a 100644
+--- a/client/test/ControllerItemImagesTest.java
++++ b/client/test/ControllerItemImagesTest.java
+@@ -2,6 +2,14 @@ import org.junit.Test;
+ import static org.junit.Assert.*;
+ public class ControllerItemImagesTest
+ {
++    @Test public void nativeCacheHitsRestoreExactCopiedArtworkAfterRelogWithoutRendering() {
++        Object sprite=new Object();int[] pixels=new int[36*32];pixels[3]=0xabcdef;
++        ControllerItemImages.attach(sprite,100,5,pixels);ControllerItemImages.clear();
++        assertNull(ControllerItemImages.get(100,5));
++        ControllerItemImages.reuse(sprite,100,4);assertNull(ControllerItemImages.get(100,4));
++        ControllerItemImages.reuse(sprite,100,5);assertEquals(0xffabcdef,ControllerItemImages.get(100,5).getRGB(3,0));
++        ControllerItemImages.clear();
++    }
+     @Test public void nativePixelsAreCopiedWithTransparentBackgroundAndExactQuantityKey()
+     {
+         ControllerItemImages.clear();int[] pixels=new int[36*32];pixels[0]=0x123456;
+diff --git a/client/test/ControllerPanelDetailsTest.java b/client/test/ControllerPanelDetailsTest.java
+new file mode 100644
+index 0000000..180b602
+--- /dev/null
++++ b/client/test/ControllerPanelDetailsTest.java
+@@ -0,0 +1,20 @@
++import org.junit.Test;
++import static org.junit.Assert.*;
++public class ControllerPanelDetailsTest {
++    @Test public void nativeJournalFormattingPreservesLineBreaksAndCompletion() {
++        assertEquals("Find the cook\nReturn with milk",ControllerPanelDetails.plain("<navy>Find the <maroon>cook<br>Return with milk"));
++        assertEquals("Completed objective",ControllerPanelDetails.status("<str>Find the cook",-1));
++        assertEquals("",ControllerPanelDetails.status("Find the cook",0x123456));
++        assertEquals("In progress",ControllerPanelDetails.status("Quest",0xffff00));
++    }
++    @Test public void nativeSkillIdsUseTheCorrectArrayIndexWithoutChangingValues() {
++        int[] real=Class256.anIntArray3295,current=Class161.anIntArray2145,xp=Class186.anIntArray2497;
++        try {
++            Class256.anIntArray3295=new int[25];Class161.anIntArray2145=new int[25];Class186.anIntArray2497=new int[25];
++            Class256.anIntArray3295[20]=17;Class161.anIntArray2145[20]=16;Class186.anIntArray2497[20]=3000;
++            assertEquals("Runecrafting",ControllerPanelDetails.skillName(110));
++            assertEquals("Level 16 / 17\nExperience: 3000",ControllerPanelDetails.skillDetail(110));
++            assertEquals("",ControllerPanelDetails.skillName(999));assertEquals(3000,Class186.anIntArray2497[20]);
++        } finally {Class256.anIntArray3295=real;Class161.anIntArray2145=current;Class186.anIntArray2497=xp;}
++    }
++}
+diff --git a/client/test/ControllerUiTest.java b/client/test/ControllerUiTest.java
+index 8b25967..b85eb4b 100644
+--- a/client/test/ControllerUiTest.java
++++ b/client/test/ControllerUiTest.java
+@@ -134,6 +134,21 @@ public class ControllerUiTest
+         assertEquals(0, ControllerUi.availableTabs());
+     }
+ 
++    @Test public void questJournalIncludesReadonlyObjectivesWithoutFabricatingActions() {
++        Class46 line=panelSlot(275,16,-1,-1);
++        line.anInt774=4;line.aString792="<str>Bring the milk<br>Return to the cook";
++        UiState.Panel journal=ControllerUi.snapshot(false).panel;
++        assertEquals(275,journal.id);assertEquals(0,journal.panes[0].widgets.length);
++        assertEquals(1,journal.details.length);
++        UiState.Widget objective=journal.details[0];
++        assertEquals("Bring the milk\nReturn to the cook",objective.name);
++        assertEquals("Completed objective",objective.status);assertEquals(0,objective.actions.length);
++        assertFalse(ControllerUi.invoke(objective,new UiState.Action("Continue",16,0)));
++        line.aBoolean813=true;
++        assertEquals(0,ControllerUi.snapshot(false).panel.details.length);
++        for(UiState.Pane pane:ControllerUi.snapshot(false).panel.panes)assertEquals(0,pane.widgets.length);
++    }
++
+     @Test public void interfaceToggleRestoresMousePanelsWithoutAffectingInventorySnapshots()
+     {
+         panelSlot(762,93,0,100,"Withdraw-1");
+diff --git a/client/test/net/runelite/client/input/controller/PanelPresentationTest.java b/client/test/net/runelite/client/input/controller/PanelPresentationTest.java
+index dc229f6..2dcab56 100644
+--- a/client/test/net/runelite/client/input/controller/PanelPresentationTest.java
++++ b/client/test/net/runelite/client/input/controller/PanelPresentationTest.java
+@@ -6,8 +6,26 @@ import static org.junit.Assert.*;
+ 
+ public class PanelPresentationTest
+ {
++    @Test public void journalPagingPreservesReadonlyMetadataAndIndependentFallback() {
++        UiState.Widget[] rows=new UiState.Widget[30];
++        for(int i=0;i<rows.length;i++)rows[i]=new UiState.Widget(275<<16|16+i,-1,-1,0,"Objective "+i,new Rectangle(0,i*32,400,28),new UiState.Action[0],"Full detail "+i,"Completed objective");
++        UiState state=new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,new UiState.Panel(275,1,"Cook's Assistant",new UiState.Pane[]{new UiState.Pane("Native controls",new UiState.Widget[0])},true,rows));
++        PanelPresentation view=new PanelPresentation(1280,800,1.25,275);
++        UiState shown=view.present(state,rows[19],false,false,false,false,true,false,false,false,false);
++        assertTrue(view.visible(shown.panel.panes[0].widgets[19]));assertFalse(view.visible(shown.panel.panes[0].widgets[0]));
++        assertEquals("Full detail 19",shown.panel.panes[0].widgets[19].detail);assertEquals(0,shown.panel.panes[0].widgets[19].actions.length);
++        assertSame(state.panel,view.present(state,rows[19],false,false,false,false,false,false,false,false,false).panel);
++    }
+     private UiState.Widget item(int index,int amount)
+     { return new UiState.Widget(149<<16,index,100+index,amount,"Item "+index,new Rectangle(1,2,32,32),new UiState.Action[]{new UiState.Action("Drop",18,5,77)}); }
++    @Test public void inventoryKeepsAllFourColumnsWhileAQuestListIsAlsoInSnapshot() {
++        UiState.Widget[] inventory=new UiState.Widget[28];for(int i=0;i<28;i++)inventory[i]=item(i,1);
++        UiState state=new UiState(inventory,new UiState.Widget[0],-1,true,new UiState.Panel(190,"Quests",new UiState.Pane[]{new UiState.Pane("Quests",new UiState.Widget[0])}));
++        PanelPresentation view=new PanelPresentation(765,503,1,190);
++        UiState shown=view.present(state,inventory[0],true,false,false,false,false,false,false,false,false);
++        for(UiState.Widget widget:shown.inventory)assertTrue(view.visible(widget));
++        assertTrue(shown.inventory[3].bounds.x>shown.inventory[0].bounds.x);
++    }
+     @Test public void presentationFitsSmallAndDeckCanvasesWithoutChangingNativeIntent()
+     {
+         for(int[] size:new int[][]{{765,503},{1280,800},{1024,600}})
