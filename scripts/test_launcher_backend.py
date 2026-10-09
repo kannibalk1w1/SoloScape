@@ -80,6 +80,32 @@ class LauncherTests(unittest.TestCase):
             with self.assertRaises(ProcessLookupError):os.kill(int((self.root/(role+'.pid')).read_text()),0)
         self.profile.backup()  # exclusive lock was released only after cleanup
 
+    def test_cancelled_partial_startup_preserves_saved_world_and_stops_only_owned_server(self):
+        from test_profiles import native_save
+        save=self.profile.state/'saves/tester.toml';save.write_bytes(native_save())
+        exchange=self.profile.state/'saves/grand_exchange/offers.toml';exchange.parent.mkdir();exchange.write_text('counter = 123\n')
+        os.environ['TEST_CASE']='timeout';cancelled=threading.Event();errors=[]
+        def run():
+            try:profile_session.run(self.profile,cancelled,lambda *args:None,checked=False)
+            except Exception as exc:errors.append(exc)
+        worker=threading.Thread(target=run);worker.start()
+        try:self.wait_for(lambda:(self.root/'server.pid').exists())
+        finally:cancelled.set();worker.join(5)
+        self.assertFalse(worker.is_alive());self.assertEqual(errors,[])
+        self.assertFalse((self.root/'client.pid').exists());self.assertEqual(save.read_bytes(),native_save())
+        self.assertEqual(exchange.read_text(),'counter = 123\n')
+        self.assertEqual((self.root/'server.stopped').read_text(),'graceful')
+        self.assertEqual(len(profiles.list_backups(self.profile.manifest['id'])),1)
+        with self.assertRaises(ProcessLookupError):os.kill(int((self.root/'server.pid').read_text()),0)
+
+    def test_unexpected_client_exit_still_waits_for_server_save_and_allows_continue(self):
+        os.environ['TEST_CASE']='client-exit'
+        result=profile_session.run(self.profile,threading.Event(),lambda *args:None,checked=False)
+        self.assertEqual(result,3)
+        self.assertEqual((self.root/'server.stopped').read_text(),'graceful')
+        self.assertEqual(len(profiles.list_backups(self.profile.manifest['id'])),2)
+        with self.profile.lock():pass
+
     def test_profile_environment_overrides_inherited_dotted_settings(self):
         env=profile_session.owned_environment(self.profile,43595)
         self.assertEqual(env['storage.players.path'],str(self.profile.state/'saves')+'/')

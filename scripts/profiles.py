@@ -540,3 +540,44 @@ def publish_import(profile):
     fsync_directory(PROFILES)
     staged.parent.rmdir()
     return profile
+
+
+def retention_plan(profile, keep=10):
+    if type(keep) is not int or not 2 <= keep <= 100:
+        raise ValueError('Keep between 2 and 100 automatic backups.')
+    if (profile.directory / 'backups').is_symlink():
+        raise ValueError('Backup retention storage cannot be a symbolic link.')
+    records = []
+    for path in sorted((profile.directory / 'backups').glob('*.zip'), reverse=True):
+        if path.is_symlink():
+            raise ValueError('Backup retention refuses symbolic links.')
+        try:
+            manifest, _ = profile.validate_backup(path)
+        except (ValueError, OSError):
+            continue  # damaged/unverified archives are retained for investigation
+        if manifest.get('reason') in ('before-launch', 'after-clean-shutdown'):
+            records.append({'name': path.name, 'sha256': hash_bytes(path.read_bytes()), 'size': path.stat().st_size})
+    remove = records[keep:]
+    token = hash_bytes(json.dumps({'profile': profile.manifest['id'], 'generation': profile.manifest['generation'],
+                                  'keep': keep, 'automatic': records}, sort_keys=True).encode())
+    return {'keep': keep, 'remove': remove, 'bytes': sum(r['size'] for r in remove), 'token': token,
+            'note': 'Manual/import backups, damaged archives and all save generations are retained.'}
+
+
+def preview_retention(uid, keep=10):
+    profile = load(uid)
+    with profile.lock():
+        return retention_plan(profile, keep)
+
+
+def apply_retention(uid, keep, token):
+    profile = load(uid)
+    with profile.lock():
+        plan = retention_plan(profile, keep)
+        if not isinstance(token, str) or token != plan['token']:
+            raise ValueError('Backup history changed. Review a fresh cleanup preview.')
+        for record in plan['remove']:
+            (profile.directory / 'backups' / record['name']).unlink()
+        if plan['remove']:
+            fsync_directory(profile.directory / 'backups')
+        return {'removed': len(plan['remove']), 'bytes': plan['bytes']}

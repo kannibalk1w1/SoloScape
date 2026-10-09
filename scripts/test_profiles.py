@@ -160,6 +160,29 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(imported.directory.parent,profiles.PROFILES)
         self.assertFalse(list(profiles.PROFILES.glob('.import-*')))
 
+    def test_retention_preview_and_cleanup_keep_manual_damaged_and_newest_automatic_backups(self):
+        manual=self.profile.backup('manual')
+        for i in range(6):self.profile.backup('after-clean-shutdown')
+        damaged=self.profile.directory/'backups/damaged.zip';damaged.write_bytes(b'damaged')
+        uid=self.profile.manifest['id'];oldstate=self.profile.state
+        plan=profiles.preview_retention(uid,2);self.assertEqual(len(plan['remove']),4)
+        result=profiles.apply_retention(uid,2,plan['token']);self.assertEqual(result['removed'],4)
+        self.assertTrue(manual.exists());self.assertTrue(damaged.exists());self.assertEqual(self.profile.state,oldstate)
+        self.assertEqual(len(list((self.profile.directory/'backups').glob('*.zip'))),4)
+        self.assertEqual(self.save.read_bytes(),native_save())
+
+    def test_retention_refuses_changed_preview_active_lock_and_symlink_directory(self):
+        uid=self.profile.manifest['id']
+        for i in range(4):self.profile.backup('before-launch')
+        plan=profiles.preview_retention(uid,2);self.profile.backup('after-clean-shutdown')
+        before=set((self.profile.directory/'backups').glob('*.zip'))
+        with self.assertRaises(ValueError):profiles.apply_retention(uid,2,plan['token'])
+        self.assertEqual(set((self.profile.directory/'backups').glob('*.zip')),before)
+        with self.profile.lock():
+            with self.assertRaises(RuntimeError):profiles.preview_retention(uid,2)
+        backups=self.profile.directory/'backups';backups.rename(self.profile.directory/'held-backups');backups.symlink_to(self.profile.directory/'held-backups')
+        with self.assertRaises(ValueError):profiles.preview_retention(uid,2)
+
     def test_derived_logs_and_cache_are_not_backed_up_but_failed_saves_are(self):
         (self.profile.state/'temp/derived.map').write_bytes(b'cache')
         (self.profile.state/'logs/session.log').write_text('logs')

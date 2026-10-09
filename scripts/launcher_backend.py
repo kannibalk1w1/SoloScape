@@ -64,6 +64,10 @@ class Backend:
         if action == 'stop':
             self.cancelled.set()
             return self.current()
+        if action == 'retention_preview':
+            return profiles.preview_retention(request.get('profile'), request.get('keep', 10))
+        if action == 'retention_apply':
+            return profiles.apply_retention(request.get('profile'), request.get('keep', 10), request.get('token'))
         if action == 'backups':
             return profiles.list_backups(request.get('profile'))
         if action == 'restore':

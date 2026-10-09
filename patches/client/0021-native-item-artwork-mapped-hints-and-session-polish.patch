@@ -1,0 +1,682 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+index 61497db..33f0872 100644
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1054,6 +1054,7 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+     @Override public boolean controllerServerVerified() { return SoloScapeConnection.verified(); }
+     @Override public String controllerServerStatus() { return SoloScapeConnection.status(); }
+     @Override public void updateControllerConnection() { SoloScapeConnection.update(); }
++    @Override public java.awt.image.BufferedImage getControllerItemImage(int item,int amount){return ControllerItemImages.get(item,amount);}
+     @Override public void prepareControllerUi() { ControllerEntry.prepare(); }
+     @Override public boolean editControllerEntry(net.runelite.client.input.controller.EntryState entry, String value) { return ControllerEntry.edit(entry, value); }
+     @Override public boolean submitControllerEntry(net.runelite.client.input.controller.EntryState entry) { return ControllerEntry.submit(entry); }
+diff --git a/client/src/Class132.java b/client/src/Class132.java
+index cb5ea22..484ee44 100644
+--- a/client/src/Class132.java
++++ b/client/src/Class132.java
+@@ -19,7 +19,7 @@ final class Class132 {
+ 
+     static final void method1138(String string, boolean bool, String string_0_, byte i) {
+         try {
+-            SoloScapeConnection.reset();
++            SoloScapeConnection.reset();ControllerItemImages.clear();
+             anInt1908++;
+             Class64_Sub3.aString5600 = string;
+             Class186.aString2496 = string_0_;
+diff --git a/client/src/ControllerItemImages.java b/client/src/ControllerItemImages.java
+new file mode 100644
+index 0000000..30b07e3
+--- /dev/null
++++ b/client/src/ControllerItemImages.java
+@@ -0,0 +1,21 @@
++import java.awt.image.BufferedImage;
++import java.util.LinkedHashMap;
++import java.util.Map;
++
++/** Copies native item sprite pixels; does not render models or load assets from overlay threads. */
++final class ControllerItemImages
++{
++    private static final Map<Long,BufferedImage> images=new LinkedHashMap<Long,BufferedImage>(128,.75f,true)
++    {protected boolean removeEldestEntry(Map.Entry<Long,BufferedImage> eldest){return size()>128;}};
++    private static long key(int item,int amount){return ((long)item<<32)|(amount&0xffffffffL);}
++    static synchronized void capture(int item,int amount,int[] pixels)
++    {
++        if(item<0||pixels==null||pixels.length!=36*32)return;
++        BufferedImage image=new BufferedImage(36,32,BufferedImage.TYPE_INT_ARGB);
++        int[] copy=pixels.clone();for(int i=0;i<copy.length;i++)if(copy[i]!=0)copy[i]|=0xff000000;
++        image.setRGB(0,0,36,32,copy,0,36);images.put(key(item,amount),image);
++    }
++    static synchronized BufferedImage get(int item,int amount)
++    {return images.get(key(item,amount));}
++    static synchronized void clear(){images.clear();}
++}
+diff --git a/client/src/ObjTypeList.java b/client/src/ObjTypeList.java
+index 6ef6905..64cf865 100644
+--- a/client/src/ObjTypeList.java
++++ b/client/src/ObjTypeList.java
+@@ -70,6 +70,7 @@ final class ObjTypeList {
+             if (i_2_ != 83) method1935(-83, -37, null, null, false, -49);
+             int[] is = ObjType.renderSprite(i_0_, bool_5_, i, var_ha_3_, var_ha, class324, class154, i_1_, (byte) -102, i_6_);
+             if (is == null) return null;
++            ControllerItemImages.capture(i_4_,i_0_,is);
+             Class105 class105_9_;
+             if (bool) class105_9_ = var_ha.method3662(36, is, (byte) 94, 0, 36, 32);
+             else class105_9_ = var_ha_3_.method3662(36, is, (byte) 94, 0, 36, 32);
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+index 19992b1..ee5ef45 100644
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -356,6 +356,7 @@ public abstract class GameClient extends Applet {
+     public boolean controllerServerVerified() { return false; }
+     public String controllerServerStatus() { return "Server features unavailable"; }
+     public void updateControllerConnection() {}
++    public java.awt.image.BufferedImage getControllerItemImage(int item,int amount){return null;}
+     public void prepareControllerUi() {}
+     public boolean editControllerEntry(net.runelite.client.input.controller.EntryState entry, String value) { return false; }
+     public boolean submitControllerEntry(net.runelite.client.input.controller.EntryState entry) { return false; }
+diff --git a/client/src/net/runelite/client/input/controller/MenuNavigation.java b/client/src/net/runelite/client/input/controller/MenuNavigation.java
+index 2749656..9577e1f 100644
+--- a/client/src/net/runelite/client/input/controller/MenuNavigation.java
++++ b/client/src/net/runelite/client/input/controller/MenuNavigation.java
+@@ -7,17 +7,19 @@ public final class MenuNavigation
+ {
+     public static final class Parent
+     {
+-        public final int tab,panel;
++        public final int tab,panel,child;
+         public final boolean inventory;
+-        public Parent(int tab,int panel,boolean inventory){this.tab=tab;this.panel=panel;this.inventory=inventory;}
++        public Parent(int tab,int panel,boolean inventory,int child){this.tab=tab;this.panel=panel;this.inventory=inventory;this.child=child;}
+     }
+     private final ArrayDeque<Parent> parents=new ArrayDeque<>();
+     private int home=-1,returnedHome=-1;
+     public void reset(){parents.clear();home=returnedHome=-1;}
+     public void fromHome(int tab){reset();home=tab;}
+-    public void push(int tab,int panel,boolean inventory)
+-    {if(parents.size()==16)parents.removeFirst();parents.addLast(new Parent(tab,panel,inventory));}
+-    public Parent pop(){return parents.pollLast();}
++    public void push(int tab,int panel,boolean inventory,int child)
++    {if(parents.size()==16)parents.removeFirst();parents.addLast(new Parent(tab,panel,inventory,child));}
++    public Parent pop(int child){return hasParent(child)?parents.pollLast():null;}
++    public void discard(int child){parents.removeIf(parent->parent.child==child);}
++    public boolean hasParent(int child){return !parents.isEmpty()&&parents.peekLast().child==child;}
+     public boolean hasParent(){return !parents.isEmpty();}
+     public void homeBack(){if(home>=0){returnedHome=home;home=-1;}parents.clear();}
+     public int takeHomeBack(){int tab=returnedHome;returnedHome=-1;return tab;}
+diff --git a/client/src/net/runelite/client/input/controller/PanelControls.java b/client/src/net/runelite/client/input/controller/PanelControls.java
+index 1261a8c..4115d89 100644
+--- a/client/src/net/runelite/client/input/controller/PanelControls.java
++++ b/client/src/net/runelite/client/input/controller/PanelControls.java
+@@ -106,8 +106,8 @@ public final class PanelControls
+             focus = state.panes[pane].widgets.length == 0 ? null : state.panes[pane].widgets[0];
+             heldDirection = 0; scrollAnchor = null;scrollSubject=null;
+         }
+-        int stickDirection=stickScroll.update(input.rightX,input.rightY,now);
+-        if(context==null && stickDirection!=0){mouseScroll(stickDirection);return true;}
++        int stickDirection=stickScroll.update(input.rightX,input.rightY,now,gateway.scrollDeadzone());
++        if(context==null && stickDirection!=0 && (input.buttonsPressed&(A|X|LB|RB))==0){mouseScroll(stickDirection);return true;}
+         int direction = direction(input, now);
+         if (context != null)
+         {
+diff --git a/client/src/net/runelite/client/input/controller/StickScroll.java b/client/src/net/runelite/client/input/controller/StickScroll.java
+index d982585..8607684 100644
+--- a/client/src/net/runelite/client/input/controller/StickScroll.java
++++ b/client/src/net/runelite/client/input/controller/StickScroll.java
+@@ -7,15 +7,17 @@ public final class StickScroll
+     private int held;
+     private long next;
+     public void reset(){armed=false;held=0;next=0;}
+-    public int update(float x,float y,long now)
++    public int update(float x,float y,long now){return update(x,y,now,.25f);}
++    public int update(float x,float y,long now,float deadzone)
+     {
++        float threshold=Math.max(.25f,Math.min(.9f,deadzone));
+         if(!Float.isFinite(x)||!Float.isFinite(y)){reset();return 0;}
+-        if(Math.hypot(x,y)<.25){armed=true;held=0;next=0;return 0;}
+-        if(!armed || Math.abs(y)<.3 || Math.abs(y)<Math.abs(x))return 0;
++        if(Math.hypot(x,y)<=threshold){armed=true;held=0;next=0;return 0;}
++        if(!armed || Math.abs(y)<Math.max(.3f,threshold) || Math.abs(y)<Math.abs(x))return 0;
+         int direction=y<0?11:12;
+         if(direction!=held){held=direction;next=0;}
+         if(now<next)return 0;
+-        double amount=Math.min(1,(Math.abs(y)-.3)/.7);
++        double amount=Math.min(1,(Math.abs(y)-Math.max(.3f,threshold))/(1-Math.max(.3f,threshold)));
+         next=now+(long)((350-270*amount)*1_000_000);
+         return direction;
+     }
+diff --git a/client/src/net/runelite/client/input/controller/UiControls.java b/client/src/net/runelite/client/input/controller/UiControls.java
+index 7a224a2..7fc34dd 100644
+--- a/client/src/net/runelite/client/input/controller/UiControls.java
++++ b/client/src/net/runelite/client/input/controller/UiControls.java
+@@ -9,6 +9,7 @@ public final class UiControls
+         default UiState snapshot(boolean inventory) { return snapshot(); }
+         boolean openInventory();
+         default boolean openTab(int index){return false;}
++        default float scrollDeadzone(){return .25f;}
+         default int selectionMask() { return 0; }
+         default boolean openTargetInventory() { return false; }
+         boolean invoke(UiState.Widget widget, UiState.Action action);
+@@ -27,6 +28,7 @@ public final class UiControls
+     private final EntryControls entry;
+     private final MenuNavigation navigation=new MenuNavigation();
+     private int closingChild=-1;
++    public void clearHistory(){panel.clearHistory();navigation.reset();}
+     public int takeHomeBack(){return navigation.takeHomeBack();}
+     public void focusHomeTab(int index,long now){focusTab(index,now);navigation.fromHome(index);}
+     private boolean inventory, armed;
+@@ -156,7 +158,7 @@ public final class UiControls
+         UiState.Panel previousPanel=panel.state();
+         if(closingChild>=0 && (state.panel==null || state.panel.id!=closingChild))
+         {
+-            MenuNavigation.Parent parent=navigation.pop();closingChild=-1;
++            MenuNavigation.Parent parent=navigation.pop(closingChild);closingChild=-1;
+             if(parent!=null)
+             {
+                 panel.reset();focusedTab=parent.tab;inventory=parent.inventory;armed=false;context=null;
+@@ -166,15 +168,17 @@ public final class UiControls
+                 return true;
+             }
+         }
++        if(previousPanel!=null && previousPanel.modal && closingChild<0 && (state.panel==null || !state.panel.modal))navigation.discard(previousPanel.id);
+         if(state.panel!=null && state.panel.modal && (previousPanel==null || previousPanel.id!=state.panel.id))
+         {
+-            if(previousPanel!=null)navigation.push(focusedTab,previousPanel.id,inventory);
+-            else if(inventory)navigation.push(-1,-1,true);
++            if(previousPanel!=null)navigation.push(focusedTab,previousPanel.id,inventory,state.panel.id);
++            else if(inventory)navigation.push(-1,-1,true,state.panel.id);
+         }
+         if (!inDialogue() && panel.update(state.panel != null && (state.panel.modal || matchesTab(state.panel)) ? state.panel : null, input, now))
+         {
+             inventory = false; context = null; armed = false;
+-            if(panel.closing() && navigation.hasParent())closingChild=state.panel.id;
++            if(panel.closing() && navigation.hasParent(state.panel.id))closingChild=state.panel.id;
++            else if(!panel.closing() && closingChild==state.panel.id)closingChild=-1;
+             if (panel.exitRequested()) { navigation.homeBack();focusedTab = -1; panel.reset(); gateway.cancelSelection(); }
+             else if (panel.selectionRequested())
+             {
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerHints.java b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerHints.java
+new file mode 100644
+index 0000000..9ae04ed
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerHints.java
+@@ -0,0 +1,37 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import java.util.regex.*;
++
++/** One-pass logical-to-physical labels; replacements cannot remap each other. */
++public final class ControllerHints
++{
++    private static final Pattern TOKENS=Pattern.compile("\\b(A|B|X|Y|LB|RB|View|Start)\\b(?=[: /])");
++    private ControllerHints(){}
++    public static String text(String text,ControllerGlyphs glyphs,ControllerButton... buttons)
++    {
++        if(text==null)return null;
++        if(buttons.length!=8)throw new IllegalArgumentException("Eight hint bindings required");
++        String[] logical={"A","B","X","LB","RB","Y","View","Start"};
++        Matcher matcher=TOKENS.matcher(text);StringBuffer result=new StringBuffer();
++        while(matcher.find())
++        {
++            int index=0;while(!logical[index].equals(matcher.group()))index++;
++            ControllerButton physical=buttons[index];String label;
++            switch(physical)
++            {
++                case A:label=glyphs==ControllerGlyphs.PLAYSTATION?"Cross":"[A]";break;
++                case B:label=glyphs==ControllerGlyphs.PLAYSTATION?"Circle":"[B]";break;
++                case X:label=glyphs==ControllerGlyphs.PLAYSTATION?"Square":"[X]";break;
++                case Y:label=glyphs==ControllerGlyphs.PLAYSTATION?"Triangle":"[Y]";break;
++                case LEFT_BUMPER:label=glyphs==ControllerGlyphs.PLAYSTATION?"L1":"LB";break;
++                case RIGHT_BUMPER:label=glyphs==ControllerGlyphs.PLAYSTATION?"R1":"RB";break;
++                case LEFT_STICK:label="LS click";break;
++                case RIGHT_STICK:label="RS click";break;
++                case VIEW:label=glyphs==ControllerGlyphs.PLAYSTATION?"Share":"View";break;
++                default:label=glyphs==ControllerGlyphs.PLAYSTATION?"Options":"Start";
++            }
++            matcher.appendReplacement(result,Matcher.quoteReplacement(label));
++        }
++        matcher.appendTail(result);return result.toString();
++    }
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+index 261c5c5..a4b396a 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+@@ -53,7 +53,7 @@ public final class SoloScapeControllerOverlay extends Overlay
+             int width=0,lineHeight=g.getFontMetrics().getHeight()+6,max=plugin.canvasWidth()-24;
+             for(int i=0;i<lines.size();i++)
+             {
+-                String text=plugin.config().glyphs().text(lines.get(i)),fit=text;
++                String text=plugin.hint(lines.get(i)),fit=text;
+                 while(!fit.isEmpty() && g.getFontMetrics().stringWidth(fit)>max) fit=fit.substring(0,fit.length()-1);
+                 if(!fit.equals(text) && fit.length()>2) fit=fit.substring(0,fit.length()-2)+"…";
+                 lines.set(i,fit);width=Math.max(width,g.getFontMetrics().stringWidth(fit)+12);
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index 2492519..5a74f96 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -101,6 +101,8 @@ public class SoloScapeControllerPlugin extends Plugin
+     }
+     QuickRadialControls getQuick() { return quick; }
+     SoloScapeControllerConfig config() { return config; }
++    String hint(String text)
++    {return ControllerHints.text(text,config.glyphs(),config.confirmButton(),config.cancelButton(),config.actionsButton(),config.previousButton(),config.nextButton(),config.inventoryButton(),config.homeButton(),config.quickButton());}
+     String bindingWarning() { return bindingWarning; }
+     int canvasWidth() { return client.getCanvas()==null?765:Math.max(100,client.getCanvas().getWidth()); }
+     private int radialFocusTab = -1;
+@@ -120,6 +122,7 @@ public class SoloScapeControllerPlugin extends Plugin
+         public UiState snapshot(boolean inventory) { return presented(client.getControllerUiState(inventory)); }
+         public boolean openInventory() { return client.openControllerInventory(); }
+         public boolean openTab(int index){return client.openControllerTab(index);}
++        public float scrollDeadzone(){return config.deadzone()/100f;}
+         public int selectionMask() { return client.getControllerSelectionMask(); }
+         public boolean openTargetInventory() { return client.openControllerTargetInventory(); }
+         public boolean invoke(UiState.Widget widget, UiState.Action action) { return invokeUi(widget, action); }
+@@ -210,7 +213,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 		client.setControllerCameraInput(0, 0);
+ 		resetWorld();
+ 		state.clear();rawState.clear();mappingArmed=false;cameraArmed=false;actionMap=null;
+-		ui.reset();
++		ui.reset();ui.clearHistory();
+         radial.reset(); quick.reset();
+         radialFocusTab = -1;confirmation.clear();panelFeedback=null;panelFeedbackUntil=0;
+ 		client.setControllerServerFeatures(false);
+@@ -299,6 +302,7 @@ public class SoloScapeControllerPlugin extends Plugin
+             client.setControllerServerFeatures(config.serverFeatures());
+             client.setControllerPanelEnabled(config.interfaceControls());
+             Canvas canvas = client.getCanvas();
++            if(!client.hasLocalPlayer())ui.clearHistory();
+             if (!state.connected || canvas == null || !canvas.isFocusOwner() || !client.hasLocalPlayer())
+             {
+                 client.setControllerCameraInput(0, 0);cameraArmed=false;
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+index aa0043a..3bd8105 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+@@ -30,13 +30,17 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+         UiState.Panel panel=ui.focusedPanel();
+         UiState.Widget[] widgets=panel==null?ui.state().inventory:panel.panes[ui.focusedPane()].widgets;
+         String title=panel==null?"Inventory":panel.name+" / "+panel.panes[ui.focusedPane()].name;
+-        Rectangle[] actions=paint(graphics,presentation,title,widgets,ui.focus(),plugin.confirmationHint(),plugin.config().glyphs(),ui.context()==null?-1:ui.contextIndex());
++        Rectangle[] actions=paint(graphics,presentation,title,widgets,ui.focus(),plugin.confirmationHint(),plugin.config().glyphs(),ui.context()==null?-1:ui.contextIndex(),plugin::hint,widget->client.getControllerItemImage(widget.itemId,widget.quantity));
+         hit=new HitMap(presentation.bounds,presentation.content,widgets,ui.focus(),actions,System.nanoTime());
+         return null;
+     }
+     public static Rectangle[] paint(Graphics2D graphics,PanelPresentation view,String title,UiState.Widget[] widgets,UiState.Widget focus,String confirmation,ControllerGlyphs glyphs,int selectedAction)
++    {return paint(graphics,view,title,widgets,focus,confirmation,glyphs,selectedAction,glyphs::text);}
++    public static Rectangle[] paint(Graphics2D graphics,PanelPresentation view,String title,UiState.Widget[] widgets,UiState.Widget focus,String confirmation,ControllerGlyphs glyphs,int selectedAction,java.util.function.Function<String,String> hints)
++    {return paint(graphics,view,title,widgets,focus,confirmation,glyphs,selectedAction,hints,widget->null);}
++    public static Rectangle[] paint(Graphics2D graphics,PanelPresentation view,String title,UiState.Widget[] widgets,UiState.Widget focus,String confirmation,ControllerGlyphs glyphs,int selectedAction,java.util.function.Function<String,String> hints,java.util.function.Function<UiState.Widget,java.awt.image.BufferedImage> images)
+     {
+-        java.util.List<Rectangle> actionBounds=new java.util.ArrayList<>();
++        Rectangle[] actionBounds=new Rectangle[focus==null?0:focus.actions.length];
+         Graphics2D draw=(Graphics2D)graphics.create();
+         try
+         {
+@@ -57,7 +61,11 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+                 draw.setColor(widget.itemId>=0?Color.WHITE:new Color(180,192,202));
+                 String name=widget.name;
+                 int inset=Math.max(4,(int)(6*scale));
+-                draw.drawString(fit(draw,name,cell.width-inset*2),cell.x+inset,cell.y+inset+draw.getFontMetrics().getAscent());
++                java.awt.image.BufferedImage icon=widget.itemId>=0?images.apply(widget):null;
++                int iconWidth=icon==null?0:Math.min((int)(36*scale),cell.height-inset*2);
++                if(icon!=null)draw.drawImage(icon,cell.x+inset,cell.y+inset,iconWidth,Math.max(1,iconWidth*32/36),null);
++                int labelX=cell.x+inset+(iconWidth==0?0:iconWidth+inset);
++                draw.drawString(fit(draw,name,cell.x+cell.width-inset-labelX),labelX,cell.y+inset+draw.getFontMetrics().getAscent());
+                 draw.setColor(new Color(166,190,206));
+                 String secondary=widget.itemId>=0?"×"+widget.quantity:widget.actions.length>0?widget.actions[0].label:"";
+                 draw.drawString(fit(draw,secondary,cell.width-inset*2),cell.x+inset,cell.y+cell.height-inset);
+@@ -66,27 +74,31 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+             int width=box.x+box.width-x-(int)(14*scale),line=Math.max(14,draw.getFontMetrics().getHeight()+3);
+             if(focus!=null)
+             {
++                java.awt.image.BufferedImage icon=focus.itemId>=0?images.apply(focus):null;
++                if(icon!=null){int size=Math.min(width,(int)(54*scale));draw.drawImage(icon,x,y,size,size*32/36,null);y+=size*32/36+line/2;}
+                 draw.setColor(new Color(245,203,98));y=text(draw,focus.name,x,y,width,line);
+                 if(focus.itemId>=0){draw.setColor(Color.WHITE);y=text(draw,"Quantity: "+focus.quantity,x,y+line/2,width,line);}
+                 draw.setColor(new Color(170,188,200));y+=line;
+                 y=text(draw,"Native actions",x,y,width,line);
+                 draw.setColor(Color.WHITE);
+-                for(int i=0;i<focus.actions.length;i++)
++                int shown=Math.max(1,(view.content.y+view.content.height-y)/(line+5));
++                int start=Math.max(0,Math.min(Math.max(0,focus.actions.length-shown),selectedAction-shown+1));
++                for(int i=start;i<Math.min(focus.actions.length,start+shown);i++)
+                 {
+                     if(y>view.content.y+view.content.height-line)break;
+-                    Rectangle actionBox=new Rectangle(x,y,width,line+3);actionBounds.add(actionBox);
++                    Rectangle actionBox=new Rectangle(x,y,width,line+3);actionBounds[i]=actionBox;
+                     draw.setColor(i==selectedAction?new Color(75,97,110):new Color(34,47,59));draw.fill(actionBox);
+                     draw.setColor(i==selectedAction?new Color(245,203,98):Color.WHITE);
+-                    draw.drawString(fit(draw,focus.actions[i].label,width-8),x+4,y+draw.getFontMetrics().getAscent());y+=line+5;
++                    draw.drawString(fit(draw,focus.actions[i].label+(i==start&&start>0?" ↑":i==start+shown-1&&i+1<focus.actions.length?" ↓":""),width-8),x+4,y+draw.getFontMetrics().getAscent());y+=line+5;
+                 }
+             }
+             draw.setColor(confirmation==null?new Color(190,207,218):new Color(245,203,98));
+-            String hint=confirmation==null?"D-pad: move/page · A: use · X / right click: actions · LB/RB: pane · B: back":confirmation;
++            String hint=confirmation==null?"D-pad: move · RS: scroll · A: use · X / right click: actions · LB/RB: pane · B: back":confirmation;
+             draw.clipRect(box.x,box.y,box.width,box.height-(int)(8*scale));
+-            text(draw,glyphs.text(hint),box.x+(int)(16*scale),box.y+box.height-(int)(48*scale),box.width-(int)(32*scale),line);
++            text(draw,hints.apply(hint),box.x+(int)(16*scale),box.y+box.height-(int)(48*scale),box.width-(int)(32*scale),line);
+         }
+         finally{draw.dispose();}
+-        return actionBounds.toArray(new Rectangle[0]);
++        return actionBounds;
+     }
+     private static int text(Graphics2D draw,String text,int x,int y,int width,int line)
+     {
+@@ -115,7 +127,7 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+         if(!captured)return event;
+         if(System.nanoTime()-current.time>=150_000_000L){event.consume();return event;}
+         if(event.getButton()==MouseEvent.BUTTON1 && current.focus!=null)
+-            for(int i=0;i<current.actions.length;i++)if(current.actions[i].contains(event.getPoint()))
++            for(int i=0;i<current.actions.length;i++)if(current.actions[i]!=null&&current.actions[i].contains(event.getPoint()))
+             {
+                 final UiState.Action action=current.focus.actions[i];
+                 clientThread.invokeLater(()->{if(plugin.customPanelActive())plugin.getUi().mouseInvoke(current.focus,action,System.nanoTime());});
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+index 2ce7841..0d5167b 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+@@ -19,7 +19,7 @@ public final class SoloScapeQuickRadialOverlay extends Overlay
+     @Override public Dimension render(Graphics2D g)
+     {
+         if (!plugin.isActive() || client.getCanvas()==null) return null;
+-        if (plugin.getQuick().active()) paint(g,client.getCanvas().getWidth(),client.getCanvas().getHeight(),plugin.getQuick(),plugin.config().overlayScale()/100.0,plugin.config().glyphs());
++        if (plugin.getQuick().active()) paint(g,client.getCanvas().getWidth(),client.getCanvas().getHeight(),plugin.getQuick(),plugin.config().overlayScale()/100.0,plugin.config().glyphs(),plugin::hint);
+         else if (plugin.bindingWarning()!=null || plugin.config().showGuide()) guide(g);
+         return null;
+     }
+@@ -31,21 +31,23 @@ public final class SoloScapeQuickRadialOverlay extends Overlay
+             g.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,(int)(13*plugin.config().overlayScale()/100.0)));
+             String[] lines=plugin.bindingWarning()!=null?new String[]{plugin.bindingWarning()}:new String[]{
+                 "CONTROLLER GUIDE — hide in SoloScape Controller settings",
+-                "Left stick: move / aim · Right stick: camera · LT: aim · Full tilt: direct-mode run",
++                "Left stick: move / aim · Right stick: camera / menu scroll · LT: aim · Full tilt: direct-mode run",
+                 "A: interact · X: actions · LB/RB: targets / panes · B: back / cancel",
+-                plugin.config().homeButton()+": home tabs · "+plugin.config().quickButton()+": quick actions · "+plugin.config().inventoryButton()+": inventory",
++                "View: home tabs · Start: quick actions · Y: inventory",
+                 "D-pad: UI focus / scroll · Production LB/RB: amount · A: make recipe",
+                 "Quick slots: focus food, potion, prayer or spell; open quick wheel; X: assign · Y: clear",
+                 "All slots start empty · Potion bindings use the lowest available dose · Plugin Reset restores controls"};
+             int max=Math.max(100,client.getCanvas().getWidth()-32),w=0,lineHeight=g.getFontMetrics().getHeight()+5;
+-            for(String line:lines) w=Math.max(w,Math.min(max,g.getFontMetrics().stringWidth(plugin.config().glyphs().text(line))+20));
++            for(String line:lines) w=Math.max(w,Math.min(max,g.getFontMetrics().stringWidth(plugin.hint(line))+20));
+             int y=Math.max(8,client.getCanvas().getHeight()-lines.length*lineHeight-20);
+             g.setColor(new Color(0,0,0,225));g.fillRoundRect(8,y,w,lines.length*lineHeight+12,10,10);g.setColor(Color.WHITE);
+-            for(int i=0;i<lines.length;i++) centreFit(g,plugin.config().glyphs().text(lines[i]),18,y+lineHeight*(i+1),w-20,false);
++            for(int i=0;i<lines.length;i++) centreFit(g,plugin.hint(lines[i]),18,y+lineHeight*(i+1),w-20,false);
+         }
+         finally { g.dispose(); }
+     }
+     public static void paint(Graphics2D graphics,int width,int height,QuickRadialControls quick,double scale,ControllerGlyphs glyphs)
++    { paint(graphics,width,height,quick,scale,glyphs,glyphs::text); }
++    public static void paint(Graphics2D graphics,int width,int height,QuickRadialControls quick,double scale,ControllerGlyphs glyphs,java.util.function.Function<String,String> hints)
+     {
+         Graphics2D g=(Graphics2D)graphics.create();
+         try
+@@ -68,8 +70,8 @@ public final class SoloScapeQuickRadialOverlay extends Overlay
+             g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,Math.max(12,(int)(16*s))));g.setColor(new Color(255,218,105));
+             centreFit(g,quick.label(quick.selected()),(int)cx,(int)cy-16,(int)(inner*1.8),true);
+             g.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,Math.max(10,(int)(12*s))));g.setColor(Color.WHITE);
+-            centreFit(g,glyphs.text("A: use · B: back"),(int)cx,(int)cy+8,(int)(inner*1.8),true);
+-            centreFit(g,glyphs.text("X: assign · Y: clear"),(int)cx,(int)cy+30,(int)(inner*1.8),true);
++            centreFit(g,hints.apply("A: use · B: back"),(int)cx,(int)cy+8,(int)(inner*1.8),true);
++            centreFit(g,hints.apply("X: assign · Y: clear"),(int)cx,(int)cy+30,(int)(inner*1.8),true);
+             centreFit(g,"QUICK ACTIONS",(int)cx,(int)(cy-radius-14),width-30,true);
+             centreFit(g,quick.message()==null?(quick.canBind()?"Current action ready to assign":"Focus food, potion, prayer or spell to assign"):quick.message(),(int)cx,(int)(cy+radius+23),width-30,true);
+         }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java
+index 7b860df..32a26e1 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java
+@@ -35,7 +35,7 @@ public final class SoloScapeTabRadialOverlay extends Overlay
+     @Override public Dimension render(Graphics2D graphics)
+     {
+         if (!plugin.isActive() || !plugin.getRadial().active() || client.getCanvas() == null) return null;
+-        paint(graphics, client.getCanvas().getWidth(), client.getCanvas().getHeight(), plugin.getRadial(),plugin.config().overlayScale()/100.0,plugin.config().glyphs());
++        paint(graphics, client.getCanvas().getWidth(), client.getCanvas().getHeight(), plugin.getRadial(),plugin.config().overlayScale()/100.0,plugin.config().glyphs(),plugin::hint);
+         return null;
+     }
+ 
+@@ -44,6 +44,8 @@ public final class SoloScapeTabRadialOverlay extends Overlay
+         paint(graphics,width,height,radial,1,ControllerGlyphs.XBOX);
+     }
+     public static void paint(Graphics2D graphics,int width,int height,TabRadialControls radial,double scale,ControllerGlyphs glyphs)
++    { paint(graphics,width,height,radial,scale,glyphs,glyphs::text); }
++    public static void paint(Graphics2D graphics,int width,int height,TabRadialControls radial,double scale,ControllerGlyphs glyphs,java.util.function.Function<String,String> hints)
+     {
+         Graphics2D draw = (Graphics2D) graphics.create();
+         try
+@@ -79,8 +81,8 @@ public final class SoloScapeTabRadialOverlay extends Overlay
+             draw.setColor(new Color(255, 218, 105)); centre(draw, TABS[radial.selected()].label, (int) cx, (int) cy - 9);
+             draw.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, Math.max(10,(int)(12*scale))));
+             draw.setColor(Color.WHITE);
+-            centre(draw, radial.message() != null ? radial.message() : radial.available(radial.selected()) ? glyphs.text("A  Open tab") : "Unavailable here", (int) cx, (int) cy + 15);
+-            draw.setColor(new Color(194, 185, 161)); centre(draw, glyphs.text("B  Back"), (int) cx, (int) cy + 38);
++            centre(draw, radial.message() != null ? radial.message() : radial.available(radial.selected()) ? hints.apply("A  Open tab") : "Unavailable here", (int) cx, (int) cy + 15);
++            draw.setColor(new Color(194, 185, 161)); centre(draw, hints.apply("B  Back"), (int) cx, (int) cy + 38);
+             draw.setFont(new Font(Font.SANS_SERIF, Font.BOLD, Math.max(10,(int)(14*scale))));
+             draw.setColor(new Color(255, 222, 139)); centre(draw, "HOME TABS", (int) cx, (int) (cy - radius - 13));
+             draw.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, Math.max(10,(int)(12*scale))));
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java
+index 903cfe2..da108af 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java
+@@ -48,7 +48,7 @@ public final class SoloScapeTargetOverlay extends Overlay
+             Color gold = new Color(255, 215, 75);
+             OverlayUtil.renderPolygon(draw, footprint, gold, new Color(255, 215, 75, 55), target.serverApproach?new BasicStroke(3,BasicStroke.CAP_BUTT,BasicStroke.JOIN_ROUND,10,new float[]{6,4},0):new BasicStroke(3));
+             draw.setFont(new java.awt.Font(java.awt.Font.SANS_SERIF,java.awt.Font.BOLD,(int)(13*plugin.config().overlayScale()/100.0)));
+-            String label = plugin.config().glyphs().text("A: " + target.option + " " + target.name + (target.serverApproach?" · server approach":""));
++            String label = plugin.hint("A: " + target.option + " " + target.name + (target.serverApproach?" · server approach":""));
+             int max=client.getCanvas().getWidth()-20;
+             String full=label;
+             while(!label.isEmpty() && draw.getFontMetrics().stringWidth(label)>max) label=label.substring(0,label.length()-1);
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+index 2bf2e5e..0f10ef2 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+@@ -26,15 +26,17 @@ public final class SoloScapeUiOverlay extends Overlay
+     @Override public Dimension render(Graphics2D graphics)
+     {
+         if (!plugin.isActive() || plugin.customPanelActive() || plugin.getQuick().active() || plugin.getRadial().active() || client.getCanvas()==null) return null;
+-        return paint(graphics,plugin.getUi(),client.getCanvas().getWidth(),client.getCanvas().getHeight(),plugin.config().overlayScale()/100.0,plugin.config().glyphs());
++        return paint(graphics,plugin.getUi(),client.getCanvas().getWidth(),client.getCanvas().getHeight(),plugin.config().overlayScale()/100.0,plugin.config().glyphs(),plugin::hint);
+     }
+     public static Dimension paint(Graphics2D graphics,UiControls ui)
+     {
+         return paint(graphics,ui,765,503,1,ControllerGlyphs.XBOX);
+     }
+     public static Dimension paint(Graphics2D graphics,UiControls ui,int canvasWidth,int canvasHeight,double scale,ControllerGlyphs glyphs)
++    { return paint(graphics,ui,canvasWidth,canvasHeight,scale,glyphs,glyphs::text); }
++    public static Dimension paint(Graphics2D graphics,UiControls ui,int canvasWidth,int canvasHeight,double scale,ControllerGlyphs glyphs,java.util.function.Function<String,String> hints)
+     {
+-        String prompt = glyphs.text(ui.prompt());
++        String prompt = hints.apply(ui.prompt());
+         if (prompt == null) return null;
+         Graphics2D draw = (Graphics2D) graphics.create();
+         try
+@@ -83,7 +85,7 @@ public final class SoloScapeUiOverlay extends Overlay
+             if (menu != null)
+             {
+                 int menuWidth = 160;
+-                for (UiState.Action action : menu.actions) menuWidth = Math.max(menuWidth, draw.getFontMetrics().stringWidth(glyphs.text(action.label)) + 20);
++                for (UiState.Action action : menu.actions) menuWidth = Math.max(menuWidth, draw.getFontMetrics().stringWidth(hints.apply(action.label)) + 20);
+                 menuWidth=Math.min(menuWidth,Math.max(100,canvasWidth-16));
+                 int rowHeight=draw.getFontMetrics().getHeight()+8;
+                 int shown=Math.max(1,Math.min(menu.actions.length,(canvasHeight-menuY-14)/rowHeight));
+@@ -94,7 +96,7 @@ public final class SoloScapeUiOverlay extends Overlay
+                     int row=i-start;
+                     if(i==ui.contextIndex()) {draw.setColor(new Color(110,90,35));draw.fillRect(10,menuY+3+row*rowHeight,menuWidth-4,rowHeight-1);}
+                     draw.setColor(i==ui.contextIndex()?new Color(255,220,95):Color.WHITE);
+-                    String label=glyphs.text(menu.actions[i].label)+(row==0 && start>0?" ↑":row==shown-1 && start+shown<menu.actions.length?" ↓":"");
++                    String label=hints.apply(menu.actions[i].label)+(row==0 && start>0?" ↑":row==shown-1 && start+shown<menu.actions.length?" ↓":"");
+                     draw.drawString(fit(draw,label,menuWidth-16),16,menuY+5+draw.getFontMetrics().getAscent()+row*rowHeight);
+                 }
+             }
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+index 63636b7..48fd62c 100644
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -22,7 +22,7 @@ public final class SoloScapeLauncher
+     private final JProgressBar progress = new JProgressBar();
+     private final JButton play = new JButton("Continue"), stop = new JButton("Save & Quit");
+     private final JButton create = new JButton("New Character"), backup = new JButton("Back Up"), restore = new JButton("Restore Backup");
+-    private final JButton diagnostics = new JButton("Diagnostics"), settings = new JButton("Launcher Settings");
++    private final JButton diagnostics = new JButton("Diagnostics"), settings = new JButton("Launcher Settings"), retention=new JButton("Manage Backups");
+     private final ExecutorService requests = Executors.newSingleThreadExecutor();
+     private final Process backend;
+     private final BufferedWriter input;
+@@ -69,9 +69,9 @@ public final class SoloScapeLauncher
+         content.add(body, BorderLayout.CENTER);
+         JPanel footer = new JPanel(new BorderLayout(0, 12));
+         JPanel buttons = new JPanel(new GridLayout(2, 4, 10, 10));
+-        for (JButton button : new JButton[]{play, create, backup, restore, stop, settings, diagnostics})
++        for (JButton button : new JButton[]{play, create, backup, restore, stop, settings, diagnostics, retention})
+         { button.setFont(button.getFont().deriveFont(15f)); button.setPreferredSize(new Dimension(145, 44)); buttons.add(button); }
+-        buttons.add(new JLabel("D-pad / stick: focus · A: select · B: back"));
++
+         footer.add(buttons, BorderLayout.CENTER);
+         JPanel state = new JPanel(new BorderLayout(8, 8)); state.add(status, BorderLayout.CENTER);
+         progress.setPreferredSize(new Dimension(110, 16)); state.add(progress, BorderLayout.EAST); footer.add(state, BorderLayout.SOUTH);
+@@ -85,6 +85,7 @@ public final class SoloScapeLauncher
+         restore.addActionListener(e -> restoreCharacter());
+         diagnostics.addActionListener(e -> diagnose());
+         settings.addActionListener(e -> settings());
++        retention.addActionListener(e -> retention());
+         frame.setVisible(true); list.requestFocusInWindow();
+         refresh = new javax.swing.Timer(1000, e -> poll()); refresh.start(); request(command("settings"), result -> {port=result.getAsJsonObject().get("port").getAsInt();poll();});
+         startController();
+@@ -137,7 +138,7 @@ public final class SoloScapeLauncher
+         String stage = data.get("stage").getAsString(); progress.setIndeterminate(running && !stage.equals("playing"));
+         stop.setEnabled(running); create.setEnabled(!running); backup.setEnabled(!running); restore.setEnabled(!running);
+         play.setEnabled(!running && list.getSelectedValue() != null && !list.getSelectedValue().damaged);
+-        settings.setEnabled(!running);
++        settings.setEnabled(!running);retention.setEnabled(!running&&list.getSelectedValue()!=null&&!list.getSelectedValue().damaged);
+     }
+     private void showCharacter()
+     {
+@@ -177,6 +178,23 @@ public final class SoloScapeLauncher
+                 selected("restore", options.getSelectedValue());
+         });
+     }
++    private void retention()
++    {
++        CharacterRow row=list.getSelectedValue();if(row==null)return;
++        JSpinner keep=new JSpinner(new SpinnerNumberModel(10,2,100,1));
++        if(JOptionPane.showConfirmDialog(frame,keep,"Automatic backups to retain",JOptionPane.OK_CANCEL_OPTION)!=JOptionPane.OK_OPTION)return;
++        JsonObject cmd=command("retention_preview");cmd.addProperty("profile",row.id);cmd.addProperty("keep",(Integer)keep.getValue());
++        request(cmd,result->{JsonObject plan=result.getAsJsonObject();JsonArray remove=plan.getAsJsonArray("remove");
++            if(remove.size()==0){JOptionPane.showMessageDialog(frame,"No old automatic backups need cleanup.");return;}
++            StringBuilder text=new StringBuilder("Delete "+remove.size()+" verified old automatic backups ("+plan.get("bytes").getAsLong()+" bytes)?\n"+plan.get("note").getAsString()+"\n\n");
++            for(JsonElement record:remove)text.append(record.getAsJsonObject().get("name").getAsString()).append("\n");
++            JTextArea details=new JTextArea(text.toString(),18,65);details.setEditable(false);
++            if(JOptionPane.showConfirmDialog(frame,new JScrollPane(details),"Review backup cleanup",JOptionPane.OK_CANCEL_OPTION)!=JOptionPane.OK_OPTION)return;
++            JsonObject apply=command("retention_apply");apply.addProperty("profile",row.id);apply.addProperty("keep",plan.get("keep").getAsInt());apply.addProperty("token",plan.get("token").getAsString());
++            request(apply,done->{status.setText("Removed "+done.getAsJsonObject().get("removed").getAsInt()+" old automatic backups.");poll();});
++        });
++    }
++
+     private void diagnose()
+     {
+         request(command("diagnostics"), result -> {
+diff --git a/client/test/ControllerItemImagesTest.java b/client/test/ControllerItemImagesTest.java
+new file mode 100644
+index 0000000..91f5595
+--- /dev/null
++++ b/client/test/ControllerItemImagesTest.java
+@@ -0,0 +1,18 @@
++import org.junit.Test;
++import static org.junit.Assert.*;
++public class ControllerItemImagesTest
++{
++    @Test public void nativePixelsAreCopiedWithTransparentBackgroundAndExactQuantityKey()
++    {
++        ControllerItemImages.clear();int[] pixels=new int[36*32];pixels[0]=0x123456;
++        ControllerItemImages.capture(100,2,pixels);pixels[0]=0;
++        assertEquals(0xff123456,ControllerItemImages.get(100,2).getRGB(0,0));assertEquals(0,ControllerItemImages.get(100,2).getRGB(1,0));
++        assertNull(ControllerItemImages.get(100,1));ControllerItemImages.clear();assertNull(ControllerItemImages.get(100,2));
++    }
++    @Test public void capturedSpriteCacheIsBoundedAndInvalidImagesAreIgnored()
++    {
++        ControllerItemImages.clear();for(int i=0;i<130;i++)ControllerItemImages.capture(i,1,new int[36*32]);
++        assertNull(ControllerItemImages.get(0,1));assertNotNull(ControllerItemImages.get(129,1));
++        ControllerItemImages.capture(200,1,new int[2]);assertNull(ControllerItemImages.get(200,1));ControllerItemImages.clear();
++    }
++}
+diff --git a/client/test/net/runelite/client/input/controller/UiControlsTest.java b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+index 0ef17ff..f8cdcd3 100644
+--- a/client/test/net/runelite/client/input/controller/UiControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+@@ -84,6 +84,20 @@ public class UiControlsTest
+         ui.focusInventory(20);input.updateButtons(0);ui.update(input,21);press(ui,input,2,30);assertEquals(-1,ui.takeHomeBack());
+     }
+ 
++    @Test public void serverClosedBankCannotLeaveInventoryParentForLaterShop()
++    {
++        Fake game=new Fake();GamepadState input=new GamepadState();UiControls ui=new UiControls(game);
++        ui.focusInventory(1);ui.update(input,2);
++        UiState.Widget item=widget(0,100,"Fish");
++        UiState.Panel bank=new UiState.Panel(762,"Bank",new UiState.Pane[]{new UiState.Pane("Items",new UiState.Widget[]{item})});
++        game.state=new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,bank);ui.update(input,10);
++        game.state=UiState.EMPTY;ui.update(input,20);ui.update(input,21);
++        UiState.Panel shop=new UiState.Panel(620,"Shop",bank.panes);
++        game.state=new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,shop);ui.update(input,30);
++        press(ui,input,2,40);game.state=UiState.EMPTY;input.updateButtons(0);ui.update(input,50);
++        assertEquals(0,game.opens);assertEquals(-1,game.openedTab);assertEquals(-1,ui.takeHomeBack());
++    }
++
+     @Test public void inventoryDescriptionsAreRequestedOnlyForEntryAndFocusIncludingRadialHandoff()
+     {
+         Fake game = new Fake(); GamepadState input = new GamepadState();
+diff --git a/client/test/net/runelite/client/plugins/soloscapecontroller/ControllerHintsTest.java b/client/test/net/runelite/client/plugins/soloscapecontroller/ControllerHintsTest.java
+new file mode 100644
+index 0000000..c6fb555
+--- /dev/null
++++ b/client/test/net/runelite/client/plugins/soloscapecontroller/ControllerHintsTest.java
+@@ -0,0 +1,11 @@
++package net.runelite.client.plugins.soloscapecontroller;
++import org.junit.Test;
++import static org.junit.Assert.*;
++public class ControllerHintsTest
++{
++    private final ControllerButton[] swapped={ControllerButton.B,ControllerButton.A,ControllerButton.RIGHT_STICK,ControllerButton.RIGHT_BUMPER,ControllerButton.LEFT_BUMPER,ControllerButton.Y,ControllerButton.VIEW,ControllerButton.START};
++    @Test public void swappedPhysicalLabelsAreMappedOnceIncludingPanesAndStickClicks()
++    {assertEquals("[B]: use · [A]: back · RS click: actions · RB/LB: pane",ControllerHints.text("A: use · B: back · X: actions · LB/RB: pane",ControllerGlyphs.XBOX,swapped));}
++    @Test public void playstationPhysicalLabelsFollowBindings()
++    {assertEquals("Circle: use · Cross: back · R1/L1: pane",ControllerHints.text("A: use · B: back · LB/RB: pane",ControllerGlyphs.PLAYSTATION,swapped));}
++}
+diff --git a/client/test/net/runelite/client/plugins/soloscapecontroller/PanelOverlayTest.java b/client/test/net/runelite/client/plugins/soloscapecontroller/PanelOverlayTest.java
+new file mode 100644
+index 0000000..3b76784
+--- /dev/null
++++ b/client/test/net/runelite/client/plugins/soloscapecontroller/PanelOverlayTest.java
+@@ -0,0 +1,30 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import java.awt.*;
++import java.awt.image.BufferedImage;
++import net.runelite.client.input.controller.*;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class PanelOverlayTest {
++    @Test public void longActionListKeepsSelectedNativeActionVisibleAndHitMapped() {
++        UiState.Action[] actions=new UiState.Action[24];
++        for(int i=0;i<actions.length;i++)actions[i]=new UiState.Action("Action "+i,18,i);
++        UiState.Widget item=new UiState.Widget(149<<16,0,100,12,"Long native item name",new Rectangle(0,0,32,32),actions);
++        PanelPresentation view=new PanelPresentation(765,503,1);
++        UiState shown=view.present(new UiState(new UiState.Widget[]{item},new UiState.Widget[0],-1),item,true,false,false,false);
++        BufferedImage canvas=new BufferedImage(765,503,BufferedImage.TYPE_INT_ARGB);
++        Graphics2D g=canvas.createGraphics();
++        try {
++            Rectangle[] hits=SoloScapePanelOverlay.paint(g,view,"Inventory",shown.inventory,shown.inventory[0],null,ControllerGlyphs.XBOX,23,s->s,w->new BufferedImage(36,32,BufferedImage.TYPE_INT_ARGB));
++            assertEquals(24,hits.length);
++            assertNull(hits[0]);
++            assertNotNull(hits[23]);
++            assertTrue(view.bounds.contains(hits[23]));
++            for(int i=0;i<hits.length;i++)if(hits[i]!=null) {
++                assertTrue(view.bounds.contains(hits[i]));
++                for(int j=i+1;j<hits.length;j++)if(hits[j]!=null)assertFalse(hits[i].intersects(hits[j]));
++            }
++        } finally {g.dispose();}
++    }
++}
