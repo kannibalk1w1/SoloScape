@@ -141,7 +141,7 @@ class Profile:
         return self.directory / 'states' / identifier(self.manifest['generation'])
 
     @contextmanager
-    def lock(self, reload=True):
+    def lock(self, reload=True, descriptor=False):
         path = self.directory / 'profile.lock'
         fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
         with os.fdopen(fd, 'a+') as lock:
@@ -151,7 +151,7 @@ class Profile:
                 raise RuntimeError('This character/world is running or another save operation is active.') from exc
             if reload:
                 self.reload()
-            yield self
+            yield lock if descriptor else self
 
     def metadata(self):
         result = {k: self.manifest[k] for k in ('id', 'label', 'account', 'created', 'last_played')}

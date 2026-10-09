@@ -242,6 +242,7 @@ def _launch(skip_build=False, build_guard=None):
             write_build_stamp(server_jar, client_jar)
         if build_guard is not None:
             fcntl.flock(build_guard, fcntl.LOCK_SH)
+        guards = (lock.fileno(),) + (() if build_guard is None else (build_guard.fileno(),))
         rotate_logs()
         server = client = None
         offsets = {}
@@ -258,7 +259,7 @@ def _launch(skip_build=False, build_guard=None):
 
         with (RUNTIME / "server.log").open("w") as server_log, (RUNTIME / "client.log").open("w") as client_log:
             try:
-                server = subprocess.Popen([server_java, "-jar", str(server_jar)], cwd=SERVER, stdout=server_log, stderr=subprocess.STDOUT, start_new_session=True)
+                server = subprocess.Popen([server_java, "-jar", str(server_jar)], cwd=SERVER, stdout=server_log, stderr=subprocess.STDOUT, start_new_session=True, pass_fds=guards)
                 deadline = time.monotonic() + READY_TIMEOUT
                 while True:
                     if server.poll() is not None:
@@ -271,7 +272,7 @@ def _launch(skip_build=False, build_guard=None):
                     if time.monotonic() > deadline:
                         raise RuntimeError("Server readiness timed out; see .runtime/server.log.")
                     time.sleep(0.25)
-                client = subprocess.Popen([client_java, "-jar", str(client_jar), "--address", "127.0.0.1", "--port", str(PORT)], cwd=CLIENT, stdout=client_log, stderr=subprocess.STDOUT, start_new_session=True)
+                client = subprocess.Popen([client_java, "-jar", str(client_jar), "--address", "127.0.0.1", "--port", str(PORT)], cwd=CLIENT, stdout=client_log, stderr=subprocess.STDOUT, start_new_session=True, pass_fds=guards)
                 print("Client started on localhost. Logs: .runtime/server.log and .runtime/client.log. Ctrl+C stops both.", flush=True)
                 while client.poll() is None:
                     stream_logs()

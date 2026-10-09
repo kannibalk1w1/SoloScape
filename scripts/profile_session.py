@@ -21,11 +21,11 @@ def owned_environment(profile, port):
 
 
 def run(profile, cancelled, notify, port=43594, client_enabled=True, checked=True):
-    with local_dev.build_lock(shared=True):
-        return _run(profile, cancelled, notify, port, client_enabled, checked)
+    with local_dev.build_lock(shared=True) as build_guard:
+        return _run(profile, cancelled, notify, port, client_enabled, checked, build_guard)
 
 
-def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=True):
+def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=True, build_guard=None):
     """Blocking worker. notify(stage, message), cancelled is a threading.Event."""
     if checked:
         if not local_dev.doctor(port=port, require_display=client_enabled, output=lambda *args, **kw: print(*args, file=sys.stderr, **kw)):
@@ -33,7 +33,11 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
     server_jar = local_dev.jar(local_dev.SERVER / 'game', 'void-server-*.jar')
     client_jar = local_dev.jar(local_dev.CLIENT / 'client', 'void-client-*.jar')
     local_dev.verify_build_stamp(server_jar, client_jar)
-    with profile.lock():
+    with profile.lock(descriptor=True) as profile_guard:
+        # Children keep these same flock descriptions alive if the launcher dies.
+        # Closing the parent's descriptors must not permit a live world to be
+        # restored/rebuilt underneath an orphaned JVM.
+        guards = (profile_guard.fileno(),) + (() if build_guard is None else (build_guard.fileno(),))
         metadata = profile.metadata()
         if metadata['error']:
             raise ValueError('Character save needs recovery: ' + metadata['error'])
@@ -65,7 +69,7 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
                     return 0
                 server = subprocess.Popen([os.environ.get('SERVER_JAVA', 'java'), '-jar', str(server_jar)],
                                           cwd=local_dev.SERVER, env=environment, stdout=server_log,
-                                          stderr=subprocess.STDOUT, start_new_session=True)
+                                          stderr=subprocess.STDOUT, start_new_session=True, pass_fds=guards)
                 deadline = time.monotonic() + local_dev.READY_TIMEOUT
                 while not cancelled.is_set():
                     if server.poll() is not None:
@@ -86,7 +90,7 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
                                                '-Dsoloscape.cache.root=' + str(client_home / 'native-cache'),
                                                '-jar', str(client_jar), '--address', '127.0.0.1', '--port', str(port)],
                                               cwd=local_dev.CLIENT, env=environment, stdout=client_log,
-                                              stderr=subprocess.STDOUT, start_new_session=True)
+                                              stderr=subprocess.STDOUT, start_new_session=True, pass_fds=guards)
                 notify('playing', 'World ready. Save & Quit waits for normal save hooks.')
                 while not cancelled.is_set():
                     if server.poll() is not None:

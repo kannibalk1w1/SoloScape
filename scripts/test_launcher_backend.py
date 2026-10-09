@@ -2,6 +2,9 @@
 import io
 import json
 import os
+import signal
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import threading
@@ -40,6 +43,48 @@ class LauncherTests(unittest.TestCase):
         self.env.start();self.addCleanup(self.env.stop)
         local_dev.write_build_stamp(local_dev.jar(local_dev.SERVER/'game','void-server-*.jar'), local_dev.jar(local_dev.CLIENT/'client','void-client-*.jar'))
         self.profile = profiles.create('Disposable', 'Tester')
+
+    def test_killed_launcher_leaves_world_and_build_locked_until_owned_children_exit(self):
+        # Use a separate launcher process so SIGKILL cannot run Python cleanup.
+        harness = """
+import sys, threading
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import local_dev, profiles, profile_session
+root=Path(sys.argv[2])
+local_dev.ROOT=root;local_dev.RUNTIME=root/'.runtime'
+local_dev.SERVER=root/'upstream/game-server';local_dev.CLIENT=root/'upstream/runelite-client'
+profiles.PROFILES=root/'profiles'
+profile=profiles.Profile(Path(sys.argv[3]))
+profile_session.run(profile,threading.Event(),lambda *args:None,checked=False)
+"""
+        process=subprocess.Popen([sys.executable,'-c',harness,str(Path(__file__).parent),str(self.root),str(self.profile.directory)],
+                                 stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        try:
+            self.wait_for(lambda:(self.root/'client.args').exists() or process.poll() is not None)
+            self.assertIsNone(process.poll(),'Isolated launcher failed before starting')
+            process.kill();process.wait(timeout=5)
+            with self.assertRaises(RuntimeError):self.profile.backup()
+            with self.assertRaisesRegex(RuntimeError,'world or build is active'):
+                with local_dev.build_lock():pass
+            self.assertEqual(len(list((self.profile.directory/'backups').glob('*.zip'))),1)
+        finally:
+            if process.poll() is None:process.kill();process.wait(timeout=5)
+            for role in ('client','server'):
+                pid=self.root/(role+'.pid')
+                if pid.exists():
+                    try:os.kill(int(pid.read_text()),signal.SIGTERM)
+                    except ProcessLookupError:pass
+            self.wait_for(lambda:all((self.root/(role+'.stopped')).exists() for role in ('client','server')))
+        # Wait for inherited descriptions to close after each graceful child exit.
+        def released():
+            try:
+                with self.profile.lock():pass
+                with local_dev.build_lock():pass
+                return True
+            except RuntimeError:return False
+        self.wait_for(released)
+        self.profile.backup()
 
     def test_launcher_settings_persist_and_invalid_port_does_not_overwrite(self):
         backend=launcher_backend.Backend()
