@@ -1,87 +1,79 @@
 # SoloScape — combined morning / completion report
 
-8 October 2026. This combines the two earlier controller sprints and the larger approved console-alpha milestone. All implementation batches are committed and pushed to [overnight/controller-sprint](https://github.com/kannibalk1w1/SoloScape/tree/overnight/controller-sprint). Public main remains at the earlier radial prototype. Your original running game, characters, cache and world were preserved. Private validation servers used disposable worlds, a separate port and virtual display.
+9 October 2026. This combines the two original controller sprints, the larger console alpha, and the approved cohesive session milestone. The implementation is committed to [overnight/controller-sprint](https://github.com/kannibalk1w1/SoloScape/tree/overnight/controller-sprint); public main remains at its preceding baseline. The existing game was left running. Original saves/cache were not migrated or removed. Private native checks used a disposable profile, separate port and virtual display.
 
-The earlier combined report is preserved in [MORNING_REPORT_CONTROLLER_SPRINTS.md](MORNING_REPORT_CONTROLLER_SPRINTS.md); the first sprint also has its own [archive](MORNING_REPORT_SPRINT_1.md). This document supersedes their current-state instructions.
+Historical reports remain available: [two controller sprints](MORNING_REPORT_CONTROLLER_SPRINTS.md), [console alpha](MORNING_REPORT_CONSOLE_ALPHA.md), and [first sprint](MORNING_REPORT_SPRINT_1.md). This report supersedes their current-state instructions.
 
 ## Current state for ChatGPT discussion
 
-SoloScape is a playable, single-player-first revision-634 RuneScape project, implemented as reproducible patches over pinned 2011Scape/Void server and RuneLite-style client sources. It targets a pre-EoC 2010–2011 console-style experience with native controller controls and eventual Steam Deck support. Native tile simulation, collision, combat requirements and inventory transactions remain authoritative. Proprietary cache/assets, account data, credentials, runtimes and built jars stay outside the public source repository.
+SoloScape is a playable local, single-player-first revision-634 RuneScape project, delivered as reproducible patches over pinned 2011Scape/Void server and RuneLite-style client sources. The intended experience is pre-EoC RuneScape with console controls and eventual Steam Deck support. Tile simulation, collision, combat and inventory transactions remain native and server-authoritative. Assets, saves, credentials, runtimes and built jars stay outside the public source repository. Contributions are welcome within agreed maintainer-directed scope.
 
-The owner has physically confirmed local launch, controller camera, movement feedback, improved aiming/interaction and that optional direct movement feels good. The newer custom interfaces and profile lifecycle have automated evidence; they still need physical acceptance. There is no packaged release, measured Deck performance budget, full content audit, AI population, solo-economy redesign or complete original graphics replacement yet. Contributions remain maintainer-directed, with agreed scope and owner-controlled merges.
+The owner has confirmed launch, camera, movement feedback, improved aiming/interaction and that optional direct movement feels good. The newest menu hierarchy, artwork and recovery changes have automated evidence and still need physical acceptance. There is no packaged release, measured Deck performance budget, complete content audit, AI population, solo-economy redesign, exposed world pause or wholesale original graphics replacement.
 
-The project now has a graphical launcher and isolated independent world profiles, reversible custom controller screens, broad control configuration, server compatibility negotiation, reliable backup recovery, and repeatable native gameplay/save validation. Read [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) and [ROADMAP.md](ROADMAP.md) alongside this report when discussing direction in ChatGPT.
+Read [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) and the full proposed [ROADMAP.md](ROADMAP.md) alongside this report for discussion. The roadmap is a proposed backlog, not approval to implement every future feature.
 
-## Work delivered across all three batches
+## Combined delivery
 
-| Area | Earlier two sprints | Larger alpha |
-|---|---|---|
-| World input | Native camera, destination/direct movement, movement/target overlays, LT aim, cycling, X menus, loot and B cancel; exception recovery and cheaper idle snapshots | Eight remappable actions, overlap rejection, neutral rearming, Xbox/PlayStation/Deck presets and configurable direct-run threshold |
-| Native interface flows | Inventory/dialogue; bank/shop quantities, search and scrolling; equipment/prayer/spells and selection handoffs | Reusable custom presentation and four independent inventory/equipment/bank/shop toggles; names/quantities/native actions, worn items/bonus text, confirmation and mouse coexistence |
-| Wheels and production | Sixteen-tab Home wheel; eight explicit food/potion/prayer/spell quick slots; common Make amount, smithing/tanning/silver/jewellery navigation | Clear quick-slot wording; preserved native eligibility/selection; native special-attack investigation |
-| Readability | Scalable overlays, Xbox/PlayStation labels, keyboard, guide and three menu bindings | Canvas-fitted text-first grids, selected-item action sidebar, visible-window paging and native game/examine feedback |
-| Saves | Build fingerprints and retained logs; manual owned-process launch/shutdown | Independent profile/world generations, metadata, private authentication/client home, versioned verified backups, atomic restore, damaged-manifest recovery and stopped-world-copy import |
-| Application | Doctor and development launcher | Swing New/Continue launcher, progress, diagnostics, persisted local port, backups/restore and owned graceful Save & Quit |
-| Server lifecycle | Explicit matched-server opt-in, directional timeout/cancel gates | Loopback default, reload-stable environment ownership, atomic character/exchange writes, offer-counter crash recovery, per-session nonce capability negotiation and long-input-gap guards |
-| Gameplay evidence | Unit/renderer checks and limited known owner acceptance | Level-one native fishing→cooking→equipment→combat→food→save/load fixture; private fully rendered native New→Continue with verified capabilities and four checked backups |
-| Delivery/review | Patches through client 0014/server 0003, bounded actual Claude reviews | Client patches 0015–0019/server 0004–0008, additional actual Claude foundation/save/panel/follow-up audits, implementation fixes and full exported-stack verification |
+| Area | Earlier controller sprints | Console alpha | New session milestone |
+| --- | --- | --- | --- |
+| Movement/world | Camera, destination/direct movement toggle, movement markers, LT aim, cycling, X native menus, loot, B cancellation | Eight mappings, presets, conflict checks, run threshold, capability nonce, interruption guards | Camera/scroll ownership and neutral handoff across menus |
+| Native interfaces | Inventory/dialogue, bank/shop quantities/search, controller entry, equipment/prayer/spells, production | Optional custom inventory/equipment/bank/shop surfaces with fresh native validation and destructive confirmation | Shared Home/tab/modal ancestry, restored focus, active-pane right-stick scrolling, stale-parent cleanup |
+| Readability | Scalable overlays, Xbox/PS labels and guide | Native item names, quantities, bonuses, actions, mouse/trackpad, game feedback | Cached native item artwork, physical mapped hints, selected-action sidebar viewport |
+| Sessions/saves | Owned startup/readiness/shutdown and matched build stamp | Graphical New/Continue, independent worlds/generations, verified backups/restore, damaged metadata recovery, stopped-copy CLI import | Startup failure/save-hook ordering, native cancellation preservation, explicit previewed backup retention, restore-source protection |
+| Content | Ordinary native handlers retained | Level-one fishing/cooking/equipment/chicken/food/save route | Existing Cook's Assistant quest plus shop/milling/bank/fishing/cooking/combat/save route; actual Lumbridge travel; general-store validation repair |
+| Delivery | Public development branch, pinned patches, cache instructions, Claude reviews | Full patch reproduction and isolated graphical New/Continue | Build-only Prepare/update workflow, archive locks, acceptance/performance checklist, bounded Claude review and follow-up |
 
-## How to try this build
+## What changed in this milestone
 
-The current checkout already has matched client/server jars. Do not stop another game merely to inspect the launcher:
+**Menu back:** Settings opened from Home returns through its observed native child close to Settings, then Home, then world controls. An action list closes before its panel. Direct inventory retains its direct world return. Focus is remembered by native identity and refreshed before actions; server-closed modals discard their parent entry. Generic reopening of one server-owned modal from another remains limited to supported parent-tab restoration.
+
+**Right stick:** vertically scrolls/moves rows in the active pane, repeats slowly at gentle tilt and faster at strong tilt, and uses validated native scrolling at viewport edges. It never performs an item transaction. A held stick must return to neutral when opening/closing a menu. Camera is suppressed while menus own input. Horizontal-dominant tilt is ignored for these vertical panes. Confirm/actions/pane button presses take precedence over a simultaneous scroll step.
+
+**Art and hints:** original native sprite pixels are copied into a bounded 128-entry memory cache keyed by exact item/quantity. Names remain the fallback. Native sprite-cache hits after relog and offscreen items can still lack artwork, and outline variants may differ; no extra asset/model renderer runs on the overlay thread. Hints follow the eight physical mappings in one pass; native labels such as Withdraw-X and Make X remain unchanged. Long action lists preserve native indices and only drawn rows have hit targets.
+
+**Commerce/content:** Lumbridge general-store purchases previously failed the native validator because global stock was not registered in the player's validation context. A transient shared inventory reference now exists only while the shop is open, and is excluded from character saves. Tests still reject wrong item identity. The existing quest route earns ingredients/progress/rewards through native handlers. Only starting net/coins are seeded; valid deterministic rolls remove chance. A separate real-map test walks courtyard→village→north bridge and back. Full ingredient travel, gates and mill floor changes still need physical route acceptance.
+
+**Recovery/delivery:** failed preload/world startup returns after stopping owned services. The shared-world save hook is registered only after successful world loading. Native early cancellation preserves the entire saved world. Manage Backups previews filenames/bytes, keeps the chosen 2–100 recent automatic backups, and retains manual/import/damaged/restore-source archives and all generations. Cleanup locks the profile and refuses a changed preview. Prepare builds without launching a world, and exclusive archive locks refuse rebuilding while an owned session uses the jars.
+
+## Validation evidence
+
+| Check | Result |
+| --- | --- |
+| Client suite | 151 cases, zero failures/errors; one pre-existing optional SDL skip |
+| Root tooling/profile/lifecycle suite | 44 cases, all passing; disposable fixtures only |
+| Selected native game suite | 11 cases: seven existing shop cases, prior progression route, and three new session/shared-stock/actual-travel checks; all passing |
+| Prior alpha server module evidence | 74 config, 249 networking, 49 selected engine cases passed at the alpha checkpoint; not rerun or claimed as newly measured here |
+| Graphical native integration | New/Continue reach rendered world, ordinary native Continue and verified capabilities; XP/items/location preserve across save/load; four verified completed-session backups |
+| Real native cancellation | Observed early content-load cancellation before ready; every saved-world file preserved, no client started |
+| Original world preservation | Original saves/errors/derived path size/mtime fingerprints unchanged after private sessions |
+| Build/export | Matched shadow jars and stamp; full 87-file client and 31-file server stacks reproduce exactly; fresh/upgrade/reverse/idempotence verified |
+| Prepare | Succeeds with cached pinned setup without launching; correctly refuses during the native profile session |
+| Hygiene | Python compilation, ShellCheck and whitespace checks pass |
+
+Private Xvfb/software New and Continue complete-session totals were **27.407 s** and **25.532 s**. These include readiness dwell, client loading and shutdown; they are not frame-rate or input-latency benchmarks. The harness writes a local summary under `.runtime/alpha-tests/session-*/native-smoke-summary.json`; it is not committed. Neither fixture tests nor the graphical smoke claim physical controller/Deck acceptance or exhaustive cancellation at every loading phase.
+
+## Claude review
+
+Actual Claude reviewed navigation and the subsequent implementation in the existing Orca terminal, with bounded static passes. It found stale modal ancestry, physical-hint label rewriting and a build/session archive-lock gap. All were repaired; follow-up reports **no remaining blockers**. It also checked shared stock, retention and startup save-hook ordering. [Navigation review](CLAUDE_SESSION_NAVIGATION_REVIEW.md), [implementation and fixes](CLAUDE_SESSION_FOLLOWUP.md). Earlier alpha and sprint reviews remain archived. The review used the `orca-cli` skill; it was not a runtime or hardware test, and no current quota percentage is inferred.
+
+## Commits and next launch
+
+- `320f963`: menu ancestry, remembered focus and right-stick scrolling.
+- `017f2ad`: native item artwork, mapped hints, sidebar polish and explicit backup management.
+- `ef55e2a`: gameplay/shop validation, startup preservation, build locking, review fixes and setup/acceptance guidance.
+- A final documentation commit records this combined report and current-state backlog.
+
+To use the new build, Save & Quit the old game, then:
 
 ```bash
+./scripts/prepare-build.sh
 ./scripts/launcher.sh
 ```
 
-If another local world occupies 43594, choose an unused port in **Launcher Settings** before starting an independent profile. New Character creates an independent world; it does not migrate your existing character. Continue uses that profile's save generation. Save & Quit waits for the owned server's normal save hooks and verifies its backup. Each profile has a private client home, so enable **SoloScape Controller** inside a new profile as needed.
+Continue selects an isolated character world; it does not silently import the old development world. The legacy development path is `./scripts/dev-run.sh --no-build`. Cache acquisition/extraction remains in [CACHE_SETUP.md](CACHE_SETUP.md), sourced from the pinned upstream maintainer README rather than an official Jagex asset distribution. Launching the client does not supply a missing server archive.
 
-Custom Inventory, Equipment, Bank and Shop each default off in the plugin settings; enable them independently to test and disable for native fallback. Direct Movement and SoloScape Server Features remain optional; extension packets additionally require the current server's capability acknowledgement. Home and Quick wheels remain separate. D-pad focuses items/pages, LB/RB switches panes, A invokes the native primary action and X opens alternatives. Drop/Destroy needs a second separate press on the same unchanged chosen action. Quick wheel X assigns and Y clears. Configurable hints currently name logical actions; consult bindings after remapping.
+## Remaining work and recommended next step
 
-New Character's text fields currently use a desktop keyboard. Profile selection and launcher focus support SDL controller navigation. The desktop development path remains available with `./scripts/dev-run.sh --no-build`; it uses the legacy world, unlike the isolated profile launcher.
+The approved implementation/preparation list is in [CONSOLE_SESSION_TASKS.md](CONSOLE_SESSION_TASKS.md). Next, run the focused [physical acceptance matrix](CONSOLE_SESSION_ACCEPTANCE.md) and [existing quest route](CONSOLE_SESSION_ROUTE.md), recording specific awkward menu transitions and scroll behavior. Then fix those cases and measure representative Deck frame times/lifecycle before packaging or adding more systems.
 
-Fresh clones must use the development branch, pinned-source/runtime instructions in [README-SOLOSCAPE.md](../README-SOLOSCAPE.md), and [CACHE_SETUP.md](CACHE_SETUP.md). The cache guide includes the upstream-maintainer download source, archive/extraction instructions and recorded checksum. Launching the game does not fetch the server cache. Neither caches nor jars are published in this repository.
-
-An independent copy of a stopped world's saves can be imported with `python3 scripts/import-profile.py /path/to/stopped-world-copy --label "My character" --account "AccountName"`. All accounts and exchange files are retained; password hashes are unchanged. Login is manual unless `--remember-password` privately captures the existing password. Import refuses original upstream data and active profile storage. See [save validation/migration instructions](ALPHA_SAVE_VALIDATION.md).
-
-## Final validation evidence
-
-| Check | Result |
-|---|---|
-| Client unit cases | 139, zero failures/errors; one existing optional SDL virtual-controller skip |
-| Root tooling/profile/launcher cases | 37, all passing; disposable fixtures only |
-| Config cases | 74, all passing |
-| Networking cases | 249, all passing |
-| Selected engine cases | 49, all passing: saves, movement, cancellation and file storage |
-| Native content progression | One complete isolated route passing; native handlers and native save/reload, no seeded XP |
-| Native graphical profile harness | New and Continue reach rendered world and verified capabilities; normal shutdown, save/reload fields and four verified backups checked |
-| Original mutable-world comparison | Unchanged file size/mtime fingerprints before/after private native sessions |
-| Build/export checks | Matched client/server shadow jars; full client 78-file/server 28-file exported stacks; fresh/upgrade/reverse/idempotent patch verification |
-| Tooling hygiene | Python compile, shellcheck and git whitespace checks pass |
-
-The native content fixture starts level one (native Constitution ten), seeds only a small net and bronze sword, catches shrimp, cooks it, equips the sword, defeats a chicken, receives attack XP and bones, eats food, saves and reloads. It calls ordinary native handlers on isolated content fixtures. It does not prove controller travel around the complete map.
-
-The graphical harness uses its own profiles, Xvfb display :197 and port 43595. It starts the actual server/client, follows ordinary login and fresh Continue, waits for a rendered world and current-session capability acknowledgement, then exits through normal server saving. See [save evidence](ALPHA_SAVE_VALIDATION.md), [controls/connection evidence](ALPHA_CONTROLS_AND_CONNECTION.md), [launcher](ALPHA_LAUNCHER.md) and [custom screens](ALPHA_CUSTOM_SCREENS.md). Renderer fixture previews are labelled; they are not physical gameplay screenshots.
-
-## Claude reviews and changes made
-
-Actual Claude reviewed the foundation, save implementation, custom screens and final fixes in the existing Orca terminal. These were bounded static audits, not claims of live gameplay testing. Review files:
-
-- [Foundation audit](CLAUDE_ALPHA_FOUNDATION_AUDIT.md)
-- [Save review](CLAUDE_ALPHA_SAVE_REVIEW.md)
-- [Custom panel review](CLAUDE_ALPHA_PANEL_REVIEW.md)
-- [Final follow-up](CLAUDE_ALPHA_FINAL_FOLLOWUP.md)
-
-The important panel finding was that a blocked Drop confirmation closed its chosen context, allowing the next A to run the primary action. This is fixed with exact gamepad and mouse→gamepad regression tests. Other changes include identity-based scroll continuation, explicit visible-page labels, consumed hover, labelled game feedback, atomic exchange writes, monotonic offer-ID recovery, oversized stdio request draining, retained damaged metadata, and hidden import staging before publication. Claude's final follow-up found no blockers; subsequent low recovery/import notes were also addressed.
-
-## Limits and next task list
-
-- Physical controller and Steam Deck/Gaming Mode acceptance remain required. Suspend/reconnect guards have automated evidence, not a completed hardware campaign.
-- Custom screens are text-first; item artwork, tooltip polish, minimum-scale equipment readability and stale-pointer feedback need refinement. Native hidden bank rows require scrolling; visible-page counts cover the current rendered window.
-- True solo world pause remains unexposed. The [contained investigation](ALPHA_SOLO_PAUSE_INVESTIGATION.md) specifies simulation-clock separation, continued network/save handling, discarded queued actions, guest resume and shutdown tests. Menus do not freeze the world.
-- Profile backups and old generations are retained. Storage size/count are visible, but pruning controls are deferred. Atomic exchange files do not form a multi-file transaction; consistent whole-world backups require a stopped world. Historical claim-only offer IDs remain an edge case for old snapshots.
-- Import uses a CLI and requires an independent stopped-world copy. New-character text entry is desktop-based; no forgotten-password reset is provided.
-- Eight logical bindings work, but overlay glyph text does not yet automatically substitute every remapped physical button. Special attack is available through fresh native Combat controls; no universal quick shortcut is claimed.
-- Broad quest/skill, Summoning/Dungeoneering, private co-op, economy/bots, packaging and original art remain proposed roadmap work.
-
-Next: accept the profile/custom-screen build on a physical controller, record concrete issues, improve readability and button-label discovery, then measure Deck performance and lifecycle behavior. The full proposed backlog remains in [ROADMAP.md](ROADMAP.md); the approved alpha implementation checklist is [CONSOLE_ALPHA_TASKS.md](CONSOLE_ALPHA_TASKS.md).
+Known limits: artwork is opportunistic; arbitrary server-modal reopening, complete quest/skill audits and all hardware checks remain pending. Save generations are retained and can consume space. Backup verification can be slow with a large history. Exchange files are individually atomic, not a multi-file transaction. Import is a CLI and launcher name entry uses desktop text entry. Unowned/manual JVMs or abnormal backend death can bypass the owned archive-lock guarantee. True pause, Deck suspend/resume, packaging/licence inventory and custom world graphics remain roadmap decisions.

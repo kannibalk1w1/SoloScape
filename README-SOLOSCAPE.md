@@ -1,12 +1,8 @@
 # SoloScape 2011+
 
-Bootstrap for a local RuneScape revision-634 experience, with Steam Deck native
-experimental controller support. JDK 21, JDK 8 and the upstream cache are installed locally.
-Both upstream builds pass, doctor passes, and the server reaches world readiness.
-The controller prototype supports camera, precise walking, LT aiming, LB/RB target
-cycling, scene highlights, inventory and dialogue controls, plus an optional direct
-movement mode, world action menus, loot pickup, bank/shop panes, a controller keyboard, equipment/prayer/spell focus, a View/Select main-tab radial, Start/Menu quick actions, production controls, additional tab focus and scalable overlays; see
-[controller testing instructions](docs/CONTROLLER_TESTING.md) to enable it.
+Development source build for a local RuneScape revision-634 experience with native controller support and eventual Steam Deck delivery. The controller build includes reversible direct movement, target/movement feedback, native UI navigation, Home and quick-action radials, optional custom inventory/equipment/bank/shop screens, shared menu back navigation, active-pane right-stick scrolling and remapped physical hints.
+
+The graphical launcher provides independent local worlds, verified backups/restore and explicit backup management. [Combined completion report](docs/MORNING_REPORT.md), [setup/update instructions](docs/CONSOLE_SETUP_UPDATE.md) and [physical acceptance checklist](docs/CONSOLE_SESSION_ACCEPTANCE.md) record evidence and remaining limits. No packaged release or completed Deck acceptance is claimed.
 
 The [proposed roadmap](docs/ROADMAP.md) is the working task list.
 The [current-state handoff](docs/PROJECT_HANDOFF.md) can be taken into ChatGPT for discussion.
@@ -49,14 +45,14 @@ supply the compatible modified upstream cache in
 proprietary game assets. Do not commit cache data, saves or game resources.
 
 ```bash
-./scripts/doctor.sh
-./scripts/dev-run.sh
-# Subsequent launches after successful builds:
+./scripts/prepare-build.sh
+./scripts/launcher.sh
+# Legacy development world instead of isolated profiles:
 ./scripts/dev-run.sh --no-build
 ```
 
-The launcher applies the tracked client/server patches, builds `:game:shadowJar` and
-`:client:shadowJar`, starts the server,
+Prepare applies the tracked client/server patches and builds `:game:shadowJar` and
+`:client:shadowJar` without starting a world. The graphical launcher selects independent profiles. The legacy development launcher starts the server,
 waits for its loaded-world message and launches the client explicitly at
 `127.0.0.1:43594`. Logs stream to the terminal and `.runtime/server.log` /
 `.runtime/client.log` (one previous session retained). Closing the client or Ctrl+C stops
@@ -64,29 +60,15 @@ owned children with SIGTERM and waits for normal save/shutdown hooks. A hung
 shutdown is reported and never forcibly killed. There is no separate stop
 script because the foreground launcher owns this lifecycle.
 
-**The upstream server binds all interfaces.** Restrict port 43594 with the host
-firewall for local-only play. This launcher refuses root server `game.properties`
-overrides until their paths/port/settings are audited. Bundled defaults include
-normal account creation, Tutorial Island, file saves and 30 staggered bots.
-
-Login with a new username/password to create a local upstream account. Saves
-belong to this world in `upstream/game-server/data/saves/`. Preserve that folder
-when updating source. Confirm restart persistence using the
-[manual checklist](docs/STEAM_DECK_TEST_CHECKLIST.md) before treating it as tested.
+The patched server defaults to IPv4 loopback. Explicit LAN hosting is a separate audited configuration. The legacy development path uses upstream `data/saves/`; the graphical launcher uses private profiles with bots disabled. Preserve either world when updating source. Build locks prevent rebuilding jars during an owned session; Save & Quit before source updates. See [setup/update](docs/CONSOLE_SETUP_UPDATE.md).
 
 The cache was downloaded with explicit user authorization from upstream's linked
 MEGA folder. See [cache provenance](docs/CACHE_SETUP.md). Cache and archive remain
 ignored by Git.
 
-The user reports that launch/gameplay and physical controller camera panning work.
-The user confirmed the walking/aiming usability pass feels better. Direct movement is optional and the user reports it feels good. The latest tab
-radial and world-menu build needs an in-game acceptance pass after restarting. Save roundtrip and Steam Deck acceptance remain
-pending. Dependency/binary licence inventory is required
-before a distributable package.
+The owner confirms launch, camera, improved walking/aiming and optional direct movement. The latest menu/art/recovery milestone has 151 client cases (one optional SDL skip), 44 root tooling cases, 11 selected native game cases and isolated graphical New/Continue/cancellation evidence. These are not physical controller/Deck acceptance. Runtime/dependency licence review remains required before a distributable package.
 
-Tooling validation: ShellCheck, Python compilation and four simulated-process
-lifecycle tests pass. Run `python3 scripts/test_local_dev.py` to repeat them.
-See [validation results](docs/VALIDATION.md) for the limits of those checks.
+Tooling validation: Python tests/compilation, ShellCheck and patch/whitespace checks pass. Run `python3 -m unittest discover -s scripts -p 'test_*.py'`. See [validation results](docs/VALIDATION.md) and the combined report for the limits of those checks.
 
 
 The overnight reliability build adds a local patch/base/jar stamp. Source builds

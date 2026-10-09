@@ -226,3 +226,12 @@ Second-sprint implementation `c8a7031` is pushed; [GitHub Tooling checks](https:
 ## Console alpha completion checkpoint
 
 Client 139 cases (one optional SDL skip), root tooling 37, config 74, networking 249, selected engine 49 and one full isolated native progression route pass. Client/server shadow jars and complete patch stacks match across 78/28 source files. Private New→Continue verifies native rendered login, current-session capabilities, normal shutdown/save, field preservation and four verified backups while original mutable path fingerprints remain unchanged. Python compile, shellcheck and git whitespace checks pass. See MORNING_REPORT.md and ALPHA_SAVE_VALIDATION.md for scope and physical acceptance limits.
+
+
+## Cohesive session checkpoint — 9 October 2026
+
+Client: 151 cases, no failures/errors, one existing optional SDL skip. Root: 44 cases pass. Selected game: 11 pass (seven existing shops, prior alpha progression, combined quest/commerce/gather/production/bank/combat/save, transient shared stock and actual Lumbridge walking). Client/server shadow builds and full 87/31-file patch reproduction pass. Prior alpha config/network/engine results above are historical, not newly rerun.
+
+Native isolated graphical New/Continue reaches rendered world and verified capabilities, preserves save/load fields and produces four completed-session backups. An observed cancellation before world readiness preserves every saved-world file. Original mutable paths' size/mtime fingerprints remain unchanged. Prepare refuses while that private session is live and succeeds afterward. New/Continue total-session times: 27.407/25.532 seconds (Xvfb/software, includes waits/shutdown; no FPS/latency claim). Python compilation, ShellCheck and whitespace checks pass.
+
+Actual Claude static reviews and follow-up find no remaining blockers after child-parent ownership, native-label, build-lock and startup fixes. Physical controller/Deck, complete real-map quest travel and exhaustive startup cancellation remain unclaimed. See MORNING_REPORT.md, CONSOLE_SESSION_ACCEPTANCE.md and CLAUDE_SESSION_FOLLOWUP.md.

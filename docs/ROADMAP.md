@@ -1,6 +1,6 @@
 # SoloScape 2011+ — proposed project roadmap and task list
 
-Updated: 8 October 2026. Companion: [current-state handoff](PROJECT_HANDOFF.md).
+Updated: 9 October 2026. Companion: [current-state handoff](PROJECT_HANDOFF.md).
 This is a proposal to review, reorder and use as the working backlog. Later tasks
 are not automatic authorization to build them. No dates or effort estimates are
 promised before the relevant subsystem has been inspected.
@@ -48,6 +48,10 @@ Both autonomous controller sprints are implemented on `overnight/controller-spri
 ## Console alpha checkpoint
 
 The larger approved alpha builds on both sprints: isolated profiles and verified generation recovery; graphical launcher; reusable custom panels and four independently reversible screens; eight bindings/presets/run thresholds; current-session capability negotiation and interruption guards; isolated native progression and graphical save/reload validation. See [approved alpha task list](CONSOLE_ALPHA_TASKS.md) and the combined morning report for precise evidence and limitations. Next priority is physical controller/Deck acceptance and concrete usability fixes, followed by measured performance, broader content auditing and packaging.
+
+## Cohesive session checkpoint
+
+The approved 9 October milestone connects Home/tab/modal B ancestry and remembered focus; adds active-pane right-stick scrolling and camera neutral handoff; displays opportunistic native item artwork and remapped physical hints; fixes shared general-store validation; tests Cook's Assistant/commerce/gathering/combat/save progression plus actual Lumbridge walking; strengthens startup preservation and previewed backup retention; provides a build-only setup/update path and archive locking. [Task list](CONSOLE_SESSION_TASKS.md), [combined report](MORNING_REPORT.md), [physical acceptance and performance](CONSOLE_SESSION_ACCEPTANCE.md). Physical acceptance, full real-map quest travel and sustained Deck measurements remain open. This implementation does not automatically complete every broader M0–M4 acceptance item.
 
 ## M0 — finish the first reliable controller playable
 
@@ -99,7 +103,7 @@ Original button glyphs/panel designs can be explored earlier without blocking M1
 - [ ] M2-04 Improve dense target selection, loot labels, obstructed/off-screen feedback and failed-action messages.
 - [ ] M2-05 Prototype a radial quick-action menu and compare it with a simple list before choosing a default.
 - [ ] M2-06 Add practical accessibility settings: contrast, text size, vibration if useful, inversion and movement/run thresholds.
-- [ ] M2-07 Keep control hints correct after remapping and support common Xbox/Deck-style layouts.
+- [x] M2-07 Map authored control hints to physical bindings and provide Xbox/PlayStation/Deck presets. Physical layout acceptance remains in M4.
 
 Acceptance: the main gameplay flows are legible and discoverable on a physical Deck
 without knowing desktop RuneScape shortcuts or reading implementation details.

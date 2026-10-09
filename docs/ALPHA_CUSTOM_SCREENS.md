@@ -6,7 +6,7 @@ Open inventory with its controller binding or use the Home wheel. Open banks and
 
 Mouse clicks and the wheel also work within the custom surface. Right click opens actions. Drop and Destroy require a second separate press on the same unchanged item within three seconds. Native actions are revalidated immediately before dispatch; item names, amounts, stock and permissions come from the game. Game and examine messages following an action appear in the custom screen. This feedback reports native messages, not guaranteed transaction completion.
 
-The layout fits the original 765×503 canvas and scales to larger canvases. This is an early text-first interface with item names and quantities; item artwork and visual polish remain future work.
+The layout fits the original 765×503 canvas and scales to larger canvases. The session milestone adds cached native item artwork beside names/quantities; missing/offscreen/native-cache-hit icons retain text fallback. Visual polish and hardware readability remain acceptance work. See CONSOLE_SESSION_INTERFACES.md.
 
 ![Original-size renderer fixture](images/alpha-custom-inventory-preview.png)
 

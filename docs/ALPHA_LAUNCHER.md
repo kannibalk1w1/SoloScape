@@ -42,3 +42,5 @@ not a gameplay or physical controller acceptance test.
 ![Actual graphical launcher smoke test](images/alpha-launcher-preview.png)
 
 The local port setting now persists in `.runtime/launcher-settings.json`; invalid ports do not overwrite it. Character details also show storage bytes, backup count and the preserve-history retention policy. Restore remains available for damaged profile manifests through verified backups. Gameplay controller settings live in each profile's private client home; new profiles may need the controller plugin enabled independently.
+
+Session milestone update (9 October): `./scripts/prepare-build.sh` builds without starting a world. Manage Backups now provides exact previewed automatic-archive cleanup; manual/import/damaged/restore-source backups and generations are kept. Sessions hold archive locks through shutdown, so Prepare refuses while they are live. The current root suite has 44 cases; native New/Continue and observed early startup cancellation are verified on disposable worlds. See CONSOLE_SETUP_UPDATE.md and CONSOLE_BACKUP_RETENTION.md for current instructions.
