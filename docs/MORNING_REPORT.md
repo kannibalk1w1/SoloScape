@@ -18,6 +18,8 @@ The preserved [journeys report](MORNING_REPORT_JOURNEYS.md) contains the previou
 - Bounded native render-interval and PID-identity resource measurements, with honest limits on CPU, RSS, battery and host sensors.
 - A Steam-preferred launcher keyboard choice following physical feedback. Steam mode pauses SDL entry/form actions; local mode consumes mapped cursor keys. Controller traversal can reach fields without auto-opening, Enter advances and neutral is required after entry. An explicit desktop-navigation choice prevents competing Swing/SDL navigation.
 
+The installed **SoloScape Test** shortcut now selects verified private snapshot r7. The owner confirmed the launcher/game closed; process/record guards were checked before updating, and the original snapshots were retained. No normal characters existed to migrate. The new local/system-mode Swing launcher probe and doctor also pass on the actual Deck.
+
 ## Verification and measurements
 
 | Check | Result |
