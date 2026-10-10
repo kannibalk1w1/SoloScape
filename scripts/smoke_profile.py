@@ -65,6 +65,8 @@ def _main():
                 i=argv.index('-jar');jar=argv[i+1]
                 label='Existing authorized X11/XWayland desktop; native overlay-render intervals, real Gateway/synthetic UI input and AWT events through native canvas mouse handlers. No physical controller or Gaming Mode acceptance.' if options.desktop else 'Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.'
                 argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.probe.awt.mouse=true'] if options.desktop else [])+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+(['-Dsoloscape.text.probe.fast=true'] if options.text else [])+(['-Dsoloscape.playable.probe=true'] if options.journey else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
+            if options.journey and any("void-server-" in arg for arg in argv):
+                kwargs["env"]=dict(kwargs.get("env") or os.environ,SOLOSCAPE_NATIVE_PROBE="1")
             process=original(argv,**kwargs)
             if any('void-server-' in arg for arg in argv):metrics.add(process,'server')
             elif any('void-client-' in arg for arg in argv):metrics.add(process,'client')

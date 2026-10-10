@@ -26,7 +26,7 @@ public final class NativeAdventureProbe {
  public static boolean tick(String marker) {
   try {
    if(failure!=null)throw new IllegalStateException(failure);
-   long now=System.currentTimeMillis();Files.write(Paths.get(marker+".adventure.status"),("step="+step+" text="+NativeTextProbe.currentStage()+" panel="+(ControllerUi.snapshot().panel==null?-1:ControllerUi.snapshot().panel.id)).getBytes("UTF-8"));
+   long now=System.currentTimeMillis();Files.write(Paths.get(marker+".adventure.status"),("step="+step+" text="+NativeTextProbe.currentStage()+" journey="+NativePlayableLoopProbe.progress()+" panel="+(ControllerUi.snapshot().panel==null?-1:ControllerUi.snapshot().panel.id)).getBytes("UTF-8"));
    if(Class132.aPlayer_1907!=null){String tile=((Class132.aPlayer_1907.x>>9)+za_Sub2.regionTileX)+","+((Class132.aPlayer_1907.y>>9)+Class90.regionTileY)+","+Class132.aPlayer_1907.plane;if(!tile.equals(lastTile)){results.put("tile_change_"+now,"step="+step+" tile="+tile);lastTile=tile;}}
    if(started==0){
     started=lastStep=now;frames=new FrameProbe();RuneLite.getInjector().getInstance(OverlayManager.class).add(frames);

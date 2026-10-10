@@ -1,0 +1,26 @@
+diff --git a/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt b/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt
+index 17880c4..3da5a7e 100644
+--- a/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt
++++ b/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt
+@@ -44,6 +44,21 @@ class PlayerCommands(
+ ) : Script {
+ 
+     init {
++        // Read-only diagnostics are opt-in for disposable native smoke servers only.
++        playerCommand("soloscape_probe_entry", stringArg("nonce"), desc = "Private native probe: inspect pending entry") { args ->
++            if (System.getenv("SOLOSCAPE_NATIVE_PROBE") != "1") return@playerCommand
++            val nonce = args.singleOrNull() ?: return@playerCommand
++            if (!nonce.matches(Regex("[a-f0-9]{32}"))) return@playerCommand
++            val pending = when (suspension) {
++                is world.gregs.voidps.engine.suspend.Suspension.IntEntry -> "int"
++                is world.gregs.voidps.engine.suspend.Suspension.NameEntry -> "name"
++                is world.gregs.voidps.engine.suspend.Suspension.StringEntry -> "string"
++                null -> "none"
++                else -> "other"
++            }
++            message("SOLOSCAPE-PROBE|$nonce|$pending", ChatType.Game)
++        }
++
+         playerCommand("soloscape_capabilities", stringArg("nonce"), desc = "Negotiate SoloScape controller capabilities") { args ->
+             val nonce = args.singleOrNull() ?: return@playerCommand
+             if (nonce.matches(Regex("[a-f0-9]{32}"))) message("SOLOSCAPE|1|$nonce|direct,cancel,entry-cancel", ChatType.Game)

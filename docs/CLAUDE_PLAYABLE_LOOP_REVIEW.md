@@ -185,3 +185,87 @@ consider them serious for this local single-player loop.
 Still pending, and not claimed here: the built-client native route (Steam text → resume →
 B → Home, bank Withdraw-X cancel with an empty server suspension, and logout during an entry)
 and physical Deck behaviour.
+
+## Harness audit: `NativePlayableLoopProbe` and `--journey` (static, read-only)
+I read `NativePlayableLoopProbe.java`, its hooks in `NativeAdventureProbe` (status line and
+step 16), the `NativeSessionSmoke` deadline, and the `--journey` wiring in `smoke_profile.py`.
+I didn't run the probe, and this doesn't claim a pass.
+
+**Verdict: no blockers.** One medium finding is about how truthfully the evidence is labelled.
+The rest are low.
+
+### Sound
+- **Isolation.** `--journey` only adds `-Dsoloscape.playable.probe=true` to the client inside
+  the existing disposable `.runtime/alpha-tests/session-*` profile, on port 43595, with the
+  existing fingerprint check of the original world. `enableServerCancel(true)` is static to
+  that client process. Each New and Continue iteration is a new client JVM, so the static
+  `step`/`since`/`sent` state can't carry over.
+- **Identity and freshness.**
+  - Every item or panel action re-reads `ControllerUi.snapshot()` the same tick and goes
+    through `ControllerUi.invoke(widget, action)`, so the adapter's freshness and `same()`
+    checks apply.
+  - World actions go through the adapter's own `candidates(true)` and
+    `ControllerWorld.interact`, with an exact name, option and world tile (the banker isn't
+    tile-checked).
+  - Movement is the ordinary `ControllerWorld.walk` adapter, so no packet is invented.
+- **Search and cancel paths.** Withdraw-X has to produce a type-7 prompt with a verified
+  `entryCancel` capability, then edit, then cancel on a fresh snapshot. Search has to be type
+  11, keep the filtered pot for 1 s, then cancel through the local `{101}`.
+- **Repeatable New and Continue.** New takes the pot into the first free slot. Deposit-1 then
+  Withdraw-1 returns it to that same slot and leaves the bank without it. The journey ends on
+  the original tile. Continue reuses the existing pot (`existing_pot_reused`). So the save
+  fields `smoke_profile` compares (account, experience, inventories, tile) should be equal
+  across the two runs.
+- **Deadlines.** Each stage fails after 60 s with the stage and tile in the message.
+  `NativeSessionSmoke` gives journey runs 420 s instead of 150 s, and any exception exits 2
+  with its stack trace.
+- **BFS.** It searches the player's plane with the same collision flags as the adapter
+  (`WorldInput.canStep`), within a 32-tile radius, using corrected parent links. If there's no
+  path, it doesn't walk, and the stage times out with a clear message instead of steering into
+  scenery.
+
+### J1. Medium: the cancellation evidence claims more than it observes
+`real_withdraw_x_cancel_sent` and `cancel_preserved_bank_and_items` are recorded once the
+client has **issued** the cancel and the bank and items look unchanged after 1.5 s. But a
+client-only `close_entry` gives exactly the same picture. That happens if the plugin tick
+flips `enableServerCancel` back (config `serverEntryCancel=false`), or if the server ignores
+the packet (`delay` set, or a type mismatch). Neither result shows that the server's
+`IntEntry` suspension was cleared.
+
+**Fix:**
+- Rename the keys to `client_withdraw_x_cancel_issued`, or similar.
+- Record `ControllerEntry` `serverCancel`, `cancellation.available()` and the type at send
+  time.
+- For real server proof, add a reply that exists only on the disposable server (like
+  `soloscape_capabilities`), for example `::soloscape_pending_entry <nonce>` answering
+  none/int/name/string. Assert `none` after cancel and `int` before it.
+
+### Low notes
+- **J2. The search-toggle result isn't checked.** Step 17 records
+  `actual_bank_search_edit_cancel_toggle` 2 s after re-invoking Search, without checking that
+  search mode actually ended. **Fix:** require the same varp that `ControllerEntry.prepare()`
+  reads (`Isaac.anIntArray1303[190]==0`), or require that the unfiltered bank layout is back,
+  before recording it.
+- **J3. The door stages pass blind.** Steps 5 and 24 move on after 1.5 s whether or not the
+  door opened (for example if `interact` found no Open option because the door was already
+  open). That's safe, because the BFS then fails with a 60 s stage timeout if the door is still
+  shut. But the failure is reported at the next walk stage. **Fix:** record `door_open_sent`,
+  or check the door's collision flag before moving on.
+- **J4. The stick magnitude is used as a step count.** `nextStep` turns 1/2/3 straight tiles
+  into a stick magnitude of 0.4/0.7/1.0. That relies on the adapter mapping magnitude to
+  distance. At full tilt, the adapter's run threshold can also turn on running, which changes
+  run energy and the run setting in the disposable save. The fields compared aren't affected,
+  but it is a side effect. **Fix:** cap the magnitude below `runThreshold`, or record that run
+  mode was used.
+- **J5. A total-time failure gets the wrong message.** If the 420 s budget runs out in a slow
+  but progressing journey, `NativeSessionSmoke` prints "Private login did not reach in-game
+  state". **Fix:** print `NativePlayableLoopProbe.progress()` in that branch.
+- **J6. The plugin also writes `enableServerCancel` every tick.** The probe sets it once.
+  Because the plugin tick writes `setControllerEntryCancelEnabled(config.serverEntryCancel())`
+  each tick, the probe's setting holds only because the config default is `true`. Assert the
+  config value at the start, or record it next to the J1 fields.
+
+### Limits
+- Static only. Native collision, door and staircase behaviour, and whether the adapter's
+  magnitude-to-distance mapping holds in Lumbridge, need the running host or Deck route you're
+  doing now.

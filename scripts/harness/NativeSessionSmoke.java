@@ -44,7 +44,7 @@ public class NativeSessionSmoke {
      if(Files.exists(Paths.get(marker))){Thread.sleep(2500);System.exit(0);}
     }catch(Exception ex){System.err.println("Private harness probe failed.");}
    }
-   System.err.println("Private login did not reach in-game state.");System.exit(2);
+   System.err.println("Private native probe timed out: "+(Boolean.getBoolean("soloscape.playable.probe")?NativePlayableLoopProbe.progress():"login/adventure incomplete"));System.exit(2);
   },"private-smoke-probe").start();
  }
 }
