@@ -12,21 +12,32 @@ import net.runelite.client.ui.overlay.*;
 
 /** Disposable native-session integration and software rendering observations, never hardware acceptance. */
 public final class NativeAdventureProbe {
- private static long started,lastStep;private static int step;private static FrameProbe frames;
+ private static long started,lastStep;private static volatile int step;private static FrameProbe frames;
  private static final Map<String,Object> results=new LinkedHashMap<>();
  private static SoloScapeControllerPlugin plugin;private static UiControls ui;
  private static Field settingsOpen;private static boolean checkedSettings;
  private static UiState display;private static UiState.Widget selected;
  private static String failure,oldNonce;
+ private static String lastTile;
+ private static String exitTile;
+ private static volatile int unexpectedMouseClicks;
+ private static final Set<java.awt.AWTEvent> syntheticMouse=Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<java.awt.AWTEvent,Boolean>()));
  public static boolean active(){return started!=0;}
  public static boolean tick(String marker) {
   try {
    if(failure!=null)throw new IllegalStateException(failure);
    long now=System.currentTimeMillis();Files.write(Paths.get(marker+".adventure.status"),("step="+step+" panel="+(ControllerUi.snapshot().panel==null?-1:ControllerUi.snapshot().panel.id)).getBytes("UTF-8"));
+   if(Class132.aPlayer_1907!=null){String tile=((Class132.aPlayer_1907.x>>9)+za_Sub2.regionTileX)+","+((Class132.aPlayer_1907.y>>9)+Class90.regionTileY)+","+Class132.aPlayer_1907.plane;if(!tile.equals(lastTile)){results.put("tile_change_"+now,"step="+step+" tile="+tile);lastTile=tile;}}
    if(started==0){
     started=lastStep=now;frames=new FrameProbe();RuneLite.getInjector().getInstance(OverlayManager.class).add(frames);
     results.put("environment",System.getProperty("soloscape.probe.environment","Private native software probe; no physical controller acceptance."));
     results.put("heap_at_ready",ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed());
+    if(Boolean.getBoolean("soloscape.probe.awt.mouse"))Toolkit.getDefaultToolkit().addAWTEventListener(event->{
+     if(event instanceof java.awt.event.MouseEvent&&step>=11&&step<=13&&!syntheticMouse.contains(event)){
+      java.awt.event.MouseEvent mouse=(java.awt.event.MouseEvent)event;
+      if((mouse.getID()==java.awt.event.MouseEvent.MOUSE_PRESSED||mouse.getID()==java.awt.event.MouseEvent.MOUSE_RELEASED)&&mouse.getSource()==RuneLite.getInjector().getInstance(com.GameClient.class).getCanvas())unexpectedMouseClicks++;
+     }
+    },java.awt.AWTEvent.MOUSE_EVENT_MASK);
     return false;
    }
    if(step==0){if(now-started<10000)return false;results.put("native_baseline",frames.finish());step++;lastStep=now;ControllerUi.openTab(HomeTab.COMBAT.ordinal());return false;}
@@ -81,14 +92,19 @@ public final class NativeAdventureProbe {
    }
    if(step==11){
     display=null;selected=null;
+    if(exitTile==null)exitTile=worldTile();
     oldNonce=nonce();require(oldNonce!=null&&SoloScapeConnection.verified(),"Initial capability nonce missing");
     if(!(clickNative(548<<16|181)||clickNative(746<<16|172))){require(now-lastStep<15000,"Visible native Exit control unavailable/focus not settled");return false;}
     step++;lastStep=now;return false;
    }
    if(step==12){
+    require(exitTile.equals(worldTile()),"Exit click moved player; mouse method="+(Boolean.getBoolean("soloscape.probe.awt.mouse")?"awt":"robot"));
+    require(unexpectedMouseClicks==0,"Real desktop mouse input interfered with the probe");
     if(!clickNative(182<<16|10)){require(now-lastStep<15000,"Visible native logout control unavailable");clickNative(548<<16|181);clickNative(746<<16|172);return false;}step++;lastStep=now;return false;
    }
    if(step==13){
+    if(Class240.anInt4674==10&&Class132.aPlayer_1907!=null)require(exitTile.equals(worldTile()),"Logout click moved player");
+    require(unexpectedMouseClicks==0,"Real desktop mouse input interfered with logout");
     if(Class240.anInt4674!=3){require(now-lastStep<15000,"Native logout did not reach login");return false;}
     SoloScapeConnection.update();require(!SoloScapeConnection.verified(),"Capabilities survived logout");
     // Native logout queues despawn/removal on server ticks. Exercise settled relogin,
@@ -104,6 +120,7 @@ public final class NativeAdventureProbe {
     require(!oldNonce.equals(nonce()),"Relog reused the earlier session nonce");results.put("same_client_relogin",true);results.put("fresh_capabilities_after_relogin",true);
 
     results.put("heap_after_ui",ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed());
+    results.put("unexpected_desktop_mouse_clicks",unexpectedMouseClicks);
     for(String line:Files.readAllLines(Paths.get("/proc/self/status")))if(line.startsWith("VmRSS:"))results.put("client_rss",line.substring(6).trim());
     results.put("probe_seconds",(now-started)/1000.0);Files.write(Paths.get(marker+".adventure.json"),new Gson().toJson(results).getBytes("UTF-8"));return true;
    }
@@ -114,6 +131,8 @@ public final class NativeAdventureProbe {
   Field field=SoloScapeConnection.class.getDeclaredField("capabilities");field.setAccessible(true);Object capabilities=field.get(null);
   Field nonce=ServerCapabilities.class.getDeclaredField("nonce");nonce.setAccessible(true);return (String)nonce.get(capabilities);
  }
+ private static String worldTile(){Player player=Class132.aPlayer_1907;return ((player.x>>9)+za_Sub2.regionTileX)+","+((player.y>>9)+Class90.regionTileY)+","+player.plane;}
+ private static void dispatch(Canvas canvas,java.awt.event.MouseEvent event){syntheticMouse.add(event);try{canvas.dispatchEvent(event);}finally{syntheticMouse.remove(event);}}
  private static Class46 widget(int id)throws Exception{
   Method load=ControllerUi.class.getDeclaredMethod("loadedWidget",int.class);load.setAccessible(true);return (Class46)load.invoke(null,id);
  }
@@ -128,6 +147,9 @@ public final class NativeAdventureProbe {
   return new Rectangle(x,y,widget.anInt709,widget.anInt789);
  }
  private static boolean clickNative(int id)throws Exception{
+  int group=id>>>16;
+  if((group==548||group==746)&&group!=r.anInt9721)return false;
+  if(group!=548&&group!=746){Method groups=ControllerUi.class.getDeclaredMethod("openGroups");groups.setAccessible(true);if(!((Set<?>)groups.invoke(null)).contains(group))return false;}
   Class46 control=widget(id);if(control==null)return false;
   Method visible=ControllerUi.class.getDeclaredMethod("isVisible",Class46.class);visible.setAccessible(true);
   if(!(Boolean)visible.invoke(null,control))return false;
@@ -138,14 +160,30 @@ public final class NativeAdventureProbe {
   Rectangle box=bounds(control,0);if(box.width<1||box.height<1)return false;
   require(!label.isEmpty(),"Visible native control label does not match "+expected+" at "+id);
   com.GameClient client=RuneLite.getInjector().getInstance(com.GameClient.class);Canvas canvas=client.getCanvas();
+  results.put("canvas_pixels",canvas.getWidth()+"x"+canvas.getHeight());results.put("native_interface_pixels",client.getCanvasWidth()+"x"+client.getCanvasHeight());
+  require(canvas.getWidth()==client.getCanvasWidth()&&canvas.getHeight()==client.getCanvasHeight(),"Scaled canvas needs explicit mouse coordinate conversion");
   Rectangle canvasBox=new Rectangle(0,0,canvas.getWidth(),canvas.getHeight());box=box.intersection(canvasBox);if(box.isEmpty())return false;
-  if(!canvas.isFocusOwner()){
+  if(!Boolean.getBoolean("soloscape.probe.awt.mouse")&&!canvas.isFocusOwner()){
    javax.swing.SwingUtilities.invokeLater(()->{Window owner=javax.swing.SwingUtilities.getWindowAncestor(canvas);if(owner!=null)owner.toFront();canvas.requestFocusInWindow();});
    results.put("native_click_waiting_for_canvas_focus",true);return false;
   }
-  Point origin=canvas.getLocationOnScreen();Robot mouse=new Robot();mouse.mouseMove(origin.x+box.x+box.width/2,origin.y+box.y+box.height/2);
-  Point pointer=MouseInfo.getPointerInfo().getLocation();results.put("native_pointer_"+id,pointer.x+","+pointer.y+" requested="+(origin.x+box.x+box.width/2)+","+(origin.y+box.y+box.height/2));
-  mouse.mousePress(java.awt.event.InputEvent.BUTTON1_DOWN_MASK);mouse.delay(80);mouse.mouseRelease(java.awt.event.InputEvent.BUTTON1_DOWN_MASK);
+  int x=box.x+box.width/2,y=box.y+box.height/2;
+  if(Boolean.getBoolean("soloscape.probe.awt.mouse")){
+   // Wayland compositor pointer warps are unreliable. Send synthetic AWT events
+   // through the real canvas listeners; never fabricate a server logout packet.
+   javax.swing.SwingUtilities.invokeLater(()->{
+    long when=System.currentTimeMillis();
+    dispatch(canvas,new java.awt.event.MouseEvent(canvas,java.awt.event.MouseEvent.MOUSE_MOVED,when,0,x,y,0,false));
+    dispatch(canvas,new java.awt.event.MouseEvent(canvas,java.awt.event.MouseEvent.MOUSE_PRESSED,when,java.awt.event.InputEvent.BUTTON1_DOWN_MASK,x,y,1,false,java.awt.event.MouseEvent.BUTTON1));
+    javax.swing.Timer release=new javax.swing.Timer(80,e->dispatch(canvas,new java.awt.event.MouseEvent(canvas,java.awt.event.MouseEvent.MOUSE_RELEASED,System.currentTimeMillis(),0,x,y,1,false,java.awt.event.MouseEvent.BUTTON1)));release.setRepeats(false);release.start();
+   });
+   results.put("mouse_method","Synthetic AWT events through actual native canvas listeners; no physical or OS pointer acceptance.");
+  }else{
+   Point origin=canvas.getLocationOnScreen();Robot mouse=new Robot();mouse.mouseMove(origin.x+x,origin.y+y);
+   Point pointer=MouseInfo.getPointerInfo().getLocation();results.put("native_pointer_"+id,pointer.x+","+pointer.y+" requested="+(origin.x+x)+","+(origin.y+y));
+   mouse.mousePress(java.awt.event.InputEvent.BUTTON1_DOWN_MASK);mouse.delay(80);mouse.mouseRelease(java.awt.event.InputEvent.BUTTON1_DOWN_MASK);
+   results.put("mouse_method","Robot OS pointer events on owned private Xvfb.");
+  }
   results.put("native_click_"+id,label+" "+box.toString());return true;
  }
  private static void require(boolean condition,String message){if(!condition)throw new IllegalStateException(message);}

@@ -94,6 +94,14 @@ class DeckSnapshotTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'leaves'):
             deck_export.copy_file(self.root / 'redirect/payload', self.root / 'copy', self.root)
 
+    def test_configuration_directory_escape_refused(self):
+        outside = tempfile.TemporaryDirectory()
+        self.addCleanup(outside.cleanup)
+        (self.root / 'config').symlink_to(outside.name, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, 'leaves'):
+            deck_runtime.configure(self.root)
+        self.assertFalse((Path(outside.name) / 'local.env').exists())
+
     def test_only_pin_reachable_objects_exported(self):
         import subprocess
         repo = self.root / 'repo'

@@ -35,6 +35,8 @@ def configure(root):
     destination = root / 'config/local.env'
     if destination.exists() or destination.is_symlink():
         raise ValueError('Existing local configuration retained; refusing replacement.')
+    if destination.parent.is_symlink() or not destination.resolve().is_relative_to(root):
+        raise ValueError('Configuration path leaves its installation.')
     destination.parent.mkdir(exist_ok=True)
     with destination.open('x') as output:
         output.write('\n'.join(lines) + '\n')

@@ -61,6 +61,7 @@ def export():
         # Include this sprint's new tooling before its first commit, never arbitrary ignored files.
         root_names += ['scripts/deck_export.py', 'scripts/deck_runtime.py', 'scripts/deck-launch.sh',
                        'scripts/test_deck_runtime.py', 'scripts/native_metrics.py',
+                       'scripts/summarise_native_metrics.py', 'scripts/test_native_metrics.py',
                        'scripts/harness/NativeControllerProbe.java', 'docs/DECK_SPRINT_TASKS.md']
         for name in sorted(set(root_names)):
             if name and name != 'config/local.env' and not name.startswith(('upstream/', '.runtime/')):

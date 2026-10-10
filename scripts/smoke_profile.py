@@ -13,7 +13,7 @@ import signal
 import json
 from native_metrics import NativeMetrics
 
-def main():
+def _main():
     parser=argparse.ArgumentParser(description="Disposable native New/Continue/save and optional adventure UI probe.")
     parser.add_argument("--adventure",action="store_true",help="Probe real native adventure tabs, local settings and software overlay intervals.")
     parser.add_argument("--desktop",action="store_true",help="Use the explicitly authorized current X11/XWayland display; never stop that display.")
@@ -60,8 +60,8 @@ def main():
         def popen(argv,**kwargs):
             if '-jar' in argv and any('void-client-' in arg for arg in argv):
                 i=argv.index('-jar');jar=argv[i+1]
-                label='Existing authorized X11/XWayland desktop; native overlay-render intervals, real Gateway/synthetic UI input and native mouse logout. No physical controller or Gaming Mode acceptance.' if options.desktop else 'Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native mouse logout. No GPU/Deck/controller acceptance.'
-                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
+                label='Existing authorized X11/XWayland desktop; native overlay-render intervals, real Gateway/synthetic UI input and AWT events through native canvas mouse handlers. No physical controller or Gaming Mode acceptance.' if options.desktop else 'Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.'
+                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.probe.awt.mouse=true'] if options.desktop else [])+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
             process=original(argv,**kwargs)
             if any('void-server-' in arg for arg in argv):metrics.add(process,'server')
             elif any('void-client-' in arg for arg in argv):metrics.add(process,'client')
@@ -140,6 +140,11 @@ def main():
             try:x.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 x.kill();x.wait(timeout=5)  # Only this probe's owned display, never a game/save process.
+
+
+def main():
+    with local_dev.build_lock(shared=True):
+        _main()
 
 
 if __name__ == "__main__":
