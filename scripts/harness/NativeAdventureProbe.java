@@ -38,6 +38,10 @@ public final class NativeAdventureProbe {
       if((mouse.getID()==java.awt.event.MouseEvent.MOUSE_PRESSED||mouse.getID()==java.awt.event.MouseEvent.MOUSE_RELEASED)&&mouse.getSource()==RuneLite.getInjector().getInstance(com.GameClient.class).getCanvas())unexpectedMouseClicks++;
      }
     },java.awt.AWTEvent.MOUSE_EVENT_MASK);
+    if(Boolean.getBoolean("soloscape.text.probe.fast")){
+     for(net.runelite.client.plugins.Plugin candidate:RuneLite.getInjector().getInstance(net.runelite.client.plugins.PluginManager.class).getPlugins())if(candidate instanceof SoloScapeControllerPlugin)plugin=(SoloScapeControllerPlugin)candidate;
+     require(plugin!=null,"Managed controller plugin missing");results.put("text_focused",true);step=15;
+    }
     return false;
    }
    if(step==0){if(now-started<10000)return false;results.put("native_baseline",frames.finish());step++;lastStep=now;ControllerUi.openTab(HomeTab.COMBAT.ordinal());return false;}
@@ -88,8 +92,9 @@ public final class NativeAdventureProbe {
     row=model.snapshot(true).panes[0].widgets[1];require(model.invoke(row,row.actions[1],true)==0,"Local preference reversal rejected");require(preferences.deadzone()==before,"Config proxy did not restore local preference");results.put("settings_config_round_trip",true);
     GamepadState back=new GamepadState();back.buttonsHeld=back.buttonsPressed=0;ui.update(back,System.nanoTime());back.buttonsHeld=back.buttonsPressed=2;ui.update(back,System.nanoTime());
     require(!settingsOpen.getBoolean(plugin),"B did not close local settings");require(ui.takeHomeBack()==HomeTab.SETTINGS.ordinal(),"B lost Home ancestry");results.put("settings_back_to_home",true);
-    step++;lastStep=now;return false;
+    step=15;lastStep=now;return false;
    }
+   if(step==15){if(!NativeTextProbe.tick(plugin,results)){lastStep=now;return false;}step=11;lastStep=now;return false;}
    if(step==11){
     display=null;selected=null;
     if(exitTile==null)exitTile=worldTile();
@@ -125,7 +130,7 @@ public final class NativeAdventureProbe {
     results.put("probe_seconds",(now-started)/1000.0);Files.write(Paths.get(marker+".adventure.json"),new Gson().toJson(results).getBytes("UTF-8"));return true;
    }
    return false;
-  }catch(Exception ex){failure=ex.toString();results.put("failed_step",step);results.put("failure",failure);try{Files.write(Paths.get(marker+".adventure-failure.json"),new Gson().toJson(results).getBytes("UTF-8"));}catch(Exception ignored){}throw new IllegalStateException("Native adventure probe failed at step "+step+": "+failure,ex);}
+  }catch(Exception ex){try{NativeTextProbe.cleanup();}catch(Exception cleanup){ex.addSuppressed(cleanup);}failure=ex.toString();results.put("failed_step",step);results.put("failure",failure);try{Files.write(Paths.get(marker+".adventure-failure.json"),new Gson().toJson(results).getBytes("UTF-8"));}catch(Exception ignored){}throw new IllegalStateException("Native adventure probe failed at step "+step+": "+failure,ex);}
  }
  private static String nonce()throws Exception{
   Field field=SoloScapeConnection.class.getDeclaredField("capabilities");field.setAccessible(true);Object capabilities=field.get(null);

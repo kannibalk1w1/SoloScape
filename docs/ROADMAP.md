@@ -321,9 +321,9 @@ Keep implemented preparation separate from physical acceptance. ROADMAP.md is th
 10 October 2026: extend the launcher keyboard ownership work to **every in-game text entry**. Prefer the SteamOS keyboard on Deck; choose one input owner at a time so typing cannot also activate the SoloScape keyboard or background game actions. The fallback D-pad must navigate keyboard keys without also moving the text caret.
 
 - [ ] Inventory all native entry paths: chat, bank/shop search, account/name prompts, dialogue text and numeric/amount prompts.
-- [ ] Add a shared, reversible keyboard mode/ownership policy with Steam keyboard invocation where supported and a usable controller fallback.
-- [ ] Suppress gameplay, menu and local keyboard actions while the system keyboard owns entry; preserve validation, cancellation and entered values.
-- [ ] Handle finish/cancel, focus loss, reopening, reconnect and neutral rearming without double actions.
+- [x] Add a shared, reversible keyboard mode/ownership policy with Steam keyboard invocation where supported and a usable controller fallback.
+- [x] Suppress gameplay, menu and local keyboard actions while the system keyboard owns entry; preserve validation, cancellation and entered values.
+- [x] Handle finish/cancel, focus loss, reopening, reconnect and neutral rearming without double actions.
 - [ ] Physically accept both modes on Deck Desktop and Gaming Mode, including manually opening Steam + X.
 
-This is a parked follow-up, not completed by the launcher fix.
+The in-game sprint implements recognized amount/name/string/bank-search ownership and a manual chat/other-native-entry path. See [scope and remaining gaps](IN_GAME_TEXT_INPUT.md). Every-widget automatic detection and physical acceptance remain open.
