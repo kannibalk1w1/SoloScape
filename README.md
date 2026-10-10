@@ -61,7 +61,7 @@ cd SoloScape
    download link, verified archive name, extraction path and recorded SHA-256.
    The server cache is not bundled and is not fetched by simply launching the game.
 3. Run `./scripts/doctor.sh`, then `./scripts/dev-run.sh` for the first build/launch. After building, `./scripts/launcher.sh` opens the graphical profile launcher; see [launcher instructions](docs/ALPHA_LAUNCHER.md).
-4. Enable **SoloScape Controller** in the client's plugin list. **Tab radial menu**
+4. **SoloScape Controller** starts enabled for fresh settings; an explicitly saved disabled preference is respected. **Tab radial menu**
    is on by default within that plugin; **Direct movement** is optional; enable **SoloScape server features** only for
    the patched server to use direct movement and position-free cancellation.
    **Native interface navigation** defaults on and can be disabled independently.

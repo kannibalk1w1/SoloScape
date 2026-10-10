@@ -8,7 +8,7 @@ The tested device is a Steam Deck (DMI Jupiter, AMD Custom APU 0405, about 14 Gi
 
 The installation lives under `~/SoloScape-test/`. `launch.sh` opens the isolated profile launcher. The Desktop/application shortcut is **SoloScape Test**. New Character creates a fresh private world; the automated probe characters are in separate test folders and do not appear in your normal character list.
 
-Enable **SoloScape Controller** in the client's plugin list on first use. Home Settings provides controller preferences and the explicit first-run setup. Select the Steam Deck preset there if wanted. Direct movement, matched-server features and each adventure screen remain reversible choices; the launcher does not silently enable them. Native game graphics/audio remain under Game Settings.
+**SoloScape Controller** starts enabled with fresh settings. Home Settings provides controller preferences and the explicit first-run setup. Select the Steam Deck preset there if wanted. A saved disabled plugin preference is respected and can be changed in RuneLite Configuration. Ctrl+F11 toggles the RuneLite sidebar; Ctrl+F12 toggles its current/last-opened plugin panel. Direct movement, matched-server features and each adventure screen remain reversible choices; the launcher does not silently enable them. Native game graphics/audio remain under Game Settings.
 
 ## Add to Steam
 
@@ -17,6 +17,30 @@ Enable **SoloScape Controller** in the client's plugin list on first use. Home S
 3. Name it SoloScape Test. Use the native Linux launch; leave forced Proton compatibility off.
 4. Choose a Gamepad layout in Steam Input. Keep a trackpad available as a mouse for native/unsupported screens.
 5. Save & Quit any running world before switching to Gaming Mode. Launch the new shortcut there.
+
+### Blank white launcher in Gaming Mode
+
+The Deck launch script exports `_JAVA_AWT_WM_NONREPARENTING=1` before starting
+Java. Gamescope does not reparent X11 windows; without this setting Java AWT can
+wait for a window event that never arrives and leave the launcher blank. The
+launcher backend and game inherit the setting. This launch fix still needs
+physical Gaming Mode acceptance on the Deck.
+
+For an already installed snapshot with the older launch script, add this line
+to `~/SoloScape-test/launch.sh` immediately before its existing `exec` line:
+
+```bash
+export _JAVA_AWT_WM_NONREPARENTING=1
+```
+
+Keep Steam's Target as `/home/deck/SoloScape-test/launch.sh`, Start In as
+`/home/deck/SoloScape-test`, and Launch Options empty. The underscores in the
+variable name are required. The installed launcher has this correction already.
+
+Fully exit SoloScape and launch it again. Keep forced Proton compatibility off.
+The setting does not require a rebuild or a change to your characters/worlds.
+Java's window-manager behavior is documented in the
+[upstream compositor discussion](https://github.com/Smithay/smithay/issues/389).
 
 Valve documents adding installed applications through Steam’s Add a Non-Steam Game flow in its [Desktop FAQ](https://help.steampowered.com/en/faqs/view/671A-4453-E8D2-323C/). Adding the Steam shortcut and changing modes are owner acceptance steps. The automation did not edit Steam's shortcut database, restart Steam, change controller layouts, switch sessions or suspend the device. Please record whether the launcher and game receive the expected gamepad, whether the window fills appropriately, and whether touchpad/controller takeover behaves correctly.
 

@@ -1,0 +1,205 @@
+diff --git a/client/src/net/runelite/client/ui/ClientUI.java b/client/src/net/runelite/client/ui/ClientUI.java
+--- a/client/src/net/runelite/client/ui/ClientUI.java
++++ b/client/src/net/runelite/client/ui/ClientUI.java
+@@ -28,6 +28,8 @@
+ import lombok.Getter;
+ import lombok.extern.slf4j.Slf4j;
+ import net.runelite.api.Constants;
++import net.runelite.client.callback.ClientThread;
++import net.runelite.client.input.KeyManager;
+ import net.runelite.client.config.ConfigManager;
+ import net.runelite.client.config.ExpandResizeType;
+ import net.runelite.client.config.RuneLiteConfig;
+@@ -48,6 +50,7 @@
+ import javax.annotation.Nullable;
+ import javax.inject.Inject;
+ import javax.inject.Named;
++import javax.inject.Provider;
+ import javax.inject.Singleton;
+ import javax.swing.*;
+ import java.applet.Applet;
+@@ -92,11 +95,11 @@
+ 		return config;
+ 	}
+ 
+-	//private final KeyManager keyManager;
++	private final KeyManager keyManager;
+ 	//private final MouseManager mouseManager;
+ 	private Applet client;
+ 	private final ConfigManager configManager;
+-	//private final Provider<ClientThread> clientThreadProvider;
++	private final Provider<ClientThread> clientThreadProvider;
+ 	private final EventBus eventBus;
+ 	private final boolean safeMode;
+ 	private final String title;
+@@ -116,6 +119,8 @@
+ 	private JButton currentButton;
+ 	private NavigationButton currentNavButton;
+ 	private boolean sidebarOpen;
++	private int pluginPanelWindowBaseWidth;
++	private int sidebarClosedWindowWidth;
+ 	private JPanel container;
+ 	private NavigationButton sidebarNavigationButton;
+ 	private JButton sidebarNavigationJButton;
+@@ -128,11 +133,11 @@
+ 	@Inject
+ 	private ClientUI(
+ 		RuneLiteConfig config,
+-		//KeyManager keyManager,
++		KeyManager keyManager,
+ 		//MouseManager mouseManager,
+ 		@Nullable Applet client,
+ 		ConfigManager configManager,
+-		//Provider<ClientThread> clientThreadProvider,
++		Provider<ClientThread> clientThreadProvider,
+ 		EventBus eventBus,
+ 		@Named("safeMode") boolean safeMode,
+ 		@Named("void.title") String title,
+@@ -141,11 +146,11 @@
+ 	{
+ 		System.out.println("client is: "+client);
+ 		this.config = config;
+-		//this.keyManager = keyManager;
++		this.keyManager = keyManager;
+ 		//this.mouseManager = mouseManager;
+ 		this.client = client;
+ 		this.configManager = configManager;
+-		//this.clientThreadProvider = clientThreadProvider;
++		this.clientThreadProvider = clientThreadProvider;
+ 		this.eventBus = eventBus;
+ 		this.safeMode = safeMode;
+ 		this.title = title + "(" + version + ")";
+@@ -442,12 +447,12 @@
+ 			frame.add(container);
+ 
+ 			// Add key listener
+-			/*final HotkeyListener sidebarListener = new HotkeyListener(config::sidebarToggleKey)
++			final HotkeyListener sidebarListener = new HotkeyListener(config::sidebarToggleKey)
+ 			{
+ 				@Override
+ 				public void hotkeyPressed()
+ 				{
+-					toggleSidebar();
++					SwingUtilities.invokeLater(ClientUI.this::toggleSidebar);
+ 				}
+ 			};
+ 			sidebarListener.setEnabledOnLoginScreen(true);
+@@ -458,14 +463,14 @@
+ 				@Override
+ 				public void hotkeyPressed()
+ 				{
+-					togglePluginPanel();
++					SwingUtilities.invokeLater(ClientUI.this::togglePluginPanel);
+ 				}
+ 			};
+ 			pluginPanelListener.setEnabledOnLoginScreen(true);
+ 			keyManager.registerKeyListener(pluginPanelListener);
+ 
+ 			// Add mouse listener
+-			final MouseListener mouseListener = new MouseAdapter()
++			/*final MouseListener mouseListener = new MouseAdapter()
+ 			{
+ 				@Override
+ 				public MouseEvent mousePressed(MouseEvent mouseEvent)
+@@ -1105,6 +1110,10 @@
+ 		// Toggle sidebar open
+ 		boolean isSidebarOpen = sidebarOpen;
+ 		sidebarOpen = !sidebarOpen;
++		if (sidebarOpen)
++		{
++			sidebarClosedWindowWidth = frame.getWidth();
++		}
+ 
+ 		// Select/deselect buttons
+ 		if (currentButton != null)
+@@ -1148,7 +1157,7 @@
+ 		}
+ 		else
+ 		{
+-			frame.contractBy(pluginToolbar.getWidth());
++			frame.contractBy(Math.max(0, frame.getWidth() - sidebarClosedWindowWidth));
+ 		}
+ 
+ 		finishClientResize();
+@@ -1218,7 +1227,10 @@
+ 	{
+ 		try
+ 		{
+-			gameClient.invalidateStretching(true);
++			// invalidateStretching resizes the native renderer's buffers. Running it on
++			// Swing's EDT races scene rasterization and can SIGSEGV in libsw3d.
++			// Perform renderer changes between frames on the owning game thread.
++			clientThreadProvider.get().invokeLater(() -> gameClient.invalidateStretching(true));
+ 
+ 			Canvas canvas = gameClient.getCanvas();
+ 			if (canvas != null)
+@@ -1361,7 +1373,11 @@
+ 		}
+ 
+ 		int width = panel.getWrappedPanel().getPreferredSize().width;
+-		int expandBy = pluginPanel != null ? pluginPanel.getWrappedPanel().getPreferredSize().width - width : width;
++		int expandBy = width - (pluginPanel != null ? pluginPanel.getWrappedPanel().getPreferredSize().width : 0);
++		if (pluginPanel == null)
++		{
++			pluginPanelWindowBaseWidth = frame.getWidth();
++		}
+ 		pluginPanel = panel;
+ 
+ 		// Expand sidebar
+@@ -1382,7 +1398,7 @@
+ 		}
+ 		else if (expandBy < 0)
+ 		{
+-			frame.contractBy(expandBy);
++			frame.contractBy(-expandBy);
+ 		}
+ 	}
+ 
+@@ -1399,13 +1415,15 @@
+ 		navContainer.setPreferredSize(new Dimension(0, 0));
+ 		navContainer.revalidate();
+ 		giveClientFocus();
+-		frame.contractBy(pluginPanel.getWrappedPanel().getPreferredSize().width);
++		// A window manager can constrain expansion asynchronously, after setBounds
++		// returns. Compare the settled width with its baseline when closing.
++		frame.contractBy(Math.max(0, frame.getWidth() - pluginPanelWindowBaseWidth));
+ 		pluginPanel = null;
+ 	}
+ 
+ 	private void giveClientFocus()
+ 	{
+-		/*if (client instanceof GameClient)
++		if (client instanceof GameClient)
+ 		{
+ 			final Canvas c = ((GameClient) client).getCanvas();
+ 			if (c != null)
+@@ -1416,7 +1434,7 @@
+ 		else if (client != null)
+ 		{
+ 			client.requestFocusInWindow();
+-		}*/
++		}
+ 	}
+ 
+ 	private void updateFrameConfig(boolean updateResizable)
+@@ -1538,7 +1556,7 @@
+ 			// Try to contract plugin panel
+ 			if (pluginPanel != null)
+ 			{
+-				normalBounds.width -= pluginPanel.getWrappedPanel().getPreferredSize().width;
++				normalBounds.width -= Math.max(0, frame.getWidth() - pluginPanelWindowBaseWidth);
+ 			}
+ 		}
+ 
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -28,7 +28,7 @@
+ 	name = "SoloScape Controller",
+ 	description = "Native controller camera, camera-relative walking and nearby world interaction",
+ 	tags = {"controller", "gamepad", "soloscape", "steam deck"},
+-	enabledByDefault = false,
++	enabledByDefault = true,
+ 	loadWhenOutdated = true
+ )
+ @Slf4j

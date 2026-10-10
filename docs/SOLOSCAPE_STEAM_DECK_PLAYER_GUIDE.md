@@ -100,16 +100,18 @@ If the name is rejected, the form stays open with your text and shows why.
 The first time, the game logs in automatically and loads your world. Wait until you see your
 character standing in Lumbridge.
 
-### First time only: turn on the SoloScape Controller plugin
-For a **new character**, the controller plugin starts **switched off**. Until you turn it on,
-the game responds only to the mouse, trackpad and touchscreen. Using the **trackpad** as the
-mouse:
-1. Open the client's **Configuration** panel in the right-hand sidebar.
-2. Scroll the plugin list until you find **SoloScape Controller**.
-3. Switch **SoloScape Controller** on.
+### SoloScape Controller starts enabled
+For a **new character**, the controller plugin starts **on**. You can go straight to
+the first-run setup below. An explicitly saved choice to disable the plugin is retained.
 
-You only need to do this once per character. A character where you've already enabled it can
-skip this step. Once it's on, the first-run setup below opens by itself.
+If controls are disabled, use the **trackpad** as a mouse: open the sidebar with the
+arrow in the title bar, click **Configuration**, scroll to **SoloScape Controller**,
+and switch it on.
+
+**Ctrl+F11** toggles the sidebar. **Ctrl+F12** toggles its current or last-opened
+plugin panel. These shortcuts can be assigned to a button in Steam Input. Closing
+the sidebar gives focus back to the game. A direct remappable controller sidebar
+action and full-screen Gaming Mode acceptance remain planned work.
 
 ### First-run controller setup
 When the plugin first starts, **Home → Settings** opens by itself with SoloScape's controller
@@ -303,7 +305,7 @@ players.
 
 | Symptom | Try this |
 |---|---|
-| Controller does nothing in the game | Make sure the game window is focused (tap it). Let go of all buttons and sticks for a moment; after menus or typing the controller waits for neutral. Check the **SoloScape Controller** plugin is switched on (see [[#First time only: turn on the SoloScape Controller plugin]]). If you see "bindings overlap", fix it in **Settings → Bindings**, or reset the plugin's settings. |
+| Controller does nothing in the game | Make sure the game window is focused (tap it). Let go of all buttons and sticks for a moment; after menus or typing the controller waits for neutral. Check the **SoloScape Controller** plugin is switched on (see [[#SoloScape Controller starts enabled]]). If you see "bindings overlap", fix it in **Settings → Bindings**, or reset the plugin's settings. |
 | Controller does nothing in the launcher | Untick **Desktop keyboard navigation**. |
 | Stuck while typing (controller paused) | Tap **Done** or **Cancel** in the top-left panel (Enter also confirms). Hiding the Steam keyboard alone doesn't end typing. **Steam + X** reopens the keyboard. |
 | Buttons do two things at once, or the D-pad moves a text cursor | Your Steam controller layout is probably sending keyboard or mouse inputs as well. Switch to a **Gamepad** layout with a mouse trackpad. |

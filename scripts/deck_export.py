@@ -63,6 +63,9 @@ def export():
                        'scripts/test_deck_runtime.py', 'scripts/native_metrics.py',
                        'scripts/summarise_native_metrics.py', 'scripts/test_native_metrics.py',
                        'scripts/harness/NativeControllerProbe.java', 'docs/DECK_SPRINT_TASKS.md']
+        root_names += ['scripts/harness/NativeSidebarProbe.java',
+                       'patches/client/0036-sidebar-resize-thread-and-controller-default.patch',
+                       'patches/server/0015-stop-game-loop-before-saving.patch']
         for name in sorted(set(root_names)):
             if name and name != 'config/local.env' and not name.startswith(('upstream/', '.runtime/')):
                 source = local_dev.ROOT / name

@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Gamescope does not reparent X11 windows. Tell AWT before its first window is
+# created; the backend and game JVM inherit this too.
+export _JAVA_AWT_WM_NONREPARENTING=1
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 export SERVER_JAVA="$root/.runtime/jdks/jdk21/bin/java"
 export CLIENT_JAVA="$root/.runtime/jdks/jdk8/bin/java"
