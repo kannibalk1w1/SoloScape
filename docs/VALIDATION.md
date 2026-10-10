@@ -248,3 +248,14 @@ Latest: 172 client cases (zero failures/errors, one existing optional SDL skip),
 ## Real Steam Deck and launcher keyboard checkpoint (2026-10-10)
 
 Actual SteamOS Desktop private deployment, SDL detection, native New/Continue/adventure/settings/save/cancel and native two-JVM ownership recovery pass. 78 root cases pass on host and Deck. Windowed software-renderer intervals/resources are observations, with host-wide sensors and no battery-life claim. After physical owner feedback, launcher patch 0029 adds exclusive Steam/local keyboard modes, neutral rearm and desktop/controller navigation choice; 179 fresh client cases pass (one optional SDL skip) and 100 client/33 server files reproduce. Native Swing local/system-mode probes pass. See [Deck evidence](DECK_VALIDATION.md), [setup](DECK_SETUP.md), [Claude keyboard review](CLAUDE_DECK_KEYBOARD_REVIEW.md) and [combined report](MORNING_REPORT.md). Physical keyboard behavior, Gaming Mode and the requested in-game ownership extension remain open.
+
+
+## In-game text ownership and classic UI — 10 October 2026
+
+Client test/shadow build: 192 cases, zero failures/errors, one existing optional SDL skip. Root tooling: 78 passing. Exact client/server source reproduction: 106/33 files through client 0030/server 0011, with matched jar/stamp. ShellCheck and Python compilation pass for the extended native smoke wrapper/parser.
+
+Twenty synthetic previews compile/render in both palettes at 765×503 and 1280×800; representative classic inventory/journal/Home/text layouts were inspected. The Swing local/system entry/backend probe passes after sharing the Steam request transport.
+
+Focused host New/Continue and full adventure/settings native probes pass real CS2 amount/name/string edit/cancel, native received public chat on Enter, Escape without submission and retained-text cleanup. Native movement remains unchanged; logout/relogin/capability refresh, configuration reversal, exact saves/four backups and early cancellation pass. Private evidence: `.runtime/alpha-tests/session-1791639855995810149` (focused) and `.runtime/alpha-tests/session-1791639994070449193` (full). These use an owned Xvfb and injected Steam visibility; physical simultaneous keys/buttons and Steam visibility remain acceptance work. [Scope](IN_GAME_TEXT_INPUT.md), [Claude static review](CLAUDE_INGAME_KEYBOARD_REVIEW.md) and the combined report distinguish remaining server-suspension/type-11/full-widget coverage.
+
+The same full probe passes on the actual Deck Desktop in verified r8, with zero non-probe mouse clicks and exact save/backup/cancellation checks. Deployment and capture limits are in [Deck validation](DECK_VALIDATION.md#in-game-text-and-classic-ui-deployment--r8).
