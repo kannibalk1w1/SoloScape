@@ -63,6 +63,29 @@ profile_session.run(profiles.Profile(Path(sys.argv[3])),threading.Event(),lambda
         with self.profile.lock():pass
         with local_dev.build_lock():pass
 
+    def test_backend_recover_worker_refuses_overlap_and_finishes_the_recorded_world(self):
+        record=self.orphan()
+        record['owner']=session_recovery.identity(os.getpid())
+        session_recovery.write(self.profile,record)
+        backend=launcher_backend.Backend()
+        class ActiveWorker:
+            def is_alive(self):return True
+        backend.worker=ActiveWorker()
+        with self.assertRaisesRegex(RuntimeError,'already running'):
+            backend.dispatch({'action':'recover','profile':self.profile.manifest['id']})
+        self.assertFalse((self.root/'server.stopped').exists())
+        backend.worker=None
+        try:
+            backend.dispatch({'action':'recover','profile':self.profile.manifest['id']})
+            backend.worker.join(5)
+            status=backend.current()
+            self.assertFalse(status['running'])
+            self.assertIsNone(status['error'])
+            self.assertEqual(status['stage'],'stopped')
+            self.assertIn('Clean shutdown is unconfirmed',status['message'])
+            self.assertIsNone(session_recovery.read(self.profile))
+        finally:backend.close()
+
     def test_wrong_process_environment_refuses_before_any_signal(self):
         record=self.orphan()
         record['session']='f'*32;session_recovery.write(self.profile,record)
