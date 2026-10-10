@@ -152,3 +152,66 @@ hardware claim. The client suite and native smoke results are as you reported th
   Config changes persist only to the disposable profile's `client_home` (`profile_session.py:95`).
 
 No new high or medium findings.
+
+## Follow-up: native `close_entry` cancel and the probe cleanup (static)
+I read `ControllerEntry.cancel`, `observe` and `snapshot`, the server's `DialogueInput.kt`,
+`Interfaces.closeDialogue`, `Interact.start` and `ActionQueue.logout`, and the probe's
+cleanup. I didn't build or run anything, and this doesn't claim the fixtures pass.
+
+**Verdict: no blockers.**
+
+### Cancel freshness and identity: sound
+- `cancel` takes a fresh `snapshot()` on the client thread. It runs `{101}` only when the
+  current entry is the **same session** as the one the caller held, so a stale overlay tap or
+  controller B after the prompt changed does nothing.
+- The value isn't compared, which is correct: cancelling doesn't depend on the text.
+- Running 101 goes through the observed script path (`observe` bumps `revision` for
+  101/108/109/110/1472), so any later stale `edit` or `submit` against the old session fails
+  `sameSession`.
+- Physical Escape keeps its native meaning, and Enter is still the native script 112.
+- No packet is made up: 101 is the same script the server itself sends as `close_entry`.
+
+### C1. Low: cancelling closes the prompt on the client only; the server keeps waiting
+The 634 protocol has no cancel message for an entry prompt. The server clears
+`Suspension.IntEntry`/`NameEntry`/`StringEntry` only in these cases:
+- an answer arrives (`DialogueInput.kt:44-56`);
+- `closeDialogue()` runs (`Interfaces.kt:283-289`, which also covers `closeInterfaces`);
+- a new interaction starts (`Interact.start`, `:71-73`).
+
+After a controller Cancel, the waiting server action (for example a withdraw-X) stays pending
+until one of those happens. While it is pending, `walkTrigger` and `Interact` treat the player
+as busy (`Character.kt:67`, `Interact.kt:103/190`). This is the same server state a native
+player gets by ignoring a prompt, so it is not a new class of state. But the controller copy
+shouldn't suggest that the server action was cancelled.
+
+A related point I found, which this change doesn't cause: `ActionQueue.logout()` spins
+`while (suspension != null)` and handles only Continue, Custom and Delay
+(`ActionQueue.kt:114-121`). If a pending **long-priority** queued action is waiting on an
+Int/Name/String entry at logout, that loop doesn't end. I didn't check whether the logout path
+calls `closeDialogue` before this point. It is worth one native fixture: start a Withdraw-X,
+press controller Cancel, then log out.
+
+### C2. Low: type 11 isn't covered
+`active()` also accepts entry type **11**. Neither the old Escape route (script 112 handled
+only 12 and 14) nor the new `{101}` has a fixture for type 11. **Fix:** either exclude 11 from
+controller cancel or add a fixture that proves `close_entry` closes it.
+
+### Harness cleanup
+- **H1. Possible false cleanup failure.** `retainedChat()` searches **every** entry of
+  `Class258_Sub2.aStringArray8532` for `solo_cancel_probe`. That array also holds the entry
+  value at index 22, so it is a general client string table, not only the chat input. If the
+  client also keeps the cancelled line in another slot (history, or a "last typed" value),
+  Backspace can't clear that slot, and stage 11 fails after 5 s even though the chat input is
+  empty. **Fix:** record the index where the text was found at stage 10, wait only on that
+  index, and put the index in the failure message.
+- **H2. `cleanup()` runs only on success.** The probe's stage throws or `require` failures go
+  through `NativeAdventureProbe`/`NativeSessionSmoke`, which exit without calling
+  `NativeTextProbe.cleanup()`. The SDL close, the field restore and the config restore are
+  then skipped. The process exits and the config is the disposable profile's, so this is
+  contained. Calling `cleanup()` in the harness's failure path would still make it
+  deterministic.
+- **H3. Cleanup ordering is correct.** The SDL provider is closed only when it is a new object
+  created by the probe while the plugin was inactive, and the plugin's own controller is never
+  touched. `failed` and `gamepad` are restored before `active`. With the duplicate tick
+  removed, an active plugin's event-bus tick (on the `systemEntry` swapped by reflection)
+  drives ownership between probe calls, which are about 500 ms apart.

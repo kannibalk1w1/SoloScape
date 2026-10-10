@@ -26,7 +26,7 @@ public final class NativeAdventureProbe {
  public static boolean tick(String marker) {
   try {
    if(failure!=null)throw new IllegalStateException(failure);
-   long now=System.currentTimeMillis();Files.write(Paths.get(marker+".adventure.status"),("step="+step+" panel="+(ControllerUi.snapshot().panel==null?-1:ControllerUi.snapshot().panel.id)).getBytes("UTF-8"));
+   long now=System.currentTimeMillis();Files.write(Paths.get(marker+".adventure.status"),("step="+step+" text="+NativeTextProbe.currentStage()+" panel="+(ControllerUi.snapshot().panel==null?-1:ControllerUi.snapshot().panel.id)).getBytes("UTF-8"));
    if(Class132.aPlayer_1907!=null){String tile=((Class132.aPlayer_1907.x>>9)+za_Sub2.regionTileX)+","+((Class132.aPlayer_1907.y>>9)+Class90.regionTileY)+","+Class132.aPlayer_1907.plane;if(!tile.equals(lastTile)){results.put("tile_change_"+now,"step="+step+" tile="+tile);lastTile=tile;}}
    if(started==0){
     started=lastStep=now;frames=new FrameProbe();RuneLite.getInjector().getInstance(OverlayManager.class).add(frames);
@@ -90,6 +90,8 @@ public final class NativeAdventureProbe {
     int before=preferences.deadzone();UiState.Widget row=model.snapshot(true).panes[0].widgets[1];
     require(model.invoke(row,row.actions[0],true)==0,"Local preference change rejected");require(preferences.deadzone()!=before,"Config proxy did not receive local change");
     row=model.snapshot(true).panes[0].widgets[1];require(model.invoke(row,row.actions[1],true)==0,"Local preference reversal rejected");require(preferences.deadzone()==before,"Config proxy did not restore local preference");results.put("settings_config_round_trip",true);
+    KeyboardMode keyboardBefore=preferences.keyboardMode();row=model.snapshot(true).panes[0].widgets[9];require(model.invoke(row,row.actions[0],true)==0&&preferences.keyboardMode()!=keyboardBefore,"Keyboard preference change rejected");row=model.snapshot(true).panes[0].widgets[9];require(model.invoke(row,row.actions[1],true)==0&&preferences.keyboardMode()==keyboardBefore,"Keyboard preference reversal rejected");
+    boolean classicBefore=preferences.classicTheme();row=model.snapshot(true).panes[0].widgets[10];require(model.invoke(row,row.actions[0],true)==0&&preferences.classicTheme()!=classicBefore,"Classic preference change rejected");row=model.snapshot(true).panes[0].widgets[10];require(model.invoke(row,row.actions[0],true)==0&&preferences.classicTheme()==classicBefore,"Classic preference reversal rejected");results.put("keyboard_classic_settings_round_trip",true);
     GamepadState back=new GamepadState();back.buttonsHeld=back.buttonsPressed=0;ui.update(back,System.nanoTime());back.buttonsHeld=back.buttonsPressed=2;ui.update(back,System.nanoTime());
     require(!settingsOpen.getBoolean(plugin),"B did not close local settings");require(ui.takeHomeBack()==HomeTab.SETTINGS.ordinal(),"B lost Home ancestry");results.put("settings_back_to_home",true);
     step=15;lastStep=now;return false;

@@ -2,7 +2,6 @@ import java.awt.event.KeyEvent;
 import java.lang.reflect.*;
 import java.util.*;
 import com.GameClient;
-import net.runelite.api.events.ChatMessage;
 import net.runelite.client.RuneLite;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.*;
@@ -13,6 +12,7 @@ import net.runelite.client.plugins.soloscapecontroller.*;
 /** Real native CS2/widget/key pipeline fixture, with fake Steam visibility only. Never physical input acceptance. */
 public final class NativeTextProbe {
     private static int stage;private static long stageAt;
+    public static int currentStage(){return stage;}
     private static SoloScapeControllerPlugin plugin;private static SystemEntryControls original,owned;
     private static boolean priorActive,priorFailed;private static String priorMode;private static Object priorGamepad;
     private static net.runelite.client.input.KeyListener keys;
@@ -20,7 +20,7 @@ public final class NativeTextProbe {
     private static final String CHAT="solo_keyboard_probe",CANCEL="solo_cancel_probe";
     private static String initialTile;
     private static final Recorder recorder=new Recorder();
-    public static final class Recorder {@Subscribe public void chat(ChatMessage event){messages.add(event.getMessage());}}
+    public static final class Recorder {@Subscribe public void chat(net.runelite.api.events.ChatMessage event){messages.add(event.getMessage());}}
     private static Field field(String name)throws Exception{Field field=SoloScapeControllerPlugin.class.getDeclaredField(name);field.setAccessible(true);return field;}
     private static void require(boolean ok,String reason){if(!ok)throw new IllegalStateException(reason);}
     private static void script(int id,String prompt){Class348_Sub36 event=new Class348_Sub36();event.anObjectArray6987=prompt==null?new Object[]{id}:new Object[]{id,prompt};Class66.method705(event);}
@@ -75,7 +75,8 @@ public final class NativeTextProbe {
             Method action=SoloScapeControllerPlugin.class.getDeclaredMethod("textEntryAction",long.class,int.class);action.setAccessible(true);action.invoke(plugin,owned.revision(),1);next();return false;
         }
         if(stage==8){
-            if(!messages.contains(CHAT)){require(System.currentTimeMillis()-stageAt<10000,"Native Enter did not submit public chat");return false;}
+            for(ChatMessage nativeMessage:Class318_Sub2.aClass147Array6400)if(nativeMessage!=null&&nativeMessage.aString2028!=null&&nativeMessage.aString2028.equalsIgnoreCase(CHAT)){messages.add(CHAT);results.put("native_chat_message_type",nativeMessage.anInt2032);}
+            if(!messages.contains(CHAT)){results.put("native_chat_messages",new ArrayList<>(messages));List<String> buffers=new ArrayList<>();for(int i=0;i<Class258_Sub2.aStringArray8532.length;i++){String v=Class258_Sub2.aStringArray8532[i];if(v!=null&&v.contains("solo_"))buffers.add(i+":"+v);}results.put("native_chat_buffers",buffers);require(System.currentTimeMillis()-stageAt<10000,"Native Enter did not submit public chat");return false;}
             require(!owned.active(),"Manual chat Done did not release ownership");results.put("native_chat_enter_submission",true);
             owned.beginManual(true,true);typed(CANCEL);next();return false;
         }
@@ -83,7 +84,7 @@ public final class NativeTextProbe {
             Method action=SoloScapeControllerPlugin.class.getDeclaredMethod("textEntryAction",long.class,int.class);action.setAccessible(true);action.invoke(plugin,owned.revision(),2);next();return false;
         }
         if(stage==10){
-            require(!owned.active(),"Manual chat Cancel did not release ownership");require(!messages.contains(CANCEL),"Native Escape submitted cancelled chat");results.put("native_chat_escape_no_submission",true);
+            require(!owned.active(),"Manual chat Cancel did not release ownership");for(ChatMessage nativeMessage:Class318_Sub2.aClass147Array6400)if(nativeMessage!=null&&nativeMessage.aString2028!=null&&nativeMessage.aString2028.equalsIgnoreCase(CANCEL))messages.add(CANCEL);require(!messages.contains(CANCEL),"Native Escape submitted cancelled chat");results.put("native_chat_escape_no_submission",true);
             String retained=retainedChat();
             results.put("native_chat_escape_retains_text",retained!=null);
             require(initialTile.equals(tile()),"Native text fixture moved the player");results.put("native_text_visibility_requests",new ArrayList<>(requests));
