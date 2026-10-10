@@ -1,89 +1,78 @@
 # SoloScape — combined morning / completion report
 
-9 October 2026. This combines both original controller sprints, the console alpha, cohesive menu/session work and the approved controller-first adventure sprint. Development is on [overnight/controller-sprint](https://github.com/kannibalk1w1/SoloScape/tree/overnight/controller-sprint). Public main remains at `07e789bfa05f48989698d7200577a331e47183ab`. Original player data and cache were preserved; gameplay verification used disposable storage and an owned private virtual display.
+10 October 2026. **Approved journeys/recovery sprint completed.** This combines the original two controller sprints, console alpha, cohesive menu/session milestone, controller-first adventure sprint and controller journeys/recovery work. Development is on [overnight/controller-sprint](https://github.com/kannibalk1w1/SoloScape/tree/overnight/controller-sprint); local branch is `soloscape/bootstrap`. Public main remains `07e789bfa05f48989698d7200577a331e47183ab`.
 
-Earlier reports are archived: [controller sprints](MORNING_REPORT_CONTROLLER_SPRINTS.md), [console alpha](MORNING_REPORT_CONSOLE_ALPHA.md), [cohesive session](MORNING_REPORT_COHESIVE_SESSION.md). This report and [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) describe current state. [ROADMAP.md](ROADMAP.md) is the full proposed task backlog, not blanket approval to implement every future system.
+Original worlds/cache were preserved; verification uses disposable storage and private displays. Earlier reports are archived: [controller sprints](MORNING_REPORT_CONTROLLER_SPRINTS.md), [console alpha](MORNING_REPORT_CONSOLE_ALPHA.md), [cohesive session](MORNING_REPORT_COHESIVE_SESSION.md), [adventure](MORNING_REPORT_ADVENTURE.md). [PROJECT_HANDOFF.md](PROJECT_HANDOFF.md) is the self-contained discussion handoff and [ROADMAP.md](ROADMAP.md) remains the full proposed backlog, not blanket authorization for future systems.
 
-## Current state for discussion
+## Current state for ChatGPT discussion
 
-SoloScape is a playable local, single-player-first revision-634 RuneScape project, delivered as reproducible patches over pinned 2011Scape/Void server and RuneLite-style client sources. The intended experience is pre-EoC RuneScape with console controls and eventual Steam Deck support. World tiles, collision, combat and transactions retain native server rules. Game assets, saves, credentials, runtimes and jars are excluded from the public source repository. Contributions remain maintainer-directed.
+SoloScape is a playable local, single-player-first revision-634 RuneScape project using reproducible patches over pinned 2011Scape/Void server and RuneLite-style client sources. The intended experience is pre-EoC RuneScape with console controls and eventual Steam Deck support. The server retains authority over movement, collision, combat, progression and transactions. Cache/assets, credentials, saves, runtimes and jars are excluded from Git. Contributions remain maintainer-directed.
 
-The owner has confirmed local launch, camera, movement feedback, improved walking/aiming/interaction and optional direct movement. Latest adventure UI, source targeting and setup need physical controller acceptance. There is no packaged release or established Deck performance budget. Complete upstream content, AI adventurers, solo-economy changes, exposed world pause and original world graphics remain future scope.
+The owner has confirmed local launch, camera, movement feedback, improved walking/aiming/interaction and optional direct movement. Current adventure screens, remapping, first-run setup, source targeting and the new launcher keyboard need physical controller acceptance. There is no packaged release or established Deck performance budget. Original world graphics, AI adventurers, solo economy, exposed world pause, selected content backports and private multiplayer remain proposed future scope.
 
 ## Combined delivery
 
-| Area | Earlier delivered work | Adventure sprint additions |
+| Area | Earlier delivered work | Journeys additions |
 | --- | --- | --- |
-| Movement and world | SDL input, camera-relative walking/direct toggle, movement overlays, aim/target cycling, native action menus, loot and cancellation | Source/target phase feedback, fresh source identity on return; quick casts retain world control |
-| Interfaces | Inventory/dialogue, bank/shop quantities/search, text/amount entry, equipment, prayer/spells and production; Home radial, contextual B ancestry, right-stick scrolling | Optional journal/quests, skills, combat, prayer and spellbook surfaces with readable native detail/state |
-| Presentation | Optional custom inventory/equipment/bank/shop, mouse/trackpad support, native names/icons and destructive confirmation | Shared readable styling, detail wrapping, pointer tooltips/page hints, bounded weak reuse of native sprite-cache artwork |
-| Controller setup | Eight bindings, presets, glyphs, deadzone/inversion/scale and run threshold | Home Controller Settings and first-run setup; swap occupied mappings; Game Settings child/B return; validated native special-attack quick binding |
-| Sessions and saves | Graphical New/Continue, isolated worlds/generations, verified backups/restore/import, previewed retention and matched build-only Prepare | Owned JVMs inherit profile/archive locks after launcher death; restart port check handles TCP TIME_WAIT while rejecting listeners |
-| Content | Earned Cook/shop/mill/bank/fishing/cooking/combat/food/save fixture; actual Lumbridge walking; shared-store validation fix | Full actual-map Restless Ghost completion/save; actual castle Cook/Rune starts, doors/north stairs, upstairs talisman banking/save |
-| Delivery | Pinned patch reproduction, setup/cache instructions, checks and actual Claude reviews | Further bounded actual Claude review/fixes, isolated native adventure validation and updated combined report/handoff/backlog |
+| World controls | SDL input, camera-relative walking/direct toggle, tile/target feedback, LT aim, target cycling, normal action menus, loot and B cancellation | Native quest-route verification retains ordinary collision/interaction rules |
+| Menus | Home radial, inventory/dialogue, bank/shop quantities/search, text/amount entry, equipment, prayer/spells, production, contextual B ancestry and right-stick scrolling | Reproduced and fixed stale Home ancestry after spell selection and tab timeout; later directly opened inventory B returns to world |
+| Presentation | Independently reversible inventory/equipment/bank/shop/journal/skills/combat/prayer/spellbook surfaces, mouse/trackpad support, native icons/names/details and destructive confirmation | Actual Swing name-entry keyboard with form-preserving B, Y advance, Shift, desktop coexistence, account filtering and inline errors |
+| Setup | Eight bindings, presets/glyphs, deadzone/inversion/scale/run threshold, Home Controller Settings, first-run setup and Game Settings parent return | Launcher character creation can be completed through the entry adapter without typing on a physical keyboard |
+| Targeting | Explicit quick slots, validated native special-attack binding, source/target feedback and identity-checked source return | Navigation history clears at selection handoff and independent inventory entry; existing return/scroll coverage remains green |
+| Sessions/saves | Isolated worlds/generations, credentials, native New/Continue, verified backups/restore/import, previewed retention, build-only Prepare and inherited profile/archive guards | Durable session records; verified pidfd recovery; honest recovered snapshots; restore generation guard; explicit ended-record archival; backend SIGTERM/SIGHUP waits for normal hooks |
+| Content | Earned gather/mill/Cook/shop/bank/fish/cook/combat/food/save fixture, shared-store fix, actual Lumbridge walking, full Restless Ghost and castle/banking routes | Full actual-map Cook and Rune Mysteries routes, native rewards and save/reload pass |
+| Delivery | Pinned setup/cache instructions, patch export/verification, matched jars/stamp and repeated actual Claude review | New launcher/recovery harnesses, further real Claude findings reproduced/fixed, combined report and updated task/backlog evidence |
 
-## Adventure behavior and how to try it
+## How to try the new behavior
 
-**Screens:** enable Custom quest journal, Custom skills screen, Custom combat screen, Custom prayer screen or Custom spellbook screen in SoloScape Controller preferences. Each is independent and defaults off. Existing inventory/equipment/bank/shop toggles remain. Native IDs, actions, quantities, eligibility checks and mouse interaction are retained; read-only journal/skill detail offers no fabricated action. Native UI is available by disabling its custom presentation.
+After Save & Quit of an existing owned world, run `./scripts/prepare-build.sh`, then `./scripts/launcher.sh`. Prepare builds/verifies the matched pair without starting a world. New Character and Continue use isolated profile worlds; they do not silently import the legacy development world. The legacy path remains `./scripts/dev-run.sh --no-build`. Never replace archives underneath a manually launched JVM.
 
-**Native details:** skills show boosted/base levels and XP; journals use loaded visible native objective text. Combat shows selected style, retaliation and special energy/state. Prayer/curse labels, levels and state follow pinned definitions and native masks. Spell labels follow pinned components; Magic/rune requirements come from the same cache information fields the server reads. Staff substitutions, quest/target restrictions, free-to-play membership restrictions and final casting availability remain native checks; the overlay does not calculate every eligibility condition.
+**Character naming:** New Character opens the local keyboard. D-pad chooses keys; A types; X deletes; Y advances; Shift changes case; B first leaves the keyboard and preserves the form. LB/RB moves between form controls. Desktop typing and pointer buttons coexist. A failed backend create keeps the values and shows an inline message. The native in-game entry types retain their prior validation.
 
-**Settings and B:** Home Settings opens controller preferences, including presets, eight bindings, deadzone, run threshold, scale, inversion, glyphs and screen toggles. Game Settings opens native graphics/audio as a child. B returns through preferences → Home → world. First-run completion is explicit; it does not silently enable direct movement or matched-server features. Custom controller settings can be disabled independently. Adoption across ticks no longer cancels the local menu.
+**Recovery:** after an abnormal launcher death, an affected character offers Recover Session instead of Continue. It checks boot, PID start, same user, unique session/role environment, exact archive argv, isolated save path and both inherited guards before using a pidfd to send SIGTERM. It stops the client before the server, waits for normal hooks and refuses live original launchers, changed identities and suspended processes. It never adopts manual/unrelated worlds or uses a forced-kill save timeout.
 
-**Selection:** item/spell selections originating in an ordinary panel remember the source tab and identity. Use/cancel can restore it once with fresh item/quantity checks. Quick casts stay in world. New selections, external modals, focus loss/logout and expired or changed sources discard obsolete return state. Focus restoration stores identity, never invokable actions.
+A verified recovered snapshot is labelled `after-recovered-shutdown`; earlier backups remain and **clean shutdown is unconfirmed**. Save errors or unfinished save files retain the record for inspection. An ended damaged world can explicitly Archive ended record, which preserves the record and enables Restore Backup. Restore refuses an outstanding record before switching generations. [Launcher guide](ALPHA_LAUNCHER.md) explains these flows.
 
-**Special quick action:** focus the native combat Special attack Use control, open the quick wheel and assign it as usual. Dispatch requires the exact supported component and fresh native permission. The server still owns energy and weapon behavior.
+**Gameplay settings:** Home Settings opens controller preferences and Game Settings opens native settings as a child. Independent custom screen toggles default off for adventure screens. Native actions, IDs, state and permission checks remain authoritative. Special-attack quick assignment and ordinary item/spell source return are described in the [adventure UI](ADVENTURE_UI.md), [setup](ADVENTURE_CONTROLLER_SETTINGS.md) and [targeting](ADVENTURE_TARGETING.md) guides.
 
-**Owned lifecycle:** launcher/profile/build guards survive abnormal launcher death through inherited JVM file descriptors. They remain held while owned children can save or load classes. No clean backup is claimed for a killed launcher; an orphan-session recovery UI remains future work. Manually launched JVMs remain outside ownership protection.
+## Current verification
 
-Guides: [adventure UI](ADVENTURE_UI.md), [controller setup](ADVENTURE_CONTROLLER_SETTINGS.md), [selection return](ADVENTURE_TARGETING.md), [session guards](ADVENTURE_SESSION_GUARDS.md), [route audit](ADVENTURE_ROUTE_AUDIT.md), [native evidence](ADVENTURE_NATIVE_VALIDATION.md).
-
-## Validation
-
-| Check | Latest result and scope |
+| Check | Evidence |
 | --- | --- |
-| Client suite / shadow jar | 172 cases, zero failures/errors; one existing optional SDL skip |
-| Root tooling/profile/lifecycle/socket suite | 47 cases, all passing; includes launcher-kill lock inheritance, live-listener rejection and normal shutdown restart |
-| Selected game slice / shadow jar | 18 cases, all passing: existing quest/recovery logic, shops/progression/session and two actual-map routes; strengthened saves reran the same two route cases |
-| Reproducible patch export | Entire ordered stack reproduces exactly: 98 client files and 32 server files; fresh/upgrade/reverse/idempotence checks pass |
-| Matched pair | Both archives build and the jar/base/patch fingerprint stamp verifies |
-| Native integration | New/Continue, settings adoption/config reversal/B, settled same-client relogin with fresh capability nonce, four verified backups, save fields and whole-world startup cancellation pass; original mutable-path fingerprints unchanged |
-| Historical broader modules | Alpha recorded 74 config, 249 networking and 49 selected engine cases; these are historical results, not newly rerun claims |
+| Client test/shadow jar | 176 cases; zero failures/errors; one existing optional SDL skip |
+| Root tooling/profile/lifecycle/recovery | 62 passing disposable cases, including real pidfds/flocks around simulated JVMs |
+| Menu regression | Two added cases fail before the ancestry fix and pass after it; full client suite stays green |
+| Actual Swing launcher | Native entry adapter/backend create, cancel/preserve, account-filter and inline-error probe passes on its own private display |
+| Selected native-cache game slice | 20 selected cases pass; zero failures/errors/skips; server shadow build passes |
+| Exact exported stacks | 99 client files through patch 0028; 33 server files through patch 0011; matched jars/stamp verify |
+| Native orphan server | Real server recovered through verified pidfd identity/inherited guards; recovered snapshot validated; original mutable-path fingerprints unchanged |
+| Native New/Continue/adventure | Repeated graphical sessions pass native save/reload, four verified backups and pre-ready cancellation preserving every saved-world file |
 
-Private complete-session totals were **66.282 / 63.783 seconds**, including the adventure probe and save/shutdown. Baseline render-interval p95 was **29.34 / 24.44 ms**; journal-state p95 **32.68 / 31.48 ms**. Full memory/sample/interval values and actual captures are in [native evidence](ADVENTURE_NATIVE_VALIDATION.md).
+[Journeys validation](CONTROLLER_JOURNEYS_VALIDATION.md) records the methods and reproduction commands. The native recovery probe covers a real server with no player/client claim; the separate native profile smoke covers graphical player New/Continue, capabilities, save/reload, settings adoption and early startup cancellation. Historical broader alpha results (74 config, 249 networking, 49 selected engine cases) have not been rerun in this checkpoint.
 
-Hardware limits remain explicit. Native desktop measurements use Xvfb/software rendering, with different native states for baseline and journal. They are not a controlled GPU A/B or Deck benchmark. Heap/RSS from short sessions does not establish a leak or long-term memory budget. Real Settings Gateway/openHomeTab and synthetic B input are exercised; the SDL-driven onClientTick path and first-run physical discovery are not accepted by this harness.
+Server/content tests use native objects/NPCs/cache and normal instructions. Their test characters start in the quest-giver scenes. Native stairs/ladders change scene normally. Door helpers wait for the object change and walking waits for a native border delay before issuing another instruction. No fixture scenery, reward items, quest state, collision overrides or teleport commands make the new routes pass. These are headless server/content checks, not a physical controller playthrough.
 
-## Actual Claude review
+## Actual Claude review and fixes
 
-Actual Claude reviewed successive bounded batches in the existing Orca terminal via the orca-cli skill. Foundation native fallback/artwork, combat/session guards, settings adoption and selection-return issues were repaired. Settings follow-up found no blockers; native Settings ownership and reentrant reset were also corrected. Final spell/route/harness review and follow-up found no correctness blockers, with private-display ownership, honest settings-probe scope and logout label validation addressed. These are static audits, not gameplay or hardware acceptance; no current Claude quota percentage is inferred.
+Actual Claude performed four bounded static reviews in the existing Orca terminal. No current usage-window percentage is inferred. The reviews did not run gameplay or establish hardware acceptance.
 
-Reports: [foundation](CLAUDE_ADVENTURE_UI_FOUNDATION.md), [foundation follow-up](CLAUDE_ADVENTURE_UI_FOLLOWUP.md), [combat/session](CLAUDE_ADVENTURE_COMBAT_SESSION.md), [settings/targeting](CLAUDE_ADVENTURE_SETTINGS_TARGETING.md), [settings follow-up](CLAUDE_ADVENTURE_SETTINGS_FOLLOWUP.md), [final review](CLAUDE_ADVENTURE_FINAL_REVIEW.md), [final follow-up](CLAUDE_ADVENTURE_FINAL_FOLLOWUP.md). Their descriptions reflect code at review time; later native clicks and logout settling are explained in the native evidence.
+- [Recovery design](CLAUDE_JOURNEYS_DESIGN_REVIEW.md): identity/guard/ownership design and reuse of native entry logic.
+- [Implementation](CLAUDE_JOURNEYS_IMPLEMENTATION_REVIEW.md): finished-worker ownership, restore generation protection and exact argv/save-path identity findings were fixed.
+- [Menu/follow-up](CLAUDE_JOURNEYS_MENU_REVIEW.md): stale Home ancestry was reproduced in two failing tests and fixed; other-profile ownership listing was fixed and tested.
+- [Native recovery probe](CLAUDE_JOURNEYS_RECOVERY_PROBE_REVIEW.md): early-parent-death cleanup now uses the durable record, cleanup errors preserve the original failure, and another legitimate shared archive holder cannot invalidate this probe's profile result.
 
-## Commits and next launch
+Previous adventure/session review reports remain linked from the archived reports. Native display scope and original-world preservation are recorded separately from static review.
 
-Verified implementation batches already on the development branch:
+## Delivery and remaining acceptance
 
-- `d1d67f6`: UI foundation, quest journal/skills and artwork reuse.
-- `82c24bf`: combat/prayer/spells state, native special quick binding and durable session guards.
-- `7cf06ef`: controller preferences and first-run setup.
-- `6ff8cce`: source/target return and settings review fixes.
-- `4c51e14`: native spell requirements, actual-map adventure/save audit, restart probe and final static reviews.
-- Subsequent native validation/documentation commits finish this report; Git history records their exact hashes.
+`1f219f2` commits/pushes controller character entry, ownership-checked recovery, launcher guidance and the reproduced menu fix. `03fa279` commits/pushes the full native quest routes and final 20-case content slice. The final native probes, Claude follow-up and documentation are committed separately in Git history. Development pushes remain on `overnight/controller-sprint`; public main is preserved.
 
-After Save & Quit of an existing owned session:
+Remaining work, in practical order:
 
-```bash
-./scripts/prepare-build.sh
-./scripts/launcher.sh
-```
+1. Physically test naming, independent inventory B, Settings → Game Settings → B, scrolling/large text, targeting/use/cancel and mouse/controller takeover. Keep concrete awkward cases for focused fixes.
+2. Play the accepted quest/gather/commerce/combat slice from a fresh profile and restart; verify completed journal rendering and tutorial/first-run on actual hardware.
+3. Measure Steam Deck/Gaming Mode frame times, loading, memory, battery/thermals and suspend/resume against a repeatable route.
+4. Verify fresh-machine setup/update/recovery and audit redistribution/dependency licences before packaging.
+5. Choose the first fully accepted solo gameplay slice before authorizing broader art/AI/economy/backport/multiplayer systems.
 
-Prepare applies tracked patches and builds/verifies the matched pair without launching a world. Continue selects an isolated profile world; it does not silently import the old development world. The legacy development path remains `./scripts/dev-run.sh --no-build`. Do not update archives beneath a manually launched game.
-
-Cache acquisition/extraction is in [CACHE_SETUP.md](CACHE_SETUP.md), using the pinned upstream maintainer’s linked compatible archive. It is not an official Jagex distribution. Launching the client downloads from the local server after that server cache is installed; it cannot supply the missing server archive.
-
-## Remaining work
-
-The [adventure task list](ADVENTURE_SPRINT_TASKS.md) separates delivered preparation from acceptance. Next: physical adventure/setup/targeting/B/scroll and special-binding acceptance; full actual-map Cook’s Assistant/Rune Mysteries travel and save restart; then repeatable Deck loading/frame/memory/suspend measurements and concrete fixes.
-
-Arbitrary server-modal reopening, niche interfaces, wider native artwork availability, controller-only launcher naming, orphan-session recovery and accessibility remain open. Save generations are retained and can consume space; backup verification scales with history. Exchange files are individually atomic rather than a multi-file transaction. Import remains a stopped-copy CLI. True world pause, packaging/licence audits, broader content and larger art/AI/economy/backport work require later decisions.
+Recovered snapshot validity does not certify every native save-hook outcome. Real orphan-client recovery, every crash timing, physical SDL timer behavior, exhaustive upstream content and long-duration performance remain unclaimed. The proposed full project task list is in [ROADMAP.md](ROADMAP.md).

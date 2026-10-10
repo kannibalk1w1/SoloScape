@@ -56,6 +56,6 @@ For an ended session whose damaged save cannot be backed up, Recover Session off
 
 Closing the backend with SIGTERM/SIGHUP now waits for its owned session worker and normal save hooks. Manual worlds and other launchers remain outside recovery ownership. Linux pidfd support is required for automatic recovery.
 
-Current evidence: 61 disposable root cases; actual Swing keyboard/form/backend validation on an owned private Xvfb display. This exercises the entry adapter rather than a physical SDL controller. See the journeys task list and combined report for final native server/game evidence.
+Current evidence: 62 disposable root cases; actual Swing keyboard/form/backend validation on an owned private Xvfb display. This exercises the entry adapter rather than a physical SDL controller. Real owned-server pidfd recovery/snapshot verification and repeated graphical New/Continue/save/cancel also pass on isolated storage. Clean recovered shutdown, native orphan-client and physical controller acceptance remain unclaimed. See [journeys validation](CONTROLLER_JOURNEYS_VALIDATION.md) for scope.
 
 ![Actual controller character-name keyboard on a private test display](images/controller-name-entry.png)

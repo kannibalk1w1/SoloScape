@@ -32,7 +32,7 @@ please discuss larger changes before starting. See [contributing](CONTRIBUTING.m
 - Production amount presets, smithing/tanning/jewellery navigation, scaled controller overlays, Xbox/PlayStation labels and configurable menu buttons.
 - Reversible custom inventory/equipment/bank/shop screens backed by native actions.
 - Eight action bindings, conflict checks, Xbox/PlayStation/Deck presets and run thresholds.
-- Graphical New/Continue launcher, isolated world profiles, verified backups and recovery.
+- Graphical New/Continue launcher, controller character naming, isolated worlds, verified backups and owned-session recovery.
 - Optional custom quest journal, skills, combat, prayer and spellbook screens with native state/details.
 - Controller preferences/first-run setup from Home Settings, special-attack quick binding and source/target return.
 - Session capability negotiation, interruption guards and reproducible client/server patches.
@@ -89,12 +89,12 @@ Next: physically accept the custom-screen/profile build, fix recorded usability 
 adventurers, a local economy, selected backports and private co-op—remain proposals,
 not implemented features or promised releases.
 
-Latest adventure checkpoint: **172 client cases** (zero failures/errors, one optional SDL skip),
-**47 root tooling/profile/lifecycle/socket cases** and **18 selected game cases** pass.
-Actual-map Restless Ghost completion and castle/banking routes include native save/load;
-full Cook/Rune Mysteries travel and physical controller/Deck acceptance remain open.
-See the [adventure task list](docs/ADVENTURE_SPRINT_TASKS.md),
-[combined report](docs/MORNING_REPORT.md) and [native validation](docs/ADVENTURE_NATIVE_VALIDATION.md).
+Latest journeys checkpoint: **176 client cases** (zero failures/errors, one optional SDL skip),
+**62 root tooling/profile/lifecycle/recovery cases** and **20 selected game cases** pass.
+Actual-map Restless Ghost, Cook’s Assistant and Rune Mysteries routes include native save/load.
+Actual Swing character entry, real owned-server recovery and repeated graphical New/Continue pass;
+physical controller/Deck acceptance remains open. See the [journeys task list](docs/CONTROLLER_JOURNEYS_TASKS.md),
+[combined report](docs/MORNING_REPORT.md) and [journeys validation](docs/CONTROLLER_JOURNEYS_VALIDATION.md).
 
 ## Repository contents and contributions
 

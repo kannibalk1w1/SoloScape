@@ -1,6 +1,6 @@
 # SoloScape 2011+ — proposed project roadmap and task list
 
-Updated: 9 October 2026. Companion: [current-state handoff](PROJECT_HANDOFF.md).
+Updated: 10 October 2026. Companion: [current-state handoff](PROJECT_HANDOFF.md).
 This is a proposal to review, reorder and use as the working backlog. Later tasks
 are not automatic authorization to build them. No dates or effort estimates are
 promised before the relevant subsystem has been inspected.
@@ -53,9 +53,13 @@ The larger approved alpha builds on both sprints: isolated profiles and verified
 
 The approved 9 October milestone connects Home/tab/modal B ancestry and remembered focus; adds active-pane right-stick scrolling and camera neutral handoff; displays opportunistic native item artwork and remapped physical hints; fixes shared general-store validation; tests Cook's Assistant/commerce/gathering/combat/save progression plus actual Lumbridge walking; strengthens startup preservation and previewed backup retention; provides a build-only setup/update path and archive locking. [Task list](CONSOLE_SESSION_TASKS.md), [combined report](MORNING_REPORT.md), [physical acceptance and performance](CONSOLE_SESSION_ACCEPTANCE.md). Physical acceptance, full real-map quest travel and sustained Deck measurements remain open. This implementation does not automatically complete every broader M0–M4 acceptance item.
 
-## Controller-first adventure checkpoint
+## Controller-first adventure checkpoint — 9 October 2026
 
 The delivered adventure implementation adds a shared readable theme and native artwork reuse; reversible quest journal/skills/combat/prayer/spellbook screens; native state, levels and cache-derived rune requirements; a native special-attack quick binding; controller preferences and first-run setup; selection-source feedback and origin return. Durable owned-JVM locks protect archives/profile storage after launcher death. Actual-map Restless Ghost and castle/banking routes save/reload natively. Repeated native desktop sessions and static Claude review are documented in [adventure tasks](ADVENTURE_SPRINT_TASKS.md), [route audit](ADVENTURE_ROUTE_AUDIT.md) and [native validation](ADVENTURE_NATIVE_VALIDATION.md). Physical controller/Deck acceptance, full Cook/Rune Mysteries travel and sustained hardware measurements remain open.
+
+## Controller journeys checkpoint — 10 October 2026
+
+Controller launcher naming, ownership-checked pidfd recovery, explicit ended-record archival and reproduced Home ancestry fixes are delivered. Full actual-map Cook and Rune Mysteries routes/rewards/save pass without injected progression or production collision changes. Evidence: 176 client cases (one optional SDL skip), 62 root cases, 20 selected game cases, exact 99/33-file stacks and matched builds. Actual Swing entry/backend, real server recovery and repeated native graphical New/Continue/cancel/save probes pass. Four actual Claude static reviews informed verified fixes. See [approved journeys tasks](CONTROLLER_JOURNEYS_TASKS.md) and [validation](CONTROLLER_JOURNEYS_VALIDATION.md). Earlier dated checkpoints remain historical. Physical controller/Deck, every crash timing/native orphan-client and fresh-machine acceptance remain open.
 
 ## M0 — finish the first reliable controller playable
 
@@ -304,10 +308,10 @@ selected release without the development workspace or undocumented setup steps.
 
 1. Physically accept the adventure UI: toggles, real quest progress, combat/prayer/spells, source-to-target use/cancel, remapping and Settings → Game Settings → B ancestry.
 2. Fix reproducible awkward transitions and accessibility/scroll issues; validate reconnect and changed-source focus on actual input.
-3. Complete actual-map Cook’s Assistant and Rune Mysteries travel, gates, mill/tower floors and save/restart. Preserve the existing earned-progression fixture.
+3. Physically play the verified Cook’s Assistant/Rune Mysteries routes and earned-progression slice from a fresh profile; accept completed journal rendering and save/restart.
 4. Measure Deck frame times, loading, memory, battery and suspend/resume against a repeatable route; select measured fixes.
-5. Add safe orphan-owned-session recovery and controller-only launcher name entry, then verify install/update/recovery on a fresh machine.
+5. Physically accept launcher character naming and owned-session recovery; verify install/update/recovery on a fresh machine and extend native orphan-client/crash coverage.
 6. Audit redistribution licences/dependencies and build a source-compatible Linux/Deck delivery path.
 7. Choose the first fully accepted solo gameplay slice before approving broader art/AI/economy/backport systems.
 
-Keep implemented preparation separate from physical acceptance. ROADMAP.md is the proposed backlog; the adventure task list records this approved batch.
+Keep implemented preparation separate from physical acceptance. ROADMAP.md is the proposed backlog; the journeys task list records this approved batch.

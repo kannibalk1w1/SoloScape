@@ -34,7 +34,10 @@ def main():
             print('Private launcher evidence:',root)
         finally:
             os.close(read_fd)
-            display.terminate();display.wait(timeout=5)
+            display.terminate()
+            try:display.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                display.kill();display.wait(timeout=5)  # Only our owned display, no game/save process.
 
 
 if __name__=='__main__':main()
