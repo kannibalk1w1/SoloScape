@@ -269,3 +269,90 @@ the packet (`delay` set, or a type mismatch). Neither result shows that the serv
 - Static only. Native collision, door and staircase behaviour, and whether the adapter's
   magnitude-to-distance mapping holds in Lumbridge, need the running host or Deck route you're
   doing now.
+
+## Harness evidence follow-up: `soloscape_probe_entry` gating and the new assertions (static)
+I read the new `PlayerCommands.soloscape_probe_entry` command, `ExecuteCommandHandler`, the
+`env` injection in `smoke_profile.py`, and the journey stages 13–17 with `pendingEntry()`. I
+didn't run anything.
+
+| Item | Status | Evidence |
+|---|---|---|
+| J1: cancellation evidence | **Resolved** | See the notes below. |
+| J2: search toggle | **Resolved** | It now requires the native search-arm varp `Isaac.anIntArray1303[190]==0` before recording the toggle. |
+| J5: timeout message | **Resolved** | `NativeSessionSmoke` prints `NativePlayableLoopProbe.progress()` (stage and tile) when the overall budget runs out during a journey. |
+| J6: config overwrite | **Resolved** | Covered by the `serverCancel` assertion described under J1. |
+| J3, J4 | **Open (low)** | Unchanged: the door stages pass on time, and the stick magnitude can switch on running. Both fail safe through the BFS and stage timeouts. |
+
+**J1 in detail:**
+- **What the reply reveals, and to whom.** The command answers only the **requesting player's** own
+  `suspension` class (none/int/name/string/other). It answers only when the **server process**
+  environment has `SOLOSCAPE_NATIVE_PROBE=1`, and only for a 32-hex nonce. It is read-only:
+  `ExecuteCommandHandler` runs it in a separate `Script.launch` with no `closeInterfaces`,
+  `closeDialogue` or queue work, so asking can't itself clear the suspension it reports.
+- **Where the variable is set.** `smoke_profile.py` adds the variable only to the `void-server`
+  `Popen` and only with `--journey`, merging it into the session environment. The client and
+  the ordinary launcher never set it.
+- **What the probe now asserts.**
+  - A fresh nonce for each stage (`next()` clears `probeNonce`), so step 14 can't read step 13's
+    `int` reply.
+  - `int` **before** the cancel. That proves the server was waiting.
+  - `ControllerEntry.serverCancel` is true (this also resolves J6).
+  - `none` **after** the client prompt has gone and 1.5 s have passed.
+
+  A client-only close, or a server that ignored the packet, now fails with "Server suspension
+  survived Cancel".
+
+### Remaining notes (low, not blockers)
+- **Q1. The opt-in rests on an inherited variable.** If a user's own shell exports
+  `SOLOSCAPE_NATIVE_PROBE=1`, ordinary launcher worlds inherit it through `os.environ` and
+  answer the query. It's read-only and reveals only the asker's own state, so there's no
+  integrity risk. To make the opt-in strict, have `profile_session` remove the variable from
+  the server environment unless a probe explicitly asks for it.
+- **Q2. The replies are visible.** `SOLOSCAPE-PROBE|…` replies don't match the
+  `ServerCapabilities.receive` prefix (`SOLOSCAPE|`), so they show up as ordinary game chat and
+  stay in the disposable profile's chat history. That's harmless, but suppressing that prefix
+  too would keep probe screenshots clean.
+- **Q3. The command is always registered.** It's registered on every server and simply does
+  nothing without the variable, so it may appear in command listings or autofill on ordinary
+  worlds. That's cosmetic.
+
+### Final resolution
+**No blockers in the harness evidence path.** J1, J2, J5 and J6 are resolved. J3 and J4 remain
+as low-severity notes that fail safe. The server-side cancel can now be distinguished from a
+client-only close in the native run. The outcome of the actual host and Deck journeys is still
+pending and is not claimed here.
+
+## Idempotent inventory open (`ControllerUi.openTab(INVENTORY)`): static check
+I read `ControllerUi.openTab` (`:527-543`), `snapshot(true)` and `inventoryVisible`
+(`:184-202`), `UiState.hasInventory`, the callers (the plugin's `openHomeTab`, selection-return
+restore, the radial and quick gateways, and `NativePlayableLoopProbe` step 0), and
+`openingVisibleInventoryIsIdempotentWithoutReclickingNativeTab`. I ran nothing.
+
+**Verdict: sound, no blockers.**
+- **The check is live.** `inventoryVisible` requires that interface 149 is open **and** that
+  `isVisible(loadedWidget(INVENTORY))` is true on the current widget tree. So when a resized
+  side panel is collapsed, or another side tab is selected (a hidden ancestor), it reports
+  false and the native type-18 tab action is still invoked. Only an inventory that is already
+  showing becomes a no-op, which is exactly the case where re-clicking would collapse it.
+- **The guards are unchanged and come first.** `ready()`, the dialogue check, the modal check
+  (so a bank still returns false), the entry check and the index bounds all run before the
+  shortcut. The inventory shortcut doesn't bypass any of them.
+- **Callers want "ensure open", not "toggle".** Home and radial focus, selection-return
+  restore (`origin.tab`), and the probe all treat `true` as "the inventory is showing". No
+  caller uses `openTab(INVENTORY)` to close it. `settingsOpen` is set only for SETTINGS.
+- **Native integrity holds.** The no-op sends no packet and leaves the visible slots alone. It
+  fixes the probe's hidden-slot problem, where a duplicate open collapsed the slots so the
+  existing starter Empty pot was never observed.
+
+### Low notes
+- **K1. The hidden-to-open branch isn't covered by a test.** The new test checks the visible
+  case and that `openInventory()` returns false once `outer` is hidden. It doesn't assert that
+  `openTab(INVENTORY)` **does** dispatch the native tab action when the inventory is hidden or
+  collapsed. **Fix:** add that assertion (for example the type-18 invoke or the recorded native
+  operation, as in `radialDispatchesTheOrdinaryNativeTabOperationPacket`), so a future change
+  can't turn the shortcut into "always true".
+- **K2. Other tabs still toggle.** Re-selecting an already selected non-inventory tab (for
+  example Spellbook from Home while it's showing) still re-clicks the native tab, and that
+  could collapse it in the same resized frame. If that is the native behaviour for every
+  side tab, the same "already visible" check could be generalised using that tab's root. Worth
+  one native observation before changing anything.

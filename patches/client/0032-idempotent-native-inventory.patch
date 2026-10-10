@@ -1,0 +1,32 @@
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+index 79e05c5..2462f14 100644
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -528,6 +528,9 @@ final class ControllerUi
+     {
+         HomeTab[] tabs = HomeTab.values();
+         if (!ready() || hasDialogue() || hasModalPanel() || ControllerEntry.active() || index < 0 || index >= tabs.length) return false;
++        // Re-clicking the selected inventory tab collapses it in the native resized frame.
++        // Home/quick consumers request an open inventory, never a toggle-off.
++        if(index==HomeTab.INVENTORY.ordinal()&&snapshot(true).hasInventory())return true;
+         for (Seen seen : visible.values())
+         {
+             int id = seen.widget.anInt830;
+diff --git a/client/test/ControllerUiTest.java b/client/test/ControllerUiTest.java
+index b85eb4b..cf18026 100644
+--- a/client/test/ControllerUiTest.java
++++ b/client/test/ControllerUiTest.java
+@@ -47,6 +47,13 @@ public class ControllerUiTest
+         Class240.anInt4674 = oldState; r.aBoolean9722 = oldSelection; Class305.aBoolean3870 = oldMenu;
+     }
+ 
++    @Test public void openingVisibleInventoryIsIdempotentWithoutReclickingNativeTab(){
++        assertTrue(ControllerUi.snapshot(true).hasInventory());
++        assertTrue(ControllerUi.openInventory());
++        assertTrue(ControllerUi.openTab(net.runelite.client.input.controller.HomeTab.INVENTORY.ordinal()));
++        assertTrue(ControllerUi.snapshot(true).hasInventory());
++        outer.aBoolean813=true;assertFalse(ControllerUi.openInventory());
++    }
+     @Test public void emptySlotUsesRenderedBoundsAndClosedOrHiddenAncestorsInvalidateIt()
+     {
+         ControllerUi.record(slot, 610, 260, 32, 32);

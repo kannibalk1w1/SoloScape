@@ -5,20 +5,33 @@ import net.runelite.client.input.controller.*;
 
 /** Actual Lumbridge scene, native Walk/Take/stairs/banker/widget actions; disposable worlds only. */
 final class NativePlayableLoopProbe {
-    private static int step;
+    private static int step=40;
     private static long since, movedAt, started;
     static String progress(){return "stage="+step+" tile="+(origin==null?"unstarted":Class132.aPlayer_1907==null?"logged out":Arrays.toString(tile()));}
     private static int[] origin;
     private static int walks;
     private static boolean sent;
     private static String probeNonce;
+    private static Map<String,Object> observations;
     static boolean tick(Map<String,Object> results) throws Exception {
-        long now=System.currentTimeMillis();
+        long now=System.currentTimeMillis();observations=results;
         if(since==0){since=started=now;origin=tile();require(origin[2]==0,"Journey needs ground-floor spawn");ControllerEntry.enableServerCancel(true);}
         results.put("gameplay_stage",step);results.put("gameplay_tile",Arrays.toString(tile()));
         require(now-since<60000,"Gameplay stage timed out: "+step+" tile="+Arrays.toString(tile()));
         ControllerEntry.prepare();
-        if(step==0){if(!sent)sent=ControllerUi.openTab(HomeTab.INVENTORY.ordinal());if(sent&&at(3211,3214,0))next();return false;}
+        if(step==40){if(!sent)sent=ControllerUi.openInventory();if(sent&&findItem(ControllerUi.snapshot(true),1931)!=null)next();return false;}
+        if(step==41){UiState.Widget pot=findItem(ControllerUi.snapshot(true),1931);if(pot!=null&&invoke(pot,"Use"))next();return false;}
+        if(step==42){require(r.aBoolean9722&&ControllerSelection.valid(),"Native item source selection missing");ControllerUi.cancelSelection();require(!r.aBoolean9722,"Native source cancel failed");results.put("native_item_source_cancel",true);next();return false;}
+        if(step==43){UiState.Widget sword=findItem(ControllerUi.snapshot(true),1277);if(sword!=null&&invoke(sword,"Wield"))next();return false;}
+        if(step==44){
+            if(!sent)sent=ControllerUi.openTab(HomeTab.EQUIPMENT.ordinal());
+            UiState.Widget sword=findItem(ControllerUi.snapshot(),1277);if(sent&&sword!=null&&(sword.id>>>16)==387&&invoke(sword,"Remove"))next();return false;
+        }
+        if(step==45){
+            if(!sent)sent=ControllerUi.openInventory();
+            if(sent&&findItem(ControllerUi.snapshot(true),1277)!=null&&now-since>1500){results.put("native_equipment_wield_remove",true);next();step=0;}return false;
+        }
+        if(step==0){if(!sent)sent=ControllerUi.openInventory();if(sent&&at(3211,3214,0))next();return false;}
         if(step==1){
             UiState inventory=ControllerUi.snapshot(true);
             List<String> names=new ArrayList<>();for(UiState.Widget widget:inventory.inventory)if(widget!=null)names.add(widget.itemId+":"+widget.name);results.put("native_inventory_names",names);
@@ -135,9 +148,12 @@ final class NativePlayableLoopProbe {
     }
     @SuppressWarnings("unchecked") private static boolean interact(String name,String option,int x,int y)throws Exception{
         Method method=ControllerWorld.class.getDeclaredMethod("candidates",boolean.class);method.setAccessible(true);
-        for(ControllerTarget target:(List<ControllerTarget>)method.invoke(null,true)){
+        List<ControllerTarget> targets=(List<ControllerTarget>)method.invoke(null,true);
+        List<String> descriptions=new ArrayList<>();for(ControllerTarget candidate:targets)descriptions.add(candidate.name+"|"+candidate.option+"|"+(candidate.x+candidate.baseX)+","+(candidate.y+candidate.baseY));
+        observations.put("candidates_stage_"+step,descriptions);
+        for(ControllerTarget target:targets){
             if((target.name.equalsIgnoreCase(name)||name.equals("Pot")&&target.identifier==1931)&&target.option.equalsIgnoreCase(option)
-                &&(x<0||target.x+target.baseX==x&&target.y+target.baseY==y))if(ControllerWorld.interact(target))return true;
+                &&(x<0||target.x+target.baseX==x&&target.y+target.baseY==y))if(ControllerWorld.interact(target)){observations.put("interaction_sent_stage_"+step,descriptions);return true;}
         }return false;
     }
     private static UiState.Widget item(UiState state,String name,boolean bank){
@@ -148,6 +164,10 @@ final class NativePlayableLoopProbe {
     }
     private static boolean invoke(UiState.Widget widget,String label){for(UiState.Action action:widget.actions)if(action.label.replace(" ","-").equalsIgnoreCase(label))return ControllerUi.invoke(widget,action);return false;}
     private static boolean panelAction(String label){UiState.Panel panel=ControllerUi.snapshot().panel;if(panel==null)return false;for(UiState.Pane pane:panel.panes)for(UiState.Widget widget:pane.widgets)if(invoke(widget,label))return true;return false;}
+    private static UiState.Widget findItem(UiState state,int id){
+        if(state.panel!=null)for(UiState.Pane pane:state.panel.panes)for(UiState.Widget widget:pane.widgets)if(widget!=null&&widget.itemId==id&&widget.quantity>0)return widget;
+        for(UiState.Widget widget:state.inventory)if(widget!=null&&widget.itemId==id&&widget.quantity>0)return widget;return null;
+    }
     private static String pendingEntry(){
         if(probeNonce==null){probeNonce=java.util.UUID.randomUUID().toString().replace("-","");Class82.method812("soloscape_probe_entry "+probeNonce,false,false,(byte)-79);return null;}
         String prefix="SOLOSCAPE-PROBE|"+probeNonce+"|";
