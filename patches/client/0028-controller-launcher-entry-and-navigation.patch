@@ -1,0 +1,400 @@
+diff --git a/client/src/net/runelite/client/input/controller/EntryControls.java b/client/src/net/runelite/client/input/controller/EntryControls.java
+index fe64eb3..038b8a3 100644
+--- a/client/src/net/runelite/client/input/controller/EntryControls.java
++++ b/client/src/net/runelite/client/input/controller/EntryControls.java
+@@ -8,18 +8,23 @@ public final class EntryControls
+     private int index, heldDirection;
+     private long repeatAt;
+     private boolean armed;
++    private boolean shift;
+     public EntryControls(UiControls.Gateway gateway) { this.gateway = gateway; }
+-    public void reset() { state = null; index = heldDirection = 0; repeatAt = 0; armed = false; }
++    public void reset() { state = null; index = heldDirection = 0; repeatAt = 0; armed = shift = false; }
+     public boolean active() { return state != null; }
+     public EntryState state() { return state; }
+     public int index() { return index; }
++    public void focusKey(int key) { if(state!=null&&key>=0&&key<keys().length)index=key; }
+     public int columns() { return state != null && state.numeric() ? 4 : 6; }
+     public String[] keys()
+     {
+-        String symbols = state != null && state.numeric() ? "1234567890" : "abcdefghijklmnopqrstuvwxyz0123456789 -'";
+-        String[] keys = new String[symbols.length() + 3];
++        boolean local=state!=null&&(state.type==EntryState.LAUNCHER_ACCOUNT||state.type==EntryState.LAUNCHER_LABEL);
++        String symbols = state != null && state.numeric() ? "1234567890" : state!=null&&state.type==EntryState.LAUNCHER_ACCOUNT?"abcdefghijklmnopqrstuvwxyz0123456789 _":"abcdefghijklmnopqrstuvwxyz0123456789 -'";
++        if(local&&shift)symbols=symbols.toUpperCase(java.util.Locale.ROOT);
++        String[] keys = new String[symbols.length() + (local?4:3)];
+         for (int i = 0; i < symbols.length(); i++) keys[i] = String.valueOf(symbols.charAt(i));
+         keys[symbols.length()] = "Delete"; keys[symbols.length()+1] = "Clear"; keys[symbols.length()+2] = "Done";
++        if(local)keys[symbols.length()+3]="Shift";
+         return keys;
+     }
+     public String prompt() { return state == null ? null : "A: key · X: delete · Y: submit · B: cancel · D-pad: move"; }
+@@ -48,6 +53,7 @@ public final class EntryControls
+             if (key.equals("Done")) { gateway.submitEntry(state); armed = false; }
+             else if (key.equals("Delete")) delete();
+             else if (key.equals("Clear")) gateway.editEntry(state,"");
++            else if(key.equals("Shift"))shift=!shift;
+             else
+             {
+                 String value = state.value+key;
+diff --git a/client/src/net/runelite/client/input/controller/EntryState.java b/client/src/net/runelite/client/input/controller/EntryState.java
+index 36f579b..1b27aff 100644
+--- a/client/src/net/runelite/client/input/controller/EntryState.java
++++ b/client/src/net/runelite/client/input/controller/EntryState.java
+@@ -3,6 +3,7 @@ package net.runelite.client.input.controller;
+ /** Native amount/name/search prompt; revision prevents reuse after a replacement prompt. */
+ public final class EntryState
+ {
++    public static final int LAUNCHER_ACCOUNT=12, LAUNCHER_LABEL=13;
+     public final int type;
+     public final long revision;
+     public final String prompt, value;
+@@ -12,10 +13,12 @@ public final class EntryState
+     public boolean numeric() { return type == 7; }
+     public static boolean valid(int type, String value)
+     {
+-        if (value == null || value.length() > (type == 7 ? 10 : type == 8 ? 12 : 80)) return false;
++        if (value == null || value.length() > (type == 7 ? 10 : type == 8 || type==LAUNCHER_ACCOUNT ? 12 : type==LAUNCHER_LABEL ? 48 : 80)) return false;
+         for (int i = 0; i < value.length(); i++)
+         {
+             char c = value.charAt(i);
++            if(type==LAUNCHER_LABEL){if(Character.isISOControl(c))return false;continue;} // Labels retain ordinary desktop Unicode input.
++            if(type==LAUNCHER_ACCOUNT){if(!(c>='a'&&c<='z'||c>='A'&&c<='Z'||c>='0'&&c<='9'||c==' '||c=='_'))return false;continue;}
+             if (type == 7 ? c < '0' || c > '9' : c < 32 || c > 126) return false;
+         }
+         if (type == 7 && !value.isEmpty())
+@@ -23,6 +26,6 @@ public final class EntryState
+             try { if (Long.parseLong(value) > Integer.MAX_VALUE) return false; }
+             catch (NumberFormatException ex) { return false; }
+         }
+-        return type == 7 || type == 8 || type == 9 || type == 11;
++        return type == 7 || type == 8 || type == 9 || type == 11 || type==LAUNCHER_ACCOUNT || type==LAUNCHER_LABEL;
+     }
+ }
+diff --git a/client/src/net/runelite/client/input/controller/UiControls.java b/client/src/net/runelite/client/input/controller/UiControls.java
+index 762b5f8..7aa3977 100644
+--- a/client/src/net/runelite/client/input/controller/UiControls.java
++++ b/client/src/net/runelite/client/input/controller/UiControls.java
+@@ -190,7 +190,7 @@ public final class UiControls
+             if (panel.exitRequested()) { navigation.homeBack();focusedTab = -1; panel.reset(); gateway.leavePanel(); }
+             else if (panel.selectionRequested())
+             {
+-                focusedTab = -1; panel.reset();
++                navigation.reset(); focusedTab = -1; panel.reset();
+                 if ((gateway.selectionMask() & 32) != 0 && gateway.openTargetInventory()) focusInventory(now);
+             }
+             return true;
+@@ -198,7 +198,7 @@ public final class UiControls
+         if (focusedTab >= 0 && !inDialogue())
+         {
+             if (now < tabOpeningUntil) return true;
+-            focusedTab = -1; armed = false; return true;
++            navigation.reset(); focusedTab = -1; armed = false; return true;
+         }
+         if (inDialogue()) panel.reset();
+         if (wasPanel && !panel.active()) { armed = false; return true; }
+@@ -232,7 +232,7 @@ public final class UiControls
+             if (inventory) { leave(); return true; }
+             if (state.hasInventory() || gateway.openInventory())
+             {
+-                inventory = true; openingUntil = now + 1_000_000_000L; context = null;
++                navigation.reset(); inventory = true; openingUntil = now + 1_000_000_000L; context = null;
+                 armed = false; heldDirection = 0;
+                 return true;
+             }
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java b/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java
+new file mode 100644
+index 0000000..951d6dc
+--- /dev/null
++++ b/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java
+@@ -0,0 +1,74 @@
++package net.runelite.client.soloscape.launcher;
++
++import java.awt.*;
++import java.awt.event.*;
++import java.util.*;
++import javax.swing.*;
++import javax.swing.text.*;
++import net.runelite.client.input.controller.*;
++
++/** EDT-only adapter to the existing entry controls. No native game actions or packets. */
++final class LauncherKeyboard extends JPanel
++{
++    private JTextField field;
++    private final Map<JTextField,Integer> types=new IdentityHashMap<>();
++    private final Map<JTextField,Runnable> next=new IdentityHashMap<>();
++    private final JPanel grid=new JPanel(new GridLayout(0,6,5,5));
++    private final JLabel prompt=new JLabel("D-pad: keys · A: select · X: delete · Y: next · B: leave keyboard · LB/RB: fields");
++    private final java.util.List<JButton> buttons=new ArrayList<>();
++    private final EntryControls controls;
++    private long revision;
++    private String[] drawn;
++    Window owner;
++    LauncherKeyboard()
++    {
++        super(new BorderLayout(5,5));add(prompt,BorderLayout.NORTH);add(grid,BorderLayout.CENTER);setVisible(false);
++        controls=new EntryControls(new UiControls.Gateway(){
++            public UiState snapshot(){return UiState.EMPTY;}
++            public boolean openInventory(){return false;}
++            public boolean invoke(UiState.Widget w,UiState.Action a){return false;}
++            public void cancelSelection(){} public void cancelDialogue(){}
++            public boolean editEntry(EntryState state,String value){if(!current(state)||!EntryState.valid(state.type,value))return false;field.setText(value);return true;}
++            public boolean submitEntry(EntryState state){if(!current(state))return false;Runnable advance=next.get(field);deactivate();advance.run();return true;}
++            public void cancelEntry(EntryState state){if(current(state))deactivate();}
++        });
++    }
++    void register(JTextField text,int type,Runnable advance)
++    {
++        types.put(text,type);next.put(text,advance);
++        ((AbstractDocument)text.getDocument()).setDocumentFilter(new DocumentFilter(){
++            @Override public void insertString(FilterBypass bypass,int offset,String value,AttributeSet attributes)throws BadLocationException{replace(bypass,offset,0,value,attributes);}
++            @Override public void replace(FilterBypass bypass,int offset,int length,String value,AttributeSet attributes)throws BadLocationException{
++                String old=bypass.getDocument().getText(0,bypass.getDocument().getLength());String changed=old.substring(0,offset)+(value==null?"":value)+old.substring(offset+length);
++                if(EntryState.valid(type,changed))bypass.replace(offset,length,value,attributes);
++            }
++        });
++        text.addFocusListener(new FocusAdapter(){@Override public void focusGained(FocusEvent event){activate(text);}});
++    }
++    boolean accepts(Component focus){return types.containsKey(focus);}
++    void activate(JTextField text){if(!types.containsKey(text))return;field=text;revision++;controls.reset();setVisible(true);GamepadState held=new GamepadState();held.buttonsHeld=1;controls.update(snapshot(),held,System.nanoTime());draw();revalidate();}
++    void deactivate(){field=null;controls.reset();setVisible(false);drawn=null;revalidate();}
++    boolean active(){return field!=null;}
++    private EntryState snapshot(){return field==null?null:new EntryState(types.get(field),revision,field.getName(),field.getText());}
++    private boolean current(EntryState state){return owner!=null&&owner.isShowing()&&active()&&state.sameSession(snapshot());}
++    void update(GamepadState input,long now)
++    {
++        if(!active())return;
++        if((input.buttonsPressed&((1<<9)|(1<<10)))!=0){JTextField previous=field;boolean back=(input.buttonsPressed&(1<<9))!=0;deactivate();if(back)previous.transferFocusBackward();else previous.transferFocus();return;}
++        controls.update(snapshot(),input,now);if(active())draw();
++    }
++    private void draw()
++    {
++        String[] keys=controls.keys();
++        if(!Arrays.equals(drawn,keys)){
++            grid.removeAll();buttons.clear();drawn=keys;
++            for(int i=0;i<keys.length;i++){
++                final int key=i;JButton button=new JButton(keys[i].equals(" ")?"Space":keys[i]);button.setFocusable(false);button.setPreferredSize(new Dimension(65,32));
++                button.addActionListener(e->{if(!active())return;GamepadState click=new GamepadState();controls.update(snapshot(),click,System.nanoTime());controls.focusKey(key);click.buttonsHeld=click.buttonsPressed=1;controls.update(snapshot(),click,System.nanoTime());if(active())draw();});
++                buttons.add(button);grid.add(button);
++            }
++            grid.revalidate();grid.repaint();
++        }
++        for(int i=0;i<buttons.size();i++)buttons.get(i).setBackground(i==controls.index()?new Color(140,190,230):UIManager.getColor("Button.background"));
++    }
++}
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+index 48fd62c..ee1ac24 100644
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -33,6 +33,8 @@ public final class SoloScapeLauncher
+     private boolean polling, closing, running;
+     private int port = 43594, serial;
+     private String error;
++    private LauncherKeyboard keyboard;
++    private final JButton recover=new JButton("Recover Session");
+ 
+     public static void main(String[] args) throws Exception
+     {
+@@ -68,8 +70,8 @@ public final class SoloScapeLauncher
+         body.setResizeWeight(.43); body.setDividerLocation(340);
+         content.add(body, BorderLayout.CENTER);
+         JPanel footer = new JPanel(new BorderLayout(0, 12));
+-        JPanel buttons = new JPanel(new GridLayout(2, 4, 10, 10));
+-        for (JButton button : new JButton[]{play, create, backup, restore, stop, settings, diagnostics, retention})
++        JPanel buttons = new JPanel(new GridLayout(3, 3, 10, 10));
++        for (JButton button : new JButton[]{play, create, backup, restore, stop, settings, diagnostics, retention, recover})
+         { button.setFont(button.getFont().deriveFont(15f)); button.setPreferredSize(new Dimension(145, 44)); buttons.add(button); }
+ 
+         footer.add(buttons, BorderLayout.CENTER);
+@@ -86,6 +88,7 @@ public final class SoloScapeLauncher
+         diagnostics.addActionListener(e -> diagnose());
+         settings.addActionListener(e -> settings());
+         retention.addActionListener(e -> retention());
++        recover.addActionListener(e -> recoverSession());
+         frame.setVisible(true); list.requestFocusInWindow();
+         refresh = new javax.swing.Timer(1000, e -> poll()); refresh.start(); request(command("settings"), result -> {port=result.getAsJsonObject().get("port").getAsInt();poll();});
+         startController();
+@@ -96,7 +99,8 @@ public final class SoloScapeLauncher
+         JsonObject command = new JsonObject(); command.addProperty("action", action); command.addProperty("port", port); return command;
+     }
+     private interface Reply { void accept(JsonElement result); }
+-    private void request(JsonObject command, Reply reply)
++    private void request(JsonObject command, Reply reply) { request(command,reply,null); }
++    private void request(JsonObject command, Reply reply, java.util.function.Consumer<String> failure)
+     {
+         if (closing && !"stop".equals(command.get("action").getAsString())) return;
+         requests.execute(() -> {
+@@ -114,6 +118,7 @@ public final class SoloScapeLauncher
+             catch (Exception ex)
+             {
+                 SwingUtilities.invokeLater(() -> { polling = false; status.setText(ex.getMessage());
++                    if(failure!=null){failure.accept(ex.getMessage());return;}
+                     if (!ex.getMessage().equals(error)) { error = ex.getMessage(); JOptionPane.showMessageDialog(frame, error, "SoloScape", JOptionPane.ERROR_MESSAGE); }
+                 });
+             }
+@@ -137,7 +142,8 @@ public final class SoloScapeLauncher
+         status.setText(data.get("message").getAsString());
+         String stage = data.get("stage").getAsString(); progress.setIndeterminate(running && !stage.equals("playing"));
+         stop.setEnabled(running); create.setEnabled(!running); backup.setEnabled(!running); restore.setEnabled(!running);
+-        play.setEnabled(!running && list.getSelectedValue() != null && !list.getSelectedValue().damaged);
++        play.setEnabled(!running && list.getSelectedValue() != null && !list.getSelectedValue().damaged && !list.getSelectedValue().needsRecovery);
++        recover.setEnabled(!running&&list.getSelectedValue()!=null&&list.getSelectedValue().recoverable);
+         settings.setEnabled(!running);retention.setEnabled(!running&&list.getSelectedValue()!=null&&!list.getSelectedValue().damaged);
+     }
+     private void showCharacter()
+@@ -145,24 +151,51 @@ public final class SoloScapeLauncher
+         CharacterRow row = list.getSelectedValue();
+         detail.setText(row == null ? "Create your first character to start an independent local world.\n\nCache setup and runtime checks are available under Diagnostics." : row.description());
+         play.setText(row != null && !row.saved ? "Start Character" : "Continue");
+-        play.setEnabled(!running && row != null && !row.damaged);
++        play.setEnabled(!running && row != null && !row.damaged && !row.needsRecovery);
++        recover.setEnabled(!running&&row!=null&&row.recoverable);
+     }
+     private void selected(String action, String backupName)
+     {
+         CharacterRow row = list.getSelectedValue(); if (row == null) return;
+         JsonObject cmd = command(action); cmd.addProperty("profile", row.id);
+         if (backupName != null) cmd.addProperty("backup", backupName);
+-        request(cmd, result -> { if (action.equals("start")) applySession(result); else { status.setText(action.equals("restore") ? "Backup restored; previous generation retained." : "Verified backup created."); poll(); } });
++        request(cmd, result -> { if (action.equals("start")||action.equals("recover")) applySession(result); else { status.setText(action.equals("restore") ? "Backup restored; previous generation retained." : "Verified backup created."); poll(); } });
+     }
+     private void newCharacter()
+     {
+-        JTextField label = new JTextField(), account = new JTextField(); JCheckBox tutorial = new JCheckBox("Start on Tutorial Island", false);
+-        JPanel fields = new JPanel(new GridLayout(0, 1, 4, 6));
+-        fields.add(new JLabel("Character label (1–48 characters)")); fields.add(label);
+-        fields.add(new JLabel("Account name (1–12 letters, numbers, spaces or underscores)")); fields.add(account); fields.add(tutorial);
+-        if (JOptionPane.showConfirmDialog(frame, fields, "New Character", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
+-        JsonObject cmd = command("create"); cmd.addProperty("label", label.getText()); cmd.addProperty("account", account.getText()); cmd.addProperty("tutorial", tutorial.isSelected());
+-        request(cmd, result -> { status.setText("Character created. Select Start Character to play."); poll(); });
++        JTextField label=new JTextField(),account=new JTextField();label.setName("Character label");account.setName("Account name");
++        JCheckBox tutorial=new JCheckBox("Start on Tutorial Island",false);
++        JButton confirm=new JButton("Create character"),cancel=new JButton("Cancel");
++        JLabel problem=new JLabel(" ");
++        JDialog dialog=new JDialog(frame,"New Character",true);
++        LauncherKeyboard entry=new LauncherKeyboard();entry.owner=dialog;keyboard=entry;
++        entry.register(label,net.runelite.client.input.controller.EntryState.LAUNCHER_LABEL,account::requestFocusInWindow);
++        entry.register(account,net.runelite.client.input.controller.EntryState.LAUNCHER_ACCOUNT,confirm::requestFocusInWindow);
++        JPanel fields=new JPanel(new GridLayout(0,1,4,6));
++        fields.add(new JLabel("Character label (1–48 characters)"));fields.add(label);
++        fields.add(new JLabel("Account name (1–12 letters, numbers, spaces or underscores)"));fields.add(account);fields.add(tutorial);fields.add(problem);
++        JPanel actions=new JPanel();actions.add(confirm);actions.add(cancel);
++        JPanel content=new JPanel(new BorderLayout(8,8));content.setBorder(BorderFactory.createEmptyBorder(16,16,16,16));content.add(fields,BorderLayout.NORTH);content.add(entry,BorderLayout.CENTER);content.add(actions,BorderLayout.SOUTH);
++        dialog.setContentPane(content);dialog.setSize(840,600);dialog.setLocationRelativeTo(frame);
++        cancel.addActionListener(e->dialog.dispose());
++        confirm.addActionListener(e->{
++            if(label.getText().trim().isEmpty()||account.getText().trim().isEmpty()){problem.setText("Enter a character label and account name.");return;}
++            confirm.setEnabled(false);JsonObject cmd=command("create");cmd.addProperty("label",label.getText());cmd.addProperty("account",account.getText());cmd.addProperty("tutorial",tutorial.isSelected());
++            request(cmd,result->{dialog.dispose();status.setText("Character created. Select Start Character to play.");poll();},message->{problem.setText(message);confirm.setEnabled(true);});
++        });
++        SwingUtilities.invokeLater(label::requestFocusInWindow);dialog.setVisible(true);entry.deactivate();if(keyboard==entry)keyboard=null;
++    }
++    private void recoverSession()
++    {
++        CharacterRow row=list.getSelectedValue();if(row==null||!row.recoverable)return;
++        if(row.archiveable){
++            String[] choices={"Recover snapshot","Archive ended record","Cancel"};
++            int choice=JOptionPane.showOptionDialog(frame,"The recorded processes have ended. Recover verifies a snapshot. If the current save is damaged, archive the ended record first, then restore a verified backup. Archiving preserves the record and does not claim a clean save.","Earlier session",JOptionPane.DEFAULT_OPTION,JOptionPane.QUESTION_MESSAGE,null,choices,choices[0]);
++            if(choice==1){JsonObject cmd=command("archive_session");cmd.addProperty("profile",row.id);request(cmd,result->{status.setText(result.getAsJsonObject().get("message").getAsString());poll();});return;}
++            if(choice!=0)return;
++        }
++        if(JOptionPane.showConfirmDialog(frame,"Save & Quit the verified world left by an earlier launcher?\nOnly verified owned processes will be stopped. The recovered snapshot is verified, but clean shutdown cannot be confirmed.","Recover earlier session",JOptionPane.OK_CANCEL_OPTION)==JOptionPane.OK_OPTION)
++            selected("recover",null);
+     }
+     private void restoreCharacter()
+     {
+@@ -224,13 +257,18 @@ public final class SoloScapeLauncher
+     {
+         final SdlGamepad pad = new SdlGamepad(); final GamepadState state = new GamepadState();
+         try { pad.init(); } catch (LinkageError | RuntimeException ex) { status.setText("Controller unavailable; mouse and keyboard work. " + ex.getMessage()); return; }
+-        final boolean[] armed = {false}; final long[] next = {0};
++        final boolean[] armed = {false}; final long[] next = {0}; final Window[] priorWindow={null};
+         javax.swing.Timer timer = new javax.swing.Timer(25, e -> {
+             if (closing) { ((javax.swing.Timer)e.getSource()).stop(); pad.close(); return; }
+             pad.poll(state); Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+             if (!state.connected || active == null || !(active == frame || active.getOwner() == frame)) { armed[0] = false; return; }
++            if(active!=priorWindow[0]){priorWindow[0]=active;armed[0]=false;}
+             if (!armed[0]) { armed[0] = state.buttonsHeld == 0 && Math.abs(state.leftX) < .3 && Math.abs(state.leftY) < .3; return; }
+             Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
++            if(keyboard!=null&&active==keyboard.owner){
++                if(keyboard.active()){keyboard.update(state,System.nanoTime());return;}
++                if((state.buttonsPressed&1)!=0&&keyboard.accepts(focus)){keyboard.activate((JTextField)focus);return;}
++            }
+             boolean previous = (state.buttonsHeld & ((1<<11)|(1<<13))) != 0 || state.leftY < -.6 || state.leftX < -.6;
+             boolean forward = (state.buttonsHeld & ((1<<12)|(1<<14))) != 0 || state.leftY > .6 || state.leftX > .6;
+             long now = System.nanoTime();
+@@ -248,9 +286,9 @@ public final class SoloScapeLauncher
+     }
+     private static final class CharacterRow
+     {
+-        final JsonObject data; final String id, label; final boolean saved, damaged;
+-        CharacterRow(JsonObject row) { data=row; id=row.get("id").getAsString(); label=row.get("label").getAsString(); saved=row.get("saved").getAsBoolean(); damaged=row.has("error")&&!row.get("error").isJsonNull(); }
+-        @Override public String toString() { return label + (damaged ? " • Needs recovery" : saved ? " • Continue" : " • New"); }
+-        String description() { StringBuilder text=new StringBuilder(label+"\n\n"); for(String field:new String[]{"account","created","last_played","saved_at","location","storage_bytes","backup_count","retention","error"}) if(data.has(field)&&!data.get(field).isJsonNull()) text.append(field.replace('_',' ')).append(": ").append(data.get(field).isJsonPrimitive()?data.get(field).getAsString():data.get(field)).append("\n\n"); return text.toString(); }
++        final JsonObject data; final String id, label; final boolean saved, damaged, needsRecovery, recoverable, archiveable;
++        CharacterRow(JsonObject row) { data=row; id=row.get("id").getAsString(); label=row.get("label").getAsString(); saved=row.get("saved").getAsBoolean(); damaged=row.has("error")&&!row.get("error").isJsonNull();needsRecovery=row.has("recovery")&&!row.get("recovery").isJsonNull();recoverable=needsRecovery&&row.getAsJsonObject("recovery").get("recoverable").getAsBoolean();archiveable=needsRecovery&&row.getAsJsonObject("recovery").has("archiveable")&&row.getAsJsonObject("recovery").get("archiveable").getAsBoolean(); }
++        @Override public String toString() { return label + (needsRecovery ? " • Earlier session" : damaged ? " • Needs recovery" : saved ? " • Continue" : " • New"); }
++        String description() { StringBuilder text=new StringBuilder(label+"\n\n"); for(String field:new String[]{"account","created","last_played","saved_at","location","storage_bytes","backup_count","retention","error"}) if(data.has(field)&&!data.get(field).isJsonNull()) text.append(field.replace('_',' ')).append(": ").append(data.get(field).isJsonPrimitive()?data.get(field).getAsString():data.get(field)).append("\n\n"); if(needsRecovery)text.append(data.getAsJsonObject("recovery").get("message").getAsString()).append("\n");return text.toString(); }
+     }
+ }
+diff --git a/client/test/net/runelite/client/input/controller/EntryControlsTest.java b/client/test/net/runelite/client/input/controller/EntryControlsTest.java
+index 7ed32f6..f9b88fa 100644
+--- a/client/test/net/runelite/client/input/controller/EntryControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/EntryControlsTest.java
+@@ -46,4 +46,29 @@ public class EntryControlsTest
+         assertFalse(EntryState.valid(7,"-1"));assertFalse(EntryState.valid(9,"bad\ntext"));
+         assertFalse(EntryState.valid(8,"abcdefghijklmnop"));assertFalse(EntryState.valid(11,new String(new char[81]).replace('\0','a')));
+     }
++    @Test public void launcherAccountKeyboardSupportsUppercaseWithoutInvalidAccountSymbols()
++    {
++        Fake game=new Fake();game.state=new EntryState(EntryState.LAUNCHER_ACCOUNT,1,"Account","");
++        EntryControls ui=new EntryControls(game);GamepadState input=new GamepadState();ui.update(game.state,input,1);
++        assertFalse(java.util.Arrays.asList(ui.keys()).contains("-"));assertFalse(java.util.Arrays.asList(ui.keys()).contains("'"));
++        assertTrue(java.util.Arrays.asList(ui.keys()).contains("_"));
++        ui.focusKey(ui.keys().length-1);press(ui,game,input,1,10);assertEquals("A",ui.keys()[0]);
++        ui.focusKey(0);press(ui,game,input,1,20);assertEquals("A",game.state.value);
++        ui.focusKey(-1);assertEquals(0,ui.index());ui.focusKey(10000);assertEquals(0,ui.index());
++        assertTrue(EntryState.valid(EntryState.LAUNCHER_ACCOUNT,"A_b 9"));
++        assertFalse(EntryState.valid(EntryState.LAUNCHER_ACCOUNT,"a-b"));assertFalse(EntryState.valid(EntryState.LAUNCHER_ACCOUNT,"bad\ntext"));
++        assertFalse(EntryState.valid(EntryState.LAUNCHER_ACCOUNT,"1234567890123"));
++    }
++    @Test public void launcherLabelRetainsDesktopUnicodeAndHasItsOwnLimit()
++    {
++        assertTrue(EntryState.valid(EntryState.LAUNCHER_LABEL,"Étude"));
++        assertTrue(EntryState.valid(EntryState.LAUNCHER_LABEL,new String(new char[48]).replace('\0','a')));
++        assertFalse(EntryState.valid(EntryState.LAUNCHER_LABEL,new String(new char[49]).replace('\0','a')));
++        assertFalse(EntryState.valid(8,"Étude")); // native protocol entry behavior is unchanged
++        Fake game=new Fake();game.state=new EntryState(EntryState.LAUNCHER_LABEL,1,"Label","");
++        EntryControls ui=new EntryControls(game);GamepadState input=new GamepadState();
++        input.buttonsHeld=input.buttonsPressed=1;ui.update(game.state,input,1);assertEquals(0,game.edits);
++        press(ui,game,input,1,10);assertEquals("a",game.state.value);
++        press(ui,game,input,2,20);assertEquals(1,game.cancels);
++    }
+ }
+diff --git a/client/test/net/runelite/client/input/controller/UiControlsTest.java b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+index 1bbc620..5157dcd 100644
+--- a/client/test/net/runelite/client/input/controller/UiControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+@@ -245,4 +245,22 @@ public class UiControlsTest
+         assertTrue(ui.update(input,3));assertNotNull(ui.focus());assertEquals(0,game.leaves);
+         press(ui,input,2,10);assertEquals(HomeTab.SETTINGS.ordinal(),ui.takeHomeBack());assertEquals(0,game.actions);assertEquals(1,game.leaves);
+     }
++    @Test public void homeSpellSelectionDoesNotBecomeAncestorOfLaterDirectInventory() {
++        Fake game=new Fake(); GamepadState input=new GamepadState(); UiControls ui=new UiControls(game);
++        UiState.Widget spell=new UiState.Widget(192<<16|25,-1,-1,0,"Wind strike",new Rectangle(100,100,32,32),new UiState.Action[]{new UiState.Action("Cast",13,0)});
++        game.state=new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,new UiState.Panel(192,1,"Spellbook",new UiState.Pane[]{new UiState.Pane("Spells",new UiState.Widget[]{spell})},false));
++        ui.focusHomeTab(HomeTab.SPELLBOOK.ordinal(),1); ui.update(input,2);
++        press(ui,input,1,10); assertEquals(1,game.actions);
++        game.state=new UiState(new UiState.Widget[]{widget(0,100,"Fish")},new UiState.Widget[0],-1);
++        press(ui,input,8,20); assertTrue(ui.inventoryFocused());
++        press(ui,input,2,30); assertFalse(ui.active()); assertEquals(-1,ui.takeHomeBack());
++    }
++    @Test public void failedHomeTabOpeningDoesNotBecomeAncestorOfLaterDirectInventory() {
++        Fake game=new Fake(); GamepadState input=new GamepadState(); UiControls ui=new UiControls(game);
++        ui.focusHomeTab(HomeTab.QUESTS.ordinal(),1); ui.update(input,2);
++        ui.update(input,2_000_000_000L); assertFalse(ui.active());
++        press(ui,input,8,2_100_000_000L); assertTrue(ui.inventoryFocused());
++        press(ui,input,2,2_200_000_000L); assertFalse(ui.active()); assertEquals(-1,ui.takeHomeBack());
++    }
++
+ }

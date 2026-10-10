@@ -11,6 +11,8 @@ import traceback
 import local_dev
 import profile_session
 import profiles
+import session_recovery
+import signal
 
 MAX_REQUEST = 16384
 SETTINGS = local_dev.ROOT / ".runtime/launcher-settings.json"
@@ -52,7 +54,15 @@ class Backend:
                 raise ValueError('Launcher settings format is unsupported.')
             return {'port': self.port(settings)}
         if action == 'list':
-            return {'profiles': profiles.list_profiles(), 'session': self.current()}
+            rows = profiles.list_profiles()
+            current = self.current()
+            for row in rows:
+                try:
+                    row['recovery'] = None if current['running'] and row['id'] == current['profile'] else session_recovery.inspect(
+                        profiles.load(row['id']), owner_active=lambda: current['running'] and current['profile'] == row['id'])
+                except (ValueError, OSError, KeyError):
+                    row['recovery'] = None
+            return {'profiles': rows, 'session': current}
         if action == 'status':
             return self.current()
         if action == 'create':
@@ -72,7 +82,11 @@ class Backend:
             return profiles.list_backups(request.get('profile'))
         if action == 'restore':
             return profiles.restore_profile(request.get('profile'), request.get('backup', ''))
-        if action in ('backup', 'start'):
+        if action == 'archive_session':
+            if self.current()['running']:
+                raise RuntimeError('Save & Quit before archiving an earlier session record.')
+            return session_recovery.archive_ended(profiles.load(request.get('profile')), owner_active=lambda: False)
+        if action in ('backup', 'start', 'recover'):
             profile = profiles.load(request.get('profile'))
             if action == 'backup':
                 return {'name': profile.backup().name}
@@ -82,7 +96,8 @@ class Backend:
             self.cancelled = threading.Event()
             with self.mutex:
                 self.status = {'stage': 'starting', 'message': 'Checking your local installation…', 'profile': profile.manifest['id'], 'error': None}
-            self.worker = threading.Thread(target=self.play, args=(profile, port), name='owned-world', daemon=False)
+            self.worker = threading.Thread(target=self.recover if action == 'recover' else self.play,
+                                           args=(profile, port), name='owned-world', daemon=False)
             self.worker.start()
             return self.current()
         raise ValueError('Unknown launcher action.')
@@ -103,6 +118,14 @@ class Backend:
             with self.mutex:
                 self.status.update(stage='error', message=str(exc), error=str(exc))
             traceback.print_exc(file=sys.stderr)
+
+    def recover(self, profile, port):
+        try:
+            # A stale record can belong to this backend's earlier, finished worker.
+            session_recovery.recover(profile, self.cancelled, self.notify, owner_active=lambda: False)
+        except Exception as exc:
+            with self.mutex:
+                self.status.update(stage='error', message=str(exc), error=str(exc))
 
     def close(self):
         self.cancelled.set()
@@ -139,4 +162,9 @@ def serve(source=sys.stdin, destination=sys.stdout):
 
 
 if __name__ == '__main__':
+    # Raising exits a blocking stdin read through serve's finally and joins save hooks.
+    def graceful_exit(signum, frame):
+        raise SystemExit(0)
+    signal.signal(signal.SIGTERM, graceful_exit)
+    signal.signal(signal.SIGHUP, graceful_exit)
     serve()

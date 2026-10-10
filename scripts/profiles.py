@@ -213,7 +213,7 @@ class Profile:
         with self.lock():
             return self._backup(reason)
 
-    def _backup(self, reason):
+    def _backup(self, reason, recovered_from_session=None):
         backup_dir = self.directory / 'backups'
         private_directory(backup_dir)
         name = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S') + '-' + uuid.uuid4().hex[:8] + '.zip'
@@ -230,6 +230,8 @@ class Profile:
         manifest = {'format': FORMAT, 'profile': self.manifest['id'], 'account': self.manifest['account'],
                     'metadata': {k: self.manifest[k] for k in ('label', 'created', 'last_played', 'tutorial')},
                     'created': now(), 'reason': reason, 'files': {name: {'sha256': hash_bytes(data), 'size': len(data)} for name, data in contents.items()}}
+        if recovered_from_session is not None:
+            manifest['recovered_from_session'] = identifier(recovered_from_session)
         try:
             with zipfile.ZipFile(temporary, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
                 archive.writestr('backup.json', json.dumps(manifest))
@@ -288,6 +290,8 @@ class Profile:
         if Path(backup_name).name != backup_name or not re.fullmatch(r'[A-Za-z0-9_-]+\.zip', backup_name):
             raise ValueError('Select a backup from this profile.')
         with self.lock(reload=not recovery):
+            if (self.directory / 'session.json').exists() or (self.directory / 'session.json').is_symlink():
+                raise RuntimeError('Recover the earlier session before restoring or changing this world generation.')
             if recovery:
                 recovered_metadata = self.manifest
                 try:

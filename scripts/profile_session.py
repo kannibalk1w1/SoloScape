@@ -11,6 +11,7 @@ import sys
 import time
 import local_dev
 import profiles
+import session_recovery
 
 
 def owned_environment(profile, port):
@@ -53,7 +54,9 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
                 current.replace(log_dir / (name + '.previous.log'))
         client_home = profile.directory / 'client-home'
         profiles.private_directory(client_home)
+        record = session_recovery.begin(profile, port, server_jar, client_jar)
         environment = owned_environment(profile, port)
+        environment['SOLOSCAPE_SESSION_ID'] = record['session']
         server = client = None
         ready = False
         failed = None
@@ -68,8 +71,9 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
                 if cancelled.is_set():
                     return 0
                 server = subprocess.Popen([os.environ.get('SERVER_JAVA', 'java'), '-jar', str(server_jar)],
-                                          cwd=local_dev.SERVER, env=environment, stdout=server_log,
+                                          cwd=local_dev.SERVER, env=dict(environment, SOLOSCAPE_SESSION_ROLE='server'), stdout=server_log,
                                           stderr=subprocess.STDOUT, start_new_session=True, pass_fds=guards)
+                session_recovery.registered(profile, record, 'server', server)
                 deadline = time.monotonic() + local_dev.READY_TIMEOUT
                 while not cancelled.is_set():
                     if server.poll() is not None:
@@ -84,13 +88,16 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
                 if not ready:
                     return 0
                 profile.mark_played()
+                record['phase'] = 'playing'
+                session_recovery.write(profile, record)
                 if client_enabled and not cancelled.is_set():
                     notify('connecting', 'Opening the game on localhost…')
                     client = subprocess.Popen([os.environ.get('CLIENT_JAVA', 'java'), '-Duser.home=' + str(client_home),
                                                '-Dsoloscape.cache.root=' + str(client_home / 'native-cache'),
                                                '-jar', str(client_jar), '--address', '127.0.0.1', '--port', str(port)],
-                                              cwd=local_dev.CLIENT, env=environment, stdout=client_log,
+                                              cwd=local_dev.CLIENT, env=dict(environment, SOLOSCAPE_SESSION_ROLE='client'), stdout=client_log,
                                               stderr=subprocess.STDOUT, start_new_session=True, pass_fds=guards)
+                    session_recovery.registered(profile, record, 'client', client)
                 notify('playing', 'World ready. Save & Quit waits for normal save hooks.')
                 while not cancelled.is_set():
                     if server.poll() is not None:
@@ -103,6 +110,11 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
                 failed = exc
                 raise
             finally:
+                record['phase'] = 'stopping'
+                try:
+                    session_recovery.write(profile, record)
+                except OSError:
+                    print('Could not update session record; still stopping owned processes normally.', file=sys.stderr)
                 notify('saving', 'Saving and closing your local world…')
                 local_dev.stop(client, output=shutdown_output)
                 local_dev.stop(server, output=shutdown_output)
@@ -110,8 +122,14 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
                 if ready and server is not None and server.returncode in (0, 143, -15) and failed is None:
                     notify('backup', 'Verifying the saved-world backup…')
                     profile._backup('after-clean-shutdown')
+                    (profile.directory / session_recovery.RECORD).unlink()
+                    profiles.fsync_directory(profile.directory)
                     notify('stopped', 'World saved and verified. You can continue later.')
-                elif server is None:
-                    notify('stopped', 'Startup cancelled. Your world was not started.')
+                elif server is None or (not ready and failed is None and server.returncode in (0, 143, -15)):
+                    (profile.directory / session_recovery.RECORD).unlink()
+                    profiles.fsync_directory(profile.directory)
+                    notify('stopped', 'Startup cancelled before readiness. Previous verified backup retained.')
                 else:
+                    record['phase'] = 'unverified'
+                    session_recovery.write(profile, record)
                     notify('stopped', 'World closed. Previous verified backup retained; check logs after an error.')

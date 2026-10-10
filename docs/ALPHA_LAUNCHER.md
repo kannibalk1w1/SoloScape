@@ -27,7 +27,7 @@ Launcher Settings selects a free game port. If an existing game already uses 435
 choose another port (for example 43595); do not stop another session merely to test this
 launcher. Gameplay controller settings remain in the SoloScape Controller plugin.
 Controller navigation uses D-pad/stick, A to activate, B to return, and bumpers to move
-between focus controls. Creating a name currently uses ordinary desktop text entry.
+between focus controls. New Character opens a controller keyboard for the label and account name: D-pad selects keys, A types, X deletes, Y advances, and B leaves the keyboard while keeping the form. LB/RB moves between form controls; Shift changes case. A second B closes the form. Desktop text entry also works; account names accept only native account characters. Failed creation keeps the form and entered values with an inline error.
 Mouse and keyboard work throughout. Missing SDL is reported without blocking the UI.
 
 Diagnostics checks pinned source, runtimes, cache presence and local port availability.
@@ -44,3 +44,18 @@ not a gameplay or physical controller acceptance test.
 The local port setting now persists in `.runtime/launcher-settings.json`; invalid ports do not overwrite it. Character details also show storage bytes, backup count and the preserve-history retention policy. Restore remains available for damaged profile manifests through verified backups. Gameplay controller settings live in each profile's private client home; new profiles may need the controller plugin enabled independently.
 
 Session milestone update (9 October): `./scripts/prepare-build.sh` builds without starting a world. Manage Backups now provides exact previewed automatic-archive cleanup; manual/import/damaged/restore-source backups and generations are kept. Sessions hold archive locks through shutdown, so Prepare refuses while they are live. The current root suite has 44 cases; native New/Continue and observed early startup cancellation are verified on disposable worlds. See CONSOLE_SETUP_UPDATE.md and CONSOLE_BACKUP_RETENTION.md for current instructions.
+
+
+## Recorded session recovery (10 October)
+
+Owned sessions record a private session identity before starting their JVMs. Their inherited profile/archive locks stay held if the launcher crashes. On the next launch, an affected character offers **Recover Session** instead of Continue. Save & Quit sends graceful termination only after checking the boot, PID start, same user, session/role environment, exact archive argument, isolated save path and both inherited guards. It uses Linux pidfds, stops the client before the server and waits for normal hooks without a forced-kill timeout. A live original launcher, changed identity or suspended process is refused.
+
+After recovery, the launcher validates a snapshot labelled `after-recovered-shutdown`, retains earlier backups, and explicitly says **clean shutdown is unconfirmed**. Disappearance alone does not establish a clean save. Save errors or unfinished save files keep the session record and previous backups for inspection.
+
+For an ended session whose damaged save cannot be backed up, Recover Session offers **Archive ended record**. This requires no live owned processes and an available profile lock, preserves the record as `session.<id>.unverified.json`, and allows Restore Backup. Archiving does not verify the current save. Restore refuses an outstanding session record before changing generations.
+
+Closing the backend with SIGTERM/SIGHUP now waits for its owned session worker and normal save hooks. Manual worlds and other launchers remain outside recovery ownership. Linux pidfd support is required for automatic recovery.
+
+Current evidence: 61 disposable root cases; actual Swing keyboard/form/backend validation on an owned private Xvfb display. This exercises the entry adapter rather than a physical SDL controller. See the journeys task list and combined report for final native server/game evidence.
+
+![Actual controller character-name keyboard on a private test display](images/controller-name-entry.png)
