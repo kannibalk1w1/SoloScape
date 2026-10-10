@@ -8,7 +8,7 @@ The [proposed roadmap](docs/ROADMAP.md) is the working task list.
 The [Steam Deck player guide](docs/SOLOSCAPE_STEAM_DECK_PLAYER_GUIDE.md) is standalone Markdown for first-time play and Obsidian.
 The [current-state handoff](docs/PROJECT_HANDOFF.md) can be taken into ChatGPT for discussion.
 
-The completed controller/Deck work is being integrated into the GitHub default branch `main`. Source checkouts under `upstream/` are
+The completed controller/Deck work is integrated into the GitHub default branch `main`. Source checkouts under `upstream/` are
 ignored; tracked SoloScape patches reproduce the client changes and the server
 directional movement extension. See [reconnaissance](docs/UPSTREAM_RECON.md),
 [architecture](docs/ARCHITECTURE.md) and the original [brief](docs/KICKOFF.md).
