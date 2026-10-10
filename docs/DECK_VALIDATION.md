@@ -102,3 +102,57 @@ The owner authorized merging all completed work into the default GitHub main bra
 Installed source `e184df7e441282a93e573f0ca6e881bc7d547268`, preserved by public tag `controller-deck-r9`: **10,402 manifest files**, manifest SHA-256 **`c377e173003356eb8f4a95b15ae158c4b4a0e9442a68b7a1b6c20b0d9d1e3cb8`**. Final manifest, exact 106/43 source stacks and doctor (zero errors) were verified on the Deck. Client/server archives and build stamp are byte-identical to the fully tested candidate above; only delivery documentation changed.
 
 The guide at `~/Downloads/SoloScape_Steam_Deck_Player_Guide.md` matches the installed guide, SHA-256 `ba4100194a7745d3df950d22e6fe8e6dd97e39ee8410ec5fda983402b4df5a1e`. PR #1 merged all sprint work into `main` as `a07347d2475451e4d6e2d70053cd9cbbb84071a1`. This final publication record follows that installed snapshot; it does not change the tested archives.
+
+### Owner-reported Gaming Mode blank launcher
+
+The owner reported a white window in Gaming Mode. The r9 Deck script did not set
+`_JAVA_AWT_WM_NONREPARENTING`. The source Deck launcher now exports it before
+Java starts. On the installed Deck, the stable `~/SoloScape-test/launch.sh` was
+backed up and updated to export the same setting; the r9 snapshot and profile
+store were retained. The live Steam shortcut was restored to that stable script,
+its original working directory and empty launch options after backing up its VDF.
+
+Steam's process log shows the attempted manual launch options contained spaces
+in place of the environment variable's underscores, explaining the later launch
+failures. A Steam launch in Desktop Mode now opens the viewable Local Worlds
+window and its Java process has `_JAVA_AWT_WM_NONREPARENTING=1`. The source
+script passes ShellCheck, shell syntax, child-environment checks and 11 Deck
+runtime tests. Physical Gaming Mode rendering remains to be retested by the owner.
+SSH public-key authorization was installed and a separate passwordless connection
+verified; connection details and credentials are not recorded here.
+
+### Sidebar crash follow-up
+
+The owner's panel crashes produced native `libsw3d.so` fatal reports. The old
+client reproduced that crash in the isolated sidebar harness. Patch 0036 queues
+stretched-renderer invalidation on the game thread, restores Ctrl+F11 (sidebar)
+and Ctrl+F12 (active panel), returns focus to the game, and accounts for window
+manager width clipping when closing panels. New RuneLite profiles enable the
+controller plugin by default; explicitly saved disablement remains respected.
+
+The updated native client passed ten panel cycles in each of New and Continue
+on the Deck in Desktop Mode, including hotkey-handler routing, game focus,
+restored window width and controller startup. The harness uses synthetic key
+events; physical Steam Input delivery and Gaming Mode still need owner testing.
+The accepted sidebar session is `session-1791650166637225116`.
+
+A separate host run exposed a server shutdown/save race in timer iteration.
+Patch 0015 cancels and joins the game loop before world and audit saves. A
+deterministic test holds an active tick and proves saving waits for it to finish.
+The new test passed; the client suite passed 211 tests with one optional SDL skip.
+Failed probe logs and disposable worlds remain available for diagnosis.
+
+After the server fix, separate isolated native New/Continue checks passed on both
+host and Deck: saved fields reloaded correctly, four backups verified, startup
+cancellation preserved the entire save, and original mutable paths were unchanged.
+These runs used the same client archive as the accepted sidebar stress check.
+
+The stable launcher now selects private build r10: 10,406 manifest files,
+manifest SHA-256 `65d235bfe074047843b67844935e88e71a1f17a7519d0b0bb256e72433998f02`.
+Before switching, the existing character received a verified manual backup; all
+69 profile files were copied and hash-checked. r9 and its profiles remain intact.
+The accepted final Deck save check is `session-1791650699595945987`.
+
+A launch through the existing Steam entry opened the r10 Local Worlds window.
+The Java process inherited the AWT setting and the window became viewable.
+The diagnostic launcher was closed normally without starting the user's world.

@@ -333,3 +333,19 @@ The in-game sprint implements recognized amount/name/string/bank-search ownershi
 Per-pane focus, text/B ancestry and fresh contextual actions are tightened. Matched-server amount/name/string cancellation and unanswered-entry logout cleanup are implemented with a reversible preference. Native cache tests exposed and fixed Inventory re-click collapse, castle object rectangle reach and double-toggle bank Search. Actual Claude improved small/resized panel and radial readability. Evidence: 211 client cases, 78 root cases, 12 selected engine cases, one network decoder case, 24 selected game cases and exact 106/43-file source stacks. See [approved loop tasks](PLAYABLE_LOOP_SPRINT_TASKS.md) and [evidence](PLAYABLE_LOOP_EVIDENCE.md); the [combined report](MORNING_REPORT.md) carries final native/device delivery.
 
 Next substantial batch should be guided by physical Deck feedback: accept B ancestry and right-stick scrolling across real bank/shop/settings/quests, exclusive Steam/local typing, full quest playthrough and focus/reconnect. Record concrete widget-specific text gaps before adding automatic recognition. Gaming Mode/suspend and sustained hardware measurements remain a separate controlled campaign; broader UI/quest/content work follows observed failures. No generic arbitrary-modal ancestry, true world pause or distributable installer is claimed.
+
+## Recorded owner feedback: controller toggle for the RuneLite sidebar
+
+10 October 2026: provide a button that opens the native RuneLite settings/sidebar
+in Steam Deck Gaming Mode and closes it again so the game fills the screen.
+
+- [ ] Add a remappable controller action to open and close the RuneLite sidebar, including access to Configuration/plugin settings.
+- [ ] Keep the toggle accessible before SoloScape Controller is enabled, so first-time plugin setup is possible.
+- [ ] On close, restore the full game area and gameplay focus; prevent the closing press from also triggering a game action.
+- [ ] Support the sidebar independently of the window title bar and retain a keyboard toggle that can be mapped through Steam Input.
+- [ ] Physically accept repeated open/edit/close in Gaming Mode, screen resizing and text-entry ownership.
+
+The delivered r9 client declared Ctrl+F11/Ctrl+F12 bindings but commented out
+their listeners. The sidebar-crash follow-up restores these keyboard toggles,
+returns game focus after closing and enables SoloScape Controller by default
+with fresh settings. A direct remappable controller sidebar action remains open.

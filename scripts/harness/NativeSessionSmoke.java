@@ -27,6 +27,7 @@ public class NativeSessionSmoke {
       if(System.currentTimeMillis()-started>15000 && ((ControllerWorld.ready() && ControllerUi.availableTabs()!=0 && SoloScapeConnection.verified())
           || Boolean.getBoolean("soloscape.adventure.probe")&&NativeAdventureProbe.active())) {
        try {
+        if(Boolean.getBoolean("soloscape.sidebar.probe")&&!NativeSidebarProbe.tick())return true;
         if(Boolean.getBoolean("soloscape.adventure.probe")&&!NativeAdventureProbe.tick(marker))return true;
         Path path=Paths.get(marker);
         if(!Files.exists(path)) {
