@@ -16,6 +16,7 @@ final class NativePlayableLoopProbe {
     static boolean tick(Map<String,Object> results) throws Exception {
         long now=System.currentTimeMillis();observations=results;
         if(since==0){since=started=now;origin=tile();require(origin[2]==0,"Journey needs ground-floor spawn");ControllerEntry.enableServerCancel(true);}
+        results.put("native_entry_type",Isaac.anIntArray1303[5]);results.put("native_search_armed",Isaac.anIntArray1303[190]);results.put("native_prompt_visible",ControllerUi.entryPrompt()!=null);
         results.put("gameplay_stage",step);results.put("gameplay_tile",Arrays.toString(tile()));
         require(now-since<60000,"Gameplay stage timed out: "+step+" tile="+Arrays.toString(tile()));
         ControllerEntry.prepare();
@@ -66,7 +67,7 @@ final class NativePlayableLoopProbe {
             if(!sent){UiState.Widget pot=item(state,"Pot",false);if(pot!=null)sent=invoke(pot,"Deposit-1");}return false;
         }
         if(step==13){
-            if(!sent){UiState.Widget pot=item(ControllerUi.snapshot(),"Pot",true);if(pot!=null)sent=invoke(pot,"Withdraw-X");}
+            if(!sent){UiState.Widget coins=bankItem(ControllerUi.snapshot(),995);if(coins!=null){results.put("bank_coins_before_cancel",coins.quantity);sent=invoke(coins,"Withdraw-X");}}
             EntryState prompt=ControllerEntry.snapshot();
             if(prompt!=null){require(prompt.type==7,"Withdraw-X did not open native amount");require(SoloScapeConnection.entryCancel(),"Fresh typed-cancel capability missing");
                 String pending=pendingEntry();if(pending==null)return false;require(pending.equals("int"),"Server did not suspend for Withdraw-X: "+pending);
@@ -80,6 +81,7 @@ final class NativePlayableLoopProbe {
             UiState state=ControllerUi.snapshot();require(state.panel!=null&&state.panel.id==762,"Cancellation closed the bank");
             require(item(state,"Pot",true)!=null&&item(state,"Pot",false)==null,"Cancellation transferred an item");
             String pending=pendingEntry();if(pending==null)return false;require(pending.equals("none"),"Server suspension survived Cancel: "+pending);results.put("server_pending_after_cancel",pending);
+            UiState.Widget coins=bankItem(state,995);require(coins!=null&&coins.quantity==((Number)results.get("bank_coins_before_cancel")).intValue(),"Cancel changed bank coins");
             results.put("cancel_preserved_bank_and_items",true);next();return false;
         }
         if(step==15){
@@ -162,8 +164,11 @@ final class NativePlayableLoopProbe {
         }else if(!bank)for(UiState.Widget widget:state.inventory)if(widget!=null&&widget.itemId>=0&&widget.quantity>0&&(widget.name.equalsIgnoreCase(name)||name.equals("Pot")&&widget.itemId==1931))return widget;
         return null;
     }
-    private static boolean invoke(UiState.Widget widget,String label){for(UiState.Action action:widget.actions)if(action.label.replace(" ","-").equalsIgnoreCase(label))return ControllerUi.invoke(widget,action);return false;}
+    private static boolean invoke(UiState.Widget widget,String label){for(UiState.Action action:widget.actions)if(action.label.replace(" ","-").equalsIgnoreCase(label)||widget.quantity==1&&action.operation==1&&(label.equals("Deposit-1")&&action.label.equals("Deposit")||label.equals("Withdraw-1")&&action.label.equals("Withdraw")))return ControllerUi.invoke(widget,action);return false;}
     private static boolean panelAction(String label){UiState.Panel panel=ControllerUi.snapshot().panel;if(panel==null)return false;for(UiState.Pane pane:panel.panes)for(UiState.Widget widget:pane.widgets)if(invoke(widget,label))return true;return false;}
+    private static UiState.Widget bankItem(UiState state,int id){
+        if(state.panel!=null&&state.panel.id==762)for(UiState.Pane pane:state.panel.panes)for(UiState.Widget widget:pane.widgets)if(widget!=null&&(widget.id>>>16)==762&&widget.itemId==id&&widget.quantity>0)return widget;return null;
+    }
     private static UiState.Widget findItem(UiState state,int id){
         if(state.panel!=null)for(UiState.Pane pane:state.panel.panes)for(UiState.Widget widget:pane.widgets)if(widget!=null&&widget.itemId==id&&widget.quantity>0)return widget;
         for(UiState.Widget widget:state.inventory)if(widget!=null&&widget.itemId==id&&widget.quantity>0)return widget;return null;

@@ -535,3 +535,7 @@ does.
 No further code findings. The 208-case suite, the K1 packet case and the rebuild stamp are as
 you reported them. The native staircase and Lumbridge round-trip results are pending and not
 claimed here.
+
+## Cancellation cleanup follow-up (actual Claude, 10 October)
+
+Claude reviewed the new Script cancellation catch/test and native coin-stack Cancel probe read-only through the existing Orca Claude terminal. No blockers: rethrowing CancellationException retains cancellation and cleanup without a false error log; Unconfined makes the continuation/job regression deterministic. Real exceptions from finally still reach the error logger. The native probe must select bank coins specifically; that ambiguity was removed. Native bank diagnostics reported int before Cancel and none afterward, bank open and coins unchanged. Search and full-route acceptance were still pending at this review.

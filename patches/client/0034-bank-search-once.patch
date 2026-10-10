@@ -1,0 +1,56 @@
+diff --git a/client/src/ControllerEntry.java b/client/src/ControllerEntry.java
+index 043cceb..9570dab 100644
+--- a/client/src/ControllerEntry.java
++++ b/client/src/ControllerEntry.java
+@@ -33,7 +33,8 @@ final class ControllerEntry
+         if (args != null && args.length > 0 && args[0] instanceof Integer)
+         {
+             int id = (Integer) args[0];
+-            if (id == 108 || id == 109 || id == 110 || id == 1472 || id == 101) revision++;
++            if (id == 1471) searchRequestedUntil = 0; // native Search onOp already performed the toggle
++            if (id == 108 || id == 109 || id == 110 || id == 1471 || id == 1472 || id == 101) revision++;
+         }
+     }
+     static boolean active()
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+index 2462f14..ffdbbe9 100644
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -612,10 +612,10 @@ final class ControllerUi
+                     if (candidate.type==valid.type && candidate.operation==valid.operation) { dispatched=candidate;break; }
+                 if (dispatched==null) return false;
+             }
++            if (current.id == (762<<16|17) && valid.label.equalsIgnoreCase("Search")) ControllerEntry.requestBankSearch();
+             Class325.method2599((byte) 109, new Class348_Sub42_Sub12(dispatched.label, destination.name, -1,
+                 dispatched.type, destination.itemId, dispatched.operation, destination.child, destination.id, true, false, 0, false),
+                 current.bounds.x + current.bounds.width / 2, current.bounds.y + current.bounds.height / 2);
+-            if (current.id == (762<<16|17) && valid.label.equalsIgnoreCase("Search")) ControllerEntry.requestBankSearch();
+             return true;
+         }
+         return false;
+diff --git a/client/test/ControllerEntryTest.java b/client/test/ControllerEntryTest.java
+index f79c3a5..b3a146c 100644
+--- a/client/test/ControllerEntryTest.java
++++ b/client/test/ControllerEntryTest.java
+@@ -98,6 +98,21 @@ public class ControllerEntryTest
+         ControllerEntry.prepare();assertEquals(1,calls.size());
+     }
+ 
++    @Test public void nativeSearchToggleConsumesFallbackBeforeDelayedServerRearm() {
++        Class348_Sub41 bank=new Class348_Sub41();bank.anInt7050=762;
++        Class125.aClass356_4915.method3483((byte)120,548<<16|200,bank);
++        for(int resultingType:new int[]{11,0}) {
++            ControllerEntry.requestBankSearch();
++            Isaac.anIntArray1303[5]=resultingType;
++            Class348_Sub36 nativeToggle=new Class348_Sub36();nativeToggle.anObjectArray6987=new Object[]{1471};
++            ControllerEntry.observe(nativeToggle);
++            Isaac.anIntArray1303[190]=1; // later server response arms its one-shot callback again
++            ControllerEntry.prepare();
++            assertTrue("Search was toggled a second time",calls.isEmpty());
++            assertEquals(resultingType,Isaac.anIntArray1303[5]);
++        }
++    }
++
+     @Test public void hiddenPromptAndUnsupportedEntryTypeNeverExposeOrSubmit()
+     {
+         Isaac.anIntArray1303[5]=7;EntryState state=ControllerEntry.snapshot();assertNotNull(state);
