@@ -12,4 +12,6 @@ Approved following the r8 keyboard/classic UI sprint. Commit incremental source 
 
 SSH/native synthetic tests do not establish physical controller comfort, Steam overlay visibility, Gaming Mode or suspend acceptance. Measure rather than infer those results.
 
-- [ ] P8 Owner follow-up: install the tested build, add native non-Steam SoloScape shortcut, provide an Obsidian-ready first-time player guide, push/merge all completed work into main and leave a clean primary checkout with no extra worktrees.
+- [x] P8 Owner follow-up: install the tested build, add native non-Steam SoloScape shortcut, provide an Obsidian-ready first-time player guide, push/merge all completed work into main and leave a clean primary checkout with no extra worktrees.
+
+Delivery completed on 2026-10-10: r9 is installed, the native Steam shortcut was launched and closed normally, and the guide is in Deck Downloads. PR #1 was squash-merged into `main`; tag `controller-deck-r9` preserves the installed source and incremental history. Only the primary checkout remains, on `main`; completed sprint/obsolete local branches and the Claude helper terminal are removed. Physical overnight acceptance remains the owner’s next task.

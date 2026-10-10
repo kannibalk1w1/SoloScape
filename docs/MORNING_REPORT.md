@@ -1,6 +1,6 @@
 # Combined morning report — 10 October 2026
 
-The controller journeys/recovery, Deck keyboard/classic UI and controller-first playable-loop sprints are integrated on `overnight/controller-sprint`. The owner requested final integration into GitHub’s default branch `main`; the earlier baseline is `07e789bfa05f48989698d7200577a331e47183ab`. This report combines their outcomes; earlier detailed reports remain archived.
+The controller journeys/recovery, Deck keyboard/classic UI and controller-first playable-loop sprints are merged into GitHub’s default branch `main` via [PR #1](https://github.com/kannibalk1w1/SoloScape/pull/1), merge commit `a07347d2475451e4d6e2d70053cd9cbbb84071a1`. Tag `controller-deck-r9` preserves the installed source and incremental sprint history. This report combines their outcomes; earlier detailed reports remain archived.
 
 ## Current project
 
@@ -62,3 +62,7 @@ Steam visibility in text probes is injected; actual SDL detection is real but ac
 5. Extend native textbox recognition and special-interface coverage from those observations, then validate fresh-machine setup/update and redistribution licences before packaging.
 
 [Project handoff](PROJECT_HANDOFF.md) is the self-contained ChatGPT context. [Roadmap](ROADMAP.md) is the wider proposed backlog; [this sprint's tasks](PLAYABLE_LOOP_SPRINT_TASKS.md) track delivered scope. [Physical checklist](PLAYABLE_LOOP_ACCEPTANCE.md) gives the next acceptance steps. Previous reports: [keyboard/classic UI](MORNING_REPORT_KEYBOARD_CLASSIC.md), [Deck](MORNING_REPORT_DECK.md), [journeys](MORNING_REPORT_JOURNEYS.md). The cache/setup instructions remain in [CACHE_SETUP.md](CACHE_SETUP.md): the compatible archive comes from the pinned upstream maintainer, not an official Jagex distribution.
+
+## Final delivery
+
+The Deck’s Steam library contains **SoloScape**, launching the verified r9 snapshot. The standalone player guide is also copied to `~/Downloads/SoloScape_Steam_Deck_Player_Guide.md` for Obsidian. All completed source and documentation are published on `main`; only the primary checkout remains, with completed sprint branches and the Claude helper terminal removed. Normal worlds, cache and older private build/test evidence are preserved. The game and launcher are closed, ready for the owner’s overnight play.
