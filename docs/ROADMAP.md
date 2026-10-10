@@ -327,3 +327,9 @@ Keep implemented preparation separate from physical acceptance. ROADMAP.md is th
 - [ ] Physically accept both modes on Deck Desktop and Gaming Mode, including manually opening Steam + X.
 
 The in-game sprint implements recognized amount/name/string/bank-search ownership and a manual chat/other-native-entry path. See [scope and remaining gaps](IN_GAME_TEXT_INPUT.md). Every-widget automatic detection and physical acceptance remain open.
+
+## Controller-first playable loop checkpoint — 10 October 2026
+
+Per-pane focus, text/B ancestry and fresh contextual actions are tightened. Matched-server amount/name/string cancellation and unanswered-entry logout cleanup are implemented with a reversible preference. Native cache tests exposed and fixed Inventory re-click collapse, castle object rectangle reach and double-toggle bank Search. Actual Claude improved small/resized panel and radial readability. Evidence: 211 client cases, 78 root cases, 12 selected engine cases, one network decoder case, 24 selected game cases and exact 106/43-file source stacks. See [approved loop tasks](PLAYABLE_LOOP_SPRINT_TASKS.md) and [evidence](PLAYABLE_LOOP_EVIDENCE.md); the [combined report](MORNING_REPORT.md) carries final native/device delivery.
+
+Next substantial batch should be guided by physical Deck feedback: accept B ancestry and right-stick scrolling across real bank/shop/settings/quests, exclusive Steam/local typing, full quest playthrough and focus/reconnect. Record concrete widget-specific text gaps before adding automatic recognition. Gaming Mode/suspend and sustained hardware measurements remain a separate controlled campaign; broader UI/quest/content work follows observed failures. No generic arbitrary-modal ancestry, true world pause or distributable installer is claimed.

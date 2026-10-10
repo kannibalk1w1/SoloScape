@@ -1,63 +1,64 @@
 # Combined morning report — 10 October 2026
 
-The controller journeys/recovery, Steam Deck deployment and in-game keyboard/classic UI sprints are delivered on `overnight/controller-sprint`. Public main remains unchanged. Physical controller and Steam keyboard acceptance remains separate from automated/native testing.
+The controller journeys/recovery, Deck keyboard/classic UI and controller-first playable-loop sprints are integrated on `overnight/controller-sprint`. The owner requested final integration into GitHub’s default branch `main`; the earlier baseline is `07e789bfa05f48989698d7200577a331e47183ab`. This report combines their outcomes; earlier detailed reports remain archived.
 
 ## Current project
 
-SoloScape launches a pinned revision-634 client and local server into independent character worlds. Controller camera, aiming/interaction, movement feedback and reversible direct movement have owner acceptance. Home-tab radial, contextual B ancestry, right-stick menu scrolling, remapping/presets and optional inventory/equipment/bank/shop/quest/skills/combat/prayer/spellbook screens are implemented. Native game validation and actions remain authoritative.
+SoloScape runs a pinned revision-634 client and local server in independent character worlds. Controller camera, targeting, movement feedback and reversible direct movement have owner acceptance. Home-tab and quick-action radials, contextual B, right-stick menu scrolling, remapping/presets and optional inventory/equipment/bank/shop/quest/skills/combat/prayer/spellbook screens are implemented. Native game validation/actions remain authoritative. Menus do not freeze simulation.
 
-The launcher supports character creation, New/Continue, verified backups/restore/import, retention and owned-session recovery. Complete Cook's Assistant and Rune Mysteries server routes/rewards/save-reload pass, alongside earlier gather/commerce/combat/food routes. These content fixtures do not replace physical playthrough acceptance.
+The launcher provides New/Continue, separate worlds, verified backups/restore/import/retention and owned-session recovery. Cook's Assistant, Rune Mysteries, Restless Ghost and gathering/commerce/combat/food routes have real-server earned progression and native save/reload evidence. Controller full-quest playthrough remains physical acceptance.
 
-The preserved [Deck report](MORNING_REPORT_DECK.md) records the previous deployment checkpoint. The [journeys report](MORNING_REPORT_JOURNEYS.md) contains the previous batch's full changes, content evidence and Claude findings. [Project handoff](PROJECT_HANDOFF.md) is the detailed context to take to ChatGPT; [roadmap](ROADMAP.md) is the proposed wider task list.
+The Deck has project-local Java 8/21 and a private **SoloScape Test** Desktop shortcut. Earlier native New/Continue/settings/text/save and owned client/server recovery pass; recovery deliberately does not claim confirmed clean shutdown. Exclusive keyboard ownership fixes the reported launcher double typing and local D-pad/caret competition. Steam is preferred on a detected Deck, with explicit local/physical alternatives. Recognized in-game amount/name/string/search prompts and a deliberate chat/other-entry path pause competing controller actions. Automatic discovery of every widget-specific textbox remains future work.
 
-## What this Deck sprint added
+Actual Claude implemented the reversible classic stone/brown/gold/parchment controller theme and this sprint's readability follow-up. Native cache artwork and private screenshots are excluded from published renderer fixtures.
 
-- Private reproducible owner-to-device snapshots with allowlisted files, compatible cache, project-local Java 21/8, matched archives and SHA-256 manifest checks. Pinned Git packing excludes stashes and dangling private blobs; path/link/config checks guard export and setup. No cache, saves, credentials, binary bundle or remote-access details enter Git.
-- A working **SoloScape Test** Desktop/application shortcut on the actual SteamOS Deck, without system installs or Steam configuration edits. Native software-renderer Desktop launch, SDL controller detection and isolated profiles work.
-- Actual Deck New/Continue/adventure/settings/logout/relog/save/cancel probes, plus native client-and-server pidfd recovery after their disposable parent dies. Exact saves and backups pass. Wayland global-pointer probe failures were retained, diagnosed and replaced with explicitly scoped AWT native-canvas tests.
-- Bounded native render-interval and PID-identity resource measurements, with honest limits on CPU, RSS, battery and host sensors.
-- A Steam-preferred launcher keyboard choice following physical feedback. Steam mode pauses SDL entry/form actions; local mode consumes mapped cursor keys. Controller traversal can reach fields without auto-opening, Enter advances and neutral is required after entry. An explicit desktop-navigation choice prevents competing Swing/SDL navigation.
+## Latest playable-loop changes
 
-The installed **SoloScape Test** shortcut now selects verified private snapshot r8. The r8 update checked closed processes, archive locks and outstanding records; the normal r7 profile store remained absent. All old snapshots and disposable test evidence remain; no normal characters existed to migrate. The new local/system-mode Swing launcher probe and doctor also pass on the actual Deck.
+- **Menu return and scrolling focus:** remember pane/slot identities across returns and text entry; revalidate fresh quantities/actions; discard stale contexts and require neutral input. Text interruptions preserve child/Settings/Home ancestry and allow native repaint. Logout/disconnect clears remembered history.
+- **Real server cancellation:** fresh matched-server negotiation enables opcode 87 for unanswered amount/name/string entries. Cancel clears the continuation without inventing an answer, while bank/side panes remain open. A controller Basics preference reverses this. Logout drains cancelled-entry cleanup; coroutine cancellation is propagated without a false error log. Legacy servers retain local closing. Type-11 search stays native/local.
+- **Native Inventory fix:** asking to open the visible resized inventory no longer re-clicks and collapses it.
+- **Native object reach fix:** rectangular objects use the native rectangle check with dimensions, rotated access faces and collision checks. The actual castle stairs are usable from their reachable edge.
+- **Real bank Search fix:** native Search runs synchronously. Registering and consuming the fallback in the right order prevents a second toggle from closing the newly opened prompt. Local text edits now invoke the native filter refresh. The server's re-armed Search button is distinguished from active search mode.
+- **Readability:** real grid page counts, one-line short cells, reserved action rows/hit targets, whole footer lines, clearer selected action and labels fitted to radial wedges. Both style choices remain reversible.
 
-## Verification and measurements
+## Verification
 
-| Check | Result |
+| Check | Latest evidence |
 | --- | --- |
-| Fresh client tests/shadow build after in-game keyboard fix | 192 cases; no failures/errors; one existing optional SDL skip |
-| Root tooling tests | 78 passing on host and Deck in the deployment checkpoint |
-| Selected content slice | 20 passing cases retained from journeys; not rerun for the launcher-only fix |
-| Exact exported source stacks | 106 client files through 0030; 33 server through 0011 |
-| Swing launcher | Local entry/backend and system-mode focus/Enter/input isolation pass |
-| Real Deck native New/Continue | Exact saves, four backups, settings reversal, logout/relog and pre-ready cancellation pass |
-| Real Deck native recovery | Both owned JVMs verified/recovered; recovered snapshot valid; clean shutdown unconfirmed |
+| Client tests | 211 cases; zero failures/errors; one existing optional SDL skip |
+| Root launcher/profile/recovery/metrics tooling | 78 passing |
+| Selected engine | 12 passing: ActionQueue cancellation/logout plus Script cancellation cleanup |
+| Network cancellation decoder | One passing; one-byte native types 7–9 only |
+| Selected game/content | 24 passing; bank cancellation and actual earned progression/quest/save routes |
+| Source reproduction and matched archives | 106 client / 43 server files through 0035 / 0014; Java 8/21 jars/stamp verified |
+| Native host and actual Deck New/Continue | Both pass; exact saves, four verified backups, full bank/castle routes and startup cancellation |
+| Real Deck controller detection | 100/100 passive SDL samples connected; no buttons pressed; max stick 0.0431 |
+| Readability previews | 20 synthetic classic/modern fixtures rendered; representative small/Deck layouts inspected |
 
-Baseline r6 native render callbacks: median **23.92 / 23.27 ms** for New/Continue; custom journal **31.91 / 30.53 ms**. Whole-session peak simultaneous RSS sums **3013 / 2600 MiB**, with shared-page double counting. These are short windowed software-renderer Desktop observations, not GPU presentation FPS, input latency or sustained Gaming Mode/battery budgets. [Detailed evidence](DECK_VALIDATION.md) and [setup guide](DECK_SETUP.md) record methods and limits.
+The native journey uses ordinary controller adapters and fresh real scene/widget actions: item Use/cancel, sword Wield/Remove, courtyard door, both castle floors, banker, deposit, Withdraw-X edit/Cancel, server pending-entry replies, native search edit/cancel/toggle, normal withdrawal, stairs/return, logout/relogin, New/Continue and exact-save checks. Disposable servers alone opt into a nonce-bound read-only pending-entry diagnostic. Earlier failed probes exposed real Inventory, staircase and Search defects and incorrect probe assumptions; those failures are retained privately and are not counted as passes.
 
-Actual Claude completed Deck design/follow-up and launcher keyboard static reviews through the existing Orca terminal. Reported findings drove export privacy, metric scope, probe ownership and keyboard navigation changes. Static review is separate from runtime and physical acceptance; no current usage-window percentage is inferred.
+Actual Claude reviewed menu/action freshness, cancellation, native reach geometry, readability and Search dispatch ordering. Findings were integrated and tested. Its final static reviews found no blockers; they do not establish hardware acceptance. The cancellation protocol identifies entry type rather than server prompt id, leaving a same-type replacement race; busy/type-mismatch refusal retains the native server continuation until later interaction/logout. [Detailed evidence](PLAYABLE_LOOP_EVIDENCE.md), [Claude review](CLAUDE_PLAYABLE_LOOP_REVIEW.md) and [text scope](IN_GAME_TEXT_INPUT.md).
 
-## In-game keyboard and classic UI sprint
+## Deck delivery and measurements
 
-- **Exclusive text ownership:** Automatic prefers Steam on a detected Deck, with Steam / physical and local controller alternatives. Recognized native amount/name/string/bank-search prompts pause world, camera, radials and the local key grid. Native typing stays native; replacement prompts reject stale taps and finish requires neutral rearming.
-- **Chat and other native entry:** unbound right-stick click or Settings → Finish → Open text keyboard starts a deliberate session. Ordinary printable typing can take ownership without launching Steam. The text panel provides Reopen/Done/Cancel, with pointer capture limited to its bounds. Native Escape can preserve unsent text; this is documented.
-- **Native cancellation correction:** real-cache testing found script 112 Escape does not close ordinary amount/name/string prompts. Guarded controller/panel Cancel now uses pinned native `close_entry` 101. This closes the client prompt; server suspension cancellation still follows native interaction/dialogue lifecycle, not an invented packet.
-- **Claude's implemented visual pass:** optional classic stone/brown panels, bronze trim, gold focus, cream text, parchment tooltips and period-style headings. Home and quick radials share it. Geometry, action tokens and hitboxes stay native; **Classic controller UI** toggles back to the previous palette.
-- **Discoverability:** Home → Settings → Basics contains both keyboard and style preferences. Right-stick chat activation respects remapped bindings. The explicit Settings action remains available.
+The installed **SoloScape Test** Desktop shortcut selects r9. **SoloScape** is also registered in Steam as a native non-Steam game using the stable launcher path. Its Steam launch opened the verified r9 launcher/backend and frame; an ordinary window-close request shut them down. No normal worlds were started for this check. Existing Steam shortcuts were backed up; the new entry is verified in Steam and on disk. Normal r8 profiles were absent, so none were removed or copied; every older build and disposable test world remains.
 
-192 client cases pass with one existing optional SDL skip; 78 root cases pass. Matched shadow jar/stamp and exact 106-client/33-server patch reproduction pass. Twenty synthetic previews render in both palettes at small and Deck sizes; representative layouts were visually inspected. Public fixture pictures contain no cache artwork. [UI details/previews](CLASSIC_CONTROLLER_UI.md) and [text ownership scope](IN_GAME_TEXT_INPUT.md) describe behavior.
+The tested code checkpoint is `fdbc2678f0b32b1196aa6b209562f223eb004635`. Full native session totals: host **270.231 / 265.419 s**, Deck **295.515 / 296.860 s** (New/Continue). Gameplay round trips: host **210.121 / 207.108 s**, Deck **204.103 / 207.097 s**, **78** native walk dispatches each. These totals include fixed probe waits and save/relogin work; they are not launch-time or responsiveness targets. The final manifest identity is recorded in [Deck validation](DECK_VALIDATION.md).
 
-The focused host New/Continue native batch passes real CS2 types 7/8/9 edit/cancel, native public-chat Enter delivery, Escape without submission, retained-text cleanup, unchanged player tile, logout/relogin, fresh capabilities, exact saves/four backups and early-startup cancellation. Steam visibility is injected in these fixtures. Full host and real Deck New/Continue adventure/settings checks also pass, including both keyboard/style preference reversals, B-to-Home and zero non-probe mouse clicks. Complete-session totals were host **88.200 / 85.997 s**, Deck **89.245 / 88.077 s**; these include login, probe waits, relog and save, and are not launch-time or performance targets. No physical keyboard visibility is inferred.
+The [Steam Deck player guide](SOLOSCAPE_STEAM_DECK_PLAYER_GUIDE.md) is self-contained Markdown for Obsidian, with first-time plugin enablement, character creation, controls, text ownership, bank/search, saving/recovery and an overnight checklist. A copy is provided in the Deck’s Downloads folder.
 
-Actual Claude implemented the theme and completed several bounded keyboard/cancel/cleanup reviews. Its high/medium findings were fixed: physical-key swallowing, unwanted typed-key popups and full-canvas mouse capture. Follow-up found no blockers. Remaining notes cover arbitrary custom Steam mappings, server suspension after client-only cancellation and type-11 real-bank coverage. [Review](CLAUDE_INGAME_KEYBOARD_REVIEW.md).
+Latest Deck software-renderer callbacks: baseline median **24.30 / 22.89 ms**, journal **29.18 / 28.02 ms**. Whole-session peak simultaneous JVM RSS sums **8840 / 8943 MiB**, client peaks **7298 / 7719 MiB**. These longer, roughly five-minute sessions use substantially more resident memory than the earlier short probes; sustained memory behavior is a priority for the next performance campaign. RSS sums can double-count shared pages.
 
-Installed r8 source: `0588ad6ec2e357859ba49551f8303408298b0195`; **10,380** manifest files, SHA-256 `dd8ba770db3405f72c2e20c26714276e44c062e7602c6a3a76164eba80a489be`. Deck manifest/doctor and 106/33 source checks pass. Wayland screenshot capture returned black, so real-panel visual acceptance remains open; the published pictures are renderer fixtures. [Deployment evidence](DECK_VALIDATION.md) records the private test paths.
+Earlier r6 software-renderer callbacks remain a historical baseline: New/Continue median 23.92/23.27 ms, journal 31.91/30.53 ms. Whole-session RSS sums 3013/2600 MiB include shared-page double counting. They are short Desktop observations, not GPU presentation FPS, input latency, sustained Gaming Mode budgets or battery measurements. [Device evidence](DECK_VALIDATION.md) records the new observations and exact private test/deployment identities.
 
-## Next work
+Steam visibility in text probes is injected; actual SDL detection is real but actions are native/synthetic. Wayland screenshots were black. Gaming Mode, physical Steam keyboard visibility, simultaneous physical input, arm's-length readability, touch accuracy, full reconnect/unplug, suspend/resume, OpenGL/GPU timing and sustained battery/thermal comfort remain unclaimed.
 
-1. Physically accept the updated launcher keyboard on Deck Desktop and Gaming Mode, including reopen, field traversal, local fallback and Steam + X.
-2. Physically accept in-game text ownership for amounts/names/search/chat, then extend automatic recognition to remaining widget-specific text paths and verify server Withdraw-X cancellation/logout.
-3. Play the quest/gather/commerce/combat slice from a fresh profile; confirm journal progress, source-to-target handoff, settings ancestry, scrolling and save/restart ergonomics.
-4. Establish repeatable Gaming Mode frame-time/loading/memory/battery/suspend evidence, then select measured optimizations such as journal rendering.
-5. Validate clean-machine setup/update/recovery and audit redistribution/dependency licences before publishing a packaged release.
+## Next task list
 
-Retain old private snapshots and verify stopped-world backups before updates. OpenGL, physical controller comfort, every crash timing, suspend/resume and exhaustive content remain unclaimed. Keep 6.1 Sol for this integration work; changing model cannot accelerate device transfers or tests.
+1. Physically accept launcher and in-game Steam/local text ownership, including amount Cancel, search, chat, field traversal and reopen.
+2. Play the bank/shop/settings/quest loop on the Deck: B returns one level, right stick scrolls the intended pane, focus survives returns, Use/Wield/Remove/quick slots feel clear.
+3. Physically complete the existing Cook/Rune routes from a fresh profile; record concrete UI/text/content gaps.
+4. Run a controlled Gaming Mode/focus/reconnect/suspend and sustained performance campaign; optimize measured bottlenecks.
+5. Extend native textbox recognition and special-interface coverage from those observations, then validate fresh-machine setup/update and redistribution licences before packaging.
+
+[Project handoff](PROJECT_HANDOFF.md) is the self-contained ChatGPT context. [Roadmap](ROADMAP.md) is the wider proposed backlog; [this sprint's tasks](PLAYABLE_LOOP_SPRINT_TASKS.md) track delivered scope. [Physical checklist](PLAYABLE_LOOP_ACCEPTANCE.md) gives the next acceptance steps. Previous reports: [keyboard/classic UI](MORNING_REPORT_KEYBOARD_CLASSIC.md), [Deck](MORNING_REPORT_DECK.md), [journeys](MORNING_REPORT_JOURNEYS.md). The cache/setup instructions remain in [CACHE_SETUP.md](CACHE_SETUP.md): the compatible archive comes from the pinned upstream maintainer, not an official Jagex distribution.

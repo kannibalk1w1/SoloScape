@@ -9,7 +9,7 @@ The controller plugin now gives text entry a single controller-input owner. **Te
 | 7 | Amount/quantity, including native X amounts | Numeric Steam keyboard request or local numeric grid; native amount validation and submit remain authoritative |
 | 8 | Native name/account-related prompts | Native name limit and ordinary native callback; no new naming packet |
 | 9 | Native string/text prompts | Native text callback and existing ASCII/length validation |
-| 11 | Bank-search entry | Existing explicit Search callback prepares native entry; typing/filtering remains native |
+| 11 | Bank-search entry | Native Search onOp opens entry once; local edits run the same filter refresh as native keys |
 
 These correspond to the pinned server's `int_entry`/`name_entry`/`string_entry` scripts 108/109/110 and bank search arm 1472. The existing adapter observes prompt identity/revision and fresh native widget visibility. Unsupported widget-specific scripts are not guessed or reclassified as these types.
 
@@ -42,3 +42,5 @@ The optional SoloScape extension uses opcode 87 with exactly one byte: native en
 Steam and manual text ownership retain menu parent identities and pane/slot identity, discard action snapshots and require fresh native widgets plus neutral controls on return. A bounded one-second repaint wait covers a temporarily missing panel after the chatbox closes. Logout/disconnection clears navigation history. LB/RB remembers each pane's own slot and returning to a pane refreshes its items, quantities and actions.
 
 The cancellation packet has no server-issued prompt identity. A server-driven replacement with the same entry class during transport can therefore be cancelled. A server refusal after the local close leaves the server action pending until ordinary native interaction/logout; this matches the older client-only behavior. These are bounded local-server limitations, not guarantees for arbitrary remote servers. Physical Escape retains the original cache behavior. See [Claude's review](CLAUDE_PLAYABLE_LOOP_REVIEW.md) and the current sprint report for separate unit, native-route and hardware evidence.
+
+Real-cache bank follow-up: native Search onOp 1471 runs synchronously, and the server later re-arms the button. The controller registers its bounded fallback before dispatch and consumes it when the native toggle runs. Local type-11 edits invoke native 1564 then native bank-filter refresh 1475 only if the edited prompt is still the same session/value. Physical typing keeps the native key pipeline. Cancel closes entry locally; toggling Search off restores normal contents through the usual native/server bank interaction. The read-only disposable bank probe verifies filtered coins disappear and return, pending amount cancellation, and ordinary withdrawal afterward.

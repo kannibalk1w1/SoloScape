@@ -636,3 +636,41 @@ I read `ControllerEntry.edit` (`:80-92`) and three `ControllerEntryTest` cases:
 ### Status
 The fix is statically sound. The fast native bank diagnostic and the **complete native
 New/Continue journey are still pending**. No pass is claimed.
+
+## Reported native evidence: fast bank-only diagnostic (scope recorded exactly)
+**Source.** These results come from the root's terminal report. I didn't run or observe them,
+and this entry only records their scope against the static review above.
+
+**What passed.** The fast native **bank-only** diagnostic exited 0 with a saved and verified
+world, covering:
+- **Banker:** the real banker opened the bank.
+- **Withdraw-X cancel:** the server reported pending `int` before Cancel and `none` after it,
+  with the bank and bank coins unchanged.
+- **Search filtering:** with "pot" searched, bank coins were excluded. This exercises the
+  patch-0035 `1564` → `1475` path.
+- **Search toggle-off:** entry type 0 and search mode 0, the coins restored by the server
+  resend, and varc 190 = 1 (the server's deliberate re-arm).
+- **Withdrawal:** a normal withdrawal after cancel.
+- **Exit:** the bank closed, followed by native logout and relog.
+
+**What this does *not* cover:**
+- the complete New/Continue journey;
+- the kitchen pot gathering, courtyard walking, door and castle staircase stages (including
+  the footprint-reach fix in a live run), and the return trip;
+- the New/Continue save comparison;
+- the Deck.
+
+**Harness changes reported since, not yet seen in a native run:**
+- **E1:** the full harness asserts that script 1475's int and string argument counts are both 0.
+- **S1:** stage 17 now polls from the Search dispatch time within the stage deadline, instead
+  of checking once.
+
+**Status.** The full fresh host and Deck New/Continue runs are **live and pending**. No full
+journey pass is claimed. The remaining low items (J3/J4 door and run side effects, S2 fallback
+desync visibility, Q1–Q3 probe-command hygiene) are unchanged.
+
+## Final integration evidence (root, after Claude review)
+
+Full host and actual Deck New/Continue runs both exit zero: all castle/bank/search/source/equipment routes, native logout/relog, exact tested save fields, four verified backups, original mutable fingerprints and cancelled-startup whole-world preservation. Native cache script 1475 has zero int/string arguments (E1 resolved); both filter/restore checks pass. Stage17 polls from actual dispatch time within the deadline (S1 resolved). Remaining S2 fallback desynchronisation concern is unobserved; normal dispatch sends its original native button packet and consumes the fallback synchronously. No physical/Gaming Mode/suspend result is inferred.
+
+Claude also authored the standalone first-time Deck player guide, then incorporated root corrections for B scope, action-list D-pad versus pane scrolling, Steam amount cancellation, input layout/Proton and exact New/Continue status. Root checked the fork's actual Configuration UI: ConfigPlugin labels the button Configuration and PluginListPanel has a scrolling plugin list with no search field; guide instructions were corrected to scroll to SoloScape Controller. The plugin defaults disabled and must be enabled once per new character.

@@ -5,9 +5,10 @@ Development source build for a local RuneScape revision-634 experience with nati
 The graphical launcher provides controller character naming, independent local worlds, verified backups/restore, explicit backup management and ownership-checked Recover Session. [Combined completion report](docs/MORNING_REPORT.md), [setup/update instructions](docs/CONSOLE_SETUP_UPDATE.md) and [physical acceptance checklist](docs/CONSOLE_SESSION_ACCEPTANCE.md) record evidence and remaining limits. No packaged release or completed Deck acceptance is claimed.
 
 The [proposed roadmap](docs/ROADMAP.md) is the working task list.
+The [Steam Deck player guide](docs/SOLOSCAPE_STEAM_DECK_PLAYER_GUIDE.md) is standalone Markdown for first-time play and Obsidian.
 The [current-state handoff](docs/PROJECT_HANDOFF.md) can be taken into ChatGPT for discussion.
 
-The local Orca branch is `soloscape/bootstrap`, tracking remote `overnight/controller-sprint`; public `main` retains the preceding baseline. Source checkouts under `upstream/` are
+The completed controller/Deck work is being integrated into the GitHub default branch `main`. Source checkouts under `upstream/` are
 ignored; tracked SoloScape patches reproduce the client changes and the server
 directional movement extension. See [reconnaissance](docs/UPSTREAM_RECON.md),
 [architecture](docs/ARCHITECTURE.md) and the original [brief](docs/KICKOFF.md).
