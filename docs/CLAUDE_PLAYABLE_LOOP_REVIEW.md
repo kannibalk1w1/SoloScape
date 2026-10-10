@@ -539,3 +539,100 @@ claimed here.
 ## Cancellation cleanup follow-up (actual Claude, 10 October)
 
 Claude reviewed the new Script cancellation catch/test and native coin-stack Cancel probe read-only through the existing Orca Claude terminal. No blockers: rethrowing CancellationException retains cancellation and cleanup without a false error log; Unconfined makes the continuation/job regression deterministic. Real exceptions from finally still reach the error logger. The native probe must select bank coins specifically; that ambiguity was removed. Native bank diagnostics reported int before Cancel and none afterward, bank open and coins unchanged. Search and full-route acceptance were still pending at this review.
+
+## Final static review: Bank Search ordering and the stronger search assertions
+I read `ControllerUi.invoke` (`:615-618`), `ControllerEntry.observe`/`prepare`,
+`Class348_Sub9.method2780`, the server's `BankOpen.kt` Search option (`armBankSearch()`, the
+`bank_searching` toggle, and the resend on toggle-off), and probe stages 15–17 with
+`bankItem()`. I ran nothing.
+
+### Ordering (final)
+- **The native click runs its script synchronously.** `method2780` runs the button's click
+  script (1471) through `Class66.method705`, which calls `observe`, and then queues the
+  ordinary IF_BUTTON packet. My earlier guess that the click script was **queued** for a later
+  cycle was wrong. The synchronous order is what the fix relies on.
+- **The fix.** `requestBankSearch()` now runs **before** the native dispatch, and `observe`
+  clears the request when it sees 1471. A native toggle therefore always uses up the request,
+  so `prepare()` can't run 1471 a second time.
+- **What the fallback is now for.** It covers only a dispatch that ran no click script (no
+  handler, or the widget vanished). It acts only while varc 190 is 1 and only within the
+  2-second window.
+- **Re-arming.** On each Search the server calls `armBankSearch()`, which sets varc 190 back to
+  1, and toggles `bank_searching`. On toggle-off it resends `bank` and runs
+  `update_bank_slots`. So varc 190 being 1 after toggle-off is **intended**, and the old
+  stage-17 assertion (`varc190==0`) was wrong. That matches the native result.
+
+### The stronger assertions are sound
+- **Stage 16: search filters for real.** With "pot" searched, the pot must still be visible in
+  the bank, and `bankItem(state, 995)` must be **null**. That helper is limited to widgets of
+  group 762, so inventory-side coins can't satisfy it. Steps 13–14 already proved bank coins
+  exist, so null can only mean the filter worked.
+- **Stage 17: search fully toggled off.** It requires all three:
+  - varc 5 (entry type) is 0;
+  - varc 188 (client search mode) is 0;
+  - bank coins are visible again, which depends on the server's resend.
+
+  That checks both the client state and the server's toggle. `native_search_button_rearmed`
+  records varc 190 for information only.
+- **Ordering of search, cancel and toggle.** Stage 16's cancel is local (`close_entry` for type
+  11; no server message, by design). Server `bank_searching` stays true, so the stage-17 click
+  turns it off on both sides, and the client and server agree.
+
+### Low notes
+- **S1. Stage 17 checks once instead of polling.** It runs its `require` once, about 1 s after
+  the Search dispatch (the window is measured from stage entry, and the dispatch happens at
+  least 1 s in). A slow server resend would fail it falsely. Poll until the condition holds,
+  within the stage deadline, and measure from the dispatch time.
+- **S2. The fallback can desynchronise client and server.** If `prepare()` ever runs 1471
+  itself, no IF_BUTTON packet is sent, so client search mode flips while server
+  `bank_searching` doesn't. The next toggle-off would then skip the bank resend. The fix makes
+  this path rare. Recording when the fallback fires (a counter in the probe results) would show
+  whether it ever happens natively.
+
+### Status
+No blockers in the static search and cancel path. Native Search with type 11, edit and cancel
+was observed on the host, and stage 17 failed only on the corrected varc-190 assertion. **The
+complete native New/Continue journey is still pending**; the root rerun is live. No pass is
+claimed here.
+
+## Search filter after a controller edit (client patch 0035): static review
+I read `ControllerEntry.edit` (`:80-92`) and three `ControllerEntryTest` cases:
+`bankSearchEditRunsNativeFilterAndRejectsStaleText`,
+`searchFilterIsNotAppliedToAReplacementPromptDuringEdit` and the existing
+`replacedPromptInvalidatesSnapshotEvenIfTypeTextAndValueAreIdentical`. I ran nothing.
+
+**Verdict: correct, no blockers.**
+- **Why it was needed.** The native key path (script 112) runs 1475 after a type-11 edit, which
+  is what refreshes the bank filter. Script 1564 only rewrites the text and caret. A controller
+  edit that ran only 1564 therefore changed the text but never filtered, which is the stage-16
+  "pot typed, coins still shown" failure. Running 1475 after 1564 for type 11 reproduces the
+  native order.
+- **The extra script runs only for the same prompt.** After 1564, `edit` takes a **fresh**
+  snapshot and runs 1475 only if it is still the same session (`revision` unchanged) **and**
+  the value equals the text just written. A prompt replaced during 1564 (`observe` bumps
+  `revision` on 108/109/110/1471/1472/101), or text that didn't take, skips the filter. The
+  pre-edit checks (same session and unchanged value) are kept, so stale edits are still
+  rejected before anything runs.
+- **Scope.** Types 7, 8 and 9 are unchanged: no 1475 and no extra snapshot. Physical typing
+  still goes through native 112. Running 1475 on each controller edit matches native per-key
+  behaviour.
+- **The tests pin the right things:**
+  - the normal type-11 order is `[1564,"pot"]` then `[1475]`;
+  - a stale second edit against the original snapshot is rejected with no script run;
+  - a 1472 observed during 1564 (a replacement) suppresses 1475, with only one call.
+
+### Low notes
+- **E1. 1475 must take no arguments.** `scripts.run(new Object[]{1475})` passes no arguments.
+  Please confirm from the cache script header that 1475's int and string argument counts are
+  0, and that 112 calls it via a bare `gosub 1475`. If it expects arguments, for example the
+  key code or char, the interpreter would read past its stack. The fast native bank diagnostic
+  will show this: an exception in the client log, or no filtering.
+- **E2. `edit` returns true even when the filter is skipped.** When the prompt is replaced
+  during the edit, `edit` still returns true. That's harmless, because the old session is gone
+  and the caller's next snapshot sees the new prompt. Just note that "edit true" doesn't mean
+  "filter applied". The probe's stage-16 `bankItem(995)==null` check covers the actual
+  outcome.
+
+### Status
+The fix is statically sound. The fast native bank diagnostic and the **complete native
+New/Continue journey are still pending**. No pass is claimed.

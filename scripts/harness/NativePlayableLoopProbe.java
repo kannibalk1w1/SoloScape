@@ -6,7 +6,7 @@ import net.runelite.client.input.controller.*;
 /** Actual Lumbridge scene, native Walk/Take/stairs/banker/widget actions; disposable worlds only. */
 final class NativePlayableLoopProbe {
     private static int step=40;
-    private static long since, movedAt, started;
+    private static long since, movedAt, started, searchToggleAt;
     static String progress(){return "stage="+step+" tile="+(origin==null?"unstarted":Class132.aPlayer_1907==null?"logged out":Arrays.toString(tile()));}
     private static int[] origin;
     private static int walks;
@@ -16,7 +16,7 @@ final class NativePlayableLoopProbe {
     static boolean tick(Map<String,Object> results) throws Exception {
         long now=System.currentTimeMillis();observations=results;
         if(since==0){since=started=now;origin=tile();require(origin[2]==0,"Journey needs ground-floor spawn");ControllerEntry.enableServerCancel(true);}
-        results.put("native_entry_type",Isaac.anIntArray1303[5]);results.put("native_search_armed",Isaac.anIntArray1303[190]);results.put("native_prompt_visible",ControllerUi.entryPrompt()!=null);
+        results.put("native_entry_type",Isaac.anIntArray1303[5]);results.put("native_search_armed",Isaac.anIntArray1303[190]);results.put("native_search_mode",Isaac.anIntArray1303[188]);results.put("native_prompt_visible",ControllerUi.entryPrompt()!=null);
         results.put("gameplay_stage",step);results.put("gameplay_tile",Arrays.toString(tile()));
         require(now-since<60000,"Gameplay stage timed out: "+step+" tile="+Arrays.toString(tile()));
         ControllerEntry.prepare();
@@ -86,16 +86,16 @@ final class NativePlayableLoopProbe {
         }
         if(step==15){
             if(!sent)sent=panelAction("Search");
-            EntryState prompt=ControllerEntry.snapshot();if(prompt!=null){require(prompt.type==11,"Bank Search type missing");require(ControllerEntry.edit(prompt,"pot"),"Search edit failed");next();}return false;
+            EntryState prompt=ControllerEntry.snapshot();if(prompt!=null){require(prompt.type==11,"Bank Search type missing");Class348_Sub42_Sub19 filter=Class328.method2609(-122,1475);require(filter!=null&&filter.anInt9697==0&&filter.anInt9695==0,"Native bank filter expects arguments");results.put("native_filter_script_no_arguments",true);require(ControllerEntry.edit(prompt,"pot"),"Search edit failed");next();}return false;
         }
         if(step==16){
             if(now-since<1000)return false;EntryState prompt=ControllerEntry.snapshot();require(prompt!=null&&prompt.type==11,"Search prompt disappeared");
-            require(item(ControllerUi.snapshot(),"Pot",true)!=null,"Native search lost matching item");ControllerEntry.cancel(prompt);next();return false;
+            require(item(ControllerUi.snapshot(),"Pot",true)!=null,"Native search lost matching item");if(bankItem(ControllerUi.snapshot(),995)!=null)return false;results.put("actual_search_filtered_coins",true);ControllerEntry.cancel(prompt);next();return false;
         }
         if(step==17){
             if(ControllerEntry.snapshot()!=null||now-since<1000)return false;
-            if(!sent)sent=panelAction("Search");
-            if(sent&&now-since>2000){require(Isaac.anIntArray1303[190]==0,"Search toggle left native search armed");results.put("actual_bank_search_edit_cancel_toggle",true);next();}return false;
+            if(!sent){sent=panelAction("Search");if(sent)searchToggleAt=now;}
+            if(sent&&now-searchToggleAt>1000&&Isaac.anIntArray1303[5]==0&&Isaac.anIntArray1303[188]==0&&bankItem(ControllerUi.snapshot(),995)!=null){results.put("native_search_button_rearmed",Isaac.anIntArray1303[190]);results.put("actual_bank_search_edit_cancel_toggle",true);next();}return false;
         }
         if(step==18){
             UiState state=ControllerUi.snapshot();
