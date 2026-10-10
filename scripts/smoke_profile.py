@@ -11,10 +11,12 @@ import local_dev, profile_session, profiles
 from unittest.mock import patch
 import signal
 import json
+from native_metrics import NativeMetrics
 
 def main():
     parser=argparse.ArgumentParser(description="Disposable native New/Continue/save and optional adventure UI probe.")
     parser.add_argument("--adventure",action="store_true",help="Probe real native adventure tabs, local settings and software overlay intervals.")
+    parser.add_argument("--desktop",action="store_true",help="Use the explicitly authorized current X11/XWayland display; never stop that display.")
     options=parser.parse_args()
     signal.signal(signal.SIGTERM, local_dev.interrupted)
     root=local_dev.ROOT;testroot=root/'.runtime/alpha-tests'/('session-'+str(time.time_ns()));testroot.mkdir(parents=True,exist_ok=True)
@@ -37,30 +39,48 @@ def main():
     clientjar=local_dev.jar(local_dev.CLIENT/'client','void-client-*.jar')
     javac=Path(os.environ['CLIENT_JAVA']).with_name('javac')
     subprocess.run([str(javac),'-cp',str(clientjar),'-d',str(harness),str(root/'scripts/harness/NativeSessionSmoke.java'),str(root/'scripts/harness/NativeAdventureProbe.java')],check=True)
-    read_display,write_display=os.pipe()
-    x=original(['Xvfb','-displayfd',str(write_display),'-screen','0','1280x800x24'],pass_fds=(write_display,),stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-    os.close(write_display)
+    x=None
+    if options.desktop:
+        if not os.environ.get('DISPLAY'):
+            raise RuntimeError('--desktop requires an explicit DISPLAY and working X11 authorization.')
+    else:
+        read_display,write_display=os.pipe()
+        x=original(['Xvfb','-displayfd',str(write_display),'-screen','0','1280x800x24','-nolisten','tcp'],pass_fds=(write_display,),stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+        os.close(write_display)
     try:
-        try:
-            with selectors.DefaultSelector() as selector:
-                selector.register(read_display,selectors.EVENT_READ)
-                if not selector.select(10):raise RuntimeError('Private Xvfb display handshake timed out.')
-            display_number=os.read(read_display,128).decode('ascii').strip()
-            if not display_number.isdigit() or x.poll() is not None:raise RuntimeError('Private Xvfb failed to allocate its own display.')
-            os.environ['DISPLAY']=':'+display_number
-        finally:os.close(read_display)
+        if x is not None:
+            try:
+                with selectors.DefaultSelector() as selector:
+                    selector.register(read_display,selectors.EVENT_READ)
+                    if not selector.select(10):raise RuntimeError('Private Xvfb display handshake timed out.')
+                display_number=os.read(read_display,128).decode('ascii').strip()
+                if not display_number.isdigit() or x.poll() is not None:raise RuntimeError('Private Xvfb failed to allocate its own display.')
+                os.environ['DISPLAY']=':'+display_number
+            finally:os.close(read_display)
         def popen(argv,**kwargs):
             if '-jar' in argv and any('void-client-' in arg for arg in argv):
                 i=argv.index('-jar');jar=argv[i+1]
-                argv=argv[:i]+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
-            return original(argv,**kwargs)
-        elapsed=[];adventure=[]
+                label='Existing authorized X11/XWayland desktop; native overlay-render intervals, real Gateway/synthetic UI input and native mouse logout. No physical controller or Gaming Mode acceptance.' if options.desktop else 'Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native mouse logout. No GPU/Deck/controller acceptance.'
+                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
+            process=original(argv,**kwargs)
+            if any('void-server-' in arg for arg in argv):metrics.add(process,'server')
+            elif any('void-client-' in arg for arg in argv):metrics.add(process,'client')
+            return process
+        elapsed=[];adventure=[];observations=[]
         for iteration in range(2):
-            if x.poll() is not None:raise RuntimeError('Owned private display exited; refusing another display.')
+            if x is not None and x.poll() is not None:raise RuntimeError('Owned private display exited; refusing another display.')
             session_started=time.monotonic()
             marker.unlink(missing_ok=True)
-            with patch.object(subprocess,'Popen',side_effect=popen):
-                code=profile_session.run(profile,threading.Event(),lambda stage,message:print(stage,message,flush=True),port=43595)
+            metrics=NativeMetrics();metrics.start()
+            try:
+                with patch.object(subprocess,'Popen',side_effect=popen):
+                    def notify(stage,message):
+                        metrics.stage(stage)
+                        print(stage,message,flush=True)
+                    code=profile_session.run(profile,threading.Event(),notify,port=43595)
+            finally:
+                observation=metrics.finish();observations.append(observation)
+                (testroot/('resources-new.json' if iteration==0 else 'resources-continue.json')).write_text(json.dumps(observation,indent=2)+'\n')
             elapsed.append(round(time.monotonic()-session_started,3))
             if code or not marker.exists() or not profile.metadata()['saved']:
                 raise RuntimeError('Native smoke failed; inspect this disposable profile’s logs.')
@@ -109,10 +129,17 @@ def main():
         print('New/Continue complete-session seconds (includes client readiness and save):',elapsed)
         (testroot/'native-smoke-summary.json').write_text(json.dumps({'new_session_seconds':elapsed[0],'continue_session_seconds':elapsed[1],
             'native_startup_cancel_preserved':True,'original_mutable_paths_unchanged':before==fingerprint(),
-            'adventure':adventure,'note':'Private Xvfb/software session totals, not frame-time or physical controller benchmarks.'},indent=2)+'\n')
+            'adventure':adventure,'display':'existing-desktop' if options.desktop else 'private-xvfb',
+            'precondition':'Desktop probes require hands off, awake display; real input/focus may interfere.' if options.desktop else 'Owned private display.',
+            'screenshots':'Private evidence only; desktop overlays may appear or Wayland capture may be unavailable. Review before publishing.',
+            'note':'Native session totals and overlay-render intervals; not physical controller or Gaming Mode acceptance.'},indent=2)+'\n')
         (testroot/'native-smoke-profile.txt').write_text(profile.manifest['id'])
     finally:
-        x.terminate();x.wait(timeout=5)
+        if x is not None:
+            x.terminate()
+            try:x.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                x.kill();x.wait(timeout=5)  # Only this probe's owned display, never a game/save process.
 
 
 if __name__ == "__main__":

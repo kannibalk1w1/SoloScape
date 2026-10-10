@@ -32,7 +32,8 @@ public class NativeSessionSmoke {
         if(!Files.exists(path)) {
          Files.write(path,("state=10\nworldReady=true\nserverCapabilities=verified\nvisibleTabs="+ControllerUi.availableTabs()+"\nsceneX="+Class132.aPlayer_1907.x+"\nsceneY="+Class132.aPlayer_1907.y+"\n").getBytes("UTF-8"));
          SwingUtilities.invokeLater(()->{try {
-          Rectangle area=GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();
+          Canvas canvas=RuneLite.getInjector().getInstance(com.GameClient.class).getCanvas();
+          Rectangle area=new Rectangle(canvas.getLocationOnScreen(),canvas.getSize());
           BufferedImage image=new Robot().createScreenCapture(area);ImageIO.write(image,"png",new java.io.File(marker+".png"));
          }catch(Exception ex){System.err.println("Private screenshot failed.");}});
         }

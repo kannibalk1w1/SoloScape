@@ -31,11 +31,11 @@ public final class NativeLauncherProbe
         try{
             launcher=edt(()->{Constructor<?> ctor=SoloScapeLauncher.class.getDeclaredConstructor(Path.class);ctor.setAccessible(true);return ctor.newInstance(root);});
             LauncherKeyboard keyboard=open();JTextField label=edt(()->text(keyboard.owner,"Character label"));JTextField account=edt(()->text(keyboard.owner,"Account name"));
-            edt(()->{GamepadState held=new GamepadState();held.buttonsHeld=held.buttonsPressed=1;keyboard.update(held,System.nanoTime());require(label.getText().isEmpty(),"Opening held A typed a key");press(keyboard,1);require(label.getText().equals("a"),"Controller did not type label");press(keyboard,8);return null;});
+            edt(()->{require(label.getText().isEmpty(),"Label changed before entry probe");keyboard.activate(label);GamepadState held=new GamepadState();held.buttonsHeld=held.buttonsPressed=1;keyboard.update(held,System.nanoTime());require(label.getText().isEmpty(),"Opening held A typed a key");press(keyboard,1);require(label.getText().equals("a"),"Controller did not type label");press(keyboard,8);return null;});
             waitFor(()->field(keyboard,"field")==account,"Y did not move to account field");
             edt(()->{press(keyboard,1);require(account.getText().equals("a"),"Controller did not type account");account.setText("bad-name");require(account.getText().equals("a"),"Invalid pasted account changed field");press(keyboard,2);require(keyboard.owner.isShowing()&&!keyboard.active(),"B closed form instead of keyboard");require(account.getText().equals("a"),"B lost entered name");keyboard.activate(account);return null;});
             Thread.sleep(200);
-            Rectangle screen=GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();javax.imageio.ImageIO.write(new Robot().createScreenCapture(screen),"png",root.resolve("launcher-name-entry.png").toFile());
+            Rectangle screen=edt(()->new Rectangle(keyboard.owner.getLocationOnScreen(),keyboard.owner.getSize()));javax.imageio.ImageIO.write(new Robot().createScreenCapture(screen),"png",root.resolve("launcher-name-entry.png").toFile());
             edt(()->{press(keyboard,8);require(!keyboard.active(),"Y did not finish name entry");button(keyboard.owner,"Create character").doClick();return null;});
             waitFor(()->!keyboard.owner.isShowing(),"Valid create did not close form");
             waitFor(()->((DefaultListModel<?>)field(launcher,"characters")).size()==1,"Backend did not create exactly one private profile");

@@ -25,7 +25,7 @@ public final class NativeAdventureProbe {
    long now=System.currentTimeMillis();Files.write(Paths.get(marker+".adventure.status"),("step="+step+" panel="+(ControllerUi.snapshot().panel==null?-1:ControllerUi.snapshot().panel.id)).getBytes("UTF-8"));
    if(started==0){
     started=lastStep=now;frames=new FrameProbe();RuneLite.getInjector().getInstance(OverlayManager.class).add(frames);
-    results.put("environment","Private owned Xvfb desktop/software rendering. Native overlay-render intervals; settings use the real Gateway/openHomeTab without SDL onClientTick; logout uses native mouse input. No GPU/Deck/controller acceptance.");
+    results.put("environment",System.getProperty("soloscape.probe.environment","Private native software probe; no physical controller acceptance."));
     results.put("heap_at_ready",ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed());
     return false;
    }
@@ -82,11 +82,11 @@ public final class NativeAdventureProbe {
    if(step==11){
     display=null;selected=null;
     oldNonce=nonce();require(oldNonce!=null&&SoloScapeConnection.verified(),"Initial capability nonce missing");
-    require(clickNative(548<<16|181)||clickNative(746<<16|172),"Visible native Exit control unavailable");
+    if(!(clickNative(548<<16|181)||clickNative(746<<16|172))){require(now-lastStep<15000,"Visible native Exit control unavailable/focus not settled");return false;}
     step++;lastStep=now;return false;
    }
    if(step==12){
-    require(clickNative(182<<16|10),"Visible native logout control unavailable");step++;lastStep=now;return false;
+    if(!clickNative(182<<16|10)){require(now-lastStep<15000,"Visible native logout control unavailable");clickNative(548<<16|181);clickNative(746<<16|172);return false;}step++;lastStep=now;return false;
    }
    if(step==13){
     if(Class240.anInt4674!=3){require(now-lastStep<15000,"Native logout did not reach login");return false;}
@@ -108,7 +108,7 @@ public final class NativeAdventureProbe {
     results.put("probe_seconds",(now-started)/1000.0);Files.write(Paths.get(marker+".adventure.json"),new Gson().toJson(results).getBytes("UTF-8"));return true;
    }
    return false;
-  }catch(Exception ex){failure=ex.toString();throw new IllegalStateException("Native adventure probe failed at step "+step+": "+failure,ex);}
+  }catch(Exception ex){failure=ex.toString();results.put("failed_step",step);results.put("failure",failure);try{Files.write(Paths.get(marker+".adventure-failure.json"),new Gson().toJson(results).getBytes("UTF-8"));}catch(Exception ignored){}throw new IllegalStateException("Native adventure probe failed at step "+step+": "+failure,ex);}
  }
  private static String nonce()throws Exception{
   Field field=SoloScapeConnection.class.getDeclaredField("capabilities");field.setAccessible(true);Object capabilities=field.get(null);
@@ -139,14 +139,19 @@ public final class NativeAdventureProbe {
   require(!label.isEmpty(),"Visible native control label does not match "+expected+" at "+id);
   com.GameClient client=RuneLite.getInjector().getInstance(com.GameClient.class);Canvas canvas=client.getCanvas();
   Rectangle canvasBox=new Rectangle(0,0,canvas.getWidth(),canvas.getHeight());box=box.intersection(canvasBox);if(box.isEmpty())return false;
+  if(!canvas.isFocusOwner()){
+   javax.swing.SwingUtilities.invokeLater(()->{Window owner=javax.swing.SwingUtilities.getWindowAncestor(canvas);if(owner!=null)owner.toFront();canvas.requestFocusInWindow();});
+   results.put("native_click_waiting_for_canvas_focus",true);return false;
+  }
   Point origin=canvas.getLocationOnScreen();Robot mouse=new Robot();mouse.mouseMove(origin.x+box.x+box.width/2,origin.y+box.y+box.height/2);
+  Point pointer=MouseInfo.getPointerInfo().getLocation();results.put("native_pointer_"+id,pointer.x+","+pointer.y+" requested="+(origin.x+box.x+box.width/2)+","+(origin.y+box.y+box.height/2));
   mouse.mousePress(java.awt.event.InputEvent.BUTTON1_DOWN_MASK);mouse.delay(80);mouse.mouseRelease(java.awt.event.InputEvent.BUTTON1_DOWN_MASK);
   results.put("native_click_"+id,label+" "+box.toString());return true;
  }
  private static void require(boolean condition,String message){if(!condition)throw new IllegalStateException(message);}
  private static void capture(String path)throws Exception{
   // Capture on a later Swing callback so the requested overlay has actually rendered.
-  javax.swing.SwingUtilities.invokeLater(()->{try{Thread.sleep(100);Rectangle screen=GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();javax.imageio.ImageIO.write(new Robot().createScreenCapture(screen),"png",new java.io.File(path));}catch(Exception ex){System.err.println("Native probe screenshot: "+ex);}});
+  javax.swing.SwingUtilities.invokeLater(()->{try{Canvas canvas=RuneLite.getInjector().getInstance(com.GameClient.class).getCanvas();Rectangle area=new Rectangle(canvas.getLocationOnScreen(),canvas.getSize());javax.imageio.ImageIO.write(new Robot().createScreenCapture(area),"png",new java.io.File(path));}catch(Exception ex){System.err.println("Native probe screenshot failed." );}});
  }
  private static final class FrameProbe extends Overlay {
   private final java.util.List<Double> intervals=new ArrayList<>();private long previous;private boolean measuring=true;
