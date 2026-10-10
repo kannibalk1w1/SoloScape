@@ -1,0 +1,405 @@
+diff --git a/client/src/Class201.java b/client/src/Class201.java
+index 8f4e728..5c5b2f9 100644
+--- a/client/src/Class201.java
++++ b/client/src/Class201.java
+@@ -17,6 +17,32 @@ public class Class201 {
+         if (!aBoolean2644) throw new RuntimeException("");
+         File file = (File) aHashtable2642.get(string);
+         if (file != null) return file;
++        String profileRoot = System.getProperty("soloscape.cache.root");
++        if (profileRoot != null) {
++            // An owned launch must never fall back to another user's/shared writable cache.
++            if (!string.matches("[A-Za-z0-9_.-]+") || string.contains("..")
++                || (string_1_ != null && (!string_1_.matches("[A-Za-z0-9_.-]+") || string_1_.contains(".."))))
++                throw new IllegalArgumentException("Unsafe profile cache name.");
++            try {
++                java.nio.file.Path root = java.nio.file.Paths.get(profileRoot).toAbsolutePath();
++                if (java.nio.file.Files.isSymbolicLink(root)) throw new java.io.IOException("Unsafe profile cache.");
++                java.nio.file.Files.createDirectories(root);
++                java.nio.file.Path directory = root.resolve("store-" + i_0_);
++                if (java.nio.file.Files.isSymbolicLink(directory)) throw new java.io.IOException("Unsafe profile cache.");
++                java.nio.file.Files.createDirectories(directory);
++                if (string_1_ != null) {
++                    directory = directory.resolve(string_1_);
++                    if (java.nio.file.Files.isSymbolicLink(directory)) throw new java.io.IOException("Unsafe profile cache.");
++                    java.nio.file.Files.createDirectories(directory);
++                }
++                java.nio.file.Path target = directory.resolve(string);
++                if (java.nio.file.Files.isSymbolicLink(target) || !directory.toRealPath().startsWith(root.toRealPath()))
++                    throw new java.io.IOException("Unsafe profile cache.");
++                file = target.toFile();
++                aHashtable2642.put(string, file);
++                return file;
++            } catch (java.io.IOException error) { throw new IllegalStateException("Cannot open the owned profile cache.", error); }
++        }
+         String[] strings = {"c:/rscache/", "/rscache/", "c:/windows/", "c:/winnt/", "c:/", aString2643, "/tmp/", ""};
+         String[] strings_2_ = {".jagex_cache_" + i_0_, ".file_store_" + i_0_};
+         for (int i_3_ = i; i_3_ < 2; i_3_++) {
+diff --git a/client/src/SoloScapeLogin.java b/client/src/SoloScapeLogin.java
+new file mode 100644
+index 0000000..92aedc5
+--- /dev/null
++++ b/client/src/SoloScapeLogin.java
+@@ -0,0 +1,25 @@
++import java.nio.file.Paths;
++import net.runelite.client.soloscape.launcher.LocalCredentials;
++
++/** One explicit launch login, through the same native transition as CS2 opcode 5600. */
++final class SoloScapeLogin
++{
++    private static boolean attempted;
++    static void update()
++    {
++        if (attempted || Class240.anInt4674 != 3 || Class225.anInt2955 != 0 || Class367_Sub2.anInt7297 != 0) return;
++        String file = System.getenv("SOLOSCAPE_AUTH_FILE");
++        if (file == null) { attempted = true; return; }
++        attempted = true; // failed login is never retried silently
++        try
++        {
++            LocalCredentials credentials = LocalCredentials.read(Paths.get(file), Loader.address);
++            if (credentials.password.isEmpty()) return; // imported accounts keep ordinary login
++            Class64_Sub3.aString5600 = credentials.account;
++            Class186.aString2496 = credentials.password;
++            RuntimeException_Sub1.anInt4596 = -1;
++            Packet.method3379(2, 6);
++        }
++        catch (Exception ex) { System.err.println("SoloScape local login unavailable; use the normal login screen."); }
++    }
++}
+diff --git a/client/src/client.java b/client/src/client.java
+index aff71e8..b3c96c8 100644
+--- a/client/src/client.java
++++ b/client/src/client.java
+@@ -1777,6 +1777,7 @@ public final class client extends Applet_Sub1 {
+                 } else r_Sub1.aClass262_10479.method1999(class348_sub45, -20180);
+             }
+             GameTuning.update();
++            SoloScapeLogin.update();
+             if (Class348_Sub42_Sub16_Sub2.method3263(true)) Class38.method363(125);
+             if (Class139.method1167(Class240.anInt4674, (byte) -51)) {
+                 Class52.method493(true);
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LocalCredentials.java b/client/src/net/runelite/client/soloscape/launcher/LocalCredentials.java
+new file mode 100644
+index 0000000..b6be18d
+--- /dev/null
++++ b/client/src/net/runelite/client/soloscape/launcher/LocalCredentials.java
+@@ -0,0 +1,34 @@
++package net.runelite.client.soloscape.launcher;
++
++import com.google.gson.*;
++import java.io.IOException;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.*;
++import java.nio.file.attribute.PosixFilePermission;
++import java.util.Set;
++
++/** Explicit local-only credential bridge. Values never enter argv or diagnostics. */
++public final class LocalCredentials
++{
++    public final String account, password;
++    private LocalCredentials(String account, String password) { this.account = account; this.password = password; }
++    public static LocalCredentials read(Path file, String address) throws IOException
++    {
++        if (!"127.0.0.1".equals(address)) throw new IOException("Automatic login requires IPv4 loopback.");
++        if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS) || Files.size(file) > 4096)
++            throw new IOException("Invalid local credentials file.");
++        Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(file, LinkOption.NOFOLLOW_LINKS);
++        if (permissions.contains(PosixFilePermission.GROUP_READ) || permissions.contains(PosixFilePermission.OTHERS_READ)
++            || permissions.contains(PosixFilePermission.GROUP_WRITE) || permissions.contains(PosixFilePermission.OTHERS_WRITE))
++            throw new IOException("Local credentials must be private to their owner.");
++        try
++        {
++            JsonObject data = new Gson().fromJson(new String(Files.readAllBytes(file), StandardCharsets.UTF_8), JsonObject.class);
++            String account = data.get("account").getAsString(), password = data.get("password").getAsString();
++            if (!account.matches("[A-Za-z0-9 _]{1,12}") || account.trim().isEmpty()
++                || password.length() > 20 || !password.matches("[ -~]*")) throw new IOException("Invalid local login fields.");
++            return new LocalCredentials(account, password);
++        }
++        catch (RuntimeException ex) { throw new IOException("Invalid local credentials format."); }
++    }
++}
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+new file mode 100644
+index 0000000..3e8a766
+--- /dev/null
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -0,0 +1,237 @@
++package net.runelite.client.soloscape.launcher;
++
++import com.google.gson.*;
++import java.awt.*;
++import java.awt.event.*;
++import java.io.*;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.*;
++import java.util.concurrent.*;
++import javax.swing.*;
++import net.runelite.client.input.controller.GamepadState;
++import net.runelite.client.input.controller.SdlGamepad;
++
++/** Desktop shell for the local, owned profile backend. No external web service. */
++public final class SoloScapeLauncher
++{
++    private final JFrame frame = new JFrame("SoloScape • Local Worlds");
++    private final DefaultListModel<CharacterRow> characters = new DefaultListModel<>();
++    private final JList<CharacterRow> list = new JList<>(characters);
++    private final JLabel status = new JLabel("Checking your characters…");
++    private final JTextArea detail = new JTextArea();
++    private final JProgressBar progress = new JProgressBar();
++    private final JButton play = new JButton("Continue"), stop = new JButton("Save & Quit");
++    private final JButton create = new JButton("New Character"), backup = new JButton("Back Up"), restore = new JButton("Restore Backup");
++    private final JButton diagnostics = new JButton("Diagnostics"), settings = new JButton("Launcher Settings");
++    private final ExecutorService requests = Executors.newSingleThreadExecutor();
++    private final Process backend;
++    private final BufferedWriter input;
++    private final BufferedReader output;
++    private final Gson gson = new Gson();
++    private final Path root;
++    private final javax.swing.Timer refresh;
++    private boolean polling, closing, running;
++    private int port = 43594, serial;
++    private String error;
++
++    public static void main(String[] args) throws Exception
++    {
++        if (args.length != 1) throw new IllegalArgumentException("Pass the SoloScape project directory.");
++        Path root = Paths.get(args[0]).toRealPath();
++        SwingUtilities.invokeLater(() -> {
++            try { new SoloScapeLauncher(root); }
++            catch (Exception ex) { JOptionPane.showMessageDialog(null, ex.getMessage(), "SoloScape setup", JOptionPane.ERROR_MESSAGE); }
++        });
++    }
++
++    private SoloScapeLauncher(Path project) throws IOException
++    {
++        root = project;
++        backend = new ProcessBuilder("python3", root.resolve("scripts/launcher_backend.py").toString())
++            .directory(root.toFile()).redirectError(ProcessBuilder.Redirect.INHERIT).start();
++        input = new BufferedWriter(new OutputStreamWriter(backend.getOutputStream(), StandardCharsets.UTF_8));
++        output = new BufferedReader(new InputStreamReader(backend.getInputStream(), StandardCharsets.UTF_8));
++        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
++        frame.addWindowListener(new WindowAdapter() { @Override public void windowClosing(WindowEvent e) { close(); } });
++        JPanel content = new JPanel(new BorderLayout(18, 18));
++        content.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
++        JLabel title = new JLabel("SoloScape"); title.setFont(title.getFont().deriveFont(Font.BOLD, 30f));
++        JPanel header = new JPanel(new GridLayout(2, 1, 0, 6)); header.add(title);
++        header.add(new JLabel("Your characters. Independent local worlds. Verified save backups."));
++        content.add(header, BorderLayout.NORTH);
++        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); list.setFixedCellHeight(60);
++        list.setFont(list.getFont().deriveFont(17f));
++        list.addListSelectionListener(e -> showCharacter());
++        detail.setEditable(false); detail.setLineWrap(true); detail.setWrapStyleWord(true);
++        detail.setFont(detail.getFont().deriveFont(16f)); detail.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
++        JSplitPane body = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(list), new JScrollPane(detail));
++        body.setResizeWeight(.43); body.setDividerLocation(340);
++        content.add(body, BorderLayout.CENTER);
++        JPanel footer = new JPanel(new BorderLayout(0, 12));
++        JPanel buttons = new JPanel(new GridLayout(2, 4, 10, 10));
++        for (JButton button : new JButton[]{play, create, backup, restore, stop, settings, diagnostics})
++        { button.setFont(button.getFont().deriveFont(15f)); button.setPreferredSize(new Dimension(145, 44)); buttons.add(button); }
++        buttons.add(new JLabel("D-pad / stick: focus · A: select · B: back"));
++        footer.add(buttons, BorderLayout.CENTER);
++        JPanel state = new JPanel(new BorderLayout(8, 8)); state.add(status, BorderLayout.CENTER);
++        progress.setPreferredSize(new Dimension(110, 16)); state.add(progress, BorderLayout.EAST); footer.add(state, BorderLayout.SOUTH);
++        content.add(footer, BorderLayout.SOUTH);
++        frame.setContentPane(content); frame.setMinimumSize(new Dimension(880, 540)); frame.setSize(1024, 650);
++        frame.setLocationRelativeTo(null);
++        play.addActionListener(e -> selected("start", null));
++        stop.addActionListener(e -> request(command("stop"), result -> applySession(result)));
++        create.addActionListener(e -> newCharacter());
++        backup.addActionListener(e -> selected("backup", null));
++        restore.addActionListener(e -> restoreCharacter());
++        diagnostics.addActionListener(e -> diagnose());
++        settings.addActionListener(e -> settings());
++        frame.setVisible(true); list.requestFocusInWindow();
++        refresh = new javax.swing.Timer(1000, e -> poll()); refresh.start(); poll();
++        startController();
++    }
++
++    private JsonObject command(String action)
++    {
++        JsonObject command = new JsonObject(); command.addProperty("action", action); command.addProperty("port", port); return command;
++    }
++    private interface Reply { void accept(JsonElement result); }
++    private void request(JsonObject command, Reply reply)
++    {
++        if (closing && !"stop".equals(command.get("action").getAsString())) return;
++        requests.execute(() -> {
++            try
++            {
++                command.addProperty("id", ++serial);
++                input.write(gson.toJson(command)); input.newLine(); input.flush();
++                String line = output.readLine();
++                if (line == null) throw new IOException("Launcher backend stopped. Restart the launcher after checking terminal diagnostics.");
++                JsonObject response = gson.fromJson(line, JsonObject.class);
++                if (response.get("id").getAsInt() != serial) throw new IOException("Launcher response does not match its request.");
++                if (!response.get("ok").getAsBoolean()) throw new IOException(response.get("error").getAsString());
++                SwingUtilities.invokeLater(() -> { polling = false; reply.accept(response.get("result")); });
++            }
++            catch (Exception ex)
++            {
++                SwingUtilities.invokeLater(() -> { polling = false; status.setText(ex.getMessage());
++                    if (!ex.getMessage().equals(error)) { error = ex.getMessage(); JOptionPane.showMessageDialog(frame, error, "SoloScape", JOptionPane.ERROR_MESSAGE); }
++                });
++            }
++        });
++    }
++    private void poll()
++    {
++        if (polling || closing) return; polling = true;
++        request(command("list"), result -> {
++            JsonObject data = result.getAsJsonObject(); String chosen = list.getSelectedValue() == null ? null : list.getSelectedValue().id;
++            characters.clear(); int selection = 0;
++            for (JsonElement row : data.getAsJsonArray("profiles"))
++            { CharacterRow character = new CharacterRow(row.getAsJsonObject()); if (character.id.equals(chosen)) selection = characters.size(); characters.addElement(character); }
++            if (!characters.isEmpty()) list.setSelectedIndex(selection);
++            applySession(data.get("session")); showCharacter();
++        });
++    }
++    private void applySession(JsonElement result)
++    {
++        JsonObject data = result.getAsJsonObject(); running = data.has("running") && data.get("running").getAsBoolean();
++        status.setText(data.get("message").getAsString());
++        String stage = data.get("stage").getAsString(); progress.setIndeterminate(running && !stage.equals("playing"));
++        stop.setEnabled(running); create.setEnabled(!running); backup.setEnabled(!running); restore.setEnabled(!running);
++        play.setEnabled(!running && list.getSelectedValue() != null && !list.getSelectedValue().damaged);
++        settings.setEnabled(!running);
++    }
++    private void showCharacter()
++    {
++        CharacterRow row = list.getSelectedValue();
++        detail.setText(row == null ? "Create your first character to start an independent local world.\n\nCache setup and runtime checks are available under Diagnostics." : row.description());
++        play.setText(row != null && !row.saved ? "Start Character" : "Continue");
++        play.setEnabled(!running && row != null && !row.damaged);
++    }
++    private void selected(String action, String backupName)
++    {
++        CharacterRow row = list.getSelectedValue(); if (row == null) return;
++        JsonObject cmd = command(action); cmd.addProperty("profile", row.id);
++        if (backupName != null) cmd.addProperty("backup", backupName);
++        request(cmd, result -> { if (action.equals("start")) applySession(result); else { status.setText(action.equals("restore") ? "Backup restored; previous generation retained." : "Verified backup created."); poll(); } });
++    }
++    private void newCharacter()
++    {
++        JTextField label = new JTextField(), account = new JTextField(); JCheckBox tutorial = new JCheckBox("Start on Tutorial Island", false);
++        JPanel fields = new JPanel(new GridLayout(0, 1, 4, 6));
++        fields.add(new JLabel("Character label (1–48 characters)")); fields.add(label);
++        fields.add(new JLabel("Account name (1–12 letters, numbers, spaces or underscores)")); fields.add(account); fields.add(tutorial);
++        if (JOptionPane.showConfirmDialog(frame, fields, "New Character", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
++        JsonObject cmd = command("create"); cmd.addProperty("label", label.getText()); cmd.addProperty("account", account.getText()); cmd.addProperty("tutorial", tutorial.isSelected());
++        request(cmd, result -> { status.setText("Character created. Select Start Character to play."); poll(); });
++    }
++    private void restoreCharacter()
++    {
++        CharacterRow row = list.getSelectedValue(); if (row == null) return;
++        JsonObject cmd = command("backups"); cmd.addProperty("profile", row.id);
++        request(cmd, result -> {
++            DefaultListModel<String> names = new DefaultListModel<>();
++            for (JsonElement entry : result.getAsJsonArray()) if (entry.getAsJsonObject().get("valid").getAsBoolean()) names.addElement(entry.getAsJsonObject().get("name").getAsString());
++            if (names.isEmpty()) { JOptionPane.showMessageDialog(frame, "No verified backups are available for this character."); return; }
++            JList<String> options = new JList<>(names); options.setSelectedIndex(0); options.setVisibleRowCount(Math.min(8, names.size()));
++            if (JOptionPane.showConfirmDialog(frame, new JScrollPane(options), "Choose verified backup", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
++            if (JOptionPane.showConfirmDialog(frame, "Restore this world snapshot? Your current generation will be retained for recovery.", "Restore world", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
++                selected("restore", options.getSelectedValue());
++        });
++    }
++    private void diagnose()
++    {
++        request(command("diagnostics"), result -> {
++            JTextArea text = new JTextArea(result.getAsJsonObject().get("text").getAsString(), 22, 85); text.setEditable(false);
++            JOptionPane.showMessageDialog(frame, new JScrollPane(text), "Local installation diagnostics", JOptionPane.INFORMATION_MESSAGE);
++        });
++    }
++    private void settings()
++    {
++        JSpinner number = new JSpinner(new SpinnerNumberModel(port, 1, 65535, 1));
++        JPanel fields = new JPanel(new GridLayout(0, 1, 6, 6)); fields.add(new JLabel("Local game port (use another free port for an independent world)")); fields.add(number);
++        fields.add(new JLabel("Gameplay controller settings remain in the SoloScape Controller plugin."));
++        if (JOptionPane.showConfirmDialog(frame, fields, "Launcher Settings", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) port = (Integer) number.getValue();
++    }
++    private void close()
++    {
++        if (closing) return; closing = true; refresh.stop(); frame.setEnabled(false);
++        status.setText("Saving and closing… Please wait for save hooks."); progress.setIndeterminate(true);
++        requests.execute(() -> {
++            try { input.close(); backend.waitFor(); }
++            catch (Exception ex) { System.err.println("Launcher shutdown: " + ex.getMessage()); }
++            finally { requests.shutdown(); SwingUtilities.invokeLater(frame::dispose); }
++        });
++    }
++    private void startController()
++    {
++        final SdlGamepad pad = new SdlGamepad(); final GamepadState state = new GamepadState();
++        try { pad.init(); } catch (LinkageError | RuntimeException ex) { status.setText("Controller unavailable; mouse and keyboard work. " + ex.getMessage()); return; }
++        final boolean[] armed = {false}; final long[] next = {0};
++        javax.swing.Timer timer = new javax.swing.Timer(25, e -> {
++            if (closing) { ((javax.swing.Timer)e.getSource()).stop(); pad.close(); return; }
++            pad.poll(state); Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
++            if (!state.connected || active == null || !(active == frame || active.getOwner() == frame)) { armed[0] = false; return; }
++            if (!armed[0]) { armed[0] = state.buttonsHeld == 0 && Math.abs(state.leftX) < .3 && Math.abs(state.leftY) < .3; return; }
++            Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
++            boolean previous = (state.buttonsHeld & ((1<<11)|(1<<13))) != 0 || state.leftY < -.6 || state.leftX < -.6;
++            boolean forward = (state.buttonsHeld & ((1<<12)|(1<<14))) != 0 || state.leftY > .6 || state.leftX > .6;
++            long now = System.nanoTime();
++            if ((previous || forward) && now >= next[0] && focus != null)
++            {
++                if (focus instanceof JList) { JList<?> choices = (JList<?>) focus; choices.setSelectedIndex(Math.max(0, Math.min(choices.getModel().getSize()-1, choices.getSelectedIndex()+(previous?-1:1)))); choices.ensureIndexIsVisible(choices.getSelectedIndex()); }
++                else if (previous) focus.transferFocusBackward(); else focus.transferFocus();
++                next[0] = now + 180_000_000L;
++            }
++            if ((state.buttonsPressed & 1) != 0) { if (focus instanceof AbstractButton) ((AbstractButton)focus).doClick(); else if (focus == list && play.isEnabled()) play.doClick(); }
++            if ((state.buttonsPressed & 2) != 0) { if (active instanceof JDialog) active.dispose(); else list.requestFocusInWindow(); }
++            if ((state.buttonsPressed & (1<<9)) != 0 && focus != null) focus.transferFocusBackward();
++            if ((state.buttonsPressed & (1<<10)) != 0 && focus != null) focus.transferFocus();
++        }); timer.start();
++    }
++    private static final class CharacterRow
++    {
++        final JsonObject data; final String id, label; final boolean saved, damaged;
++        CharacterRow(JsonObject row) { data=row; id=row.get("id").getAsString(); label=row.get("label").getAsString(); saved=row.get("saved").getAsBoolean(); damaged=row.has("error")&&!row.get("error").isJsonNull(); }
++        @Override public String toString() { return label + (damaged ? " • Needs recovery" : saved ? " • Continue" : " • New"); }
++        String description() { StringBuilder text=new StringBuilder(label+"\n\n"); for(String field:new String[]{"account","created","last_played","saved_at","location","error"}) if(data.has(field)&&!data.get(field).isJsonNull()) text.append(field.replace('_',' ')).append(": ").append(data.get(field).isJsonPrimitive()?data.get(field).getAsString():data.get(field)).append("\n\n"); return text.toString(); }
++    }
++}
+diff --git a/client/test/net/runelite/client/soloscape/launcher/LocalCredentialsTest.java b/client/test/net/runelite/client/soloscape/launcher/LocalCredentialsTest.java
+new file mode 100644
+index 0000000..4f36be5
+--- /dev/null
++++ b/client/test/net/runelite/client/soloscape/launcher/LocalCredentialsTest.java
+@@ -0,0 +1,36 @@
++package net.runelite.client.soloscape.launcher;
++
++import org.junit.Test;
++import java.io.IOException;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.*;
++import java.nio.file.attribute.PosixFilePermissions;
++import static org.junit.Assert.*;
++
++public class LocalCredentialsTest
++{
++    @Test public void onlyExplicitLoopbackCanReadPrivateLocalLogin() throws Exception
++    {
++        Path directory = Files.createTempDirectory("soloscape-auth-test-"); Path file = directory.resolve("login.json");
++        try
++        {
++            Files.write(file, "{\"account\":\"Tester\",\"password\":\"fixture-only\"}".getBytes(StandardCharsets.UTF_8));
++            Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rw-------"));
++            assertEquals("Tester", LocalCredentials.read(file, "127.0.0.1").account);
++            rejects(file, "192.168.1.1"); rejects(file, "localhost");
++            Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rw-r--r--")); rejects(file, "127.0.0.1");
++        } finally { Files.deleteIfExists(file); Files.deleteIfExists(directory); }
++    }
++    @Test public void invalidOrLinkedCredentialsFailClosed() throws Exception
++    {
++        Path directory = Files.createTempDirectory("soloscape-auth-test-"); Path file=directory.resolve("login.json"), link=directory.resolve("linked.json");
++        try
++        {
++            Files.write(file, "{\"account\":\"Tester\",\"password\":\"this-password-is-too-long-for-native-login\"}".getBytes(StandardCharsets.UTF_8));
++            Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rw-------")); rejects(file,"127.0.0.1");
++            Files.createSymbolicLink(link,file); rejects(link,"127.0.0.1");
++        } finally { Files.deleteIfExists(link); Files.deleteIfExists(file); Files.deleteIfExists(directory); }
++    }
++    private static void rejects(Path file,String address) throws Exception
++    { try { LocalCredentials.read(file,address); fail("Unsafe credentials were accepted"); } catch(IOException expected) { } }
++}

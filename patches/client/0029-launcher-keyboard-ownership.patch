@@ -1,0 +1,227 @@
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java b/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java
+index 951d6dc..10089ca 100644
+--- a/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java
++++ b/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java
+@@ -17,18 +17,32 @@ final class LauncherKeyboard extends JPanel
+     private final JLabel prompt=new JLabel("D-pad: keys · A: select · X: delete · Y: next · B: leave keyboard · LB/RB: fields");
+     private final java.util.List<JButton> buttons=new ArrayList<>();
+     private final EntryControls controls;
++    private boolean systemKeyboard;
++    private final java.util.function.Consumer<Boolean> steamKeyboard;
++    private final KeyEventDispatcher navigation = this::consumeNavigation;
++    private boolean dispatching;
+     private long revision;
+     private String[] drawn;
+     Window owner;
+-    LauncherKeyboard()
++    LauncherKeyboard(){this(Boolean.getBoolean("soloscape.launcher.steamKeyboard"),LauncherKeyboard::requestSteamKeyboard);}
++    LauncherKeyboard(boolean preferred,java.util.function.Consumer<Boolean> request)
+     {
+-        super(new BorderLayout(5,5));add(prompt,BorderLayout.NORTH);add(grid,BorderLayout.CENTER);setVisible(false);
++        super(new BorderLayout(5,5));systemKeyboard=preferred;steamKeyboard=request;
++        JPanel heading=new JPanel(new BorderLayout(5,5));
++        JComboBox<String> mode=new JComboBox<>(new String[]{"Steam / physical keyboard","SoloScape controller keyboard"});
++        mode.setSelectedIndex(preferred?0:1);
++        mode.addActionListener(e->{JTextField previous=field;deactivate();systemKeyboard=mode.getSelectedIndex()==0;if(previous!=null){previous.requestFocusInWindow();activate(previous);}});
++        JButton reopen=new JButton("Open Steam keyboard");reopen.setFocusable(false);
++        reopen.addActionListener(e->{if(active()&&systemKeyboard)steamKeyboard.accept(true);});
++        JPanel choice=new JPanel();choice.add(mode);choice.add(reopen);
++        heading.add(choice,BorderLayout.NORTH);heading.add(prompt,BorderLayout.SOUTH);
++        add(heading,BorderLayout.NORTH);add(grid,BorderLayout.CENTER);setVisible(false);
+         controls=new EntryControls(new UiControls.Gateway(){
+             public UiState snapshot(){return UiState.EMPTY;}
+             public boolean openInventory(){return false;}
+             public boolean invoke(UiState.Widget w,UiState.Action a){return false;}
+             public void cancelSelection(){} public void cancelDialogue(){}
+-            public boolean editEntry(EntryState state,String value){if(!current(state)||!EntryState.valid(state.type,value))return false;field.setText(value);return true;}
++            public boolean editEntry(EntryState state,String value){if(!current(state)||!EntryState.valid(state.type,value))return false;field.setText(value);field.setCaretPosition(field.getText().length());return true;}
+             public boolean submitEntry(EntryState state){if(!current(state))return false;Runnable advance=next.get(field);deactivate();advance.run();return true;}
+             public void cancelEntry(EntryState state){if(current(state))deactivate();}
+         });
+@@ -43,17 +57,58 @@ final class LauncherKeyboard extends JPanel
+                 if(EntryState.valid(type,changed))bypass.replace(offset,length,value,attributes);
+             }
+         });
+-        text.addFocusListener(new FocusAdapter(){@Override public void focusGained(FocusEvent event){activate(text);}});
++        text.addMouseListener(new MouseAdapter(){@Override public void mouseReleased(MouseEvent event){if(systemKeyboard)activate(text);}});
++        text.addActionListener(e->{if(systemKeyboard&&field==text){Runnable finish=next.get(text);deactivate();finish.run();}});
++        text.addFocusListener(new FocusAdapter(){
++            @Override public void focusGained(FocusEvent event){if(!systemKeyboard)activate(text);}
++            @Override public void focusLost(FocusEvent event){
++                Component opposite=event.getOppositeComponent();
++                if(field==text&&opposite!=null&&SwingUtilities.getWindowAncestor(opposite)==owner&&!SwingUtilities.isDescendingFrom(opposite,LauncherKeyboard.this))deactivate();
++            }
++        });
+     }
+     boolean accepts(Component focus){return types.containsKey(focus);}
+-    void activate(JTextField text){if(!types.containsKey(text))return;field=text;revision++;controls.reset();setVisible(true);GamepadState held=new GamepadState();held.buttonsHeld=1;controls.update(snapshot(),held,System.nanoTime());draw();revalidate();}
+-    void deactivate(){field=null;controls.reset();setVisible(false);drawn=null;revalidate();}
++    void activate(JTextField text){
++        if(!types.containsKey(text)||field==text)return;
++        deactivate();field=text;revision++;controls.reset();setVisible(true);
++        if(systemKeyboard){grid.setVisible(false);prompt.setText("Steam keyboard owns input · Enter: next field / finish · Steam + X: reopen");steamKeyboard.accept(true);}
++        else{
++            grid.setVisible(true);prompt.setText("D-pad: keys · A: select · X: delete · Y: next · B: leave keyboard · LB/RB: fields");
++            KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(navigation);dispatching=true;
++            GamepadState held=new GamepadState();held.buttonsHeld=1;controls.update(snapshot(),held,System.nanoTime());draw();
++        }
++        revalidate();
++    }
++    void deactivate(){
++        if(field!=null){revision++;if(systemKeyboard)steamKeyboard.accept(false);}
++        field=null;controls.reset();setVisible(false);drawn=null;
++        if(dispatching){KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(navigation);dispatching=false;}
++        revalidate();
++    }
++    boolean consumeNavigation(KeyEvent event){
++        if(!active()||systemKeyboard||event.getComponent()!=field)return false;
++        int key=event.getKeyCode();char ch=event.getKeyChar();
++        boolean consume=key==KeyEvent.VK_LEFT||key==KeyEvent.VK_RIGHT||key==KeyEvent.VK_UP||key==KeyEvent.VK_DOWN||key==KeyEvent.VK_ENTER||key==KeyEvent.VK_BACK_SPACE||key==KeyEvent.VK_SPACE||key==KeyEvent.VK_ESCAPE||ch=='\n'||ch=='\b'||ch==' ';
++        if(consume)event.consume();return consume;
++    }
++    private static final java.util.concurrent.ExecutorService STEAM_REQUESTS=java.util.concurrent.Executors.newSingleThreadExecutor(task->{Thread thread=new Thread(task,"launcher-steam-keyboard");thread.setDaemon(true);return thread;});
++    private static void requestSteamKeyboard(boolean open){
++        // Same URI transport used by SDL's X11 Steam Deck keyboard support.
++        // This requests visibility; it is not a dismissal callback or proof Steam is running.
++        STEAM_REQUESTS.execute(()->{
++            try{Process process=new ProcessBuilder("xdg-open",open?"steam://open/keyboard?XPosition=0&YPosition=0&Width=0&Height=0&Mode=0":"steam://close/keyboard").redirectOutput(ProcessBuilder.Redirect.to(new java.io.File("/dev/null"))).redirectError(ProcessBuilder.Redirect.to(new java.io.File("/dev/null"))).start();if(!process.waitFor(3,java.util.concurrent.TimeUnit.SECONDS)){process.destroy();System.err.println("Steam keyboard request timed out; use Steam + X or choose SoloScape keyboard.");}}
++            catch(Exception ex){System.err.println("Steam keyboard request unavailable; use Steam + X or choose SoloScape keyboard.");}
++        });
++    }
+     boolean active(){return field!=null;}
++    boolean systemOwnsInput(){return active()&&systemKeyboard;}
++    boolean systemMode(){return systemKeyboard;}
++    long revision(){return revision;}
+     private EntryState snapshot(){return field==null?null:new EntryState(types.get(field),revision,field.getName(),field.getText());}
+     private boolean current(EntryState state){return owner!=null&&owner.isShowing()&&active()&&state.sameSession(snapshot());}
+     void update(GamepadState input,long now)
+     {
+-        if(!active())return;
++        if(!active()||systemKeyboard)return;
+         if((input.buttonsPressed&((1<<9)|(1<<10)))!=0){JTextField previous=field;boolean back=(input.buttonsPressed&(1<<9))!=0;deactivate();if(back)previous.transferFocusBackward();else previous.transferFocus();return;}
+         controls.update(snapshot(),input,now);if(active())draw();
+     }
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+index ee1ac24..7ca258e 100644
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -34,6 +34,7 @@ public final class SoloScapeLauncher
+     private int port = 43594, serial;
+     private String error;
+     private LauncherKeyboard keyboard;
++    private final JCheckBox nativeNavigation=new JCheckBox("Desktop keyboard navigation (disables launcher controller)");
+     private final JButton recover=new JButton("Recover Session");
+ 
+     public static void main(String[] args) throws Exception
+@@ -58,9 +59,9 @@ public final class SoloScapeLauncher
+         JPanel content = new JPanel(new BorderLayout(18, 18));
+         content.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+         JLabel title = new JLabel("SoloScape"); title.setFont(title.getFont().deriveFont(Font.BOLD, 30f));
+-        JPanel header = new JPanel(new GridLayout(2, 1, 0, 6)); header.add(title);
++        JPanel header = new JPanel(new GridLayout(3, 1, 0, 6)); header.add(title);
+         header.add(new JLabel("Your characters. Independent local worlds. Verified save backups."));
+-        content.add(header, BorderLayout.NORTH);
++        nativeNavigation.setFocusable(false);header.add(nativeNavigation);content.add(header, BorderLayout.NORTH);
+         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); list.setFixedCellHeight(60);
+         list.setFont(list.getFont().deriveFont(17f));
+         list.addListSelectionListener(e -> showCharacter());
+@@ -169,7 +170,7 @@ public final class SoloScapeLauncher
+         JLabel problem=new JLabel(" ");
+         JDialog dialog=new JDialog(frame,"New Character",true);
+         LauncherKeyboard entry=new LauncherKeyboard();entry.owner=dialog;keyboard=entry;
+-        entry.register(label,net.runelite.client.input.controller.EntryState.LAUNCHER_LABEL,account::requestFocusInWindow);
++        entry.register(label,net.runelite.client.input.controller.EntryState.LAUNCHER_LABEL,()->{account.requestFocusInWindow();entry.activate(account);});
+         entry.register(account,net.runelite.client.input.controller.EntryState.LAUNCHER_ACCOUNT,confirm::requestFocusInWindow);
+         JPanel fields=new JPanel(new GridLayout(0,1,4,6));
+         fields.add(new JLabel("Character label (1–48 characters)"));fields.add(label);
+@@ -183,7 +184,7 @@ public final class SoloScapeLauncher
+             confirm.setEnabled(false);JsonObject cmd=command("create");cmd.addProperty("label",label.getText());cmd.addProperty("account",account.getText());cmd.addProperty("tutorial",tutorial.isSelected());
+             request(cmd,result->{dialog.dispose();status.setText("Character created. Select Start Character to play.");poll();},message->{problem.setText(message);confirm.setEnabled(true);});
+         });
+-        SwingUtilities.invokeLater(label::requestFocusInWindow);dialog.setVisible(true);entry.deactivate();if(keyboard==entry)keyboard=null;
++        SwingUtilities.invokeLater(()->{label.requestFocusInWindow();entry.activate(label);});dialog.setVisible(true);entry.deactivate();if(keyboard==entry)keyboard=null;
+     }
+     private void recoverSession()
+     {
+@@ -257,16 +258,31 @@ public final class SoloScapeLauncher
+     {
+         final SdlGamepad pad = new SdlGamepad(); final GamepadState state = new GamepadState();
+         try { pad.init(); } catch (LinkageError | RuntimeException ex) { status.setText("Controller unavailable; mouse and keyboard work. " + ex.getMessage()); return; }
+-        final boolean[] armed = {false}; final long[] next = {0}; final Window[] priorWindow={null};
++        final boolean[] armed = {false}; final long[] next = {0}, entryRevision={-1}; final Window[] priorWindow={null};
++        KeyEventDispatcher mappedKeys=event->{
++            Window window=SwingUtilities.getWindowAncestor(event.getComponent());
++            boolean ours=window==frame||(window!=null&&window.getOwner()==frame);
++            if(ours&&keyboard!=null&&keyboard.systemMode()&&keyboard.accepts(event.getComponent())&&
++                (event.getID()==KeyEvent.KEY_TYPED||event.getKeyCode()==KeyEvent.VK_SPACE||event.getKeyCode()==KeyEvent.VK_ENTER)){
++                keyboard.activate((JTextField)event.getComponent());return false;
++            }
++            boolean system=keyboard!=null&&keyboard.systemOwnsInput();
++            if(!Boolean.getBoolean("soloscape.launcher.steamKeyboard")||!state.connected||nativeNavigation.isSelected()||!ours||system)return false;
++            int key=event.getKeyCode();char ch=event.getKeyChar();
++            boolean consume=key==KeyEvent.VK_LEFT||key==KeyEvent.VK_RIGHT||key==KeyEvent.VK_UP||key==KeyEvent.VK_DOWN||key==KeyEvent.VK_ENTER||key==KeyEvent.VK_SPACE||key==KeyEvent.VK_ESCAPE||ch=='\n'||ch==' ';
++            if(consume)event.consume();return consume;
++        };
++        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mappedKeys);
+         javax.swing.Timer timer = new javax.swing.Timer(25, e -> {
+-            if (closing) { ((javax.swing.Timer)e.getSource()).stop(); pad.close(); return; }
++            if (closing) { ((javax.swing.Timer)e.getSource()).stop();KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(mappedKeys);pad.close();return; }
+             pad.poll(state); Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+-            if (!state.connected || active == null || !(active == frame || active.getOwner() == frame)) { armed[0] = false; return; }
++            if (nativeNavigation.isSelected() || !state.connected || active == null || !(active == frame || active.getOwner() == frame)) { armed[0] = false; return; }
+             if(active!=priorWindow[0]){priorWindow[0]=active;armed[0]=false;}
++            if(keyboard!=null&&entryRevision[0]!=keyboard.revision()){entryRevision[0]=keyboard.revision();armed[0]=false;}
++            if(keyboard!=null&&active==keyboard.owner&&keyboard.active()){keyboard.update(state,System.nanoTime());armed[0]=false;return;}
+             if (!armed[0]) { armed[0] = state.buttonsHeld == 0 && Math.abs(state.leftX) < .3 && Math.abs(state.leftY) < .3; return; }
+             Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+             if(keyboard!=null&&active==keyboard.owner){
+-                if(keyboard.active()){keyboard.update(state,System.nanoTime());return;}
+                 if((state.buttonsPressed&1)!=0&&keyboard.accepts(focus)){keyboard.activate((JTextField)focus);return;}
+             }
+             boolean previous = (state.buttonsHeld & ((1<<11)|(1<<13))) != 0 || state.leftY < -.6 || state.leftX < -.6;
+diff --git a/client/test/net/runelite/client/soloscape/launcher/LauncherKeyboardTest.java b/client/test/net/runelite/client/soloscape/launcher/LauncherKeyboardTest.java
+new file mode 100644
+index 0000000..e9ab5c9
+--- /dev/null
++++ b/client/test/net/runelite/client/soloscape/launcher/LauncherKeyboardTest.java
+@@ -0,0 +1,40 @@
++package net.runelite.client.soloscape.launcher;
++
++import java.awt.event.KeyEvent;
++import java.util.*;
++import javax.swing.*;
++import net.runelite.client.input.controller.*;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class LauncherKeyboardTest {
++    @Test public void steamOwnsAllControllerInputUntilEntryFinishes() throws Exception {
++        SwingUtilities.invokeAndWait(()->{
++            List<Boolean> requests=new ArrayList<>();LauncherKeyboard keyboard=new LauncherKeyboard(true,requests::add);
++            JTextField field=new JTextField();boolean[] advanced={false};keyboard.register(field,EntryState.LAUNCHER_LABEL,()->advanced[0]=true);
++            keyboard.activate(field);keyboard.activate(field);assertEquals(Arrays.asList(true),requests);
++            field.setText("SteamTyped");GamepadState input=new GamepadState();input.buttonsHeld=input.buttonsPressed=0x7fff;input.leftX=1;input.leftY=-1;
++            keyboard.update(input,System.nanoTime());assertEquals("SteamTyped",field.getText());assertTrue(keyboard.active());assertFalse(advanced[0]);
++            long before=keyboard.revision();field.postActionEvent();assertTrue(advanced[0]);assertFalse(keyboard.active());assertTrue(keyboard.revision()>before);assertEquals(Arrays.asList(true,false),requests);
++            keyboard.deactivate();assertEquals(2,requests.size());
++        });
++    }
++    @Test public void fallbackConsumesDesktopMappedNavigationOnlyDuringLocalEntry() throws Exception {
++        SwingUtilities.invokeAndWait(()->{
++            LauncherKeyboard keyboard=new LauncherKeyboard(false,open->{fail("Local fallback invoked Steam");});JTextField field=new JTextField("abc");
++            keyboard.register(field,EntryState.LAUNCHER_LABEL,()->{});keyboard.activate(field);field.setCaretPosition(3);
++            for(int key:new int[]{KeyEvent.VK_LEFT,KeyEvent.VK_RIGHT,KeyEvent.VK_UP,KeyEvent.VK_DOWN,KeyEvent.VK_ENTER,KeyEvent.VK_BACK_SPACE,KeyEvent.VK_SPACE,KeyEvent.VK_ESCAPE}){
++                KeyEvent event=new KeyEvent(field,KeyEvent.KEY_PRESSED,0,0,key,KeyEvent.CHAR_UNDEFINED);assertTrue(keyboard.consumeNavigation(event));assertTrue(event.isConsumed());
++            }
++            assertEquals(3,field.getCaretPosition());assertFalse(keyboard.consumeNavigation(new KeyEvent(new JTextField(),KeyEvent.KEY_PRESSED,0,0,KeyEvent.VK_LEFT,KeyEvent.CHAR_UNDEFINED)));
++            keyboard.deactivate();assertFalse(keyboard.consumeNavigation(new KeyEvent(field,KeyEvent.KEY_PRESSED,0,0,KeyEvent.VK_LEFT,KeyEvent.CHAR_UNDEFINED)));
++        });
++    }
++    @Test public void steamAllowsOrdinaryCursorKeysAndKeepsAccountValidation() throws Exception {
++        SwingUtilities.invokeAndWait(()->{
++            LauncherKeyboard keyboard=new LauncherKeyboard(true,open->{});JTextField field=new JTextField();keyboard.register(field,EntryState.LAUNCHER_ACCOUNT,()->{});keyboard.activate(field);
++            assertFalse(keyboard.consumeNavigation(new KeyEvent(field,KeyEvent.KEY_PRESSED,0,0,KeyEvent.VK_LEFT,KeyEvent.CHAR_UNDEFINED)));
++            field.setText("valid_name");field.setText("bad-name");assertEquals("valid_name",field.getText());keyboard.deactivate();
++        });
++    }
++}

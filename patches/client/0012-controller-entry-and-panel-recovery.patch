@@ -1,0 +1,747 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+index b0fd0b0..3495e63 100644
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1050,6 +1050,9 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+     @Override public int getControllerAvailableTabs() { return ControllerUi.availableTabs(); }
+     @Override public boolean openControllerTab(int index) { return ControllerUi.openTab(index); }
+     @Override public void setControllerServerFeatures(boolean enabled) { ControllerDirectMovement.enableServerFeatures(enabled); }
++    @Override public boolean editControllerEntry(net.runelite.client.input.controller.EntryState entry, String value) { return ControllerEntry.edit(entry, value); }
++    @Override public boolean submitControllerEntry(net.runelite.client.input.controller.EntryState entry) { return ControllerEntry.submit(entry); }
++    @Override public void cancelControllerEntry(net.runelite.client.input.controller.EntryState entry) { ControllerEntry.cancel(entry); }
+     @Override public boolean scrollControllerUi(net.runelite.client.input.controller.UiState.Widget widget, int direction) { return ControllerUi.scroll(widget, direction); }
+     @Override public void closeControllerPanel() { if (ControllerUi.hasModalPanel()) ControllerUi.cancelWorld(); }
+     @Override public boolean invokeControllerUi(net.runelite.client.input.controller.UiState.Widget widget, net.runelite.client.input.controller.UiState.Action action) { return ControllerUi.invoke(widget, action); }
+diff --git a/client/src/ControllerEntry.java b/client/src/ControllerEntry.java
+new file mode 100644
+index 0000000..fcd59c4
+--- /dev/null
++++ b/client/src/ControllerEntry.java
+@@ -0,0 +1,68 @@
++import net.runelite.client.input.controller.EntryState;
++
++/** Uses native CS2 entry editing/Enter/Escape. No new packets or fabricated quantities. */
++final class ControllerEntry
++{
++    private static long revision;
++    private static int previousType;
++    interface Scripts { void run(Object[] arguments); }
++    private static final Scripts NATIVE = arguments -> {
++        Class348_Sub36 event = new Class348_Sub36(); event.anObjectArray6987 = arguments;
++        Class66.method705(event);
++    };
++    private static Scripts scripts = NATIVE;
++    static void testScripts(Scripts value) { scripts = value == null ? NATIVE : value; }
++    static void observe(Class348_Sub36 event)
++    {
++        Object[] args = event.anObjectArray6987;
++        if (args != null && args.length > 0 && args[0] instanceof Integer)
++        {
++            int id = (Integer) args[0];
++            if (id == 108 || id == 109 || id == 110 || id == 1472 || id == 101) revision++;
++        }
++    }
++    static boolean active()
++    {
++        if (Isaac.anIntArray1303 == null || Isaac.anIntArray1303.length <= 5) return false;
++        int type = Isaac.anIntArray1303[5];
++        return type == 7 || type == 8 || type == 9 || type == 11;
++    }
++    static EntryState snapshot()
++    {
++        if (!ControllerUi.entryReady()) return null;
++        // The bank Search button arms a native key callback. Activate that callback
++        // so a controller can enter search without first pressing a physical key.
++        if (ControllerUi.hasBank() && Isaac.anIntArray1303 != null && Isaac.anIntArray1303.length > 190
++            && Isaac.anIntArray1303[190] == 1) scripts.run(new Object[] {1471});
++        int type = active() ? Isaac.anIntArray1303[5] : 0;
++        if (type != previousType) { revision++; previousType = type; }
++        if (type == 0) return null;
++        Class46 prompt = ControllerUi.entryPrompt();
++        if (prompt == null) return null;
++        String value = Class258_Sub2.aStringArray8532 == null || Class258_Sub2.aStringArray8532.length <= 22
++            || Class258_Sub2.aStringArray8532[22] == null ? "" : Class258_Sub2.aStringArray8532[22];
++        String label = ControllerUi.clean(prompt.aString792);
++        return new EntryState(type, revision, label.isEmpty() ? type == 7 ? "Enter amount" : "Enter text" : label, value);
++    }
++    static boolean edit(EntryState expected, String value)
++    {
++        EntryState current = snapshot();
++        if (current == null || !current.sameSession(expected) || !current.value.equals(expected.value)
++            || !EntryState.valid(current.type, value)) return false;
++        scripts.run(new Object[] {1564, value});
++        return true;
++    }
++    static boolean submit(EntryState expected)
++    {
++        EntryState current = snapshot();
++        if (current == null || !current.sameSession(expected) || !current.value.equals(expected.value)
++            || current.value.trim().isEmpty() || !EntryState.valid(current.type, current.value)) return false;
++        scripts.run(new Object[] {112, 84, 0}); // native Enter dispatches exactly the pending entry type
++        return true;
++    }
++    static void cancel(EntryState expected)
++    {
++        EntryState current = snapshot();
++        if (current != null && current.sameSession(expected)) scripts.run(new Object[] {112, 13, 0}); // native Escape
++    }
++}
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+index ce57384..ce88cf3 100644
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -16,6 +16,8 @@ final class ControllerUi
+     private static final int INVENTORY = 149 << 16;
+     private static final Map<Long, Seen> visible = new HashMap<>();
+     private static boolean enabled;
++    private static long renderFrame;
++    static void beginFrame() { renderFrame++; }
+     private static final Pattern TAGS = Pattern.compile("<[^>]*>");
+     private static final UiState.Widget[] NO_INVENTORY = new UiState.Widget[0];
+     // Filled from the pinned server's dialogue.ifaces.toml. Only exposed button actions are supported.
+@@ -30,7 +32,7 @@ final class ControllerUi
+         Class46 widget;
+         Rectangle bounds;
+         long time;
+-        int frame;
++        long frame;
+     }
+ 
+     static void enable(boolean value)
+@@ -46,12 +48,12 @@ final class ControllerUi
+         if (!enabled || width <= 0 || height <= 0) return;
+         int group = widget.anInt830 >>> 16;
+         if (widget.anInt830 != INVENTORY && !DIALOGUES.contains(group)
+-            && !HomeTab.isTab(widget.anInt830) && !panelGroup(group)) return;
++            && !HomeTab.isTab(widget.anInt830) && !panelGroup(group) && group != 752) return;
+         Seen seen = visible.computeIfAbsent(key(widget.anInt830, widget.anInt704), unused -> new Seen());
+         seen.widget = widget;
+         if (seen.bounds == null) seen.bounds = new Rectangle();
+         seen.bounds.setBounds(x, y, width, height);
+-        seen.time = System.nanoTime(); seen.frame = Class367_Sub11.anInt7396;
++        seen.time = System.nanoTime(); seen.frame = renderFrame;
+     }
+ 
+     private static Set<Integer> openGroups()
+@@ -100,7 +102,15 @@ final class ControllerUi
+         dialogue.sort(Comparator.comparingInt((UiState.Widget w) -> w.bounds.y).thenComparingInt(w -> w.bounds.x));
+         Class46 inventoryRoot = loadedWidget(INVENTORY);
+         boolean inventoryVisible = open.contains(149) && inventoryRoot != null && isVisible(inventoryRoot);
+-        return new UiState(inventory, dialogue.toArray(new UiState.Widget[0]), dialogueId, inventoryVisible, panel(open));
++        return new UiState(inventory, dialogue.toArray(new UiState.Widget[0]), dialogueId, inventoryVisible, panel(open), ControllerEntry.snapshot());
++    }
++
++    static boolean entryReady() { return ready(); }
++    static boolean hasBank() { return openGroups().contains(762); }
++    static Class46 entryPrompt()
++    {
++        Seen seen = visible.get(key(752 << 16 | 4, -1));
++        return seen != null && fresh(seen) ? seen.widget : null;
+     }
+ 
+     private static boolean panelGroup(int group)
+@@ -140,13 +150,14 @@ final class ControllerUi
+             Class46 w = seen.widget;
+             int group = w.anInt830 >>> 16;
+             if (group != id && !(id == 762 && group == 763) && !(id == 620 && group == 621)) continue;
+-            if (!open.contains(group) || !fresh(seen)) continue;
++            if (!open.contains(group) || !fresh(seen) || seen.frame != renderFrame) continue;
+             // Dynamic empty slots can expose inherited operations; never invoke them.
+             if (w.anInt704 >= 0 && w.anInt812 < 0) continue;
+             UiState.Widget widget = describePanel(seen);
+             if (widget.actions.length == 0) continue;
+             if (group == 763 || group == 621) side.add(widget);
+-            else if (w.anInt812 >= 0) items.add(widget);
++            else if (w.anInt812 >= 0 && (id != 762 || (w.anInt830 & 65535) == 93)
++                && (id != 620 || (w.anInt830 & 65535) == 25 || (w.anInt830 & 65535) == 26)) items.add(widget);
+             else controls.add(widget);
+         }
+         Comparator<UiState.Widget> order = Comparator.comparingInt((UiState.Widget w) -> w.bounds.y).thenComparingInt(w -> w.bounds.x).thenComparingInt(w -> w.child);
+@@ -155,7 +166,7 @@ final class ControllerUi
+         panes.add(new UiState.Pane(id == 620 ? "Stock" : id == 11 ? "Inventory" : "Bank", items.toArray(new UiState.Widget[0])));
+         if (id != 11) panes.add(new UiState.Pane("Inventory", side.toArray(new UiState.Widget[0])));
+         panes.add(new UiState.Pane("Controls / tabs", controls.toArray(new UiState.Widget[0])));
+-        return new UiState.Panel(id, id == 620 ? "Shop" : id == 11 ? "Deposit box" : "Bank", panes.toArray(new UiState.Pane[0]));
++        return new UiState.Panel(id, renderFrame, id == 620 ? "Shop" : id == 11 ? "Deposit box" : "Bank", panes.toArray(new UiState.Pane[0]));
+     }
+ 
+     static boolean scroll(UiState.Widget expected, int direction)
+@@ -173,6 +184,7 @@ final class ControllerUi
+                 int next = Math.max(0, Math.min(max, w.anInt755 + (direction == 11 ? -54 : 54)));
+                 if (next == w.anInt755) return false;
+                 w.anInt755 = next; Class251.method1916(-9343, w);
++                if (w.anInt704 == -1) Class328_Sub3.method2615(-91, w.anInt830);
+                 return true;
+             }
+             if (w.anInt704 >= 0 && loadedWidget(w.anInt830) != w) w = loadedWidget(w.anInt830);
+@@ -215,7 +227,7 @@ final class ControllerUi
+         String label = Class368.method3561(op, w, true);
+         if (label != null) actions.add(new UiState.Action(clean(label), op < 5 ? 18 : 1011, op + 1));
+     }
+-    private static String clean(String value) { return value == null ? "" : TAGS.matcher(value).replaceAll("").replace("\u00a0", " ").trim(); }
++    static String clean(String value) { return value == null ? "" : TAGS.matcher(value).replaceAll("").replace("\u00a0", " ").trim(); }
+ 
+     static boolean openInventory()
+     {
+@@ -224,7 +236,7 @@ final class ControllerUi
+ 
+     static int availableTabs()
+     {
+-        if (!ready() || hasDialogue() || hasModalPanel()) return 0;
++        if (!ready() || hasDialogue() || hasModalPanel() || ControllerEntry.active()) return 0;
+         int mask = 0;
+         HomeTab[] tabs = HomeTab.values();
+         for (Seen seen : visible.values())
+@@ -241,7 +253,7 @@ final class ControllerUi
+     static boolean openTab(int index)
+     {
+         HomeTab[] tabs = HomeTab.values();
+-        if (!ready() || hasDialogue() || hasModalPanel() || index < 0 || index >= tabs.length) return false;
++        if (!ready() || hasDialogue() || hasModalPanel() || ControllerEntry.active() || index < 0 || index >= tabs.length) return false;
+         for (Seen seen : visible.values())
+         {
+             int id = seen.widget.anInt830;
+@@ -299,7 +311,7 @@ final class ControllerUi
+ 
+     static boolean invoke(UiState.Widget expected, UiState.Action action)
+     {
+-        if (!ready() || expected == null || action == null) return false;
++        if (!ready() || ControllerEntry.active() || expected == null || action == null) return false;
+         Seen seen = visible.get(key(expected.id, expected.child));
+         if (seen == null || !fresh(seen)) return false;
+         int group = expected.id >>> 16;
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+index 01c4a77..91ef695 100644
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -21,7 +21,7 @@ final class ControllerWorld
+         return Class240.anInt4674 == 10 && Class132.aPlayer_1907 != null
+             && Class132.aPlayer_1907.method2436((byte) 70) == 1
+             && (Class348_Sub40_Sub21.anInt9282 == 1 || Class348_Sub40_Sub21.anInt9282 == 5)
+-            && !r.aBoolean9722 && !Class305.aBoolean3870 && !ControllerUi.hasDialogue() && !ControllerUi.hasModalPanel()
++            && !r.aBoolean9722 && !Class305.aBoolean3870 && !ControllerUi.hasDialogue() && !ControllerUi.hasModalPanel() && !ControllerEntry.active()
+             && Class348_Sub45.aClass361Array7108 != null
+             && Class348_Sub45.aClass361Array7108[Class132.aPlayer_1907.plane] != null;
+     }
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+index 46cd541..447fd98 100644
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -352,6 +352,9 @@ public abstract class GameClient extends Applet {
+     public int getControllerAvailableTabs() { return 0; }
+     public boolean openControllerTab(int index) { return false; }
+     public void setControllerServerFeatures(boolean enabled) {}
++    public boolean editControllerEntry(net.runelite.client.input.controller.EntryState entry, String value) { return false; }
++    public boolean submitControllerEntry(net.runelite.client.input.controller.EntryState entry) { return false; }
++    public void cancelControllerEntry(net.runelite.client.input.controller.EntryState entry) {}
+     public boolean scrollControllerUi(net.runelite.client.input.controller.UiState.Widget widget, int direction) { return false; }
+     public void closeControllerPanel() {}
+     public boolean invokeControllerUi(net.runelite.client.input.controller.UiState.Widget widget, net.runelite.client.input.controller.UiState.Action action) { return false; }
+diff --git a/client/src/net/runelite/client/input/controller/EntryControls.java b/client/src/net/runelite/client/input/controller/EntryControls.java
+new file mode 100644
+index 0000000..fe64eb3
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/EntryControls.java
+@@ -0,0 +1,72 @@
++package net.runelite.client.input.controller;
++
++/** Compact controller keyboard; press edges edit, direction alone repeats. */
++public final class EntryControls
++{
++    private final UiControls.Gateway gateway;
++    private EntryState state;
++    private int index, heldDirection;
++    private long repeatAt;
++    private boolean armed;
++    public EntryControls(UiControls.Gateway gateway) { this.gateway = gateway; }
++    public void reset() { state = null; index = heldDirection = 0; repeatAt = 0; armed = false; }
++    public boolean active() { return state != null; }
++    public EntryState state() { return state; }
++    public int index() { return index; }
++    public int columns() { return state != null && state.numeric() ? 4 : 6; }
++    public String[] keys()
++    {
++        String symbols = state != null && state.numeric() ? "1234567890" : "abcdefghijklmnopqrstuvwxyz0123456789 -'";
++        String[] keys = new String[symbols.length() + 3];
++        for (int i = 0; i < symbols.length(); i++) keys[i] = String.valueOf(symbols.charAt(i));
++        keys[symbols.length()] = "Delete"; keys[symbols.length()+1] = "Clear"; keys[symbols.length()+2] = "Done";
++        return keys;
++    }
++    public String prompt() { return state == null ? null : "A: key · X: delete · Y: submit · B: cancel · D-pad: move"; }
++    public boolean update(EntryState snapshot, GamepadState input, long now)
++    {
++        if (snapshot == null) { reset(); return false; }
++        if (state == null || !state.sameSession(snapshot)) { reset(); state = snapshot; }
++        state = snapshot;
++        if (!armed)
++        {
++            if ((input.buttonsHeld & (15 | (15 << 11))) == 0 && Math.hypot(input.leftX,input.leftY) < .25) armed = true;
++            else return true;
++        }
++        if ((input.buttonsPressed & 2) != 0) { gateway.cancelEntry(state); armed = false; return true; }
++        if ((input.buttonsPressed & 8) != 0) { gateway.submitEntry(state); armed = false; return true; }
++        if ((input.buttonsPressed & 4) != 0) { delete(); return true; }
++        int direction = direction(input,now), columns = columns();
++        String[] keys = keys();
++        if (direction == 11) index = Math.max(0,index-columns);
++        if (direction == 12) index = Math.min(keys.length-1,index+columns);
++        if (direction == 13 && index%columns > 0) index--;
++        if (direction == 14 && index%columns < columns-1) index = Math.min(keys.length-1,index+1);
++        if ((input.buttonsPressed & 1) != 0)
++        {
++            String key = keys[index];
++            if (key.equals("Done")) { gateway.submitEntry(state); armed = false; }
++            else if (key.equals("Delete")) delete();
++            else if (key.equals("Clear")) gateway.editEntry(state,"");
++            else
++            {
++                String value = state.value+key;
++                if (EntryState.valid(state.type,value)) gateway.editEntry(state,value);
++            }
++        }
++        return true;
++    }
++    private void delete()
++    {
++        if (!state.value.isEmpty()) gateway.editEntry(state,state.value.substring(0,state.value.length()-1));
++    }
++    private int direction(GamepadState input,long now)
++    {
++        int mask = input.buttonsHeld & (15 << 11);
++        if (Integer.bitCount(mask) != 1) { heldDirection = 0; repeatAt = 0; return 0; }
++        int direction = Integer.numberOfTrailingZeros(mask);
++        if (direction != heldDirection) { heldDirection = direction; repeatAt = now+350_000_000L; return direction; }
++        if (now >= repeatAt) { repeatAt = now+100_000_000L; return direction; }
++        return 0;
++    }
++}
+diff --git a/client/src/net/runelite/client/input/controller/EntryState.java b/client/src/net/runelite/client/input/controller/EntryState.java
+new file mode 100644
+index 0000000..36f579b
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/EntryState.java
+@@ -0,0 +1,28 @@
++package net.runelite.client.input.controller;
++
++/** Native amount/name/search prompt; revision prevents reuse after a replacement prompt. */
++public final class EntryState
++{
++    public final int type;
++    public final long revision;
++    public final String prompt, value;
++    public EntryState(int type, long revision, String prompt, String value)
++    { this.type = type; this.revision = revision; this.prompt = prompt; this.value = value; }
++    public boolean sameSession(EntryState other) { return other != null && type == other.type && revision == other.revision && prompt.equals(other.prompt); }
++    public boolean numeric() { return type == 7; }
++    public static boolean valid(int type, String value)
++    {
++        if (value == null || value.length() > (type == 7 ? 10 : type == 8 ? 12 : 80)) return false;
++        for (int i = 0; i < value.length(); i++)
++        {
++            char c = value.charAt(i);
++            if (type == 7 ? c < '0' || c > '9' : c < 32 || c > 126) return false;
++        }
++        if (type == 7 && !value.isEmpty())
++        {
++            try { if (Long.parseLong(value) > Integer.MAX_VALUE) return false; }
++            catch (NumberFormatException ex) { return false; }
++        }
++        return type == 7 || type == 8 || type == 9 || type == 11;
++    }
++}
+diff --git a/client/src/net/runelite/client/input/controller/PanelControls.java b/client/src/net/runelite/client/input/controller/PanelControls.java
+index 6acf618..695fcd6 100644
+--- a/client/src/net/runelite/client/input/controller/PanelControls.java
++++ b/client/src/net/runelite/client/input/controller/PanelControls.java
+@@ -11,7 +11,7 @@ public final class PanelControls
+     private UiState.Panel state;
+     private UiState.Widget focus, context;
+     private int pane, contextIndex, heldDirection;
+-    private long repeatAt, scrollAt;
++    private long repeatAt, scrollFrame, closingUntil;
+     private boolean armed, closing;
+     private Rectangle scrollAnchor;
+ 
+@@ -19,7 +19,7 @@ public final class PanelControls
+     public void reset()
+     {
+         state = null; focus = context = null; pane = contextIndex = heldDirection = 0;
+-        armed = closing = false; repeatAt = scrollAt = 0; scrollAnchor = null;
++        armed = closing = false; repeatAt = scrollFrame = closingUntil = 0; scrollAnchor = null;
+     }
+     public boolean active() { return state != null; }
+     public UiState.Widget focus() { return focus; }
+@@ -45,13 +45,19 @@ public final class PanelControls
+         pane = Math.min(pane, state.panes.length - 1);
+         UiState.Widget previous = focus;
+         focus = find(previous);
+-        if (scrollAnchor != null && now > scrollAt)
++        if (scrollAnchor != null && state.frame != scrollFrame)
+         {
+             focus = closest(scrollAnchor); scrollAnchor = null;
+         }
++        if (focus == null && previous != null) focus = closest(previous.bounds);
+         if (focus == null && state.panes[pane].widgets.length > 0) focus = state.panes[pane].widgets[0];
++        if (previous != null && focus != null && previous.itemId != focus.itemId) armed = false;
+         if (context != null && !context.same(focus)) context = null;
+-        if (closing) return true;
++        if (closing)
++        {
++            if (now < closingUntil) return true;
++            closing = false; armed = false;
++        }
+         // Opening by a world action cannot reuse its held A or direction.
+         if (!armed)
+         {
+@@ -62,7 +68,7 @@ public final class PanelControls
+         if ((input.buttonsPressed & B) != 0)
+         {
+             if (context != null) context = null;
+-            else { gateway.closePanel(); closing = true; }
++            else { gateway.closePanel(); closing = true; closingUntil = now + 1_000_000_000L; }
+             armed = false; return true;
+         }
+         if (context == null && (input.buttonsPressed & (LB | RB)) != 0)
+@@ -88,7 +94,7 @@ public final class PanelControls
+             if (next != null) focus = next;
+             else if ((direction == 11 || direction == 12) && gateway.scroll(focus, direction))
+             {
+-                scrollAnchor = new Rectangle(focus.bounds); scrollAt = now + 30_000_000L;
++                scrollAnchor = new Rectangle(focus.bounds); scrollFrame = state.frame;
+             }
+         }
+         if ((input.buttonsPressed & X) != 0 && focus != null)
+diff --git a/client/src/net/runelite/client/input/controller/UiControls.java b/client/src/net/runelite/client/input/controller/UiControls.java
+index e8eb17e..fe86e67 100644
+--- a/client/src/net/runelite/client/input/controller/UiControls.java
++++ b/client/src/net/runelite/client/input/controller/UiControls.java
+@@ -9,6 +9,9 @@ public final class UiControls
+         default UiState snapshot(boolean inventory) { return snapshot(); }
+         boolean openInventory();
+         boolean invoke(UiState.Widget widget, UiState.Action action);
++        default boolean editEntry(EntryState entry, String value) { return false; }
++        default boolean submitEntry(EntryState entry) { return false; }
++        default void cancelEntry(EntryState entry) {}
+         default boolean scroll(UiState.Widget widget, int direction) { return false; }
+         default void closePanel() { cancelDialogue(); }
+         void cancelSelection();
+@@ -18,6 +21,7 @@ public final class UiControls
+     private static final int DIRECTIONS = (1 << 11) | (1 << 12) | (1 << 13) | (1 << 14);
+     private final Gateway gateway;
+     private final PanelControls panel;
++    private final EntryControls entry;
+     private boolean inventory, armed;
+     private long openingUntil, repeatAt;
+     private int slot, choice, dialogueId = -1, heldDirection;
+@@ -25,29 +29,32 @@ public final class UiControls
+     private UiState.Widget context;
+     private int contextIndex;
+ 
+-    public UiControls(Gateway gateway) { this.gateway = gateway; this.panel = new PanelControls(gateway); }
++    public UiControls(Gateway gateway) { this.gateway = gateway; this.panel = new PanelControls(gateway); this.entry = new EntryControls(gateway); }
+     public void reset()
+     {
+-        panel.reset();
++        panel.reset(); entry.reset();
+         inventory = false; armed = false; openingUntil = repeatAt = 0;
+         slot = choice = heldDirection = 0; dialogueId = -1; context = null; state = UiState.EMPTY;
+     }
+-    public boolean active() { return panel.active() || inventory || state.dialogueId >= 0; }
++    public boolean active() { return entry.active() || panel.active() || inventory || state.dialogueId >= 0; }
+     public void focusInventory(long now)
+     {
+         reset(); inventory = true; openingUntil = now + 1_000_000_000L;
+     }
++    public EntryControls entry() { return entry; }
+     public boolean inDialogue() { return state.dialogueId >= 0; }
+     public UiState.Widget focus()
+     {
++        if (entry.active()) return null;
+         if (panel.active()) return panel.focus();
+         if (inDialogue()) return choice < state.dialogue.length ? state.dialogue[choice] : null;
+         return inventory && slot < state.inventory.length ? state.inventory[slot] : null;
+     }
+-    public UiState.Widget context() { return panel.active() ? panel.context() : context; }
++    public UiState.Widget context() { return entry.active() ? null : panel.active() ? panel.context() : context; }
+     public int contextIndex() { return panel.active() ? panel.contextIndex() : contextIndex; }
+     public String prompt()
+     {
++        if (entry.active()) return entry.prompt();
+         if (panel.active()) return panel.prompt();
+         UiState.Widget widget = focus();
+         if (inDialogue()) return widget == null ? "Dialogue: waiting · B: close" : "A: " + widget.name + " · B: close";
+@@ -63,6 +70,9 @@ public final class UiControls
+     public boolean update(GamepadState input, long now)
+     {
+         state = gateway.snapshot(inventory || (input.buttonsPressed & Y) != 0);
++        boolean wasEntry = entry.active();
++        if (entry.update(state.entry,input,now)) { context = null; armed = false; return true; }
++        if (wasEntry) { armed = false; return true; }
+         if (state.dialogueId != dialogueId)
+         {
+             dialogueId = state.dialogueId; choice = 0; context = null; armed = false;
+diff --git a/client/src/net/runelite/client/input/controller/UiState.java b/client/src/net/runelite/client/input/controller/UiState.java
+index 559e3ca..023bc14 100644
+--- a/client/src/net/runelite/client/input/controller/UiState.java
++++ b/client/src/net/runelite/client/input/controller/UiState.java
+@@ -8,6 +8,7 @@ public final class UiState
+     public static final UiState EMPTY = new UiState(new Widget[28], new Widget[0], -1);
+     public final Widget[] inventory, dialogue;
+     public final Panel panel;
++    public final EntryState entry;
+     public final int dialogueId;
+     public final boolean inventoryVisible;
+     public UiState(Widget[] inventory, Widget[] dialogue, int dialogueId)
+@@ -20,6 +21,11 @@ public final class UiState
+     }
+     public UiState(Widget[] inventory, Widget[] dialogue, int dialogueId, boolean inventoryVisible, Panel panel)
+     {
++        this(inventory, dialogue, dialogueId, inventoryVisible, panel, null);
++    }
++    public UiState(Widget[] inventory, Widget[] dialogue, int dialogueId, boolean inventoryVisible, Panel panel, EntryState entry)
++    {
++        this.entry = entry;
+         this.panel = panel;
+         this.inventory = inventory; this.dialogue = dialogue; this.dialogueId = dialogueId;
+         this.inventoryVisible = inventoryVisible;
+@@ -34,8 +40,10 @@ public final class UiState
+     {
+         public final int id;
+         public final String name;
++        public final long frame;
+         public final Pane[] panes;
+-        public Panel(int id, String name, Pane[] panes) { this.id = id; this.name = name; this.panes = panes; }
++        public Panel(int id, String name, Pane[] panes) { this(id, 0, name, panes); }
++        public Panel(int id, long frame, String name, Pane[] panes) { this.id = id; this.frame = frame; this.name = name; this.panes = panes; }
+     }
+     public static final class Pane
+     {
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index 596cc58..6c3f7f3 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -58,6 +58,9 @@ public class SoloScapeControllerPlugin extends Plugin
+         public UiState snapshot(boolean inventory) { return client.getControllerUiState(inventory); }
+         public boolean openInventory() { return client.openControllerInventory(); }
+         public boolean invoke(UiState.Widget widget, UiState.Action action) { return client.invokeControllerUi(widget, action); }
++        public boolean editEntry(net.runelite.client.input.controller.EntryState entry, String value) { return client.editControllerEntry(entry,value); }
++        public boolean submitEntry(net.runelite.client.input.controller.EntryState entry) { return client.submitControllerEntry(entry); }
++        public void cancelEntry(net.runelite.client.input.controller.EntryState entry) { client.cancelControllerEntry(entry); }
+         public boolean scroll(UiState.Widget widget, int direction) { return client.scrollControllerUi(widget, direction); }
+         public void closePanel() { client.closeControllerPanel(); }
+         public void cancelSelection() { client.cancelControllerSelection(); }
+@@ -192,7 +195,7 @@ public class SoloScapeControllerPlugin extends Plugin
+             float yaw = state.rightX * scale;
+             float pitch = state.rightY * scale * (config.invertY() ? 1 : -1);
+             client.setControllerCameraInput(yaw * config.yawSpeed(), pitch * config.pitchSpeed());
+-            if (ui.update(state, now)) resetWorld();
++            if (ui.update(state, now)) { client.setControllerCameraInput(0, 0); resetWorld(); }
+             else
+             {
+                 if (!client.isControllerWorldReady()) client.clearControllerWalkMarker();
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+index db6217b..89d7515 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+@@ -30,6 +30,28 @@ public final class SoloScapeUiOverlay extends Overlay
+         Graphics2D draw = (Graphics2D) graphics.create();
+         try
+         {
++            if (ui.entry().active())
++            {
++                net.runelite.client.input.controller.EntryControls keyboard = ui.entry();
++                String[] keys = keyboard.keys(); int columns = keyboard.columns();
++                int cellWidth = 58, cellHeight = 32, rows = (keys.length+columns-1)/columns;
++                int width = Math.max(440,columns*cellWidth+24), height = rows*cellHeight+106;
++                draw.setColor(new Color(0,0,0,235)); draw.fillRoundRect(8,8,width,height,12,12);
++                draw.setColor(new Color(255,220,95)); draw.drawString(keyboard.state().prompt,20,30);
++                String value = keyboard.state().value;
++                if (value.length()>52) value = "…"+value.substring(value.length()-52);
++                draw.setColor(Color.WHITE); draw.drawString(value+"_",20,54);
++                for (int i=0;i<keys.length;i++)
++                {
++                    int x=20+i%columns*cellWidth,y=66+i/columns*cellHeight;
++                    draw.setColor(i==keyboard.index()?new Color(125,99,35):new Color(55,55,55));
++                    draw.fillRect(x,y,cellWidth-4,cellHeight-4);
++                    draw.setColor(i==keyboard.index()?new Color(255,220,95):Color.WHITE);
++                    draw.drawString(keys[i].equals(" ")?"Space":keys[i],x+6,y+20);
++                }
++                draw.setColor(Color.WHITE); draw.drawString(prompt,20,86+rows*cellHeight);
++                return null;
++            }
+             UiState.Widget focus = ui.focus();
+             if (focus != null)
+             {
+diff --git a/client/test/ControllerEntryTest.java b/client/test/ControllerEntryTest.java
+new file mode 100644
+index 0000000..b581673
+--- /dev/null
++++ b/client/test/ControllerEntryTest.java
+@@ -0,0 +1,78 @@
++import java.util.ArrayList;
++import java.util.List;
++import net.runelite.client.input.controller.EntryState;
++import org.junit.Before;
++import org.junit.After;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class ControllerEntryTest
++{
++    private int[] oldInts;
++    private String[] oldStrings;
++    private Class46[][] oldWidgets;
++    private IterableHashTable oldInterfaces;
++    private Player oldPlayer;
++    private int oldState;
++    private boolean oldMenu;
++    private List<Object[]> calls;
++    @Before public void setup()
++    {
++        oldInts=Isaac.anIntArray1303;oldStrings=Class258_Sub2.aStringArray8532;
++        oldWidgets=Class348_Sub40_Sub33.aClass46ArrayArray9427;oldInterfaces=Class125.aClass356_4915;
++        oldPlayer=Class132.aPlayer_1907;oldState=Class240.anInt4674;oldMenu=Class305.aBoolean3870;
++        Isaac.anIntArray1303=new int[1100];Class258_Sub2.aStringArray8532=new String[250];
++        Class348_Sub40_Sub33.aClass46ArrayArray9427=new Class46[1000][];
++        Class125.aClass356_4915=new IterableHashTable(8);
++        Class132.aPlayer_1907=new Player();Class240.anInt4674=10;Class305.aBoolean3870=false;
++        Class46 outer=new Class46();outer.anInt830=548<<16|200;
++        Class348_Sub40_Sub33.aClass46ArrayArray9427[548]=new Class46[201];
++        Class348_Sub40_Sub33.aClass46ArrayArray9427[548][200]=outer;
++        Class46 prompt=new Class46();prompt.anInt830=752<<16|4;prompt.aString792="Enter amount:";
++        Class348_Sub40_Sub33.aClass46ArrayArray9427[752]=new Class46[6];
++        Class348_Sub40_Sub33.aClass46ArrayArray9427[752][4]=prompt;
++        Class348_Sub41 attached=new Class348_Sub41();attached.anInt7050=752;
++        Class125.aClass356_4915.method3483((byte)120,outer.anInt830,attached);
++        ControllerUi.enable(true);ControllerUi.record(prompt,10,400,350,20);
++        calls=new ArrayList<>();ControllerEntry.testScripts(args->{
++            calls.add(args);
++            if ((Integer)args[0]==1564) Class258_Sub2.aStringArray8532[22]=(String)args[1];
++            if ((Integer)args[0]==112) Isaac.anIntArray1303[5]=0;
++        });
++    }
++    @After public void restore()
++    {
++        ControllerEntry.testScripts(null);ControllerUi.enable(false);
++        Isaac.anIntArray1303=oldInts;Class258_Sub2.aStringArray8532=oldStrings;
++        Class348_Sub40_Sub33.aClass46ArrayArray9427=oldWidgets;Class125.aClass356_4915=oldInterfaces;
++        Class132.aPlayer_1907=oldPlayer;Class240.anInt4674=oldState;Class305.aBoolean3870=oldMenu;
++    }
++    @Test public void editAndSubmitUseNativeScriptsAndRejectOverflowAndChangedValue()
++    {
++        Isaac.anIntArray1303[5]=7;
++        EntryState state=ControllerEntry.snapshot();assertNotNull(state);
++        assertFalse(ControllerEntry.edit(state,"2147483648"));
++        assertTrue(ControllerEntry.edit(state,"250"));assertEquals(1564,calls.get(0)[0]);
++        assertFalse(ControllerEntry.submit(state)); // old empty snapshot cannot submit newly edited value
++        state=ControllerEntry.snapshot();assertTrue(ControllerEntry.submit(state));
++        assertArrayEquals(new Object[]{112,84,0},calls.get(1));
++        assertFalse(ControllerEntry.submit(state));
++    }
++    @Test public void replacedPromptInvalidatesSnapshotEvenIfTypeTextAndValueAreIdentical()
++    {
++        Isaac.anIntArray1303[5]=7;Class258_Sub2.aStringArray8532[22]="10";
++        EntryState old=ControllerEntry.snapshot();
++        Class348_Sub36 event=new Class348_Sub36();event.anObjectArray6987=new Object[]{108,"Enter amount:"};
++        ControllerEntry.observe(event);
++        assertFalse(ControllerEntry.submit(old));ControllerEntry.cancel(old);assertTrue(calls.isEmpty());
++        EntryState fresh=ControllerEntry.snapshot();ControllerEntry.cancel(fresh);
++        assertArrayEquals(new Object[]{112,13,0},calls.get(0));
++    }
++    @Test public void hiddenPromptAndUnsupportedEntryTypeNeverExposeOrSubmit()
++    {
++        Isaac.anIntArray1303[5]=7;EntryState state=ControllerEntry.snapshot();assertNotNull(state);
++        Class348_Sub40_Sub33.aClass46ArrayArray9427[752][4].aBoolean813=true;
++        assertNull(ControllerEntry.snapshot());assertFalse(ControllerEntry.submit(state));
++        Isaac.anIntArray1303[5]=14;assertFalse(ControllerEntry.active());
++    }
++}
+diff --git a/client/test/net/runelite/client/input/controller/EntryControlsTest.java b/client/test/net/runelite/client/input/controller/EntryControlsTest.java
+new file mode 100644
+index 0000000..7ed32f6
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/EntryControlsTest.java
+@@ -0,0 +1,49 @@
++package net.runelite.client.input.controller;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class EntryControlsTest
++{
++    private static class Fake implements UiControls.Gateway
++    {
++        EntryState state=new EntryState(7,1,"Amount","");
++        int edits,submits,cancels;
++        public UiState snapshot(){return UiState.EMPTY;}
++        public boolean openInventory(){return false;}
++        public boolean invoke(UiState.Widget w,UiState.Action a){return false;}
++        public void cancelSelection(){}
++        public void cancelDialogue(){}
++        public boolean editEntry(EntryState e,String value){edits++;state=new EntryState(e.type,e.revision,e.prompt,value);return true;}
++        public boolean submitEntry(EntryState e){submits++;return true;}
++        public void cancelEntry(EntryState e){cancels++;}
++    }
++    private static void press(EntryControls ui,Fake game,GamepadState input,int mask,long time)
++    {
++        input.updateButtons(0);ui.update(game.state,input,time);
++        input.updateButtons(mask);ui.update(game.state,input,time+1);
++    }
++    @Test public void enteringDoesNotReuseHeldAAndEditsUseEdgesWithDeleteSubmitCancel()
++    {
++        Fake game=new Fake();EntryControls ui=new EntryControls(game);GamepadState input=new GamepadState();
++        input.updateButtons(1);ui.update(game.state,input,1);assertEquals(0,game.edits);
++        press(ui,game,input,1,10);input.updateButtons(1);ui.update(game.state,input,12);assertEquals("1",game.state.value);assertEquals(1,game.edits);
++        press(ui,game,input,1<<14,20);press(ui,game,input,1,30);assertEquals("12",game.state.value);
++        press(ui,game,input,4,40);assertEquals("1",game.state.value);
++        press(ui,game,input,8,50);assertEquals(1,game.submits);
++        press(ui,game,input,2,60);assertEquals(1,game.cancels);
++    }
++    @Test public void replacingPromptRequiresReleaseAndTextEntryHasLetterGrid()
++    {
++        Fake game=new Fake();EntryControls ui=new EntryControls(game);GamepadState input=new GamepadState();
++        ui.update(game.state,input,1);press(ui,game,input,1,10);
++        game.state=new EntryState(11,2,"Search","");ui.update(game.state,input,20);assertEquals(1,game.edits);
++        assertEquals(6,ui.columns());assertEquals("a",ui.keys()[0]);
++        press(ui,game,input,1,30);assertEquals("a",game.state.value);
++    }
++    @Test public void boundsRejectOverflowControlCharactersAndProtocolLength()
++    {
++        assertTrue(EntryState.valid(7,"2147483647"));assertFalse(EntryState.valid(7,"2147483648"));
++        assertFalse(EntryState.valid(7,"-1"));assertFalse(EntryState.valid(9,"bad\ntext"));
++        assertFalse(EntryState.valid(8,"abcdefghijklmnop"));assertFalse(EntryState.valid(11,new String(new char[81]).replace('\0','a')));
++    }
++}
+diff --git a/client/test/net/runelite/client/input/controller/PanelControlsTest.java b/client/test/net/runelite/client/input/controller/PanelControlsTest.java
+index 08b456c..070672c 100644
+--- a/client/test/net/runelite/client/input/controller/PanelControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/PanelControlsTest.java
+@@ -54,6 +54,19 @@ public class PanelControlsTest
+         press(ui,changed,input,1,60); assertEquals(0,game.invoked);
+         assertFalse(ui.update(null,input,70));
+     }
++    @Test public void droppedCloseRecoversAndAOnChangedItemRequiresRelease()
++    {
++        Fake game=new Fake(); PanelControls ui=new PanelControls(game); GamepadState input=new GamepadState();
++        UiState.Panel state=shop(item(620<<16|25,0,100,100,10,"Info","Buy 1"));
++        ui.update(state,input,1);press(ui,state,input,2,10);
++        input.updateButtons(0);ui.update(state,input,1_100_000_000L);
++        input.updateButtons(2);ui.update(state,input,1_200_000_000L);assertEquals(2,game.closed);
++        ui.reset();input.updateButtons(0);ui.update(state,input,2_000_000_000L);
++        UiState.Widget replacement=new UiState.Widget(620<<16|25,0,999,10,"Other",new Rectangle(100,100,32,32),state.panes[0].widgets[0].actions);
++        input.updateButtons(1);ui.update(shop(replacement),input,2_100_000_000L);assertEquals(0,game.invoked);
++        press(ui,shop(replacement),input,1,2_200_000_000L);assertEquals(1,game.invoked);
++    }
++
+     @Test public void spatialNavigationStaysInColumnAndUsesActualBounds()
+     {
+         UiState.Widget origin=item(1,0,100,100,1,"A");
+@@ -66,7 +79,8 @@ public class PanelControlsTest
+         Fake game=new Fake(); PanelControls ui=new PanelControls(game); GamepadState input=new GamepadState();
+         UiState.Panel first=shop(item(620<<16|25,0,100,100,10,"Info","Buy 1"));
+         ui.update(first,input,1); press(ui,first,input,1<<12,10); assertEquals(1,game.scrolled);
+-        UiState.Panel next=shop(item(620<<16|25,1,100,100,10,"Info","Buy 1"));
++        UiState.Panel nextBase=shop(item(620<<16|25,1,100,100,10,"Info","Buy 1"));
++        UiState.Panel next=new UiState.Panel(nextBase.id,1,nextBase.name,nextBase.panes);
+         input.updateButtons(0); ui.update(next,input,100_000_000); assertEquals(1,ui.focus().child);
+         press(ui,next,input,1,200_000_000); ui.update(next,input,300_000_000); assertEquals(1,game.invoked);
+     }

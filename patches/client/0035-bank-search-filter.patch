@@ -1,0 +1,63 @@
+diff --git a/client/src/ControllerEntry.java b/client/src/ControllerEntry.java
+index 9570dab..0219328 100644
+--- a/client/src/ControllerEntry.java
++++ b/client/src/ControllerEntry.java
+@@ -50,8 +50,8 @@ final class ControllerEntry
+         if (!ControllerUi.entryReady()) return;
+         if (Isaac.anIntArray1303 != null && Isaac.anIntArray1303.length>190 && Isaac.anIntArray1303[190]==1)
+         {
+-            // Native search waits for the next physical key. Only an explicit
+-            // controller Search request activates that one-shot callback here.
++            // Only a controller Search click whose native onOp did not run
++            // retains this bounded fallback; an observed native toggle consumes it.
+             searchRequestedUntil=0; scripts.run(new Object[]{1471});
+         }
+     }
+@@ -83,6 +83,11 @@ final class ControllerEntry
+         if (current == null || !current.sameSession(expected) || !current.value.equals(expected.value)
+             || !EntryState.valid(current.type, value)) return false;
+         scripts.run(new Object[] {1564, value});
++        if (current.type == 11) {
++            EntryState edited = snapshot();
++            if (edited != null && edited.sameSession(current) && edited.value.equals(value))
++                scripts.run(new Object[] {1475}); // native key handler refreshes bank filtering after text changes
++        }
+         return true;
+     }
+     static boolean submit(EntryState expected)
+diff --git a/client/test/ControllerEntryTest.java b/client/test/ControllerEntryTest.java
+index b3a146c..97d09de 100644
+--- a/client/test/ControllerEntryTest.java
++++ b/client/test/ControllerEntryTest.java
+@@ -76,6 +76,31 @@ public class ControllerEntryTest
+         assertArrayEquals(new Object[]{112,84,0},calls.get(1));
+         assertFalse(ControllerEntry.submit(state));
+     }
++    @Test public void bankSearchEditRunsNativeFilterAndRejectsStaleText() {
++        Isaac.anIntArray1303[5]=11;
++        EntryState initial=ControllerEntry.snapshot();
++        assertTrue(ControllerEntry.edit(initial,"pot"));
++        assertEquals(2,calls.size());
++        assertArrayEquals(new Object[]{1564,"pot"},calls.get(0));
++        assertArrayEquals(new Object[]{1475},calls.get(1));
++        assertFalse(ControllerEntry.edit(initial,"coins"));
++        assertEquals(2,calls.size());
++    }
++    @Test public void searchFilterIsNotAppliedToAReplacementPromptDuringEdit() {
++        Isaac.anIntArray1303[5]=11;
++        EntryState initial=ControllerEntry.snapshot();
++        ControllerEntry.testScripts(args->{
++            calls.add(args);
++            if((Integer)args[0]==1564){
++                Class258_Sub2.aStringArray8532[22]=(String)args[1];
++                Class348_Sub36 replaced=new Class348_Sub36();replaced.anObjectArray6987=new Object[]{1472};
++                ControllerEntry.observe(replaced);
++            }
++        });
++        assertTrue(ControllerEntry.edit(initial,"pot"));
++        assertEquals(1,calls.size());
++    }
++
+     @Test public void replacedPromptInvalidatesSnapshotEvenIfTypeTextAndValueAreIdentical()
+     {
+         Isaac.anIntArray1303[5]=7;Class258_Sub2.aStringArray8532[22]="10";

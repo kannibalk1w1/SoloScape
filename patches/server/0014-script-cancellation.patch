@@ -1,0 +1,47 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/Script.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/Script.kt
+index 77bbf36..4e367b6 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/Script.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/Script.kt
+@@ -38,6 +38,8 @@ interface Script : Spawn, Despawn, Skills, Moved, VariableApi, TimerApi, Operati
+             scope.launch(errorHandler) {
+                 try {
+                     block()
++                } catch (e: CancellationException) {
++                    throw e
+                 } catch (e: Exception) {
+                     logger.error(e) { "Error in script handler." }
+                 }
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/ScriptCancellationTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/ScriptCancellationTest.kt
+new file mode 100644
+index 0000000..4f9614c
+--- /dev/null
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/ScriptCancellationTest.kt
+@@ -0,0 +1,28 @@
++package world.gregs.voidps.engine
++
++import kotlinx.coroutines.CancellableContinuation
++import kotlinx.coroutines.Job
++import kotlinx.coroutines.suspendCancellableCoroutine
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.Test
++
++class ScriptCancellationTest {
++    @Test
++    fun `cancelled script runs cleanup and retains cancelled job state`() {
++        lateinit var pending: CancellableContinuation<Unit>
++        lateinit var job: Job
++        var cleaned = false
++        Script.launch {
++            job = coroutineContext[Job]!!
++            try {
++                suspendCancellableCoroutine<Unit> { pending = it }
++            } finally {
++                cleaned = true
++            }
++        }
++        pending.cancel()
++        assertTrue(cleaned)
++        assertTrue(job.isCompleted)
++        assertTrue(job.isCancelled)
++    }
++}

@@ -351,3 +351,100 @@ actual ordinary tab operation packet dispatch. The full client run has 71 cases
 virtual-device case. The client Shadow jar rebuilds. Patch reproduction matches
 41 client files on upgrade/fresh/reverse/idempotent runs. Renderer previews at
 765×503 and 1280×800 were inspected; physical/in-game acceptance remains pending.
+
+
+## Overnight reliability batch
+
+**SoloScape server features** is now an explicit opt-in, off by default. Enable it
+only when using the patched SoloScape server; enable **Direct movement** as well
+for held directional movement. With server features off, direct mode falls back
+to destination walking and world B uses an ordinary same-tile Walk at the native
+path head. It does not send custom opcodes 85/86. This is an interim compatibility
+setting; automatic server capability negotiation is still proposed.
+
+An adapter RuntimeException resets input/focus and logs its real cause at most
+once per five seconds while SDL polling continues. Provider init/poll failures
+still disable the plugin with provider-specific advice. Diagnostics now report
+controller tick average/maximum microseconds once per second; Deck timings remain
+unmeasured. Idle snapshots skip inventory item descriptions and regex is precompiled.
+
+The launcher records patch/base and jar hashes after a successful source build.
+`--no-build` rejects missing/invalid stamps, changed patches and changed jars with
+an instruction to rebuild. Logs rotate to `server.previous.log` and
+`client.previous.log` before the next session instead of losing the previous logs.
+The current session is not rotated or interrupted by development builds.
+
+Test the explicit server-features toggle, direct opt-out stop, normal B fallback,
+focus rearming after a transient error and clean rebuild/restart. Do not enable
+custom packets against an unpatched server. Automated tests cover custom packet
+suppression, one direct stop and the native fallback packet/path-head coordinates.
+
+
+## Bank and shop focus (patch 0011)
+
+Open a bank, deposit box or shop normally. Controller focus activates automatically after held buttons/stick are released. D-pad navigates the visible grid; up/down at its edge scrolls the native container. LB/RB switches Bank/Stock, Inventory, and Controls / tabs panes. A uses the first withdrawal/deposit action, Buy or Sell; X lists all native quantities/actions, including Info/Value. B backs out of that list, then closes the interface. Bank tabs, deposit-carried/worn, note/swap toggles and other actionable buttons are in Controls / tabs. Server messages provide transaction feedback.
+
+Test full/empty banks and shops, mixed stack quantities, note mode, buying with insufficient funds, selling with full stock, tab switches, grid scrolling, mouse scroll takeover and fixed/resized layouts. This build has automated native-widget and state-machine checks, but gameplay is not yet accepted. Deposit/Withdraw-X and search still require native keyboard entry until the next controller-entry batch; bank PIN remains native.
+
+
+## Controller amount/name/search entry (patch 0012)
+
+The native amount, name, string and bank-search prompts now show a controller keyboard. D-pad chooses keys; A inserts; X deletes one character; Y or Done submits; B uses native Escape. Numeric entry rejects values above the signed 32-bit limit. Text entry uses printable ASCII and bounded lengths; physical keyboard entry remains available. Native scripts 1564 and 112 handle edits/submission/cancellation. Bank search uses the native armed key callback and search pipeline.
+
+Validate Withdraw/Deposit-X (including Cancel and a second quantity request), search with several matches/no matches/clearing, mouse/keyboard edits while the controller keyboard is open, hidden/replaced prompts, and held A during opening. B on an amount prompt cancels the native entry; the server retains its ordinary cancellation behavior. No quantity is fabricated on cancellation. Bank PIN remains native.
+
+Bank/shop B recovers after one second if a busy server ignores a close. Scrolling resolves focus after an actual widget render, and item replacement requires release before A can act. The controller pauses camera input while UI modes consume input.
+
+
+## Equipment, prayer and spell handoff (patch 0013)
+
+On the View/Select radial, choose Equipment, Prayer or Spellbook. D-pad navigates rendered actionable widgets, A performs the native action, X lists alternatives and B returns to world control. Ordinary mouse tab switching does not enter controller focus. Equipment bonuses (667) and its side inventory (670) also support panes.
+
+Selecting a targeted spell stops controller walking and hands off to eligible nearby NPC/object/ground targets; stick aims, LB/RB cycles, A dispatches, B cancels. Inventory-target spells open/focus inventory through a native tab operation that preserves selection. Source identity/item/quantity/permissions and a re-selection token are revalidated. A source stack change requires cancellation and re-selection. Ineligible or invalid inventory targeting never falls back to eating/dropping. Immediate casts still use their native operations. Server/native messages handle unmet requirements.
+
+Test removing/equipping with a full bag, empty worn slots, opening/closing bonuses, toggling prayers and quick-prayer selection/confirmation, modern/ancient/lunar books, immediate/home teleport, a targeted NPC cast with enough and insufficient runes, an inventory spell, replacing the selected item, despawns/region changes, and B cancellation. Player/PvP/self and arbitrary ground-tile targets are not added; patch 0014 adds server-approach selection for Attack and selected NPC spells; other nearby targets retain conservative approach reachability.
+
+**Native interface navigation** in SoloScape Controller defaults on. Turn it off to restore mouse/keyboard handling for the added interfaces; inventory/dialogue controls and tab switching remain. New renderer previews in `images/controller-bank-preview.png` and `images/controller-keyboard-preview.png` use plain backgrounds, not gameplay screenshots.
+
+
+## Second sprint: quick actions, production and home panels (patch 0014)
+
+Defaults: **View/Select** opens Home, **Start/Menu** opens Quick actions and **Y/Triangle** opens Inventory. These three bindings can be changed in SoloScape Controller settings. Choose distinct buttons; overlapping bindings disable both wheels and show a hint. Face actions inside a wheel/keyboard remain A/B/X/Y (or the corresponding PlayStation buttons). The plugin's **Reset** restores controls and clears assigned slots; Y in the quick wheel restores just the selected slot.
+
+All eight quick slots start empty. Open inventory with Y or a supported tab through Home, focus your food/potion/prayer/spell with D-pad, optionally choose an alternative in its X action list, then open Quick actions. Stick/D-pad/bumpers selects a slot; **X assigns that captured action**, **A uses the assigned action**, **B cancels**. Opening never repeats a held A. Quick actions open the corresponding native tab and wait at most one second for a valid rendered widget; missing items, inactive spellbooks or unavailable permissions show a message. A failed or expired invocation is not retried. Binding a prayer means toggle that same prayer. A targeted spell selects the native spell and then hands off to world or inventory targeting; an immediate cast remains an immediate native op. There is no automatic eating/drinking or arbitrary packet binding.
+
+Assigned potions survive `(4)`→`(3)` dose changes in that named family and choose the lowest available dose. **Partial cakes/pies that change item ID require reassigning**; the old slot fails safely. Intermediate pre-review quick-binding formats are rejected; this is the first published quick-wheel version, so there is no released quick-slot migration. Assign whole-item food initially.
+
+Make-amount dialogues show the native amount. **LB/RB changes among the unlocked 1/5/10/All presets; D-pad chooses a recipe; A starts it.** Smithing groups each product's actual native quantity buttons: A prefers Make 1, X lists Make 5/X/All. Native-X opens the controller keyboard. Tanning, silver and jewellery use their exposed native options and names. Common production modals enter controller focus automatically; B backs out of actions, then requests native closure. No decrement-to-zero shortcut is added. Locked options are never fabricated; unsupported cache/CS2 actions keep their mouse path.
+
+Home now hands off into Combat, Skills, Quests and supported Settings in addition to inventory/equipment/prayer/spells. D-pad navigates or scrolls actionable native widgets, A selects, X lists alternatives and B returns to world or closes a supported detail modal. Complex sliders, text-only scrolling pages, drag controls and niche panels still need native mouse/keyboard input.
+
+Attack and selected-NPC-spell targets use a **ten-tile selection radius**, independent of actual weapon/spell reach. Walking barriers no longer hide them. A dashed footprint and “server approach” label mean the **server** decides approach, range and LOS; melee may walk around a barrier or report that it cannot reach. At most six such candidates enter cycling. Talk-to, objects, ground items and selected item-on-NPC retain the five-tile, bounded walkability check. Stale/unavailable actions and cancellation have HUD feedback; server messages still report requirements and unreachable approaches.
+
+Settings also offer **Controller overlay size (75–175%)**, **Xbox/PlayStation button labels** and **Show controller guide**. Wheels/keyboard fit the canvas, action menus keep the selected row visible, focus bounds still follow native widgets, and the native game UI text itself remains unchanged. Example renderer artifacts: `images/controller-quick-wheel-preview.png` (1280×800, 150%) and `images/controller-scaled-keyboard-preview.png` (765×503, 150%). They are not gameplay screenshots.
+
+### Combined acceptance checklist
+
+- Bank/shops: quantities, note/swap/tabs/search, large lists, insufficient money/stock, mouse scrolling and repeated X/cancel.
+- Quick wheel: empty slots do nothing; assign each supported kind; two potion doses; missing item; wrong spellbook; cancel during tab handoff; no repeat while A held; reset one slot/all settings; partial-food fail-closed behavior.
+- Production: cooking/spinning/smelting/fletching make-amount choices and 1/5/10/All; smithing regular and irregular rows, locked products, 1/5/X/All; tanning, silver and jewellery; held input and close/reopen.
+- Combat: melee/ranged/selected spell across a fence/table/river; native approach/requirements/unreachable feedback; target cycle cap; despawn/reselect; item-on-NPC remains ordinary reachability.
+- Tabs/layout: Combat/Skills/Quests/Settings in fixed/resized modes; supported detail modals; native mouse fallback; 100/150% overlays at 1280×800; each menu binding, overlap warning and Reset; both glyph sets and guide.
+- Lifecycle: focus loss, reconnect, plugin/interface disable/re-enable, native mouse takeover, clean character save/restart and physical Deck performance/suspend.
+
+121 client cases and 14 tooling cases pass; one native SDL case is skipped. Actual physical play, cache operation availability and persistence remain pending. Priority is entry/dialogue or modal UI, then active wheel, then focused tab/inventory, then world input; neither wheel can open over a dialogue/entry/modal. Each closing input is consumed before world control can resume.
+
+## Console alpha acceptance additions
+
+Use `./scripts/launcher.sh` for disposable new profiles; set a free local port in Launcher Settings if another world is running. The controller plugin/settings are private per profile.
+
+- Enable each custom inventory/equipment/bank/shop toggle separately, then disable it and confirm native fallback.
+- Test D-pad pages and LB/RB panes, native bank Search, quantities and shop insufficient-funds feedback. “Visible page” describes the rendered native window; continue scrolling for more bank rows.
+- Choose Drop/Destroy through X, press A once and confirm nothing happens, then A again and verify only the chosen action. B cancels confirmation. Repeat mouse action → controller confirmation.
+- Test mouse wheel/right click/drag/hover inside custom surfaces and ordinary mouse interaction outside them.
+- Inspect worn items and equipment bonus text; check live item/spell targeting and stale stock/stack changes.
+- Apply each preset, remap actions, deliberately overlap bindings and verify warning/no controller actions. Restore defaults and test neutral rearming.
+- Verify direct movement with the matched server, older-server fallback and fresh reconnect acknowledgement. Suspend/focus loss must not replay held actions.
+- Save & Quit, Continue, backup/restore a disposable profile, and recover a deliberately damaged disposable profile manifest. Preserve real characters.
+
+Custom screens are early text-first layouts. True world pause is not enabled. Physical Deck/Gaming Mode, performance and suspend acceptance remain outstanding.

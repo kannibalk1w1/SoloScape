@@ -1,0 +1,399 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+index 33f0872..aa9369f 100644
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1080,6 +1080,7 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+     @Override public boolean openControllerTargetInventory() { return ControllerUi.openTargetInventory(); }
+     @Override public String getControllerSelectionHint() { return !r.aBoolean9722 ? null : ControllerSelection.valid() ? ControllerSelection.label() : "Selection changed"; }
+     @Override public boolean isControllerTargeting() { return r.aBoolean9722; }
++    @Override public long getControllerSelectionToken() { return ControllerSelection.token(); }
+     @Override public int getControllerSelectionMask() { return ControllerSelection.valid() ? Class38.anInt500 : 0; }
+     @Override
+     public boolean isControllerWorldReady() { return ControllerWorld.ready(); }
+diff --git a/client/src/ControllerSelection.java b/client/src/ControllerSelection.java
+index 5457414..b86030a 100644
+--- a/client/src/ControllerSelection.java
++++ b/client/src/ControllerSelection.java
+@@ -19,6 +19,7 @@ final class ControllerSelection
+         return flags.method3307(14) == Class38.anInt500 && flags.anInt7093 == Class246.anInt3176
+             && Class239_Sub8.method1753(0,live) != null;
+     }
++    static boolean isSource(Class46 widget) { return valid() && source==widget; }
+     static boolean allows(int mask) { return valid() && (Class38.anInt500 & mask) != 0; }
+     static Class254 parameter()
+     {
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+index b34d9ea..883f2af 100644
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -446,7 +446,9 @@ final class ControllerUi
+         }
+         if (name.isEmpty()) name = dialogue ? "Continue" : "Empty slot";
+         return new UiState.Widget(w.anInt830, w.anInt704, w.anInt812, w.anInt781, name,
+-            new Rectangle(seen.bounds), actions(w, dialogue));
++            new Rectangle(seen.bounds), actions(w, dialogue),
++            !dialogue&&ControllerSelection.token()!=0?ControllerSelection.label()+" Choose an eligible target; B cancels.":"",
++            !dialogue&&ControllerSelection.isSource(w)?"Source":"");
+     }
+ 
+     static UiState.Action[] actions(Class46 w, boolean dialogue)
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+index ee5ef45..46a42a7 100644
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -376,6 +376,7 @@ public abstract class GameClient extends Applet {
+     public String getControllerSelectionHint() { return null; }
+     public boolean isControllerTargeting() { return false; }
+     public int getControllerSelectionMask() { return 0; }
++    public long getControllerSelectionToken() { return 0; }
+     public boolean isControllerWorldReady() { return false; }
+     public boolean walkController(double directionX, double directionY) { return false; }
+     public ControllerTarget findControllerTarget(double facingX, double facingY, ControllerTarget previous) { return null; }
+diff --git a/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java b/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
+index 18148fd..662a686 100644
+--- a/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
++++ b/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
+@@ -32,6 +32,7 @@ public final class ControllerSettingsModel {
+  private final Store store;
+  public ControllerSettingsModel(Store store){this.store=store;}
+  private String value(Option option){String value=store.get(option.key);return value==null||value.isEmpty()?option.values[0]:value;}
++ public static boolean canPresent(UiState state){return state.dialogueId<0&&state.entry==null&&(state.panel!=null&&!state.panel.modal&&(state.panel.id==261||state.panel.id==982));}
+  public UiState.Panel snapshot(boolean setup){
+   UiState.Pane[] panes=new UiState.Pane[4];String[] names={"Basics","Bindings","Screens"};
+   for(int p=0;p<OPTIONS.length;p++){
+diff --git a/client/src/net/runelite/client/input/controller/MenuNavigation.java b/client/src/net/runelite/client/input/controller/MenuNavigation.java
+index 9577e1f..f92694e 100644
+--- a/client/src/net/runelite/client/input/controller/MenuNavigation.java
++++ b/client/src/net/runelite/client/input/controller/MenuNavigation.java
+@@ -14,6 +14,7 @@ public final class MenuNavigation
+     private final ArrayDeque<Parent> parents=new ArrayDeque<>();
+     private int home=-1,returnedHome=-1;
+     public void reset(){parents.clear();home=returnedHome=-1;}
++    public boolean hasHome(){return home>=0;}
+     public void fromHome(int tab){reset();home=tab;}
+     public void push(int tab,int panel,boolean inventory,int child)
+     {if(parents.size()==16)parents.removeFirst();parents.addLast(new Parent(tab,panel,inventory,child));}
+diff --git a/client/src/net/runelite/client/input/controller/QuickBinding.java b/client/src/net/runelite/client/input/controller/QuickBinding.java
+index 05985c6..7744f12 100644
+--- a/client/src/net/runelite/client/input/controller/QuickBinding.java
++++ b/client/src/net/runelite/client/input/controller/QuickBinding.java
+@@ -35,7 +35,7 @@ public final class QuickBinding
+             if (w.itemId<0) return null;
+             if (item>=0 && w.itemId!=item && !(action.equalsIgnoreCase("Drink") && family(w.name).equals(family(name)))) return null;
+         }
+-        else if (w.id!=item || !w.name.equals(name)) return null;
++        else if (w.id!=item || !w.name.equalsIgnoreCase(name)) return null;
+         for (UiState.Action a:w.actions)
+         {
+             if (a.selection!=0 || a.type!=type) continue;
+diff --git a/client/src/net/runelite/client/input/controller/SelectionReturn.java b/client/src/net/runelite/client/input/controller/SelectionReturn.java
+new file mode 100644
+index 0000000..1ed2674
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/SelectionReturn.java
+@@ -0,0 +1,20 @@
++package net.runelite.client.input.controller;
++
++/** Remember identities, never cached dispatchable actions, for one native selection. */
++public final class SelectionReturn {
++ public static final class Origin {
++  public final int tab,id,child,item,quantity;public final String name;public final boolean home;
++  Origin(UiState.Widget widget,int tab,boolean home){this.tab=tab;this.home=home;id=widget.id;child=widget.child;item=widget.itemId;quantity=widget.quantity;name=widget.name;}
++  public boolean matches(UiState.Widget widget){return widget!=null&&widget.id==id&&widget.child==child&&widget.itemId==item&&widget.quantity==quantity&&widget.name.equals(name);}
++ }
++ private Origin origin;private long token;
++ public void clear(){origin=null;token=0;}
++ public void begin(UiState.Widget widget,int tab,boolean home,long nativeToken){
++  clear();if(widget==null||nativeToken==0||tab<0||tab>=HomeTab.values().length)return;
++  origin=new Origin(widget,tab,home);token=nativeToken;
++ }
++ public Origin observe(long nativeToken){
++  if(origin==null||nativeToken==token)return null;
++  Origin result=nativeToken==0?origin:null;clear();return result;
++ }
++}
+diff --git a/client/src/net/runelite/client/input/controller/UiControls.java b/client/src/net/runelite/client/input/controller/UiControls.java
+index 50a4f69..762b5f8 100644
+--- a/client/src/net/runelite/client/input/controller/UiControls.java
++++ b/client/src/net/runelite/client/input/controller/UiControls.java
+@@ -19,6 +19,7 @@ public final class UiControls
+         default boolean scroll(UiState.Widget widget, int direction) { return false; }
+         default void closePanel() { cancelDialogue(); }
+         void cancelSelection();
++        default void leavePanel(){cancelSelection();}
+         void cancelDialogue();
+     }
+     private static final int A = 1, B = 2, X = 4, Y = 8;
+@@ -29,6 +30,13 @@ public final class UiControls
+     private final MenuNavigation navigation=new MenuNavigation();
+     private int closingChild=-1;
+     public void clearHistory(){panel.clearHistory();navigation.reset();}
++    public int focusedTab(){return focusedTab;}
++    public boolean fromHome(){return navigation.hasHome();}
++    public void restoreSourceFocus(SelectionReturn.Origin origin){
++        state=gateway.snapshot(inventory);
++        if(inventory){for(int i=0;i<state.inventory.length;i++)if(origin.matches(state.inventory[i])){slot=i;break;}}
++        else if(state.panel!=null){for(UiState.Pane pane:state.panel.panes)for(UiState.Widget widget:pane.widgets)if(origin.matches(widget))panel.mouseFocus(widget,false);}
++    }
+     public int takeHomeBack(){return navigation.takeHomeBack();}
+     public void focusHomeTab(int index,long now){focusTab(index,now);navigation.fromHome(index);}
+     private boolean inventory, armed;
+@@ -179,7 +187,7 @@ public final class UiControls
+             inventory = false; context = null; armed = false;
+             if(panel.closing() && navigation.hasParent(state.panel.id))closingChild=state.panel.id;
+             else if(!panel.closing() && closingChild==state.panel.id)closingChild=-1;
+-            if (panel.exitRequested()) { navigation.homeBack();focusedTab = -1; panel.reset(); gateway.cancelSelection(); }
++            if (panel.exitRequested()) { navigation.homeBack();focusedTab = -1; panel.reset(); gateway.leavePanel(); }
+             else if (panel.selectionRequested())
+             {
+                 focusedTab = -1; panel.reset();
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+index c1f73dc..add02b1 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -93,4 +93,6 @@ public interface SoloScapeControllerConfig extends Config
+     default boolean customControllerSettings(){return true;}
+     @ConfigItem(keyName="setupComplete",name="Controller setup completed",description="Finish the controller setup once to hide its automatic first-run prompt.",hidden=true)
+     default boolean setupComplete(){return false;}
++    @ConfigItem(keyName="returnToSource",name="Return to selection source",description="After native item/spell targeting completes or is cancelled, reopen its source screen using fresh widgets.",position=34)
++    default boolean returnToSource(){return true;}
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index d493330..dbd04f3 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -48,6 +48,9 @@ public class SoloScapeControllerPlugin extends Plugin
+     @Inject private SoloScapePanelOverlay panelOverlay;
+     @Inject private net.runelite.client.input.MouseManager mouseManager;
+     private final net.runelite.client.input.controller.PanelConfirmation confirmation=new net.runelite.client.input.controller.PanelConfirmation();
++    private final net.runelite.client.input.controller.SelectionReturn selectionReturn=new net.runelite.client.input.controller.SelectionReturn();
++    private net.runelite.client.input.controller.SelectionReturn.Origin restoringSource;
++    private long restoringSourceUntil,settingsOpeningUntil;
+     private boolean settingsOpen,settingsPrompted,nativeSettingsChild;
+     private final net.runelite.client.input.controller.ControllerSettingsModel settings = new net.runelite.client.input.controller.ControllerSettingsModel(
+         new net.runelite.client.input.controller.ControllerSettingsModel.Store(){
+@@ -55,8 +58,9 @@ public class SoloScapeControllerPlugin extends Plugin
+             public void set(String key,String value){configManager.setConfiguration("soloscapecontroller",key,value);}
+         });
+     private boolean openHomeTab(int index){
++        selectionReturn.clear();restoringSource=null;
+         boolean opened=client.openControllerTab(index);
+-        if(opened)settingsOpen=!nativeSettingsChild&&config.customControllerSettings()&&index==HomeTab.SETTINGS.ordinal();
++        if(opened){settingsOpen=!nativeSettingsChild&&config.customControllerSettings()&&index==HomeTab.SETTINGS.ordinal();settingsOpeningUntil=settingsOpen?System.nanoTime()+1_000_000_000L:0;}
+         return opened;
+     }
+     private String panelFeedback;
+@@ -68,8 +72,13 @@ public class SoloScapeControllerPlugin extends Plugin
+     private UiState presented(UiState nativeState)
+     {
+         if(settingsOpen){
+-            if(!config.customControllerSettings() || nativeState.dialogueId>=0 || nativeState.entry!=null
+-                || nativeState.panel!=null&&nativeState.panel.modal)settingsOpen=false;
++            // Wait for the requested native tab before replacing it. Once adopted,
++            // a native mouse/tab change releases local ownership immediately.
++            if(nativeState.dialogueId<0&&nativeState.entry==null
++                &&(nativeState.panel==null||!nativeState.panel.modal&&nativeState.panel.id!=261&&nativeState.panel.id!=982)
++                &&System.nanoTime()<settingsOpeningUntil)return nativeState;
++            if(nativeState.panel!=null&&(nativeState.panel.id==261||nativeState.panel.id==982))settingsOpeningUntil=0;
++            if(!config.customControllerSettings() || !net.runelite.client.input.controller.ControllerSettingsModel.canPresent(nativeState)){settingsOpen=nativeSettingsChild=false;}
+             else nativeState=new UiState(nativeState.inventory,nativeState.dialogue,nativeState.dialogueId,nativeState.inventoryVisible,
+                 settings.snapshot(!config.setupComplete()),nativeState.entry,nativeState.amounts,nativeState.amount);
+         }
+@@ -84,7 +93,7 @@ public class SoloScapeControllerPlugin extends Plugin
+         return panel==null?config.customInventory()&&ui.inventoryFocused():customGroup(panel.id);
+     }
+     String confirmationHint()
+-    { String pending=confirmation.prompt(ui.focus(),System.nanoTime());return pending!=null?pending:System.nanoTime()<panelFeedbackUntil?panelFeedback:null; }
++    { String pending=confirmation.prompt(ui.focus(),System.nanoTime());return pending!=null?pending:client.getControllerSelectionHint()!=null?client.getControllerSelectionHint()+" Choose a target · B: cancel":System.nanoTime()<panelFeedbackUntil?panelFeedback:null; }
+     private boolean invokeUi(UiState.Widget widget,UiState.Action action)
+     {
+         if(widget!=null && widget.id>>>16==net.runelite.client.input.controller.ControllerSettingsModel.ID){
+@@ -95,7 +104,9 @@ public class SoloScapeControllerPlugin extends Plugin
+             return result>=0;
+         }
+         if(customPanelActive()&&!confirmation.allow(widget,action,System.nanoTime()))return false;
++        int originTab=ui.inventoryFocused()?HomeTab.INVENTORY.ordinal():ui.focusedTab();boolean home=ui.fromHome();
+         boolean sent=client.invokeControllerUi(widget,action);
++        if(sent&&action.type==13)selectionReturn.begin(widget,originTab,home,client.getControllerSelectionToken());
+         if(customPanelActive())
+         { panelFeedback=sent?action.label+" requested for "+widget.name:"Item or action changed; choose it again.";panelFeedbackUntil=System.nanoTime()+2_000_000_000L;panelRequestUntil=sent?System.nanoTime()+6_000_000_000L:0; }
+         return sent;
+@@ -111,7 +122,10 @@ public class SoloScapeControllerPlugin extends Plugin
+         public boolean allowed() { return !settingsOpen && config.interfaceControls() && client.getControllerAvailableTabs()!=0; }
+         public UiState snapshot() { return client.getControllerUiState(true); }
+         public boolean openTab(int index) { return client.openControllerTab(index); }
+-        public boolean invoke(UiState.Widget widget,UiState.Action action) { return client.invokeControllerUi(widget,action); }
++        public boolean invoke(UiState.Widget widget,UiState.Action action) {
++            boolean sent=client.invokeControllerUi(widget,action);
++            return sent;
++        }
+         public QuickBinding binding(int slot) { return quickBinding(slot); }
+         public void bind(int slot,QuickBinding binding) { saveBinding(slot,binding.encode()); }
+         public void restore(int slot) { saveBinding(slot,"default"); }
+@@ -162,7 +176,8 @@ public class SoloScapeControllerPlugin extends Plugin
+         public void cancelEntry(net.runelite.client.input.controller.EntryState entry) { client.cancelControllerEntry(entry); }
+         public boolean scroll(UiState.Widget widget, int direction) { return client.scrollControllerUi(widget, direction); }
+         public void closePanel() { client.closeControllerPanel(); }
+-        public void cancelSelection() { settingsOpen=false;confirmation.clear(); client.cancelControllerSelection(); }
++        public void cancelSelection() { confirmation.clear(); client.cancelControllerSelection(); }
++        public void leavePanel() { settingsOpen=false;cancelSelection(); }
+         public void cancelDialogue() { client.cancelControllerDialogue(); }
+     });
+     private final WorldControls world = new WorldControls(new WorldControls.Gateway()
+@@ -246,7 +261,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 		state.clear();rawState.clear();mappingArmed=false;cameraArmed=false;actionMap=null;
+ 		ui.reset();ui.clearHistory();
+         radial.reset(); quick.reset();
+-        radialFocusTab = -1;settingsOpen=settingsPrompted=nativeSettingsChild=false;confirmation.clear();panelFeedback=null;panelFeedbackUntil=0;
++        radialFocusTab = -1;selectionReturn.clear();restoringSource=null;settingsOpen=settingsPrompted=nativeSettingsChild=false;confirmation.clear();panelFeedback=null;panelFeedbackUntil=0;
+ 		client.setControllerServerFeatures(false);
+ 		client.setControllerUiEnabled(false);
+ 		if (gamepad != null) gamepad.close();
+@@ -333,13 +348,27 @@ public class SoloScapeControllerPlugin extends Plugin
+             client.setControllerServerFeatures(config.serverFeatures());
+             client.setControllerPanelEnabled(config.interfaceControls());
+             Canvas canvas = client.getCanvas();
+-            if(!client.hasLocalPlayer()){settingsOpen=nativeSettingsChild=false;ui.clearHistory();}
++            if(!client.hasLocalPlayer()){settingsOpen=nativeSettingsChild=false;selectionReturn.clear();restoringSource=null;ui.clearHistory();}
+             if (!state.connected || canvas == null || !canvas.isFocusOwner() || !client.hasLocalPlayer())
+             {
+                 client.setControllerCameraInput(0, 0);cameraArmed=false;
+-                resetWorld(); ui.reset(); radial.reset(); quick.reset(); radialFocusTab = -1;mappingArmed=false;cameraArmed=false;
++                resetWorld(); ui.reset(); radial.reset(); quick.reset();selectionReturn.clear();restoringSource=null; radialFocusTab = -1;mappingArmed=false;cameraArmed=false;
+                 return;
+             }
++            if(!config.returnToSource()){selectionReturn.clear();restoringSource=null;}
++            if(config.returnToSource()){
++                net.runelite.client.input.controller.SelectionReturn.Origin origin=selectionReturn.observe(client.getControllerSelectionToken());
++                if(origin!=null){
++                    UiState nativeUi=client.getControllerUiState();
++                    if(nativeUi.dialogueId<0&&nativeUi.entry==null&&(nativeUi.panel==null||!nativeUi.panel.modal)&&!radial.active()&&!quick.active()){
++                        client.cancelControllerSelection();
++                        if(client.openControllerTab(origin.tab)){
++                            if(origin.home)ui.focusHomeTab(origin.tab,System.nanoTime());else ui.focusTab(origin.tab,System.nanoTime());
++                            restoringSource=origin;restoringSourceUntil=System.nanoTime()+1_000_000_000L;
++                        }
++                    }
++                }
++            }
+             if(settingsOpen && ui.focusedPanel()==null && !ui.inDialogue() && !radial.active() && !quick.active())
+                 ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());
+             client.prepareControllerUi();
+@@ -347,8 +376,7 @@ public class SoloScapeControllerPlugin extends Plugin
+                 && config.interfaceControls() && !client.isControllerTargeting()){
+                 UiState nativeUi=client.getControllerUiState();
+                 if(nativeUi.dialogueId<0 && nativeUi.entry==null && (nativeUi.panel==null||!nativeUi.panel.modal)){
+-                    settingsPrompted=true;
+-                    if(openHomeTab(HomeTab.SETTINGS.ordinal()))ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());
++                    if(openHomeTab(HomeTab.SETTINGS.ordinal())){settingsPrompted=true;ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());}
+                 }
+             }
+ 
+@@ -395,6 +423,8 @@ public class SoloScapeControllerPlugin extends Plugin
+             client.setControllerCameraInput(cameraArmed?yaw * config.yawSpeed():0,cameraArmed?pitch * config.pitchSpeed():0);
+             if (ui.update(state, now))
+             {
++                if(restoringSource!=null&&now>=restoringSourceUntil)restoringSource=null;
++                if(restoringSource!=null&&(ui.inventoryFocused()||ui.focusedPanel()!=null)){ui.restoreSourceFocus(restoringSource);restoringSource=null;}
+                 client.setControllerCameraInput(0, 0);resetWorld();cameraArmed=false;
+                 int parent=ui.takeHomeBack();
+                 if(parent==HomeTab.SETTINGS.ordinal()&&nativeSettingsChild&&config.customControllerSettings()){
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+index 2b57b84..96800f3 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+@@ -72,7 +72,7 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+                 int labelX=cell.x+inset+(iconWidth==0?0:iconWidth+inset);
+                 draw.drawString(fit(draw,name,cell.x+cell.width-inset-labelX),labelX,cell.y+inset+draw.getFontMetrics().getAscent());
+                 draw.setColor(new Color(166,190,206));
+-                String secondary=widget.itemId>=0?"×"+widget.quantity:!widget.status.isEmpty()?widget.status:widget.actions.length>0?widget.actions[0].label:"";
++                String secondary=widget.itemId>=0?"×"+widget.quantity+(widget.status.isEmpty()?"":" · "+widget.status):!widget.status.isEmpty()?widget.status:widget.actions.length>0?widget.actions[0].label:"";
+                 draw.drawString(fit(draw,secondary,cell.width-inset*2),cell.x+inset,cell.y+cell.height-inset);
+             }
+             int x=view.content.x+view.content.width+(int)(14*scale),y=view.content.y;
+diff --git a/client/test/net/runelite/client/input/controller/ControllerSettingsModelTest.java b/client/test/net/runelite/client/input/controller/ControllerSettingsModelTest.java
+index 636b4fe..e78832e 100644
+--- a/client/test/net/runelite/client/input/controller/ControllerSettingsModelTest.java
++++ b/client/test/net/runelite/client/input/controller/ControllerSettingsModelTest.java
+@@ -24,4 +24,11 @@ public class ControllerSettingsModelTest {
+   assertEquals(1,model.invoke(game,game.actions[0],true));assertNull(store.get("setupComplete"));
+   assertEquals(2,model.invoke(done,done.actions[0],true));assertEquals("true",store.get("setupComplete"));
+  }
++ @Test public void nativeTabChangesAndModalPromptsReleaseSettingsCapture(){
++  assertFalse(ControllerSettingsModel.canPresent(UiState.EMPTY));
++  UiState.Pane[] panes=new UiState.Pane[0];
++  assertTrue(ControllerSettingsModel.canPresent(new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,new UiState.Panel(261,0,"Settings",panes,false))));
++  assertFalse(ControllerSettingsModel.canPresent(new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,new UiState.Panel(190,0,"Quests",panes,false))));
++  assertFalse(ControllerSettingsModel.canPresent(new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,new UiState.Panel(742,0,"Graphics",panes,true))));
++ }
+ }
+diff --git a/client/test/net/runelite/client/input/controller/QuickRadialControlsTest.java b/client/test/net/runelite/client/input/controller/QuickRadialControlsTest.java
+index 19e8b77..5525182 100644
+--- a/client/test/net/runelite/client/input/controller/QuickRadialControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/QuickRadialControlsTest.java
+@@ -127,4 +127,11 @@ public class QuickRadialControlsTest
+         UiState.Widget style=widget(884<<16|11,-1,"Style","Use",18);assertNull(QuickBinding.capture(style,style.actions[0]));
+         assertNull(QuickBinding.decode(binding.encode().replace(":"+(884<<16|4)+":",":"+(884<<16|11)+":")));
+     }
++    @Test public void legacyQuickNamesCanDifferInCapitalisationWithoutChangingNativeIdentity() {
++        UiState.Widget spell=widget(192<<16|25,-1,"Wind strike","Cast",13);
++        QuickBinding binding=QuickBinding.capture(spell,spell.actions[0]);
++        assertNotNull(binding.match(widget(192<<16|25,-1,"Wind Strike","Cast",13)));
++        assertNull(binding.match(widget(192<<16|26,-1,"Wind Strike","Cast",13)));
++        assertNull(binding.match(widget(192<<16|25,-1,"Water Strike","Cast",13)));
++    }
+ }
+diff --git a/client/test/net/runelite/client/input/controller/SelectionReturnTest.java b/client/test/net/runelite/client/input/controller/SelectionReturnTest.java
+new file mode 100644
+index 0000000..16a4670
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/SelectionReturnTest.java
+@@ -0,0 +1,16 @@
++package net.runelite.client.input.controller;
++import java.awt.Rectangle;
++import org.junit.Test;
++import static org.junit.Assert.*;
++public class SelectionReturnTest {
++ private UiState.Widget source(int amount){return new UiState.Widget(149<<16,3,100,amount,"Source",new Rectangle(),new UiState.Action[]{new UiState.Action("Use",13,0)});}
++ @Test public void completedOrCancelledSelectionReturnsOnlyItsOwnOriginOnce(){
++  SelectionReturn flow=new SelectionReturn();flow.begin(source(2),0,true,42);assertNull(flow.observe(42));
++  SelectionReturn.Origin origin=flow.observe(0);assertNotNull(origin);assertTrue(origin.home);assertTrue(origin.matches(source(2)));assertFalse(origin.matches(source(1)));assertNull(flow.observe(0));
++ }
++ @Test public void externallyReplacedSelectionAndSessionResetCannotRestoreOldSource(){
++  SelectionReturn flow=new SelectionReturn();flow.begin(source(2),0,false,42);assertNull(flow.observe(43));assertNull(flow.observe(0));
++  flow.begin(source(2),0,false,44);flow.clear();assertNull(flow.observe(0));
++  flow.begin(source(2),-1,false,45);assertNull(flow.observe(0));
++ }
++}
+diff --git a/client/test/net/runelite/client/input/controller/UiControlsTest.java b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+index 7d1863d..1bbc620 100644
+--- a/client/test/net/runelite/client/input/controller/UiControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+@@ -14,7 +14,7 @@ public class UiControlsTest
+     private static final class Fake implements UiControls.Gateway
+     {
+         UiState state;
+-        int opens, actions, cancels, closes, openedTab=-1;
++        int opens, actions, cancels, closes, leaves, openedTab=-1;
+         boolean inventoryRequested;
+         PanelConfirmation confirmation;
+         UiState.Widget acted;
+@@ -31,6 +31,7 @@ public class UiControlsTest
+         public boolean openTab(int index){openedTab=index;return true;}
+         public boolean invoke(UiState.Widget widget, UiState.Action action) { if(confirmation!=null&&!confirmation.allow(widget,action,System.nanoTime()))return false;actions++; acted = widget; this.action = action; return true; }
+         public void cancelSelection() { cancels++; }
++        public void leavePanel() { leaves++;cancelSelection(); }
+         public void cancelDialogue() { closes++; }
+     }
+     private static void press(UiControls ui, GamepadState input, int mask, long now)
+@@ -240,7 +241,8 @@ public class UiControlsTest
+         Fake game=new Fake();GamepadState input=new GamepadState();UiControls ui=new UiControls(game);
+         ControllerSettingsModel model=new ControllerSettingsModel(new ControllerSettingsModel.Store(){public String get(String key){return null;}public void set(String key,String value){}});
+         game.state=new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,model.snapshot(true));
+-        ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),1);assertTrue(ui.update(input,2));assertNotNull(ui.focus());
+-        press(ui,input,2,10);assertEquals(HomeTab.SETTINGS.ordinal(),ui.takeHomeBack());assertEquals(0,game.actions);
++        ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),1);assertTrue(ui.update(input,2));assertNotNull(ui.focus());assertEquals(0,game.leaves);
++        assertTrue(ui.update(input,3));assertNotNull(ui.focus());assertEquals(0,game.leaves);
++        press(ui,input,2,10);assertEquals(HomeTab.SETTINGS.ordinal(),ui.takeHomeBack());assertEquals(0,game.actions);assertEquals(1,game.leaves);
+     }
+ }

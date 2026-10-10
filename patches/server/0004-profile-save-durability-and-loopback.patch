@@ -1,0 +1,282 @@
+diff --git a/config/src/main/kotlin/world/gregs/config/Config.kt b/config/src/main/kotlin/world/gregs/config/Config.kt
+index 0c2fc4b..8f785c9 100644
+--- a/config/src/main/kotlin/world/gregs/config/Config.kt
++++ b/config/src/main/kotlin/world/gregs/config/Config.kt
+@@ -1,6 +1,10 @@
+ package world.gregs.config
+ 
+ import java.io.*
++import java.nio.channels.FileChannel
++import java.nio.file.Files
++import java.nio.file.StandardCopyOption
++import java.nio.file.StandardOpenOption
+ 
+ /**
+  * Methods for reading and writing toml configuration files
+@@ -31,6 +35,26 @@ object Config {
+         }
+     }
+ 
++    /** A failed write leaves the previous save intact; temporary files are not account TOMLs. */
++    fun atomicFileWriter(file: File, block: ConfigWriter.() -> Unit) {
++        val target = file.toPath().toAbsolutePath()
++        Files.createDirectories(target.parent)
++        val temporary = Files.createTempFile(target.parent, ".save-", ".tmp")
++        try {
++            FileOutputStream(temporary.toFile()).use { stream ->
++                val output = BufferedWriter(OutputStreamWriter(stream, Charsets.UTF_8))
++                block.invoke(output)
++                output.flush()
++                stream.fd.sync()
++            }
++            // Require atomic replacement rather than silently falling back to truncating writes.
++            Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
++            FileChannel.open(target.parent, StandardOpenOption.READ).use { it.force(true) }
++        } finally {
++            Files.deleteIfExists(temporary)
++        }
++    }
++
+     fun stringWriter(block: ConfigWriter.() -> Unit): String {
+         val stringWriter = StringWriter()
+         BufferedWriter(stringWriter).use { output ->
+diff --git a/config/src/test/kotlin/world/gregs/config/AtomicFileWriterTest.kt b/config/src/test/kotlin/world/gregs/config/AtomicFileWriterTest.kt
+new file mode 100644
+index 0000000..7180259
+--- /dev/null
++++ b/config/src/test/kotlin/world/gregs/config/AtomicFileWriterTest.kt
+@@ -0,0 +1,35 @@
++package world.gregs.config
++
++import org.junit.jupiter.api.Assertions.*
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.io.TempDir
++import org.junit.jupiter.api.assertThrows
++import java.nio.file.Path
++
++class AtomicFileWriterTest {
++    @TempDir lateinit var directory: Path
++
++    @Test
++    fun `failed serialization preserves existing bytes and cleans temporary files`() {
++        val save = directory.resolve("tester.toml").toFile()
++        save.writeText("previous valid save")
++        assertThrows<IllegalStateException> {
++            Config.atomicFileWriter(save) {
++                write("partially serialized save")
++                error("simulated serialization failure")
++            }
++        }
++        assertEquals("previous valid save", save.readText())
++        assertEquals(listOf("tester.toml"), directory.toFile().list()!!.toList())
++    }
++
++    @Test
++    fun `successful replacement is complete and creates missing parents`() {
++        val save = directory.resolve("nested/saves/tester.toml").toFile()
++        Config.atomicFileWriter(save) { writePair("name", "éclair") }
++        assertEquals("name = \"éclair\"\n", save.readText())
++        Config.atomicFileWriter(save) { writePair("name", "second") }
++        assertEquals("name = \"second\"\n", save.readText())
++        assertEquals(listOf("tester.toml"), save.parentFile.list()!!.toList())
++    }
++}
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/PlayerSave.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/PlayerSave.kt
+index eba62b7..f9ab8e6 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/data/PlayerSave.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/PlayerSave.kt
+@@ -58,7 +58,7 @@ data class PlayerSave(
+     )
+ 
+     fun save(file: File) {
+-        Config.fileWriter(file) {
++        Config.atomicFileWriter(file) {
+             writePair("accountName", name)
+             writePair("passwordHash", password)
+             writePair("experience", experience)
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/Settings.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/Settings.kt
+index b20d072..ad46d96 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/data/Settings.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/Settings.kt
+@@ -58,13 +58,18 @@ open class Settings {
+         private val logger = InlineLogger()
+ 
+         fun load(fileName: String = PROPERTY_FILE_NAME): Properties {
+-            val file = File("./$fileName")
+-            return if (file.exists()) {
+-                load(file.inputStream())
++            val file = File(fileName)
++            if (file.exists()) {
++                file.inputStream().use { load(it) }
+             } else {
+                 logger.debug { "Property file not found; defaulting to internal." }
+-                load(Settings::class.java.getResourceAsStream("/$fileName")!!)
++                requireNotNull(Settings::class.java.getResourceAsStream("/$fileName")) {
++                    "Settings file not found: $fileName"
++                }.use { load(it) }
+             }
++            // Profile ownership must survive administrator-triggered settings reloads.
++            properties.putAll(System.getenv())
++            return properties
+         }
+     }
+ }
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/data/SettingsTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/data/SettingsTest.kt
+index bad7944..8b2f34f 100644
+--- a/engine/src/test/kotlin/world/gregs/voidps/engine/data/SettingsTest.kt
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/data/SettingsTest.kt
+@@ -3,6 +3,8 @@ package world.gregs.voidps.engine.data
+ import org.junit.jupiter.api.Assertions.*
+ import org.junit.jupiter.api.BeforeEach
+ import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.io.TempDir
++import java.nio.file.Path
+ import org.junit.jupiter.api.assertThrows
+ 
+ class SettingsTest {
+@@ -58,5 +60,23 @@ class SettingsTest {
+         assertEquals(43594, settings["network.port", -1])
+     }
+ 
++    @TempDir lateinit var directory: Path
++
++    @Test
++    fun `environment ownership survives settings reload`() {
++        val file = directory.resolve("profile.properties").toFile()
++        val inherited = System.getenv("PATH") ?: return
++        file.writeText("PATH=unsafe-file-override\n")
++        try {
++            Settings.load(file.path)
++            assertEquals(inherited, Settings["PATH"])
++            file.writeText("PATH=another-unsafe-override\n")
++            Settings.load(file.path)
++            assertEquals(inherited, Settings["PATH"])
++        } finally {
++            Settings.clear()
++        }
++    }
++
+     private fun Settings.load(string: String) = load(string.byteInputStream(Charsets.UTF_8))
+ }
+diff --git a/game/src/main/kotlin/GameModules.kt b/game/src/main/kotlin/GameModules.kt
+index 530d1d7..65f2d30 100644
+--- a/game/src/main/kotlin/GameModules.kt
++++ b/game/src/main/kotlin/GameModules.kt
+@@ -61,7 +61,7 @@ fun gameModule(files: ConfigFiles) = module {
+         } else {
+             val saves = File(Settings["storage.players.path"])
+             if (!saves.exists()) {
+-                saves.mkdir()
++                check(saves.mkdirs()) { "Unable to create player storage: $saves" }
+             }
+             FileStorage(saves)
+         }
+diff --git a/game/src/main/kotlin/Main.kt b/game/src/main/kotlin/Main.kt
+index 06f0fb7..ead5fba 100644
+--- a/game/src/main/kotlin/Main.kt
++++ b/game/src/main/kotlin/Main.kt
+@@ -54,7 +54,7 @@ object Main {
+         val cache = timed("cache") { Cache.load(settings) }
+         server = GameServer.load(cache, settings)
+         val port = Settings["network.port"].toInt()
+-        val job = server.start(port)
++        val job = server.start(port, Settings["network.bind", "127.0.0.1"])
+         AuditLog.info("login online")
+ 
+         // Web server
+diff --git a/network/src/main/kotlin/world/gregs/voidps/network/GameServer.kt b/network/src/main/kotlin/world/gregs/voidps/network/GameServer.kt
+index 1419204..9f8bca8 100644
+--- a/network/src/main/kotlin/world/gregs/voidps/network/GameServer.kt
++++ b/network/src/main/kotlin/world/gregs/voidps/network/GameServer.kt
+@@ -24,17 +24,21 @@ class GameServer(
+     private var job: Job? = null
+     private var dispatcher: ExecutorCoroutineDispatcher? = null
+     private var server: ServerSocket? = null
++    private var selector: ActorSelectorManager? = null
+     var loginServer: Server? = null
++    val localAddress: SocketAddress? get() = server?.localAddress
+ 
+-    fun start(port: Int): Job {
++    fun start(port: Int, hostname: String = "127.0.0.1"): Job {
++        check(dispatcher == null) { "Server is already running." }
+         Runtime.getRuntime().addShutdownHook(thread(start = false) { stop() })
+         val executor = Executors.newCachedThreadPool()
+         val dispatcher = executor.asCoroutineDispatcher()
+         this.dispatcher = dispatcher
+         try {
+             val selector = ActorSelectorManager(dispatcher)
++            this.selector = selector
+             runBlocking {
+-                this@GameServer.server = aSocket(selector).tcp().bind(port = port)
++                this@GameServer.server = aSocket(selector).tcp().bind(hostname = hostname, port = port)
+             }
+         } catch (exception: Exception) {
+             stop()
+@@ -84,13 +88,14 @@ class GameServer(
+     }
+ 
+     fun stop() {
+-        if (job == null) {
+-            return
+-        }
+         job?.cancel()
+         job = null
+-        dispatcher?.close()
+         server?.close()
++        server = null
++        selector?.close()
++        selector = null
++        dispatcher?.close()
++        dispatcher = null
+         connections.clear()
+     }
+ 
+diff --git a/network/src/test/kotlin/world/gregs/voidps/network/GameServerTest.kt b/network/src/test/kotlin/world/gregs/voidps/network/GameServerTest.kt
+index 16f850d..431f6a0 100644
+--- a/network/src/test/kotlin/world/gregs/voidps/network/GameServerTest.kt
++++ b/network/src/test/kotlin/world/gregs/voidps/network/GameServerTest.kt
+@@ -1,6 +1,7 @@
+ package world.gregs.voidps.network
+ 
+ import io.ktor.util.network.*
++import io.ktor.network.sockets.toJavaAddress
+ import io.ktor.utils.io.*
+ import io.mockk.mockk
+ import io.mockk.spyk
+@@ -17,6 +18,8 @@ import world.gregs.voidps.network.login.protocol.writeByte
+ import java.io.BufferedReader
+ import java.io.InputStreamReader
+ import java.net.Socket
++import java.net.InetSocketAddress
++import java.net.ServerSocket
+ import java.util.*
+ 
+ internal class GameServerTest {
+@@ -169,6 +172,27 @@ internal class GameServerTest {
+         assertTrue(writeChannel.isClosedForRead)
+     }
+ 
++    @Test
++    fun `default listener is bound only to IPv4 loopback`() {
++        val job = server.start(0)
++        val address = server.localAddress!!.toJavaAddress() as InetSocketAddress
++        assertEquals("127.0.0.1", address.address.hostAddress)
++        assertTrue(address.port > 0)
++        assertTrue(job.isActive)
++        server.stop()
++        server.stop()
++        assertNull(server.localAddress)
++    }
++
++    @Test
++    fun `failed bind releases resources and allows clean first startup`() {
++        ServerSocket(0).use { occupied ->
++            assertThrows<Exception> { server.start(occupied.localPort) }
++        }
++        assertNull(server.localAddress)
++        assertTrue(server.start(0).isActive)
++    }
++
+     @AfterEach
+     fun shutdown() {
+         server.stop()

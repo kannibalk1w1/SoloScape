@@ -1,0 +1,46 @@
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerHints.java b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerHints.java
+index 9ae04ed..1e8d781 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerHints.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerHints.java
+@@ -5,7 +5,7 @@ import java.util.regex.*;
+ /** One-pass logical-to-physical labels; replacements cannot remap each other. */
+ public final class ControllerHints
+ {
+-    private static final Pattern TOKENS=Pattern.compile("\\b(A|B|X|Y|LB|RB|View|Start)\\b(?=[: /])");
++    private static final Pattern TOKENS=Pattern.compile("(?<![\\w-])(A|B|X|Y|LB|RB|View|Start)\\b(?=\\s*[:/])");
+     private ControllerHints(){}
+     public static String text(String text,ControllerGlyphs glyphs,ControllerButton... buttons)
+     {
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+index 0f10ef2..82cce6c 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+@@ -85,7 +85,7 @@ public final class SoloScapeUiOverlay extends Overlay
+             if (menu != null)
+             {
+                 int menuWidth = 160;
+-                for (UiState.Action action : menu.actions) menuWidth = Math.max(menuWidth, draw.getFontMetrics().stringWidth(hints.apply(action.label)) + 20);
++                for (UiState.Action action : menu.actions) menuWidth = Math.max(menuWidth, draw.getFontMetrics().stringWidth(action.label) + 20);
+                 menuWidth=Math.min(menuWidth,Math.max(100,canvasWidth-16));
+                 int rowHeight=draw.getFontMetrics().getHeight()+8;
+                 int shown=Math.max(1,Math.min(menu.actions.length,(canvasHeight-menuY-14)/rowHeight));
+@@ -96,7 +96,7 @@ public final class SoloScapeUiOverlay extends Overlay
+                     int row=i-start;
+                     if(i==ui.contextIndex()) {draw.setColor(new Color(110,90,35));draw.fillRect(10,menuY+3+row*rowHeight,menuWidth-4,rowHeight-1);}
+                     draw.setColor(i==ui.contextIndex()?new Color(255,220,95):Color.WHITE);
+-                    String label=hints.apply(menu.actions[i].label)+(row==0 && start>0?" ↑":row==shown-1 && start+shown<menu.actions.length?" ↓":"");
++                    String label=menu.actions[i].label+(row==0 && start>0?" ↑":row==shown-1 && start+shown<menu.actions.length?" ↓":"");
+                     draw.drawString(fit(draw,label,menuWidth-16),16,menuY+5+draw.getFontMetrics().getAscent()+row*rowHeight);
+                 }
+             }
+diff --git a/client/test/net/runelite/client/plugins/soloscapecontroller/ControllerHintsTest.java b/client/test/net/runelite/client/plugins/soloscapecontroller/ControllerHintsTest.java
+index c6fb555..de0c4fa 100644
+--- a/client/test/net/runelite/client/plugins/soloscapecontroller/ControllerHintsTest.java
++++ b/client/test/net/runelite/client/plugins/soloscapecontroller/ControllerHintsTest.java
+@@ -8,4 +8,6 @@ public class ControllerHintsTest
+     {assertEquals("[B]: use · [A]: back · RS click: actions · RB/LB: pane",ControllerHints.text("A: use · B: back · X: actions · LB/RB: pane",ControllerGlyphs.XBOX,swapped));}
+     @Test public void playstationPhysicalLabelsFollowBindings()
+     {assertEquals("Circle: use · Cross: back · R1/L1: pane",ControllerHints.text("A: use · B: back · LB/RB: pane",ControllerGlyphs.PLAYSTATION,swapped));}
++    @Test public void nativeActionLabelsAndItemNamesAreNotControllerTokens()
++    {assertEquals("[B]: Withdraw-X A new item · Make X · RS click / right click: actions",ControllerHints.text("A: Withdraw-X A new item · Make X · X / right click: actions",ControllerGlyphs.XBOX,swapped));}
+ }

@@ -1,0 +1,403 @@
+diff --git a/client/src/net/runelite/client/input/controller/MenuNavigation.java b/client/src/net/runelite/client/input/controller/MenuNavigation.java
+new file mode 100644
+index 0000000..2749656
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/MenuNavigation.java
+@@ -0,0 +1,24 @@
++package net.runelite.client.input.controller;
++
++import java.util.ArrayDeque;
++
++/** Parent identities only. Saved navigation must never retain dispatchable stale actions. */
++public final class MenuNavigation
++{
++    public static final class Parent
++    {
++        public final int tab,panel;
++        public final boolean inventory;
++        public Parent(int tab,int panel,boolean inventory){this.tab=tab;this.panel=panel;this.inventory=inventory;}
++    }
++    private final ArrayDeque<Parent> parents=new ArrayDeque<>();
++    private int home=-1,returnedHome=-1;
++    public void reset(){parents.clear();home=returnedHome=-1;}
++    public void fromHome(int tab){reset();home=tab;}
++    public void push(int tab,int panel,boolean inventory)
++    {if(parents.size()==16)parents.removeFirst();parents.addLast(new Parent(tab,panel,inventory));}
++    public Parent pop(){return parents.pollLast();}
++    public boolean hasParent(){return !parents.isEmpty();}
++    public void homeBack(){if(home>=0){returnedHome=home;home=-1;}parents.clear();}
++    public int takeHomeBack(){int tab=returnedHome;returnedHome=-1;return tab;}
++}
+diff --git a/client/src/net/runelite/client/input/controller/PanelControls.java b/client/src/net/runelite/client/input/controller/PanelControls.java
+index 6ec2eae..1261a8c 100644
+--- a/client/src/net/runelite/client/input/controller/PanelControls.java
++++ b/client/src/net/runelite/client/input/controller/PanelControls.java
+@@ -8,6 +8,10 @@ public final class PanelControls
+     private static final int A = 1, B = 2, X = 4, LB = 1 << 9, RB = 1 << 10;
+     private static final int DIRECTIONS = 15 << 11;
+     private final UiControls.Gateway gateway;
++    private final StickScroll stickScroll=new StickScroll();
++    private final java.util.Map<Integer,int[]> positions=new java.util.HashMap<>();
++    public void clearHistory(){positions.clear();}
++    private void remember(){if(state!=null&&focus!=null)positions.put(state.id,new int[]{pane,focus.id,focus.child});}
+     private UiState.Panel state;
+     private UiState.Widget focus, context;
+     private int pane, contextIndex, heldDirection;
+@@ -20,6 +24,7 @@ public final class PanelControls
+     public PanelControls(UiControls.Gateway gateway) { this.gateway = gateway; }
+     public void reset()
+     {
++        remember();stickScroll.reset();
+         state = null; focus = context = null; pane = contextIndex = heldDirection = 0;
+         armed = closing = exitRequested = selectionRequested = false; repeatAt = scrollFrame = closingUntil = 0; scrollAnchor = null;scrollSubject=null;
+     }
+@@ -27,6 +32,7 @@ public final class PanelControls
+     public int pane() { return pane; }
+     public boolean exitRequested() { return exitRequested; }
+     public boolean selectionRequested() { return selectionRequested; }
++    public boolean closing(){return closing;}
+     public boolean active() { return state != null; }
+     public UiState.Widget focus() { return focus; }
+     public UiState.Widget context() { return context; }
+@@ -37,7 +43,7 @@ public final class PanelControls
+         if (closing) return "Closing " + state.name + "…";
+         if (context != null) return "A: " + context.actions[contextIndex].label + " " + context.name + " · D-pad: quantity/action · B: back";
+         String label = focus == null ? "No visible items" : focus.actions.length==0 ? focus.name : "A: " + primary(focus).label + " " + focus.name + (focus.itemId >= 0 ? " ×" + focus.quantity : "");
+-        return state.name + " / " + state.panes[pane].name + " · " + label + " · X: actions · LB/RB: pane · D-pad: move/scroll · B: " + (state.modal ? "close" : "world");
++        return state.name + " / " + state.panes[pane].name + " · " + label + " · X: actions · LB/RB: pane · D-pad: move · RS: scroll · B: " + (state.modal ? "close" : "world");
+     }
+     public boolean update(UiState.Panel snapshot, GamepadState input, long now)
+     {
+@@ -45,6 +51,8 @@ public final class PanelControls
+         if (state == null || state.id != snapshot.id)
+         {
+             reset(); state = snapshot;
++            int[] saved=positions.get(snapshot.id);
++            if(saved!=null){pane=Math.min(saved[0],snapshot.panes.length-1);for(UiState.Widget widget:snapshot.panes[pane].widgets)if(widget.id==saved[1]&&widget.child==saved[2]){focus=widget;break;}}
+             gateway.cancelSelection();
+         }
+         state = snapshot;
+@@ -98,6 +106,8 @@ public final class PanelControls
+             focus = state.panes[pane].widgets.length == 0 ? null : state.panes[pane].widgets[0];
+             heldDirection = 0; scrollAnchor = null;scrollSubject=null;
+         }
++        int stickDirection=stickScroll.update(input.rightX,input.rightY,now);
++        if(context==null && stickDirection!=0){mouseScroll(stickDirection);return true;}
+         int direction = direction(input, now);
+         if (context != null)
+         {
+diff --git a/client/src/net/runelite/client/input/controller/StickScroll.java b/client/src/net/runelite/client/input/controller/StickScroll.java
+new file mode 100644
+index 0000000..d982585
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/StickScroll.java
+@@ -0,0 +1,22 @@
++package net.runelite.client.input.controller;
++
++/** Menu-local vertical scrolling, bounded repeat with no catch-up after an interruption. */
++public final class StickScroll
++{
++    private boolean armed;
++    private int held;
++    private long next;
++    public void reset(){armed=false;held=0;next=0;}
++    public int update(float x,float y,long now)
++    {
++        if(!Float.isFinite(x)||!Float.isFinite(y)){reset();return 0;}
++        if(Math.hypot(x,y)<.25){armed=true;held=0;next=0;return 0;}
++        if(!armed || Math.abs(y)<.3 || Math.abs(y)<Math.abs(x))return 0;
++        int direction=y<0?11:12;
++        if(direction!=held){held=direction;next=0;}
++        if(now<next)return 0;
++        double amount=Math.min(1,(Math.abs(y)-.3)/.7);
++        next=now+(long)((350-270*amount)*1_000_000);
++        return direction;
++    }
++}
+diff --git a/client/src/net/runelite/client/input/controller/TabRadialControls.java b/client/src/net/runelite/client/input/controller/TabRadialControls.java
+index 94da1ca..6795480 100644
+--- a/client/src/net/runelite/client/input/controller/TabRadialControls.java
++++ b/client/src/net/runelite/client/input/controller/TabRadialControls.java
+@@ -31,6 +31,13 @@ public final class TabRadialControls
+         selected = available = 0; refreshAt = 0; message = null;
+     }
+ 
++    public boolean returnTo(int index,long now)
++    {
++        available=gateway.availableTabs();if(available==0)return false;
++        selected=Math.floorMod(index,COUNT);active=true;armed=false;stickArmed=false;openingArmed=true;
++        refreshAt=now+100_000_000L;message=null;return true;
++    }
++
+     public boolean update(GamepadState input, long now)
+     {
+         if (!openingArmed)
+diff --git a/client/src/net/runelite/client/input/controller/UiControls.java b/client/src/net/runelite/client/input/controller/UiControls.java
+index 00f6696..7a224a2 100644
+--- a/client/src/net/runelite/client/input/controller/UiControls.java
++++ b/client/src/net/runelite/client/input/controller/UiControls.java
+@@ -8,6 +8,7 @@ public final class UiControls
+         UiState snapshot();
+         default UiState snapshot(boolean inventory) { return snapshot(); }
+         boolean openInventory();
++        default boolean openTab(int index){return false;}
+         default int selectionMask() { return 0; }
+         default boolean openTargetInventory() { return false; }
+         boolean invoke(UiState.Widget widget, UiState.Action action);
+@@ -24,6 +25,10 @@ public final class UiControls
+     private final Gateway gateway;
+     private final PanelControls panel;
+     private final EntryControls entry;
++    private final MenuNavigation navigation=new MenuNavigation();
++    private int closingChild=-1;
++    public int takeHomeBack(){return navigation.takeHomeBack();}
++    public void focusHomeTab(int index,long now){focusTab(index,now);navigation.fromHome(index);}
+     private boolean inventory, armed;
+     private long openingUntil, repeatAt;
+     private int focusedTab = -1;
+@@ -39,6 +44,7 @@ public final class UiControls
+     public UiControls(Gateway gateway) { this.gateway = gateway; this.panel = new PanelControls(gateway); this.entry = new EntryControls(gateway); }
+     public void reset()
+     {
++        navigation.reset();closingChild=-1;
+         panel.reset(); entry.reset(); focusedTab = -1; tabOpeningUntil = 0;
+         inventory = false; armed = false; openingUntil = repeatAt = 0;
+         slot = choice = heldDirection = 0; dialogueId = -1; context = null; state = UiState.EMPTY;
+@@ -147,10 +153,29 @@ public final class UiControls
+             if (dialogueId >= 0) { inventory = false; focusedTab = -1; }
+         }
+         boolean wasPanel = panel.active();
++        UiState.Panel previousPanel=panel.state();
++        if(closingChild>=0 && (state.panel==null || state.panel.id!=closingChild))
++        {
++            MenuNavigation.Parent parent=navigation.pop();closingChild=-1;
++            if(parent!=null)
++            {
++                panel.reset();focusedTab=parent.tab;inventory=parent.inventory;armed=false;context=null;
++                if(parent.inventory)gateway.openInventory();
++                else if(parent.tab>=0 && (state.panel==null || !state.panel.modal))gateway.openTab(parent.tab);
++                tabOpeningUntil=now+1_000_000_000L;
++                return true;
++            }
++        }
++        if(state.panel!=null && state.panel.modal && (previousPanel==null || previousPanel.id!=state.panel.id))
++        {
++            if(previousPanel!=null)navigation.push(focusedTab,previousPanel.id,inventory);
++            else if(inventory)navigation.push(-1,-1,true);
++        }
+         if (!inDialogue() && panel.update(state.panel != null && (state.panel.modal || matchesTab(state.panel)) ? state.panel : null, input, now))
+         {
+             inventory = false; context = null; armed = false;
+-            if (panel.exitRequested()) { focusedTab = -1; panel.reset(); gateway.cancelSelection(); }
++            if(panel.closing() && navigation.hasParent())closingChild=state.panel.id;
++            if (panel.exitRequested()) { navigation.homeBack();focusedTab = -1; panel.reset(); gateway.cancelSelection(); }
+             else if (panel.selectionRequested())
+             {
+                 focusedTab = -1; panel.reset();
+@@ -245,7 +270,7 @@ public final class UiControls
+ 
+     private void leave()
+     {
+-        inventory = false; context = null; armed = false; gateway.cancelSelection();
++        navigation.homeBack();inventory = false; context = null; armed = false; gateway.cancelSelection();
+         heldDirection = 0; repeatAt = 0;
+     }
+     private int direction(GamepadState input, long now)
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index 3e42c11..2492519 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -119,6 +119,7 @@ public class SoloScapeControllerPlugin extends Plugin
+         public UiState snapshot() { return presented(client.getControllerUiState()); }
+         public UiState snapshot(boolean inventory) { return presented(client.getControllerUiState(inventory)); }
+         public boolean openInventory() { return client.openControllerInventory(); }
++        public boolean openTab(int index){return client.openControllerTab(index);}
+         public int selectionMask() { return client.getControllerSelectionMask(); }
+         public boolean openTargetInventory() { return client.openControllerTargetInventory(); }
+         public boolean invoke(UiState.Widget widget, UiState.Action action) { return invokeUi(widget, action); }
+@@ -148,7 +149,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 	private final GamepadState state = new GamepadState();
+     private final GamepadState rawState=new GamepadState();
+     private net.runelite.client.input.controller.ActionMap actionMap;
+-    private boolean mappingArmed;
++    private boolean mappingArmed,cameraArmed;
+     private ControllerPreset appliedPreset;
+ 	private SdlGamepad gamepad;
+ 	private boolean failed;
+@@ -208,7 +209,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 		active = false;
+ 		client.setControllerCameraInput(0, 0);
+ 		resetWorld();
+-		state.clear();rawState.clear();mappingArmed=false;actionMap=null;
++		state.clear();rawState.clear();mappingArmed=false;cameraArmed=false;actionMap=null;
+ 		ui.reset();
+         radial.reset(); quick.reset();
+         radialFocusTab = -1;confirmation.clear();panelFeedback=null;panelFeedbackUntil=0;
+@@ -277,7 +278,7 @@ public class SoloScapeControllerPlugin extends Plugin
+             long tickNow=System.nanoTime();
+             client.updateControllerConnection();
+             if(lastInputTick!=0 && tickNow-lastInputTick>750_000_000L)
+-            {mappingArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();confirmation.clear();}
++            {mappingArmed=false;cameraArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();confirmation.clear();}
+             lastInputTick=tickNow;
+             applyPreset();
+             net.runelite.client.input.controller.ActionMap nextMap=new net.runelite.client.input.controller.ActionMap(
+@@ -285,7 +286,7 @@ public class SoloScapeControllerPlugin extends Plugin
+                 config.previousButton().mask,config.nextButton().mask,config.inventoryButton().mask,
+                 config.homeButton().mask,config.quickButton().mask);
+             boolean changed=!nextMap.same(actionMap);
+-            if(changed){actionMap=nextMap;mappingArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();confirmation.clear();}
++            if(changed){actionMap=nextMap;mappingArmed=false;cameraArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();confirmation.clear();}
+             bindingWarning=actionMap.valid()?null:"Controller bindings overlap. Choose distinct buttons or reset plugin settings.";
+             if(!actionMap.valid()){client.setControllerCameraInput(0,0);return;}
+             if(!mappingArmed)
+@@ -300,8 +301,8 @@ public class SoloScapeControllerPlugin extends Plugin
+             Canvas canvas = client.getCanvas();
+             if (!state.connected || canvas == null || !canvas.isFocusOwner() || !client.hasLocalPlayer())
+             {
+-                client.setControllerCameraInput(0, 0);
+-                resetWorld(); ui.reset(); radial.reset(); quick.reset(); radialFocusTab = -1;mappingArmed=false;
++                client.setControllerCameraInput(0, 0);cameraArmed=false;
++                resetWorld(); ui.reset(); radial.reset(); quick.reset(); radialFocusTab = -1;mappingArmed=false;cameraArmed=false;
+                 return;
+             }
+             client.prepareControllerUi();
+@@ -319,7 +320,7 @@ public class SoloScapeControllerPlugin extends Plugin
+                 UiState.Action action=focused==null || focused.actions.length==0?null:focused.actions[Math.min(ui.context()!=null?ui.contextIndex():0,focused.actions.length-1)];
+                 if (quick.update(state,now,focused,action))
+                 {
+-                    client.setControllerCameraInput(0,0);resetWorld();
++                    client.setControllerCameraInput(0,0);cameraArmed=false;resetWorld();
+                     // Keep the captured focus while assigning, discard it on exit.
+                     if (!quick.active())
+                     {
+@@ -332,11 +333,11 @@ public class SoloScapeControllerPlugin extends Plugin
+             if (!config.tabRadial() || conflict) radial.reset();
+             if (!conflict && config.tabRadial() && radial.update(state, now))
+             {
+-                client.setControllerCameraInput(0, 0);
++                client.setControllerCameraInput(0, 0);cameraArmed=false;
+                 resetWorld(); ui.reset();
+                 if (radialFocusTab >= 0)
+                 {
+-                    if (config.interfaceControls() || radialFocusTab == HomeTab.INVENTORY.ordinal()) ui.focusTab(radialFocusTab,now);
++                    if (config.interfaceControls() || radialFocusTab == HomeTab.INVENTORY.ordinal()) ui.focusHomeTab(radialFocusTab,now);
+                     radialFocusTab = -1;
+                 }
+                 return;
+@@ -344,8 +345,13 @@ public class SoloScapeControllerPlugin extends Plugin
+             float scale = StickMath.deadzoneScale(state.rightX, state.rightY, config.deadzone() / 100f);
+             float yaw = state.rightX * scale;
+             float pitch = state.rightY * scale * (config.invertY() ? 1 : -1);
+-            client.setControllerCameraInput(yaw * config.yawSpeed(), pitch * config.pitchSpeed());
+-            if (ui.update(state, now)) { client.setControllerCameraInput(0, 0); resetWorld(); }
++            if(Math.hypot(state.rightX,state.rightY)<=config.deadzone()/100f)cameraArmed=true;
++            client.setControllerCameraInput(cameraArmed?yaw * config.yawSpeed():0,cameraArmed?pitch * config.pitchSpeed():0);
++            if (ui.update(state, now))
++            {
++                client.setControllerCameraInput(0, 0);resetWorld();cameraArmed=false;
++                int parent=ui.takeHomeBack();if(parent>=0)radial.returnTo(parent,now);
++            }
+             else
+             {
+                 if (!client.isControllerWorldReady()) client.clearControllerWalkMarker();
+diff --git a/client/test/net/runelite/client/input/controller/PanelControlsTest.java b/client/test/net/runelite/client/input/controller/PanelControlsTest.java
+index dbd47c1..e6218ee 100644
+--- a/client/test/net/runelite/client/input/controller/PanelControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/PanelControlsTest.java
+@@ -90,6 +90,16 @@ public class PanelControlsTest
+         input.updateButtons(0); ui.update(next,input,100_000_000); assertEquals(1,ui.focus().child);
+         press(ui,next,input,1,200_000_000); ui.update(next,input,300_000_000); assertEquals(1,game.invoked);
+     }
++    @Test public void rightStickScrollsNativeEdgesAfterNeutralAndNeverInvokesItem()
++    {
++        Fake game=new Fake();PanelControls ui=new PanelControls(game);GamepadState input=new GamepadState();
++        UiState.Panel state=shop(item(620<<16|25,0,100,100,10,"Buy 1"));
++        input.rightY=1;ui.update(state,input,1);assertEquals(0,game.scrolled);
++        input.rightY=0;ui.update(state,input,2);input.rightY=1;ui.update(state,input,3);assertEquals(1,game.scrolled);
++        ui.update(state,input,100_000_003);assertEquals(2,game.scrolled);assertEquals(0,game.invoked);
++        input.rightY=0;press(ui,state,input,4,200_000_000);input.rightY=1;ui.update(state,input,300_000_000);assertEquals(2,game.scrolled);
++    }
++
+     @Test public void readOnlyDetailsAreNavigableWithoutInvokingAnInventedAction()
+     {
+         Fake game=new Fake();PanelControls ui=new PanelControls(game);GamepadState input=new GamepadState();
+diff --git a/client/test/net/runelite/client/input/controller/StickScrollTest.java b/client/test/net/runelite/client/input/controller/StickScrollTest.java
+new file mode 100644
+index 0000000..8633ac7
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/StickScrollTest.java
+@@ -0,0 +1,21 @@
++package net.runelite.client.input.controller;
++import org.junit.Test;
++import static org.junit.Assert.*;
++public class StickScrollTest
++{
++    @Test public void heldOpeningStickRequiresNeutralAndOnlyVerticalIntentScrolls()
++    {
++        StickScroll scroll=new StickScroll();assertEquals(0,scroll.update(0,1,1));
++        assertEquals(0,scroll.update(0,0,2));assertEquals(0,scroll.update(1,.5f,3));
++        assertEquals(12,scroll.update(0,1,4));assertEquals(0,scroll.update(0,1,5));
++        assertEquals(11,scroll.update(0,-1,6));
++    }
++    @Test public void strongerTiltRepeatsFasterAndLongGapsNeverReplayBurst()
++    {
++        StickScroll slow=new StickScroll(),fast=new StickScroll();slow.update(0,0,0);fast.update(0,0,0);
++        assertEquals(12,slow.update(0,.4f,1));assertEquals(12,fast.update(0,1,1));
++        assertEquals(0,slow.update(0,.4f,100_000_001));assertEquals(12,fast.update(0,1,100_000_001));
++        assertEquals(12,fast.update(0,1,10_000_000_000L));assertEquals(0,fast.update(0,1,10_000_000_001L));
++        fast.reset();assertEquals(0,fast.update(0,1,20_000_000_000L));
++    }
++}
+diff --git a/client/test/net/runelite/client/input/controller/UiControlsTest.java b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+index 027d963..0ef17ff 100644
+--- a/client/test/net/runelite/client/input/controller/UiControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+@@ -14,7 +14,7 @@ public class UiControlsTest
+     private static final class Fake implements UiControls.Gateway
+     {
+         UiState state;
+-        int opens, actions, cancels, closes;
++        int opens, actions, cancels, closes, openedTab=-1;
+         boolean inventoryRequested;
+         PanelConfirmation confirmation;
+         UiState.Widget acted;
+@@ -28,6 +28,7 @@ public class UiControlsTest
+         public UiState snapshot() { return state; }
+         public UiState snapshot(boolean inventory) { inventoryRequested = inventory; return state; }
+         public boolean openInventory() { opens++; return true; }
++        public boolean openTab(int index){openedTab=index;return true;}
+         public boolean invoke(UiState.Widget widget, UiState.Action action) { if(confirmation!=null&&!confirmation.allow(widget,action,System.nanoTime()))return false;actions++; acted = widget; this.action = action; return true; }
+         public void cancelSelection() { cancels++; }
+         public void cancelDialogue() { closes++; }
+@@ -59,6 +60,30 @@ public class UiControlsTest
+         press(ui,input,1,30);assertEquals(1,game.actions);assertEquals("Drop",game.action.label);
+     }
+ 
++    @Test public void settingsChildBackRestoresParentFocusThenReturnsToHomeWheel()
++    {
++        Fake game=new Fake();GamepadState input=new GamepadState();UiControls ui=new UiControls(game);
++        UiState.Widget first=new UiState.Widget(261<<16|1,-1,-1,0,"Graphics",new Rectangle(100,100,30,30),new UiState.Action[]{new UiState.Action("Open",18,1)});
++        UiState.Widget second=new UiState.Widget(261<<16|2,-1,-1,0,"Audio",new Rectangle(100,145,30,30),first.actions);
++        UiState.Panel parent=new UiState.Panel(261,1,"Settings",new UiState.Pane[]{new UiState.Pane("Options",new UiState.Widget[]{first,second})},false);
++        game.state=new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,parent);
++        ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),1);ui.update(input,2);press(ui,input,1<<12,10);assertEquals(second.id,ui.focus().id);
++        UiState.Panel child=new UiState.Panel(742,"Graphics",new UiState.Pane[]{new UiState.Pane("Options",new UiState.Widget[]{first})});
++        game.state=new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,child);
++        input.updateButtons(0);ui.update(input,20);press(ui,input,2,30);assertEquals(1,game.closes);assertEquals(-1,ui.takeHomeBack());
++        game.state=UiState.EMPTY;ui.update(input,40);assertEquals(HomeTab.SETTINGS.ordinal(),game.openedTab);
++        game.state=new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,parent);
++        input.updateButtons(0);ui.update(input,50);assertEquals(second.id,ui.focus().id);
++        press(ui,input,2,60);assertEquals(HomeTab.SETTINGS.ordinal(),ui.takeHomeBack());assertEquals(-1,ui.takeHomeBack());
++    }
++    @Test public void inventoryOpenedFromHomeReturnsToHomeAndDirectInventoryDoesNot()
++    {
++        Fake game=new Fake();GamepadState input=new GamepadState();UiControls ui=new UiControls(game);
++        ui.focusHomeTab(HomeTab.INVENTORY.ordinal(),1);ui.update(input,2);press(ui,input,2,10);
++        assertEquals(HomeTab.INVENTORY.ordinal(),ui.takeHomeBack());
++        ui.focusInventory(20);input.updateButtons(0);ui.update(input,21);press(ui,input,2,30);assertEquals(-1,ui.takeHomeBack());
++    }
++
+     @Test public void inventoryDescriptionsAreRequestedOnlyForEntryAndFocusIncludingRadialHandoff()
+     {
+         Fake game = new Fake(); GamepadState input = new GamepadState();

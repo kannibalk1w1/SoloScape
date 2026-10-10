@@ -1,0 +1,74 @@
+diff --git a/client/src/ControllerSpellDetails.java b/client/src/ControllerSpellDetails.java
+new file mode 100644
+index 0000000..8e79cac
+--- /dev/null
++++ b/client/src/ControllerSpellDetails.java
+@@ -0,0 +1,26 @@
++import java.util.function.IntFunction;
++
++/** Cache information array uses the same level/rune fields as server SpellRunes. */
++final class ControllerSpellDetails {
++ static final class Detail {final int level;final String text;Detail(int level,String text){this.level=level;this.text=text;}}
++ static Detail read(Object[] information,IntFunction<String> name){
++  if(information==null||information.length<16||!(information[5] instanceof Integer))return null;
++  int level=(Integer)information[5];if(level<0||level>120)return null;
++  StringBuilder text=new StringBuilder("Requires Magic level ").append(level);
++  boolean runes=false;
++  for(int i=8;i<=14;i+=2){
++   if(!(information[i] instanceof Integer)||!(information[i+1] instanceof Integer))return null;
++   int id=(Integer)information[i],amount=(Integer)information[i+1];
++   if(id==-1||amount<=0)break;if(id<0||amount>1000000)return null;
++   String label=name.apply(id);if(label==null||label.isEmpty())label="Item "+id;
++   text.append('\n').append(label).append(" ×").append(amount);runes=true;
++  }
++  if(runes)text.append("\nStaves and other equipment may supply required runes.");
++  return new Detail(level,text.toString());
++ }
++ static String itemName(int id){
++  if(Exception_Sub1.aClass255_112==null)return "Item "+id;
++  ObjType definition=Exception_Sub1.aClass255_112.getItemDefinitions(-115,id);
++  return definition==null?"Item "+id:ControllerPanelDetails.plain(definition.name);
++ }
++}
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+index 883f2af..111300d 100644
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -267,6 +267,12 @@ final class ControllerUi
+         ControllerAdventureDetails.Detail adventure=ControllerAdventureDetails.describe(group,w.anInt830&65535,w.anInt704,
+             variables==null?null:variables.anIntArray5063);
+         if(adventure!=null){if(!adventure.name.isEmpty())name=adventure.name;detail=adventure.detail;status=adventure.status;}
++        if(adventure!=null&&(group==192||group==193||group==430)){
++            ControllerSpellDetails.Detail requirements=ControllerSpellDetails.read(w.anObjectArray815,ControllerSpellDetails::itemName);
++            if(requirements!=null){detail=requirements.text;
++                if(Class161.anIntArray2145!=null&&Class161.anIntArray2145.length>6&&Class161.anIntArray2145[6]<requirements.level)status="Magic level too low";
++            }
++        }
+         if(group==190 && w.anInt704>=0)status=ControllerPanelDetails.status(w.aString792,w.anInt749);
+         if(group==275 || group==499 || group==741) {
+             name=ControllerPanelDetails.plain(w.aString792);detail=name;status=ControllerPanelDetails.status(w.aString792,-1);
+diff --git a/client/test/ControllerSpellDetailsTest.java b/client/test/ControllerSpellDetailsTest.java
+new file mode 100644
+index 0000000..efd1fee
+--- /dev/null
++++ b/client/test/ControllerSpellDetailsTest.java
+@@ -0,0 +1,19 @@
++import org.junit.Test;
++import static org.junit.Assert.*;
++public class ControllerSpellDetailsTest {
++ private Object[] spell(){Object[] information=new Object[16];information[5]=1;information[8]=556;information[9]=1;information[10]=558;information[11]=1;information[12]=-1;information[13]=0;return information;}
++ @Test public void levelAndRunesUseServerInformationPositionsWithoutChangingCache(){
++  Object[] information=spell();ControllerSpellDetails.Detail result=ControllerSpellDetails.read(information,id->id==556?"Air rune":"Mind rune");
++  assertEquals(1,result.level);assertTrue(result.text.contains("Air rune ×1"));assertTrue(result.text.contains("Mind rune ×1"));assertTrue(result.text.contains("Staves"));assertEquals(556,information[8]);
++ }
++ @Test public void malformedOrMissingInformationDoesNotInventRequirements(){
++  assertNull(ControllerSpellDetails.read(null,id->""));assertNull(ControllerSpellDetails.read(new Object[5],id->""));
++  Object[] information=spell();information[5]="1";assertNull(ControllerSpellDetails.read(information,id->""));
++  information=spell();information[10]="Not a rune ID";assertNull(ControllerSpellDetails.read(information,id->""));
++ }
++ @Test public void noRuneHomeSpellAndMissingNamesRemainReadable(){
++  Object[] information=spell();information[5]=0;information[8]=-1;
++  assertEquals("Requires Magic level 0",ControllerSpellDetails.read(information,id->null).text);
++  assertTrue(ControllerSpellDetails.read(spell(),id->null).text.contains("Item 556 ×1"));
++ }
++}

@@ -1,0 +1,16 @@
+diff --git a/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt b/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt
+index 825fec4..ec8b57c 100644
+--- a/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt
++++ b/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt
+@@ -44,6 +44,11 @@ class PlayerCommands(
+ ) : Script {
+ 
+     init {
++        playerCommand("soloscape_capabilities", stringArg("nonce"), desc = "Negotiate SoloScape controller capabilities") { args ->
++            val nonce = args.singleOrNull() ?: return@playerCommand
++            if (nonce.matches(Regex("[a-f0-9]{32}"))) message("SOLOSCAPE|1|$nonce|direct,cancel", ChatType.Game)
++        }
++
+         modCommand("save", desc = "Save all players") {
+             Players.forEach(saveQueue::save)
+             exchange.save()

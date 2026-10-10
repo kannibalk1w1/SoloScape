@@ -194,3 +194,68 @@ restart. Follow `STEAM_DECK_TEST_CHECKLIST.md` for the real game roundtrip.
   archive, extraction path and client/server download distinction. Upstream README
   link was checked through GitHub's API. Public contribution policy preserves
   maintainer control; no original-material licence grant was inferred.
+
+
+## Overnight reliability checkpoint (2026-10-08)
+
+Client patch 0010 implements the reliability changes described in `MORNING_REPORT.md` and `PROTOCOL_EXTENSIONS.md`. Client test/build: 76 cases, zero failures/errors, one SDL skip. Root tooling: 11 cases pass. Fresh, upgrade, reverse and repeated patch application reproduce all 41 affected client files. Claude found no blockers; minor follow-ups were applied. Direct movement now requires both Direct movement and SoloScape server features settings. Automatic remote capability negotiation and physical gameplay acceptance remain pending.
+
+
+## Completed overnight controller sprint (2026-10-08)
+
+Implementation commits: `daf577c`, `40cc0a0`, `237e5be`, `bb1aca0`. Final client test/Shadow build passes: **100 cases, zero failures/errors, one SDL virtual-device skip**. Root tooling: **14 cases**, ShellCheck and Python compilation pass. Server source/jar was unchanged by this client sprint; existing server evidence remains **247 network + 61 selected engine** passing cases.
+
+The complete modified trees match reproduced patches: **53 client / 14 server files**. Fresh application, upgrades, reverse application and repeated application pass; real patch helpers are idempotent. Whole-tree export verification additionally detects omitted tracked/new files and changed contents. Patch 0013 includes the entry observer, render-frame and selection hooks, completing the exported native paths.
+
+Native widget/pane tests cover bank/shop grids, permissions, quantities, scroll bounds, item replacement, close retry and radial handoff. Entry checks cover native edit/Enter/Escape argument shapes, explicit one-shot bank search, hidden/replaced prompts and overflow. Selection tests cover source identity/permissions/quantity, re-selection tokens, inventory tab preservation, ineligible item targets and an actual native spell-on-NPC packet (opcode 61, source group/component, child/item and NPC fields matched to the pinned decoder).
+
+Three bounded Claude reviews are retained; identified medium bank close/recovery and minor redraw/search/test improvements were fixed. Bank and keyboard overlays were inspected at 765×503 and 1280×800 on plain backgrounds. No real session was launched/stopped, no cache/saves changed and no physical acceptance or fresh native SDL run is claimed. See `MORNING_REPORT.md` for remaining checks.
+
+## Second autonomous controller sprint — 2026-10-08
+
+Patch `0014-quick-actions-production-and-controller-usability.patch` adds the separate eight-slot wheel, explicit native quick-action assignments, production amount presets and common modal screens, additional home-tab focus, server-authoritative attack/spell approach selection, auxiliary button settings, glyph labels, scaled overlays and the optional in-client guide.
+
+Final client test/Shadow build: **121 cases, zero failures/errors, one SDL virtual-device skip**. The 21 additional cases exercise quick-slot assignment/serialization/type checks, potion family and dose selection, unavailable/cancel/timeout behavior, held-input guards, native smithing sibling packet dispatch, permission/hidden/replaced widgets, paired jewellery names, production recipe/amount separation, additional tabs and obstacle targets. Root tooling: **14 cases pass**. Complete patch reproduction matches **59 client / 14 server files**, including upgrades, fresh application, reversal and repeat application. Server code and its previously verified jar remain unchanged (247 network + 61 selected engine cases are existing evidence).
+
+Actual Claude performed a bounded planning audit, implementation review and fix follow-up. Its medium finding about unspecified food/potion consumption is fixed: every quick slot starts empty. Bindings retain native type/operation; assigned potion families prefer their lowest dose. Partial-food ID changes deliberately fail closed. The follow-up reports no remaining blockers. Read the three `CLAUDE_SECOND_SPRINT_*.md` records for the review scope and remaining physical checks.
+
+Quick-wheel and keyboard renderer previews were inspected at 765×503 and 1280×800, including 100% and 150% scaling. Published images are plain-background renderer artifacts, not game screenshots. No game process was started/stopped and no cache/player/save files were modified. Physical controller, production cache/CS2 op availability, native modal closing, real save persistence, Deck performance and suspend behavior remain unaccepted.
+
+Second-sprint implementation `c8a7031` is pushed; [GitHub Tooling checks](https://github.com/kannibalk1w1/SoloScape/actions/runs/37832832337) pass. Public main was verified unchanged at `07e789b`. The local build stamp was updated only after final test/build and exact export verification; no processes were launched.
+
+## Console alpha completion checkpoint
+
+Client 139 cases (one optional SDL skip), root tooling 37, config 74, networking 249, selected engine 49 and one full isolated native progression route pass. Client/server shadow jars and complete patch stacks match across 78/28 source files. Private New→Continue verifies native rendered login, current-session capabilities, normal shutdown/save, field preservation and four verified backups while original mutable path fingerprints remain unchanged. Python compile, shellcheck and git whitespace checks pass. See MORNING_REPORT.md and ALPHA_SAVE_VALIDATION.md for scope and physical acceptance limits.
+
+
+## Cohesive session checkpoint — 9 October 2026
+
+Client: 151 cases, no failures/errors, one existing optional SDL skip. Root: 44 cases pass. Selected game: 11 pass (seven existing shops, prior alpha progression, combined quest/commerce/gather/production/bank/combat/save, transient shared stock and actual Lumbridge walking). Client/server shadow builds and full 87/31-file patch reproduction pass. Prior alpha config/network/engine results above are historical, not newly rerun.
+
+Native isolated graphical New/Continue reaches rendered world and verified capabilities, preserves save/load fields and produces four completed-session backups. An observed cancellation before world readiness preserves every saved-world file. Original mutable paths' size/mtime fingerprints remain unchanged. Prepare refuses while that private session is live and succeeds afterward. New/Continue total-session times: 27.407/25.532 seconds (Xvfb/software, includes waits/shutdown; no FPS/latency claim). Python compilation, ShellCheck and whitespace checks pass.
+
+Actual Claude static reviews and follow-up find no remaining blockers after child-parent ownership, native-label, build-lock and startup fixes. Physical controller/Deck, complete real-map quest travel and exhaustive startup cancellation remain unclaimed. See MORNING_REPORT.md, CONSOLE_SESSION_ACCEPTANCE.md and CLAUDE_SESSION_FOLLOWUP.md.
+
+
+## 9 October controller-first adventure checkpoint
+
+Latest: 172 client cases (zero failures/errors, one existing optional SDL skip), 47 root tooling/profile/lifecycle/socket cases and 18 selected game cases pass. Two strengthened actual-map save cases reran within the same selected slice. Matched shadow jars and stamp verify; complete exported stacks reproduce 98 client and 32 server files. See [native adventure validation](ADVENTURE_NATIVE_VALIDATION.md), [route audit](ADVENTURE_ROUTE_AUDIT.md), [task status](ADVENTURE_SPRINT_TASKS.md) and [combined report](MORNING_REPORT.md). Historical counts above remain evidence for their original checkpoints, not newly rerun claims. Hardware acceptance is separate.
+
+## 10 October controller journeys/recovery checkpoint
+
+176 client cases (zero errors/failures, one optional SDL skip), 62 root cases and 20 selected game cases pass. Full actual-map Cook/Rune routes include native rewards and save/load; no production collision/content rule changes. Exact exported stacks match 99 client/33 server files; shadow builds and matched stamp verify. Actual Swing character-entry/backend, real owned-server pidfd recovery and repeated graphical New/Continue pass. Four completed-session backups, native save/reload, fresh relog capabilities and pre-ready cancellation preserving the entire saved world are verified; original mutable-path size/mtime fingerprints remain unchanged. Actual Claude completed four bounded static reviews and findings were repaired. See [journeys validation](CONTROLLER_JOURNEYS_VALIDATION.md) and [combined report](MORNING_REPORT.md). Hardware, native orphan-client and exhaustive content/crash coverage remain separate.
+
+## Real Steam Deck and launcher keyboard checkpoint (2026-10-10)
+
+Actual SteamOS Desktop private deployment, SDL detection, native New/Continue/adventure/settings/save/cancel and native two-JVM ownership recovery pass. 78 root cases pass on host and Deck. Windowed software-renderer intervals/resources are observations, with host-wide sensors and no battery-life claim. After physical owner feedback, launcher patch 0029 adds exclusive Steam/local keyboard modes, neutral rearm and desktop/controller navigation choice; 179 fresh client cases pass (one optional SDL skip) and 100 client/33 server files reproduce. Native Swing local/system-mode probes pass. See [Deck evidence](DECK_VALIDATION.md), [setup](DECK_SETUP.md), [Claude keyboard review](CLAUDE_DECK_KEYBOARD_REVIEW.md) and [combined report](MORNING_REPORT.md). Physical keyboard behavior, Gaming Mode and the requested in-game ownership extension remain open.
+
+
+## In-game text ownership and classic UI — 10 October 2026
+
+Client test/shadow build: 192 cases, zero failures/errors, one existing optional SDL skip. Root tooling: 78 passing. Exact client/server source reproduction: 106/33 files through client 0030/server 0011, with matched jar/stamp. ShellCheck and Python compilation pass for the extended native smoke wrapper/parser.
+
+Twenty synthetic previews compile/render in both palettes at 765×503 and 1280×800; representative classic inventory/journal/Home/text layouts were inspected. The Swing local/system entry/backend probe passes after sharing the Steam request transport.
+
+Focused host New/Continue and full adventure/settings native probes pass real CS2 amount/name/string edit/cancel, native received public chat on Enter, Escape without submission and retained-text cleanup. Native movement remains unchanged; logout/relogin/capability refresh, configuration reversal, exact saves/four backups and early cancellation pass. Private evidence: `.runtime/alpha-tests/session-1791639855995810149` (focused) and `.runtime/alpha-tests/session-1791639994070449193` (full). These use an owned Xvfb and injected Steam visibility; physical simultaneous keys/buttons and Steam visibility remain acceptance work. [Scope](IN_GAME_TEXT_INPUT.md), [Claude static review](CLAUDE_INGAME_KEYBOARD_REVIEW.md) and the combined report distinguish remaining server-suspension/type-11/full-widget coverage.
+
+The same full probe passes on the actual Deck Desktop in verified r8, with zero non-probe mouse clicks and exact save/backup/cancellation checks. Deployment and capture limits are in [Deck validation](DECK_VALIDATION.md#in-game-text-and-classic-ui-deployment--r8).

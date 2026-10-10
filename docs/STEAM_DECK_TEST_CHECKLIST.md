@@ -22,3 +22,15 @@ Prerequisite and build checks pass. No gameplay/hardware acceptance has run.
 - [ ] Disabling controller support restores baseline input behaviour.
 - [ ] Later: dialogue, bank/shop, UI scaling and suspend/resume.
 - [ ] Later: two independent persisted accounts on one LAN server.
+
+## Launcher keyboard ownership acceptance
+
+- [ ] New Character automatically opens Steam keyboard in Deck launcher; one selected key inserts exactly one character.
+- [ ] Enter moves label → account → Create; the same held A cannot create a character.
+- [ ] From Create, controller traversal can return to either field; A opens typing, without a trapped auto-open loop.
+- [ ] Steam + X reopen/dismiss and tapping controls preserve entered values.
+- [ ] Selecting local fallback after closing Steam keyboard makes D-pad change selected key without moving the caret.
+- [ ] Main character list D-pad changes one row per press; confirm acts once.
+- [ ] Desktop keyboard navigation disables competing launcher SDL; USB/Bluetooth keys work.
+- [ ] Repeat in Gaming Mode; record Steam Input layout and focus behavior.
+- [ ] Later: apply/accept the same exclusive ownership for every in-game entry (parked roadmap task).

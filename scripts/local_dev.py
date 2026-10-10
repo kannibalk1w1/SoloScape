@@ -1,5 +1,7 @@
 """Local source-build launcher. Own only the child processes created here."""
 import fcntl
+import hashlib
+import json
 import errno
 import os
 from pathlib import Path
@@ -10,6 +12,7 @@ import socket
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
 
 ROOT = Path(__file__).resolve().parent.parent
 SERVER = ROOT / "upstream/game-server"
@@ -24,6 +27,18 @@ PINNED = {
 }
 
 
+@contextmanager
+def build_lock(shared=False):
+    """Keep archives stable while any owned JVM may lazily load/save classes."""
+    RUNTIME.mkdir(exist_ok=True)
+    with (RUNTIME / 'build.lock').open('a+') as lock:
+        try:
+            fcntl.flock(lock, (fcntl.LOCK_SH if shared else fcntl.LOCK_EX) | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise RuntimeError('An owned world or build is active. Save & Quit before rebuilding, or wait for the build before playing.') from exc
+        yield lock
+
+
 def java_version(executable):
     result = subprocess.run([executable, "-version"], capture_output=True, text=True)
     match = re.search(r'version "(?:1\.)?(\d+)', result.stdout + result.stderr)
@@ -32,7 +47,14 @@ def java_version(executable):
     return int(match.group(1))
 
 
-def doctor():
+def probe_port(port):
+    """Match Linux Java ServerSocketChannel address reuse, without sharing listeners."""
+    with socket.socket() as probe:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        probe.bind(("127.0.0.1", port))
+
+
+def doctor(port=PORT, require_display=True, output=print, check_port=True):
     errors = []
     if shutil.which("flock") is None:
         errors.append("Install util-linux (flock) for safe client patch application.")
@@ -54,7 +76,7 @@ def doctor():
             if (variable == "SERVER_JAVA" and version < required) or (variable == "CLIENT_JAVA" and version != required):
                 errors.append(f"{variable}: Java {version}; set {variable} to a JDK {required} executable.")
             else:
-                print(f"OK {variable}: Java {version}")
+                output(f"OK {variable}: Java {version}")
             javac = Path(shutil.which(executable) or executable).resolve().with_name("javac")
             if not javac.is_file():
                 errors.append(f"{variable} needs a JDK including javac, not only a JRE.")
@@ -69,29 +91,29 @@ def doctor():
             errors.append(f"Missing upstream client library {name}.")
     if (SERVER / "game.properties").exists():
         errors.append("External upstream/game-server/game.properties found. This launcher requires the audited internal defaults; move the override aside or audit it first.")
-    if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
+    if require_display and not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
         errors.append("No graphical display. Run from a Linux desktop session (Java 8 AWT needs X11/XWayland).")
-    try:
-        with socket.socket() as probe:
-            probe.bind(("0.0.0.0", PORT))
-    except OSError as exc:
-        if exc.errno in (errno.EPERM, errno.EACCES):
-            errors.append(f"Port {PORT} probe denied by environment permissions; run doctor with local socket access.")
-        else:
-            errors.append(f"Port {PORT} is unavailable: {exc}. Stop the existing listener before launching.")
-    print("NOTE: upstream binds all interfaces; restrict LAN access with your firewall for local development.")
-    print("NOTE: cache presence checks do not prove revision/content compatibility.")
-    print("Linux input nodes (not controller identification):", ", ".join(str(p) for p in Path("/dev/input").glob("event*")) or "none visible")
+    if check_port:
+        try:
+            probe_port(port)
+        except OSError as exc:
+            if exc.errno in (errno.EPERM, errno.EACCES):
+                errors.append(f"Port {port} probe denied by environment permissions; run doctor with local socket access.")
+            else:
+                errors.append(f"Port {port} is unavailable: {exc}. Choose a free port before launching.")
+    output("NOTE: patched server binds IPv4 loopback by default; LAN hosting requires an explicit override.")
+    output("NOTE: cache presence checks do not prove revision/content compatibility.")
+    output("Linux input nodes (not controller identification):", ", ".join(str(p) for p in Path("/dev/input").glob("event*")) or "none visible")
     for error in errors:
-        print("ERROR:", error)
-    print(f"Doctor: {len(errors)} error(s).")
+        output("ERROR:", error)
+    output(f"Doctor: {len(errors)} error(s).")
     return not errors
 
 
-def stop(process):
+def stop(process, output=print):
     if process is None or process.poll() is not None:
         return
-    print(f"Stopping child {process.pid}; waiting for normal shutdown/save hooks.", flush=True)
+    output(f"Stopping child {process.pid}; waiting for normal shutdown/save hooks.", flush=True)
     try:
         os.killpg(process.pid, signal.SIGTERM)
     except ProcessLookupError:
@@ -102,7 +124,7 @@ def stop(process):
         try:
             process.wait(timeout=10)
         except subprocess.TimeoutExpired:
-            print("Still waiting for shutdown; no forced kill. See .runtime logs.", flush=True)
+            output("Still waiting for shutdown; no forced kill. See .runtime logs.", flush=True)
 
 
 def build(repo, java, task):
@@ -127,7 +149,81 @@ def jar(repo, pattern):
     return files[0]
 
 
+def file_hash(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def build_fingerprint(server_jar, client_jar):
+    patches = sorted((ROOT / "patches").glob("*/*.patch"))
+    return {
+        "format": 1,
+        "pins": PINNED,
+        "patches": {str(p.relative_to(ROOT)): file_hash(p) for p in patches},
+        "jars": {"server": file_hash(server_jar), "client": file_hash(client_jar)},
+    }
+
+
+def write_build_stamp(server_jar, client_jar):
+    RUNTIME.mkdir(exist_ok=True)
+    temporary = RUNTIME / "build-stamp.json.tmp"
+    temporary.write_text(json.dumps(build_fingerprint(server_jar, client_jar), indent=2) + "\n")
+    temporary.replace(RUNTIME / "build-stamp.json")
+
+
+def verify_build_stamp(server_jar, client_jar):
+    try:
+        recorded = json.loads((RUNTIME / "build-stamp.json").read_text())
+    except (OSError, ValueError) as exc:
+        raise RuntimeError("No valid build stamp. Run ./scripts/dev-run.sh once to rebuild the matched client/server.") from exc
+    if recorded != build_fingerprint(server_jar, client_jar):
+        raise RuntimeError("Client/server jars or patches changed since the last build. Run ./scripts/dev-run.sh without --no-build.")
+
+
+def rotate_logs():
+    for name in ("server", "client"):
+        current = RUNTIME / f"{name}.log"
+        if current.exists():
+            current.replace(RUNTIME / f"{name}.previous.log")
+
+
+def prepare():
+    with build_lock():
+        return _prepare()
+
+
+def _prepare():
+    """Build a matched pair without starting a world or touching save directories."""
+    RUNTIME.mkdir(exist_ok=True)
+    with (RUNTIME / "launcher.lock").open("w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RuntimeError("The development launcher is running; close that session before preparing builds.")
+        if not doctor(require_display=False, check_port=False):
+            return 1
+        subprocess.run(["bash", str(ROOT / "scripts/apply-client-patches.sh")], check=True)
+        subprocess.run(["bash", str(ROOT / "scripts/apply-server-patches.sh")], check=True)
+        server_java = os.environ.get("SERVER_JAVA", "java")
+        build(SERVER, server_java, ":game:shadowJar")
+        build(CLIENT, server_java, ":client:shadowJar")
+        server_jar = jar(SERVER / "game", "void-server-*.jar")
+        client_jar = jar(CLIENT / "client", "void-client-*.jar")
+        write_build_stamp(server_jar, client_jar)
+        verify_build_stamp(server_jar, client_jar)
+        print("Matched client/server prepared. Open ./scripts/launcher.sh to choose a local world.")
+        return 0
+
+
 def launch(skip_build=False):
+    with build_lock(shared=skip_build) as lock:
+        return _launch(skip_build, lock)
+
+
+def _launch(skip_build=False, build_guard=None):
     RUNTIME.mkdir(exist_ok=True)
     with (RUNTIME / "launcher.lock").open("w") as lock:
         try:
@@ -146,6 +242,14 @@ def launch(skip_build=False):
             build(CLIENT, server_java, ":client:shadowJar")
         server_jar = jar(SERVER / "game", "void-server-*.jar")
         client_jar = jar(CLIENT / "client", "void-client-*.jar")
+        if skip_build:
+            verify_build_stamp(server_jar, client_jar)
+        else:
+            write_build_stamp(server_jar, client_jar)
+        if build_guard is not None:
+            fcntl.flock(build_guard, fcntl.LOCK_SH)
+        guards = (lock.fileno(),) + (() if build_guard is None else (build_guard.fileno(),))
+        rotate_logs()
         server = client = None
         offsets = {}
 
@@ -161,7 +265,7 @@ def launch(skip_build=False):
 
         with (RUNTIME / "server.log").open("w") as server_log, (RUNTIME / "client.log").open("w") as client_log:
             try:
-                server = subprocess.Popen([server_java, "-jar", str(server_jar)], cwd=SERVER, stdout=server_log, stderr=subprocess.STDOUT, start_new_session=True)
+                server = subprocess.Popen([server_java, "-jar", str(server_jar)], cwd=SERVER, stdout=server_log, stderr=subprocess.STDOUT, start_new_session=True, pass_fds=guards)
                 deadline = time.monotonic() + READY_TIMEOUT
                 while True:
                     if server.poll() is not None:
@@ -174,7 +278,7 @@ def launch(skip_build=False):
                     if time.monotonic() > deadline:
                         raise RuntimeError("Server readiness timed out; see .runtime/server.log.")
                     time.sleep(0.25)
-                client = subprocess.Popen([client_java, "-jar", str(client_jar), "--address", "127.0.0.1", "--port", str(PORT)], cwd=CLIENT, stdout=client_log, stderr=subprocess.STDOUT, start_new_session=True)
+                client = subprocess.Popen([client_java, "-jar", str(client_jar), "--address", "127.0.0.1", "--port", str(PORT)], cwd=CLIENT, stdout=client_log, stderr=subprocess.STDOUT, start_new_session=True, pass_fds=guards)
                 print("Client started on localhost. Logs: .runtime/server.log and .runtime/client.log. Ctrl+C stops both.", flush=True)
                 while client.poll() is None:
                     stream_logs()
@@ -200,10 +304,12 @@ if __name__ == "__main__":
     try:
         if sys.argv[1:] == ["doctor"]:
             sys.exit(0 if doctor() else 1)
+        elif sys.argv[1:] == ["prepare"]:
+            sys.exit(prepare())
         elif sys.argv[1:] in (["run"], ["run", "--no-build"]):
             sys.exit(launch("--no-build" in sys.argv))
         else:
-            sys.exit("Usage: local_dev.py doctor | run [--no-build]")
+            sys.exit("Usage: local_dev.py doctor | prepare | run [--no-build]")
     except KeyboardInterrupt:
         sys.exit(130)
     except (OSError, RuntimeError, subprocess.CalledProcessError) as exc:

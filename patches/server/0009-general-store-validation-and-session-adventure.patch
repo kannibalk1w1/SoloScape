@@ -1,0 +1,265 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/inv/Inventories.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/inv/Inventories.kt
+index bfc8ecf..0e920cc 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/inv/Inventories.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/inv/Inventories.kt
+@@ -23,6 +23,11 @@ class Inventories(
+ 
+     val instances: MutableMap<String, Inventory> = mutableMapOf()
+ 
++    // Shared interface stock participates in native validation but never in character saves.
++    private val external: MutableMap<String, Inventory> = mutableMapOf()
++    fun bindExternal(inventory: Inventory) { external[inventory.id] = inventory }
++    fun unbindExternal(inventory: Inventory) { if (external[inventory.id] === inventory) external.remove(inventory.id) }
++
+     lateinit var validItemRule: ItemRestrictionRule
+     lateinit var player: Player
+     lateinit var normalStack: ItemStackingRule
+@@ -38,7 +43,7 @@ class Inventories(
+ 
+     fun getOrNull(definition: InventoryDefinition, secondary: Boolean = false): Inventory? {
+         val inventoryId = if (secondary) "_${definition.stringId}" else definition.stringId
+-        return instances[inventoryId]
++        return external[inventoryId] ?: instances[inventoryId]
+     }
+ 
+     fun inventory(id: String, secondary: Boolean = false): Inventory {
+diff --git a/game/src/main/kotlin/Main.kt b/game/src/main/kotlin/Main.kt
+index ead5fba..31cb146 100644
+--- a/game/src/main/kotlin/Main.kt
++++ b/game/src/main/kotlin/Main.kt
+@@ -76,6 +76,7 @@ object Main {
+             logger.error(ex) { "Error loading files." }
+             server.stop()
+             site?.cancel()
++            return
+         }
+ 
+         // Login server
+@@ -85,7 +86,21 @@ object Main {
+ 
+         // Game world
+         val stages = getTickStages()
+-        World.start(configFiles)
++        try {
++            World.start(configFiles)
++        } catch (ex: Exception) {
++            logger.error(ex) { "Error starting world." }
++            server.stop()
++            site?.cancel()
++            return
++        }
++        // Never save partially loaded shared world state when startup is cancelled.
++        Runtime.getRuntime().addShutdownHook(
++            thread(start = false) {
++                World.shutdown()
++                AuditLog.save()
++            },
++        )
+         val scope = CoroutineScope(Contexts.Game)
+         val engine = GameLoop(stages).start(scope)
+         server.loginServer = loginServer
+@@ -123,12 +138,6 @@ object Main {
+         Wildcards.load(Settings["storage.wildcards"])
+         ContentLoader().load()
+         Wildcards.update(Settings["storage.wildcards"])
+-        Runtime.getRuntime().addShutdownHook(
+-            thread(start = false) {
+-                World.shutdown()
+-                AuditLog.save()
+-            },
+-        )
+     }
+ 
+     private fun cache(cache: Cache, files: ConfigFiles): Module {
+diff --git a/game/src/main/kotlin/content/entity/npc/shop/general/GeneralStores.kt b/game/src/main/kotlin/content/entity/npc/shop/general/GeneralStores.kt
+index 0337bf0..6392786 100644
+--- a/game/src/main/kotlin/content/entity/npc/shop/general/GeneralStores.kt
++++ b/game/src/main/kotlin/content/entity/npc/shop/general/GeneralStores.kt
+@@ -39,11 +39,13 @@ object GeneralStores {
+     }
+ 
+     fun bind(player: Player, key: String): Inventory = get(key).apply {
++        player.inventories.bindExternal(this)
+         this.transaction.changes.bind(player)
+         player.sendInventory(this, false)
+     }
+ 
+     fun unbind(player: Player, key: String): Inventory = get(key).apply {
++        player.inventories.unbindExternal(this)
+         this.transaction.changes.unbind(player)
+     }
+ }
+diff --git a/game/src/test/kotlin/content/soloscape/SessionAdventureTest.kt b/game/src/test/kotlin/content/soloscape/SessionAdventureTest.kt
+new file mode 100644
+index 0000000..419cc65
+--- /dev/null
++++ b/game/src/test/kotlin/content/soloscape/SessionAdventureTest.kt
+@@ -0,0 +1,168 @@
++package content.soloscape
++
++import FakeRandom
++import WorldTest
++import content.entity.npc.shop.shopInventory
++import content.entity.player.bank.bank
++import content.quest.quest
++import dialogueOption
++import floorItemOption
++import interfaceOption
++import itemOnObject
++import itemOption
++import npcOption
++import objectOption
++import skipDialogues
++import walk
++import org.junit.jupiter.api.Assertions.*
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
++import world.gregs.voidps.engine.client.ui.closeInterfaces
++import world.gregs.voidps.engine.data.PlayerSave
++import world.gregs.voidps.engine.data.SaveQueue
++import world.gregs.voidps.engine.data.file.FileStorage
++import world.gregs.voidps.engine.entity.item.Item
++import world.gregs.voidps.engine.entity.item.floor.FloorItems
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.type.setRandom
++import kotlinx.coroutines.runBlocking
++import java.nio.file.Files
++
++/** Full existing quest/commerce loop on spaced disposable fixtures; ordinary walking, no teleport. */
++@EnabledIfEnvironmentVariable(named = "SOLOSCAPE_TEST_ROOT", matches = ".+")
++internal class SessionAdventureTest : WorldTest() {
++    @Test
++    fun `ordinary walking crosses actual Lumbridge courtyard village and north bridge`() {
++        val route=listOf(world.gregs.voidps.type.Tile(3222,3218),
++            world.gregs.voidps.type.Tile(3236,3218),world.gregs.voidps.type.Tile(3236,3225),
++            world.gregs.voidps.type.Tile(3230,3232),world.gregs.voidps.type.Tile(3222,3241),
++            world.gregs.voidps.type.Tile(3226,3245),world.gregs.voidps.type.Tile(3235,3261))
++        val player=createPlayer(route.first())
++        for(destination in route.drop(1)+route.reversed().drop(1)) {
++            player.walk(destination);tickIf(80){player.tile!=destination}
++            assertEquals(destination,player.tile)
++        }
++    }
++
++    @Test
++    fun `shared general stock is validated transient and unbound after closing`() {
++        val player=createPlayer(emptyTile)
++        val shopkeeper=createNPC("shopkeeper_lumbridge",emptyTile.addY(1))
++        player.inventory.add("coins",100)
++        player.npcOption(shopkeeper,"Trade");tick(2)
++        val stock=player.shopInventory(false)
++        val definition=world.gregs.voidps.engine.data.definition.InventoryDefinitions.get("lumbridge_general_store")
++        assertSame(stock,player.inventories.getOrNull(definition))
++        assertFalse(player.inventories.instances.containsKey(stock.id))
++        val initial=stock.count("bucket")
++        val slot=stock.indexOf("bucket")*6
++        // A mismatched item in the correct slot must still fail native validation.
++        player.interfaceOption("shop","stock","Buy-1",item=Item("bronze_sword"),slot=slot);tick()
++        assertEquals(initial,stock.count("bucket"));assertEquals(0,player.inventory.count("bronze_sword"))
++        player.interfaceOption("shop","stock","Buy-1",item=Item("bucket"),slot=slot);tick()
++        assertEquals(initial-1,stock.count("bucket"));assertEquals(1,player.inventory.count("bucket"))
++        val other=createPlayer(emptyTile.addX(1))
++        other.npcOption(shopkeeper,"Trade");tick(2)
++        assertSame(stock,other.shopInventory(false))
++        player.closeInterfaces();tick()
++        assertNull(player.inventories.getOrNull(definition))
++        assertSame(stock,other.inventories.getOrNull(definition))
++        other.closeInterfaces();tick()
++        assertNull(other.inventories.getOrNull(definition))
++    }
++
++    @Test
++    fun `walk shop gather mill quest bank and reload without injecting quest progress`() {
++        val player = createPlayer(emptyTile)
++        player.inventory.add("small_fishing_net")
++        player.inventory.add("coins", 10) // Explicit small starting allowance; rewards/quest items are never injected.
++        setRandom(object : FakeRandom() { override fun nextInt(until: Int) = 0 })
++        val cook = createNPC("cook_lumbridge", emptyTile.addY(1))
++        player.npcOption(cook,"Talk-to");tick();player.skipDialogues()
++        player.dialogueOption(1);player.skipDialogues();player.dialogueOption(1);player.skipDialogues()
++        assertEquals("started",player.quest("cooks_assistant"))
++        assertEquals(0,player.inventory.count("top_quality_milk"))
++
++        val shopkeeper = createNPC("shopkeeper_lumbridge",emptyTile.addX(10))
++        player.walk(emptyTile.addX(9));tickIf(40){player.tile!=emptyTile.addX(9)}
++        assertEquals(emptyTile.addX(9),player.tile)
++        player.npcOption(shopkeeper,"Trade");tick(3)
++        val stock=player.shopInventory(false)
++        assertFalse(player.inventories.instances.containsKey("lumbridge_general_store"))
++        for(id in listOf("bucket","empty_pot"))
++            player.interfaceOption("shop","stock","Buy-1",item=Item(id),slot=stock.indexOf(id)*6)
++        tick();assertEquals(1,player.inventory.count("bucket"));assertEquals(1,player.inventory.count("empty_pot"))
++        assertTrue(player.inventory.count("coins")<10)
++        player.closeInterfaces()
++
++        val cow=createObject("prized_dairy_cow",emptyTile.addX(18))
++        player.walk(emptyTile.addX(17));tickIf(40){player.tile!=emptyTile.addX(17)}
++        assertEquals(emptyTile.addX(17),player.tile)
++        player.objectOption(cow,"Milk");tick(10);assertEquals(1,player.inventory.count("top_quality_milk"))
++        val egg=createFloorItem("super_large_egg",emptyTile.addX(20))
++        player.floorItemOption(egg,"Take");tick(10);assertEquals(1,player.inventory.count("super_large_egg"))
++
++        val millie=createNPC("millie_miller",emptyTile.addX(26))
++        player.npcOption(millie,"Talk-to");tick(15);player.skipDialogues();player.dialogueOption(1);player.skipDialogues()
++        player.dialogueOption(2);player.skipDialogues()
++        assertEquals(1,player["cooks_assistant_talked_to_millie",0])
++        val wheat=createObject("wheat",emptyTile.addX(27))
++        player.objectOption(wheat,"Pick");tick(6);assertEquals(1,player.inventory.count("grain"))
++        val hopper=createObject("hopper",emptyTile.addX(28))
++        player.itemOnObject(hopper,player.inventory.indexOf("grain"));tick(6)
++        assertEquals(1,player["hopper_bin",0]);assertEquals(0,player.inventory.count("grain"))
++        val controls=createObject("hopper_controls",emptyTile.addX(30))
++        player.objectOption(controls,"Operate");tick(6);assertEquals(1,player["flour_bin",0])
++        val bin=createObject("flour_bin_3",emptyTile.addX(32))
++        player.objectOption(bin,"Take-flour");tick(6);assertEquals(1,player.inventory.count("extra_fine_flour"))
++
++        player.walk(emptyTile);tickIf(80){player.tile!=emptyTile};assertEquals(emptyTile,player.tile)
++        player.npcOption(cook,"Talk-to");tick();player.skipDialogues()
++        assertEquals("completed",player.quest("cooks_assistant"))
++        assertTrue(player.inventory.count("coins")>=500);assertEquals(20,player.inventory.count("sardine_noted"))
++        assertEquals(0,player.inventory.count("super_large_egg"));assertEquals(0,player.inventory.count("extra_fine_flour"))
++        player.closeInterfaces()
++
++        val booth=createObject("36786",emptyTile.addY(8))
++        player.objectOption(booth,"Use-quickly");tick(15)
++        val coins=player.inventory.count("coins")
++        player.interfaceOption("bank_side","inventory","Deposit-All",item=Item("coins"),slot=player.inventory.indexOf("coins"))
++        tick();assertEquals(coins,player.bank.count("coins"));assertEquals(0,player.inventory.count("coins"))
++        player.interfaceOption("bank","inventory","Withdraw-1",item=Item("coins"),slot=player.bank.indexOf("coins"))
++        tick();assertEquals(1,player.inventory.count("coins"));assertEquals(coins-1,player.bank.count("coins"))
++        player.closeInterfaces()
++
++        setRandom(object : FakeRandom(){override fun nextInt(until:Int)=0})
++        player.walk(emptyTile);tickIf(40){player.tile!=emptyTile}
++        val spot=createNPC("fishing_spot_small_net_bait_draynor",emptyTile.addY(1))
++        player.npcOption(spot,"Net");tickIf(150){player.inventory.count("raw_shrimps")<3}
++        assertTrue(player.experience.get(Skill.Fishing)>0)
++        val fire=createObject("fire_orange",emptyTile.addX(1))
++        player.itemOnObject(fire,player.inventory.indexOf("raw_shrimps"));tick(8)
++        player.dialogueOption(id="dialogue_skill_creation",component="choice1")
++        tickIf(100){player.inventory.count("shrimps")==0};player.closeInterfaces()
++        assertTrue(player.inventory.count("shrimps")>0)
++        setRandom(object : FakeRandom(){
++            override fun nextInt(until:Int)=(until-1).coerceAtLeast(0)
++            override fun nextInt(from:Int,until:Int)=if(until==128||until==1)from else (until-1).coerceAtLeast(from)
++        })
++        val chicken=createNPC("chicken",emptyTile.addY(4));val before=player.experience.get(Skill.Attack)
++        player.npcOption(chicken,"Attack");tickIf(250){chicken.levels.get(Skill.Constitution)>0}
++        val deathTile=chicken["death_tile",chicken.tile];tick(8)
++        assertTrue(player.experience.get(Skill.Attack)>before);assertNotNull(FloorItems.firstOrNull(deathTile,"bones"))
++        val food=player.inventory.count("shrimps");player.itemOption("Eat","shrimps");tick(4)
++        assertEquals(food-1,player.inventory.count("shrimps"))
++
++        val directory=Files.createTempDirectory("soloscape-session-adventure-")
++        try {
++            runBlocking{SaveQueue(FileStorage(directory.toFile())).direct().join()}
++            val restored=PlayerSave.load(directory.resolve("${player.accountName.lowercase()}.toml").toFile())
++            assertEquals(player.tile,restored.tile)
++            assertEquals("completed",restored.variables["cooks_assistant"])
++            assertArrayEquals(player.experience.experience,restored.experience)
++            for((name,inventory) in player.inventories.instances)assertArrayEquals(inventory.items,restored.inventories[name])
++        } finally {directory.toFile().deleteRecursively()}
++    }
++}

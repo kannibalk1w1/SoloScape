@@ -1,0 +1,319 @@
+diff --git a/client/src/ControllerAdventureDetails.java b/client/src/ControllerAdventureDetails.java
+new file mode 100644
+index 0000000..c6e369e
+--- /dev/null
++++ b/client/src/ControllerAdventureDetails.java
+@@ -0,0 +1,174 @@
++/** Read-only metadata from pinned prayers.toml, prayer.varps.toml and spellbook.ifaces.toml. */
++final class ControllerAdventureDetails {
++ static final class Detail { final String name,detail,status; Detail(String n,String d,String s){name=n;detail=d;status=s;} }
++ private static Integer value(int[] vars,int id){return vars==null||id<0||id>=vars.length?null:vars[id];}
++ private static final String[] PRAYER_NAMES={"Thick Skin","Burst Of Strength","Clarity Of Thought","Sharp Eye","Mystic Will","Rock Skin","Superhuman Strength","Improved Reflexes","Rapid Restore","Rapid Heal","Protect Item","Hawk Eye","Mystic Lore","Steel Skin","Ultimate Strength","Incredible Reflexes","Protect From Summoning","Protect From Magic","Protect From Missiles","Protect From Melee","Eagle Eye","Mystic Might","Retribution","Redemption","Smite","Chivalry","Rapid Renewal","Piety","Rigour","Augury"};
++ private static final int[] PRAYER_LEVELS={1,4,7,8,9,10,13,16,19,22,25,26,27,28,31,34,35,37,40,43,44,45,46,49,52,60,65,70,74,77};
++ private static final int[] PRAYER_BITS={0,1,2,18,19,3,4,5,6,7,8,20,21,9,10,11,24,12,13,14,22,23,15,16,17,25,27,26,29,28};
++ private static final String[] CURSE_NAMES={"Protect Item","Sap Warrior","Sap Ranger","Sap Mage","Sap Spirit","Berserker","Deflect Summoning","Deflect Magic","Deflect Missiles","Deflect Melee","Leech Attack","Leech Ranged","Leech Magic","Leech Defence","Leech Strength","Leech Energy","Leech Special Attack","Wrath","Soul Split","Turmoil"};
++ private static final int[] CURSE_LEVELS={50,50,52,54,56,59,62,65,68,71,74,76,78,80,82,84,86,89,92,95};
++ private static final int[] CURSE_BITS={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
++ static Detail describe(int group,int component,int child,int[] vars) {
++  if(group==271&&(component==8||component==42)&&child>=0){
++   Integer book=value(vars,1584);if(book==null||(book!=0&&book!=1))return null;
++   boolean curses=book==1;String[] names=curses?CURSE_NAMES:PRAYER_NAMES;int[] levels=curses?CURSE_LEVELS:PRAYER_LEVELS,bits=curses?CURSE_BITS:PRAYER_BITS;
++   if(child>=names.length)return null;Integer mask=value(vars,component==42?(curses?1587:1397):(curses?1582:1395));
++   String state=mask==null?"":(mask&(1<<bits[child]))!=0?(component==42?"Selected":"Active"):(component==42?"Unselected":"Inactive");
++   return new Detail(names[child],"Requires Prayer level "+levels[child]+"\nNative checks determine availability.",state);
++  }
++  if(group==884){
++   if(component>=11&&component<=14){Integer selected=value(vars,43);return new Detail("","Native weapon style "+(component-10),selected!=null&&selected==component-11?"Selected":"");}
++   if(component==15){Integer retaliate=value(vars,172);return new Detail("Auto retaliate","Automatically retaliate when attacked.",retaliate==null?"":retaliate==0?"On":"Off");}
++   if(component==4){Integer energy=value(vars,300),active=value(vars,301);return new Detail("Special attack",energy==null?"Energy is loading":"Energy: "+(energy/10.0)+"%\nNative weapon and energy rules apply.",active==null?"":active==0?"Off":"Selected");}
++  }
++  String spell=spell(group,component);return spell==null?null:new Detail(spell,"Use the available native action. Spell and target requirements are checked by the game.","");
++ }
++ private static String spell(int group,int component){
++  switch(group){
++   case 192: switch(component){
++    case 24: return "Lumbridge Home Teleport";
++    case 98: return "Wind Rush";
++    case 25: return "Wind Strike";
++    case 26: return "Confuse";
++    case 27: return "Enchant Crossbow Bolt";
++    case 28: return "Water Strike";
++    case 29: return "Enchant Level 1";
++    case 30: return "Earth Strike";
++    case 37: return "Mobilising Armies Teleport";
++    case 31: return "Weaken";
++    case 32: return "Fire Strike";
++    case 33: return "Bones To Bananas";
++    case 34: return "Wind Bolt";
++    case 35: return "Curse";
++    case 36: return "Bind";
++    case 38: return "Low Level Alchemy";
++    case 39: return "Water Bolt";
++    case 40: return "Varrock Teleport";
++    case 41: return "Enchant Level 2";
++    case 42: return "Earth Bolt";
++    case 43: return "Lumbridge Teleport";
++    case 44: return "Telekinetic Grab";
++    case 45: return "Fire Bolt";
++    case 46: return "Falador Teleport";
++    case 47: return "Crumble Undead";
++    case 48: return "Teleport To House";
++    case 49: return "Wind Blast";
++    case 50: return "Superheat Item";
++    case 51: return "Camelot Teleport";
++    case 52: return "Water Blast";
++    case 53: return "Enchant Level 3";
++    case 54: return "Iban Blast";
++    case 55: return "Snare";
++    case 56: return "Magic Dart";
++    case 57: return "Ardougne Teleport";
++    case 58: return "Earth Blast";
++    case 59: return "High Level Alchemy";
++    case 60: return "Charge Water Orb";
++    case 61: return "Enchant Level 4";
++    case 62: return "Watchtower Teleport";
++    case 63: return "Fire Blast";
++    case 64: return "Charge Earth Orb";
++    case 65: return "Bones To Peaches";
++    case 66: return "Saradomin Strike";
++    case 67: return "Claws Of Guthix";
++    case 68: return "Flames Of Zamorak";
++    case 69: return "Trollheim Teleport";
++    case 70: return "Wind Wave";
++    case 71: return "Charge Fire Orb";
++    case 72: return "Ape Atoll Teleport";
++    case 73: return "Water Wave";
++    case 74: return "Charge Air Orb";
++    case 75: return "Vulnerability";
++    case 76: return "Enchant Level 5";
++    case 77: return "Earth Wave";
++    case 78: return "Enfeeble";
++    case 79: return "Teleother Lumbridge";
++    case 80: return "Fire Wave";
++    case 81: return "Entangle";
++    case 82: return "Stun";
++    case 83: return "Charge";
++    case 84: return "Wind Surge";
++    case 85: return "Teleother Falador";
++    case 86: return "Teleport Block";
++    case 87: return "Water Surge";
++    case 88: return "Enchant Level 6";
++    case 89: return "Earth Surge";
++    case 90: return "Teleother Camelot";
++    case 91: return "Fire Surge";
++    default:return null; }
++   case 193: switch(component){
++    case 48: return "Edgeville Home Teleport";
++    case 28: return "Smoke Rush";
++    case 32: return "Shadow Rush";
++    case 40: return "Paddewwa Teleport";
++    case 24: return "Blood Rush";
++    case 20: return "Ice Rush";
++    case 41: return "Senntisten Teleport";
++    case 36: return "Miasmic Rush";
++    case 30: return "Smoke Burst";
++    case 34: return "Shadow Burst";
++    case 42: return "Kharyrll Teleport";
++    case 26: return "Blood Burst";
++    case 22: return "Ice Burst";
++    case 43: return "Lassar Teleport";
++    case 38: return "Miasmic Burst";
++    case 29: return "Smoke Blitz";
++    case 33: return "Shadow Blitz";
++    case 44: return "Dareeyak Teleport";
++    case 25: return "Blood Blitz";
++    case 21: return "Ice Blitz";
++    case 45: return "Carrallanger Teleport";
++    case 37: return "Miasmic Blitz";
++    case 31: return "Smoke Barrage";
++    case 35: return "Shadow Barrage";
++    case 46: return "Annakarl Teleport";
++    case 27: return "Blood Barrage";
++    case 23: return "Ice Barrage";
++    case 47: return "Ghorrock Teleport";
++    case 39: return "Miasmic Barrage";
++    default:return null; }
++   case 430: switch(component){
++    case 38: return "Lunar Home Teleport";
++    case 37: return "Bake Pie";
++    case 54: return "Cure Plant";
++    case 28: return "Monster Examine";
++    case 26: return "Npc Contact";
++    case 23: return "Cure Other";
++    case 29: return "Humidify";
++    case 42: return "Moonclan Teleport";
++    case 55: return "Tele Group Moonclan";
++    case 53: return "Ourania Teleport";
++    case 45: return "Cure Me";
++    case 30: return "Hunter Kit";
++    case 46: return "Waterbirth Teleport";
++    case 56: return "Tele Group Waterbirth";
++    case 25: return "Cure Group";
++    case 31: return "Stat Spy";
++    case 22: return "Barbarian Teleport";
++    case 57: return "Tele Group Barbarian";
++    case 47: return "Superglass Make";
++    case 40: return "Khazard Teleport";
++    case 58: return "Tele Group Khazard";
++    case 32: return "Dream";
++    case 44: return "String Jewellery";
++    case 49: return "Stat Restore Pot Share";
++    case 35: return "Magic Imbue";
++    case 24: return "Fertile Soil";
++    case 48: return "Boost Potion Share";
++    case 39: return "Fishing Guild Teleport";
++    case 59: return "Tele Group Fishing Guild";
++    case 33: return "Plank Make";
++    case 43: return "Catherby Teleport";
++    case 60: return "Tele Group Catherby";
++    case 50: return "Ice Plateau Teleport";
++    case 27: return "Energy Transfer";
++    case 51: return "Heal Other";
++    case 41: return "Vengeance Other";
++    case 36: return "Vengeance";
++    case 52: return "Heal Group";
++    case 34: return "Spellbook Swap";
++    default:return null; }
++   default:return null;
++  }
++ }
++}
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+index a3f0bc3..b34d9ea 100644
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -263,6 +263,10 @@ final class ControllerUi
+         if(group==320 && !ControllerPanelDetails.skillName(w.anInt830&65535).isEmpty()) {
+             name=ControllerPanelDetails.skillName(w.anInt830&65535);detail=ControllerPanelDetails.skillDetail(w.anInt830&65535);
+         }
++        Class170 variables=Class318_Sub1_Sub3_Sub3.aClass170_10209;
++        ControllerAdventureDetails.Detail adventure=ControllerAdventureDetails.describe(group,w.anInt830&65535,w.anInt704,
++            variables==null?null:variables.anIntArray5063);
++        if(adventure!=null){if(!adventure.name.isEmpty())name=adventure.name;detail=adventure.detail;status=adventure.status;}
+         if(group==190 && w.anInt704>=0)status=ControllerPanelDetails.status(w.aString792,w.anInt749);
+         if(group==275 || group==499 || group==741) {
+             name=ControllerPanelDetails.plain(w.aString792);detail=name;status=ControllerPanelDetails.status(w.aString792,-1);
+diff --git a/client/src/net/runelite/client/input/controller/QuickBinding.java b/client/src/net/runelite/client/input/controller/QuickBinding.java
+index 153edf4..05985c6 100644
+--- a/client/src/net/runelite/client/input/controller/QuickBinding.java
++++ b/client/src/net/runelite/client/input/controller/QuickBinding.java
+@@ -17,6 +17,8 @@ public final class QuickBinding
+         if (group==149 && w.itemId>=0 && (a.type==18 || a.type==1011)
+             && (a.label.equalsIgnoreCase("Eat") || a.label.equalsIgnoreCase("Drink")))
+             return new QuickBinding(0,group,w.itemId,a.type,a.operation,w.name,a.label);
++        if (w.id==(884<<16|4) && (a.type==18 || a.type==1011) && a.label.equalsIgnoreCase("Use"))
++            return new QuickBinding(HomeTab.COMBAT.ordinal(),group,w.id,a.type,a.operation,w.name,a.label);
+         if (group==271 && (a.type==18 || a.type==1011) && prayer(a.label))
+             return new QuickBinding(HomeTab.PRAYER.ordinal(),group,w.id,a.type,a.operation,w.name,"Toggle");
+         if ((group==192 || group==193 || group==430) && (a.type==13 || a.type==18 || a.type==1011))
+@@ -65,6 +67,8 @@ public final class QuickBinding
+             QuickBinding b=new QuickBinding(Integer.parseInt(parts[1]),Integer.parseInt(parts[2]),Integer.parseInt(parts[3]),Integer.parseInt(parts[4]),Integer.parseInt(parts[5]),decodeText(parts[6]),decodeText(parts[7]));
+             if (b.name.length()>120 || b.action.length()>120 || (b.type!=13 && b.type!=18 && b.type!=1011) || b.operation<0 || b.operation>10) return null;
+             if (b.group==149 && b.tab==0 && b.item>=0 && (b.type==18 || b.type==1011) && (b.action.equalsIgnoreCase("Eat") || b.action.equalsIgnoreCase("Drink"))) return b;
++            if (b.group==884 && b.tab==HomeTab.COMBAT.ordinal() && b.item==(884<<16|4)
++                && (b.type==18 || b.type==1011) && b.action.equalsIgnoreCase("Use")) return b;
+             if (b.group==271 && b.tab==HomeTab.PRAYER.ordinal() && b.item>>>16==271 && (b.type==18 || b.type==1011) && b.action.equals("Toggle")) return b;
+             if ((b.group==192 || b.group==193 || b.group==430) && b.tab==HomeTab.SPELLBOOK.ordinal() && b.item>>>16==b.group && !b.action.isEmpty()) return b;
+         }
+diff --git a/client/src/net/runelite/client/input/controller/QuickRadialControls.java b/client/src/net/runelite/client/input/controller/QuickRadialControls.java
+index 1adcc2b..c1e9056 100644
+--- a/client/src/net/runelite/client/input/controller/QuickRadialControls.java
++++ b/client/src/net/runelite/client/input/controller/QuickRadialControls.java
+@@ -76,7 +76,7 @@ public final class QuickRadialControls
+         if ((input.buttonsPressed&4)!=0)
+         {
+             if (captured!=null) { gateway.bind(selected,captured);message="Assigned "+captured.name; }
+-            else message="Focus food, potion, prayer or spell first";
++            else message="Focus food, potion, prayer, spell or special first";
+             armed=false;
+         }
+         else if ((input.buttonsPressed&8)!=0) { gateway.restore(selected);message="Slot cleared";armed=false; }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+index a5266bc..2b57b84 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+@@ -83,9 +83,9 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+             {
+                 java.awt.image.BufferedImage icon=focus.itemId>=0?images.apply(focus):null;
+                 if(icon!=null){int size=Math.min(width,(int)(54*scale));draw.drawImage(icon,x,y,size,size*32/36,null);y+=size*32/36+line/2;}
+-                draw.setColor(ControllerTheme.FOCUS);y=text(draw,focus.name,x,y,width,line);
++                draw.setColor(ControllerTheme.FOCUS);for(String row:focus.name.split("\n")){y=text(draw,row,x,y,width,line);}
+                 if(focus.itemId>=0){draw.setColor(Color.WHITE);y=text(draw,"Quantity: "+focus.quantity,x,y+line/2,width,line);}
+-                if(!focus.status.isEmpty()){draw.setColor(ControllerTheme.COMPLETE);y=text(draw,focus.status,x,y+line/2,width,line);}
++                if(!focus.status.isEmpty()){draw.setColor(focus.status.startsWith("Completed")||focus.status.equals("Active")?ControllerTheme.COMPLETE:ControllerTheme.MUTED);y=text(draw,focus.status,x,y+line/2,width,line);}
+                 if(!focus.detail.isEmpty()&&!focus.detail.equals(focus.name)){
+                     draw.setColor(ControllerTheme.MUTED);
+                     for(String row:focus.detail.split("\n")){y=text(draw,row,x,y+line/2,width,line);}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+index 0d5167b..d22a454 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+@@ -35,7 +35,7 @@ public final class SoloScapeQuickRadialOverlay extends Overlay
+                 "A: interact · X: actions · LB/RB: targets / panes · B: back / cancel",
+                 "View: home tabs · Start: quick actions · Y: inventory",
+                 "D-pad: UI focus / scroll · Production LB/RB: amount · A: make recipe",
+-                "Quick slots: focus food, potion, prayer or spell; open quick wheel; X: assign · Y: clear",
++                "Quick slots: focus food, potion, prayer, spell or special; open quick wheel; X: assign · Y: clear",
+                 "All slots start empty · Potion bindings use the lowest available dose · Plugin Reset restores controls"};
+             int max=Math.max(100,client.getCanvas().getWidth()-32),w=0,lineHeight=g.getFontMetrics().getHeight()+5;
+             for(String line:lines) w=Math.max(w,Math.min(max,g.getFontMetrics().stringWidth(plugin.hint(line))+20));
+@@ -73,7 +73,7 @@ public final class SoloScapeQuickRadialOverlay extends Overlay
+             centreFit(g,hints.apply("A: use · B: back"),(int)cx,(int)cy+8,(int)(inner*1.8),true);
+             centreFit(g,hints.apply("X: assign · Y: clear"),(int)cx,(int)cy+30,(int)(inner*1.8),true);
+             centreFit(g,"QUICK ACTIONS",(int)cx,(int)(cy-radius-14),width-30,true);
+-            centreFit(g,quick.message()==null?(quick.canBind()?"Current action ready to assign":"Focus food, potion, prayer or spell to assign"):quick.message(),(int)cx,(int)(cy+radius+23),width-30,true);
++            centreFit(g,quick.message()==null?(quick.canBind()?"Current action ready to assign":"Focus food, potion, prayer, spell or special to assign"):quick.message(),(int)cx,(int)(cy+radius+23),width-30,true);
+         }
+         finally {g.dispose();}
+     }
+diff --git a/client/test/ControllerAdventureDetailsTest.java b/client/test/ControllerAdventureDetailsTest.java
+new file mode 100644
+index 0000000..6c87c80
+--- /dev/null
++++ b/client/test/ControllerAdventureDetailsTest.java
+@@ -0,0 +1,27 @@
++import org.junit.Test;
++import static org.junit.Assert.*;
++public class ControllerAdventureDetailsTest {
++ @Test public void prayerChildOrderDoesNotAssumeMaskBitOrder() {
++  int[] vars=new int[1600];vars[1395]=1<<18;
++  ControllerAdventureDetails.Detail sharp=ControllerAdventureDetails.describe(271,8,3,vars);
++  assertEquals("Sharp Eye",sharp.name);assertEquals("Active",sharp.status);assertTrue(sharp.detail.contains("8"));
++  assertEquals("Inactive",ControllerAdventureDetails.describe(271,8,18,vars).status);
++  vars[1397]=1<<18;assertEquals("Selected",ControllerAdventureDetails.describe(271,42,3,vars).status);
++  vars[1584]=1;vars[1582]=1<<19;assertEquals("Turmoil",ControllerAdventureDetails.describe(271,8,19,vars).name);
++  assertEquals("Active",ControllerAdventureDetails.describe(271,8,19,vars).status);
++  assertNull(ControllerAdventureDetails.describe(271,8,30,vars));
++ }
++ @Test public void combatAndMissingStateRemainReadOnly() {
++  int[] vars=new int[1600];vars[43]=2;vars[172]=1;vars[300]=750;vars[301]=1;
++  assertEquals("Selected",ControllerAdventureDetails.describe(884,13,-1,vars).status);
++  assertEquals("Off",ControllerAdventureDetails.describe(884,15,-1,vars).status);
++  assertTrue(ControllerAdventureDetails.describe(884,4,-1,vars).detail.contains("75.0%"));assertEquals(750,vars[300]);
++  assertEquals("",ControllerAdventureDetails.describe(884,4,-1,null).status);
++  assertNull(ControllerAdventureDetails.describe(271,8,0,null));
++ }
++ @Test public void spellLabelsRequirePinnedKnownComponents() {
++  assertEquals("Wind Strike",ControllerAdventureDetails.describe(192,25,-1,null).name);
++  assertNull(ControllerAdventureDetails.describe(192,7,-1,null));
++  assertNull(ControllerAdventureDetails.describe(192,900,-1,null));
++ }
++}
+diff --git a/client/test/net/runelite/client/input/controller/QuickRadialControlsTest.java b/client/test/net/runelite/client/input/controller/QuickRadialControlsTest.java
+index ea29924..19e8b77 100644
+--- a/client/test/net/runelite/client/input/controller/QuickRadialControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/QuickRadialControlsTest.java
+@@ -118,4 +118,13 @@ public class QuickRadialControlsTest
+         f.bindings[0]=null;press(q,i,8,10);assertEquals("Assign food",q.label(0));
+         q.trigger(128);i.updateButtons(128);assertFalse(q.update(i,20,null,null));i.updateButtons(0);q.update(i,21,null,null);i.updateButtons(128);assertTrue(q.update(i,22,null,null));
+     }
++    @Test public void specialBindingRequiresExactNativeControlAndFreshUsePermission() {
++        UiState.Widget special=widget(884<<16|4,-1,"Special attack","Use",18);
++        QuickBinding binding=QuickBinding.capture(special,special.actions[0]);assertNotNull(binding);
++        assertEquals(HomeTab.COMBAT.ordinal(),binding.tab);assertNotNull(QuickBinding.decode(binding.encode()));
++        assertNotNull(binding.match(special));
++        assertNull(binding.match(widget(884<<16|4,-1,"Special attack","Examine",18)));
++        UiState.Widget style=widget(884<<16|11,-1,"Style","Use",18);assertNull(QuickBinding.capture(style,style.actions[0]));
++        assertNull(QuickBinding.decode(binding.encode().replace(":"+(884<<16|4)+":",":"+(884<<16|11)+":")));
++    }
+ }

@@ -1,0 +1,225 @@
+diff --git a/client/src/Class201.java b/client/src/Class201.java
+index 5c5b2f9..b8c9f83 100644
+--- a/client/src/Class201.java
++++ b/client/src/Class201.java
+@@ -39,6 +39,13 @@ public class Class201 {
+                 if (java.nio.file.Files.isSymbolicLink(target) || !directory.toRealPath().startsWith(root.toRealPath()))
+                     throw new java.io.IOException("Unsafe profile cache.");
+                 file = target.toFile();
++                // Native stores reserve sector zero: preserve the original access probe,
++                // including its sentinel byte when a cache file is first created.
++                try (RandomAccessFile probe = new RandomAccessFile(file, "rw")) {
++                    int first = probe.read();
++                    probe.seek(0L);
++                    probe.write(first);
++                }
+                 aHashtable2642.put(string, file);
+                 return file;
+             } catch (java.io.IOException error) { throw new IllegalStateException("Cannot open the owned profile cache.", error); }
+diff --git a/client/src/net/runelite/client/input/controller/PanelConfirmation.java b/client/src/net/runelite/client/input/controller/PanelConfirmation.java
+new file mode 100644
+index 0000000..903f9b0
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/PanelConfirmation.java
+@@ -0,0 +1,22 @@
++package net.runelite.client.input.controller;
++
++/** A second distinct press confirms destructive item actions against the same native token. */
++public final class PanelConfirmation
++{
++    private UiState.Widget widget;
++    private UiState.Action action;
++    private long until;
++    public void clear() { widget=null;action=null;until=0; }
++    public boolean allow(UiState.Widget expected,UiState.Action requested,long now)
++    {
++        boolean destructive=requested.label.equalsIgnoreCase("Drop") || requested.label.toLowerCase(java.util.Locale.ROOT).startsWith("destroy");
++        if (!destructive) { clear();return true; }
++        if (now<until && expected.same(widget) && requested.same(action)) { clear();return true; }
++        widget=expected;action=requested;until=now+3_000_000_000L;return false;
++    }
++    public String prompt(UiState.Widget focused,long now)
++    {
++        if (widget==null || now>=until || !widget.same(focused)) { clear();return null; }
++        return "A: confirm "+action.label+" "+widget.name+" · B: cancel";
++    }
++}
+diff --git a/client/src/net/runelite/client/input/controller/PanelControls.java b/client/src/net/runelite/client/input/controller/PanelControls.java
+index 491d543..836293e 100644
+--- a/client/src/net/runelite/client/input/controller/PanelControls.java
++++ b/client/src/net/runelite/client/input/controller/PanelControls.java
+@@ -21,6 +21,8 @@ public final class PanelControls
+         state = null; focus = context = null; pane = contextIndex = heldDirection = 0;
+         armed = closing = exitRequested = selectionRequested = false; repeatAt = scrollFrame = closingUntil = 0; scrollAnchor = null;
+     }
++    public UiState.Panel state() { return state; }
++    public int pane() { return pane; }
+     public boolean exitRequested() { return exitRequested; }
+     public boolean selectionRequested() { return selectionRequested; }
+     public boolean active() { return state != null; }
+diff --git a/client/src/net/runelite/client/input/controller/PanelPresentation.java b/client/src/net/runelite/client/input/controller/PanelPresentation.java
+new file mode 100644
+index 0000000..08d2d77
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/PanelPresentation.java
+@@ -0,0 +1,56 @@
++package net.runelite.client.input.controller;
++
++import java.awt.Rectangle;
++
++/** Presentation-only bounds. Native identity, quantities, actions and selection tokens survive unchanged. */
++public final class PanelPresentation
++{
++    public final Rectangle bounds, content;
++    public final int columns, rows, pageSize;
++    public final double scale;
++    public PanelPresentation(int width, int height, double requestedScale)
++    {
++        scale = Math.max(.5, Math.min(requestedScale, Math.min((width-24.0)/720, (height-24.0)/460)));
++        bounds = new Rectangle((width-(int)(720*scale))/2, (height-(int)(460*scale))/2, (int)(720*scale), (int)(460*scale));
++        content = new Rectangle(bounds.x+(int)(16*scale), bounds.y+(int)(58*scale), (int)(500*scale), (int)(336*scale));
++        columns = 4; rows = 7; pageSize = columns*rows;
++    }
++    public UiState present(UiState nativeState, UiState.Widget selected, boolean inventory, boolean equipment, boolean bank, boolean shop)
++    {
++        UiState.Widget[] items = inventory ? grid(nativeState.inventory, 0) : nativeState.inventory;
++        UiState.Panel panel = nativeState.panel;
++        if (panel != null && supported(panel.id,equipment,bank,shop))
++        {
++            UiState.Pane[] panes = new UiState.Pane[panel.panes.length];
++            for (int p=0;p<panes.length;p++)
++            {
++                UiState.Widget[] widgets = panel.panes[p].widgets;
++                int page = page(widgets, selected);
++                panes[p] = new UiState.Pane(panel.panes[p].name,grid(widgets,page));
++            }
++            panel = new UiState.Panel(panel.id,panel.frame,panel.name,panes,panel.modal);
++        }
++        return new UiState(items,nativeState.dialogue,nativeState.dialogueId,nativeState.inventoryVisible,panel,nativeState.entry,nativeState.amounts,nativeState.amount);
++    }
++    public static boolean supported(int id, boolean equipment, boolean bank, boolean shop)
++    { return equipment&&(id==387||id==667) || bank&&(id==762||id==11) || shop&&id==620; }
++    public int page(UiState.Widget[] widgets, UiState.Widget selected)
++    {
++        if (selected != null) for (int i=0;i<widgets.length;i++) if (selected.same(widgets[i])) return i/pageSize;
++        return 0;
++    }
++    private UiState.Widget[] grid(UiState.Widget[] widgets,int page)
++    {
++        UiState.Widget[] result = new UiState.Widget[widgets.length];
++        int cellWidth = content.width/columns, cellHeight=content.height/rows;
++        for (int i=0;i<widgets.length;i++)
++        {
++            UiState.Widget widget=widgets[i]; if (widget==null) continue;
++            // Off-page rows remain in the spatial model so navigation crosses pages naturally.
++            Rectangle position=new Rectangle(content.x+i%columns*cellWidth,content.y+(i/columns-page*rows)*cellHeight,cellWidth-4,cellHeight-4);
++            result[i]=new UiState.Widget(widget.id,widget.child,widget.itemId,widget.quantity,widget.name,position,widget.actions);
++        }
++        return result;
++    }
++    public boolean visible(UiState.Widget widget) { return widget!=null && content.contains(widget.bounds); }
++}
+diff --git a/client/src/net/runelite/client/input/controller/UiControls.java b/client/src/net/runelite/client/input/controller/UiControls.java
+index ed65807..f41866d 100644
+--- a/client/src/net/runelite/client/input/controller/UiControls.java
++++ b/client/src/net/runelite/client/input/controller/UiControls.java
+@@ -67,6 +67,10 @@ public final class UiControls
+             || focusedTab==HomeTab.SETTINGS.ordinal() && (panel.id==261 || panel.id==982)
+             || focusedTab == HomeTab.SPELLBOOK.ordinal() && (panel.id == 192 || panel.id == 193 || panel.id == 430);
+     }
++    public UiState state() { return state; }
++    public UiState.Panel focusedPanel() { return panel.state(); }
++    public int focusedPane() { return panel.pane(); }
++    public boolean inventoryFocused() { return inventory && !panel.active() && !entry.active() && !inDialogue(); }
+     public boolean inDialogue() { return state.dialogueId >= 0; }
+     public UiState.Widget focus()
+     {
+diff --git a/client/test/OwnedCacheTest.java b/client/test/OwnedCacheTest.java
+new file mode 100644
+index 0000000..9993401
+--- /dev/null
++++ b/client/test/OwnedCacheTest.java
+@@ -0,0 +1,35 @@
++import java.io.File;
++import java.lang.reflect.Field;
++import java.nio.file.*;
++import java.util.*;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class OwnedCacheTest
++{
++    @Test public void ownedCachePreservesNativeSectorZeroSentinelAndNeverFallsBack() throws Exception
++    {
++        Path root=Files.createTempDirectory("soloscape-owned-cache-"); String old=System.getProperty("soloscape.cache.root");
++        Field tableField=Class201.class.getDeclaredField("aHashtable2642");tableField.setAccessible(true);
++        Hashtable table=(Hashtable)tableField.get(null); Hashtable previous=(Hashtable)table.clone();
++        try
++        {
++            table.clear();System.setProperty("soloscape.cache.root",root.toString());Class201.method1465((byte)-121,"fixture",1);
++            File cache=Class201.method1464(0,1,"main_file_cache.dat2","fixture");
++            assertTrue(cache.toPath().startsWith(root));assertEquals(1,cache.length());assertEquals(255,Files.readAllBytes(cache.toPath())[0]&255);
++            try { Class201.method1464(0,1,"../escape",null);fail("Unsafe file path accepted"); } catch(IllegalArgumentException expected) { }
++            Path outside=Files.createTempDirectory("soloscape-cache-outside-");
++            try
++            {
++                Files.createSymbolicLink(root.resolve("store-2"),outside);
++                try { Class201.method1464(0,2,"other.dat",null);fail("Linked store accepted"); } catch(IllegalStateException expected) { }
++                assertEquals(0,outside.toFile().list() .length);
++            } finally { Files.deleteIfExists(root.resolve("store-2"));Files.deleteIfExists(outside); }
++        }
++        finally
++        {
++            table.clear();table.putAll(previous);if(old==null)System.clearProperty("soloscape.cache.root");else System.setProperty("soloscape.cache.root",old);
++            try(java.util.stream.Stream<Path> files=Files.walk(root)) { files.sorted(Comparator.reverseOrder()).forEach(path->{try{Files.delete(path);}catch(Exception ex){throw new RuntimeException(ex);}}); }
++        }
++    }
++}
+diff --git a/client/test/net/runelite/client/input/controller/PanelPresentationTest.java b/client/test/net/runelite/client/input/controller/PanelPresentationTest.java
+new file mode 100644
+index 0000000..e55deaf
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/PanelPresentationTest.java
+@@ -0,0 +1,42 @@
++package net.runelite.client.input.controller;
++
++import java.awt.Rectangle;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class PanelPresentationTest
++{
++    private UiState.Widget item(int index,int amount)
++    { return new UiState.Widget(149<<16,index,100+index,amount,"Item "+index,new Rectangle(1,2,32,32),new UiState.Action[]{new UiState.Action("Drop",18,5,77)}); }
++    @Test public void presentationFitsSmallAndDeckCanvasesWithoutChangingNativeIntent()
++    {
++        for(int[] size:new int[][]{{765,503},{1280,800},{1024,600}})
++        {
++            UiState.Widget[] inventory=new UiState.Widget[28]; for(int i=0;i<28;i++)inventory[i]=item(i,1);
++            PanelPresentation view=new PanelPresentation(size[0],size[1],1.75);
++            assertTrue(new Rectangle(0,0,size[0],size[1]).contains(view.bounds));
++            UiState translated=view.present(new UiState(inventory,new UiState.Widget[0],-1),null,true,false,false,false);
++            for(int i=0;i<28;i++){assertTrue(view.visible(translated.inventory[i]));assertTrue(inventory[i].same(translated.inventory[i]));assertSame(inventory[i].actions,translated.inventory[i].actions);}
++            assertEquals(new Rectangle(1,2,32,32),inventory[0].bounds);
++        }
++    }
++    @Test public void bankFocusCrossesCustomPagesAndFallbackKeepsNativeBounds()
++    {
++        UiState.Widget[] widgets=new UiState.Widget[60];for(int i=0;i<60;i++)widgets[i]=item(i,10);
++        UiState nativeState=new UiState(new UiState.Widget[28],new UiState.Widget[0],-1,true,new UiState.Panel(762,123,"Bank",new UiState.Pane[]{new UiState.Pane("Stored",widgets)}));
++        PanelPresentation view=new PanelPresentation(765,503,1);
++        UiState presented=view.present(nativeState,widgets[35],false,false,true,false);
++        assertEquals(123,presented.panel.frame);assertTrue(view.visible(presented.panel.panes[0].widgets[35]));assertFalse(view.visible(presented.panel.panes[0].widgets[0]));
++        assertSame(nativeState.panel,view.present(nativeState,widgets[35],false,false,false,false).panel);
++    }
++    @Test public void changedItemOrQuantityAndExpiredConfirmationCannotDropTheOldIntent()
++    {
++        PanelConfirmation confirmation=new PanelConfirmation();UiState.Widget one=item(1,1),changed=item(1,2);
++        assertFalse(confirmation.allow(one,one.actions[0],0));
++        assertFalse(confirmation.allow(changed,changed.actions[0],10));
++        assertTrue(confirmation.allow(changed,changed.actions[0],20));
++        assertFalse(confirmation.allow(one,one.actions[0],30));
++        assertFalse(confirmation.allow(one,one.actions[0],4_000_000_000L));
++        confirmation.clear();assertNull(confirmation.prompt(one,4_000_000_001L));
++    }
++}

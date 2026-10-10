@@ -1,0 +1,1253 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+index 3495e63..dcd0440 100644
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1043,6 +1043,7 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+         ControllerCamera.setInput(yawDegreesPerSecond, pitchDegreesPerSecond);
+     }
+ 
++    @Override public void setControllerPanelEnabled(boolean enabled) { ControllerUi.enablePanels(enabled); }
+     @Override public void setControllerUiEnabled(boolean enabled) { ControllerUi.enable(enabled); }
+     @Override public net.runelite.client.input.controller.UiState getControllerUiState() { return ControllerUi.snapshot(); }
+     @Override public net.runelite.client.input.controller.UiState getControllerUiState(boolean inventory) { return ControllerUi.snapshot(inventory); }
+@@ -1050,6 +1051,7 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+     @Override public int getControllerAvailableTabs() { return ControllerUi.availableTabs(); }
+     @Override public boolean openControllerTab(int index) { return ControllerUi.openTab(index); }
+     @Override public void setControllerServerFeatures(boolean enabled) { ControllerDirectMovement.enableServerFeatures(enabled); }
++    @Override public void prepareControllerUi() { ControllerEntry.prepare(); }
+     @Override public boolean editControllerEntry(net.runelite.client.input.controller.EntryState entry, String value) { return ControllerEntry.edit(entry, value); }
+     @Override public boolean submitControllerEntry(net.runelite.client.input.controller.EntryState entry) { return ControllerEntry.submit(entry); }
+     @Override public void cancelControllerEntry(net.runelite.client.input.controller.EntryState entry) { ControllerEntry.cancel(entry); }
+@@ -1071,6 +1073,10 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+     @Override
+     public net.runelite.api.coords.WorldPoint getControllerWalkDestination() { return ControllerWorld.walkDestination(); }
+ 
++    @Override public boolean openControllerTargetInventory() { return ControllerUi.openTargetInventory(); }
++    @Override public String getControllerSelectionHint() { return !r.aBoolean9722 ? null : ControllerSelection.valid() ? ControllerSelection.label() : "Selection changed"; }
++    @Override public boolean isControllerTargeting() { return r.aBoolean9722; }
++    @Override public int getControllerSelectionMask() { return ControllerSelection.valid() ? Class38.anInt500 : 0; }
+     @Override
+     public boolean isControllerWorldReady() { return ControllerWorld.ready(); }
+ 
+diff --git a/client/src/Class339.java b/client/src/Class339.java
+index fae4882..db38ef9 100644
+--- a/client/src/Class339.java
++++ b/client/src/Class339.java
+@@ -123,6 +123,7 @@ final class Class339 implements Runnable {
+             Class348_Sub49_Sub1.anInt9747 = class46.anInt824;
+             if (i_14_ != 21) method2665(-99, (byte) -106, 10, -37, 26, -123);
+             Class149.anInt2046 = class46.anInt830;
++            ControllerSelection.changed(class46);
+             Class251.method1916(-9343, class46);
+         }
+     }
+diff --git a/client/src/Class66.java b/client/src/Class66.java
+index 7188b18..b377051 100644
+--- a/client/src/Class66.java
++++ b/client/src/Class66.java
+@@ -2448,6 +2448,7 @@ final class Class66 {
+ 
+     static final void method705(Class348_Sub36 class348_sub36) {
+         method712(class348_sub36, 200000);
++        ControllerEntry.observe(class348_sub36);
+     }
+ 
+     static final void method706() {
+diff --git a/client/src/Class88.java b/client/src/Class88.java
+index 9885a7a..72fa622 100644
+--- a/client/src/Class88.java
++++ b/client/src/Class88.java
+@@ -40,6 +40,7 @@ final class Class88 {
+     }
+ 
+     static final void method842(boolean bool) {
++        ControllerUi.beginFrame();
+         anInt1501++;
+         Class138.aClass46Array1942 = null;
+         if (Class59_Sub1.aBoolean5300 && Class348_Sub42_Sub12.method3229(-82) != 1) OutputStream_Sub1.method132(106, (Class240.anInt4674 == 3) || Class240.anInt4674 == 7, za_Sub1.method3439(107), 0, Class348_Sub44.method3306((byte) -111), 0);
+diff --git a/client/src/ControllerDirectMovement.java b/client/src/ControllerDirectMovement.java
+index 3121428..e81c51b 100644
+--- a/client/src/ControllerDirectMovement.java
++++ b/client/src/ControllerDirectMovement.java
+@@ -19,7 +19,7 @@ final class ControllerDirectMovement
+     {
+         int next = DirectInput.direction(x, y, direction);
+         if (next < 0) { stop(); blocked = false; return; }
+-        if (!serverFeatures || !ControllerWorld.ready() || blocked) { stop(); return; }
++        if (!serverFeatures || (!ControllerWorld.ready() || r.aBoolean9722) || blocked) { stop(); return; }
+         long now = System.nanoTime();
+         if (next != direction || running != run || now - lastSent >= 200_000_000L)
+         {
+@@ -43,6 +43,7 @@ final class ControllerDirectMovement
+     static void cancelAction()
+     {
+         stop();
++        if (r.aBoolean9722) { ControllerUi.cancelSelection(); ControllerWorld.clearWalkMarker(); ControllerWorld.reset(); return; }
+         if (!ControllerWorld.ready() || Class348_Sub23_Sub2.aClass77_9029 == null) return;
+         if (!serverFeatures) { ControllerUi.cancelWorld(); return; }
+         Class348_Sub47 packet = Class286_Sub3.method2148(CANCEL, Class348_Sub23_Sub2.aClass77_9029, -100);
+diff --git a/client/src/ControllerEntry.java b/client/src/ControllerEntry.java
+index fcd59c4..e171638 100644
+--- a/client/src/ControllerEntry.java
++++ b/client/src/ControllerEntry.java
+@@ -5,6 +5,8 @@ final class ControllerEntry
+ {
+     private static long revision;
+     private static int previousType;
++    private static long searchRequestedUntil;
++    static void requestBankSearch() { searchRequestedUntil = System.nanoTime()+2_000_000_000L; }
+     interface Scripts { void run(Object[] arguments); }
+     private static final Scripts NATIVE = arguments -> {
+         Class348_Sub36 event = new Class348_Sub36(); event.anObjectArray6987 = arguments;
+@@ -27,13 +29,21 @@ final class ControllerEntry
+         int type = Isaac.anIntArray1303[5];
+         return type == 7 || type == 8 || type == 9 || type == 11;
+     }
++    static void prepare()
++    {
++        if (searchRequestedUntil == 0) return;
++        if (System.nanoTime()>searchRequestedUntil || !ControllerUi.hasBank()) { searchRequestedUntil=0; return; }
++        if (!ControllerUi.entryReady()) return;
++        if (Isaac.anIntArray1303 != null && Isaac.anIntArray1303.length>190 && Isaac.anIntArray1303[190]==1)
++        {
++            // Native search waits for the next physical key. Only an explicit
++            // controller Search request activates that one-shot callback here.
++            searchRequestedUntil=0; scripts.run(new Object[]{1471});
++        }
++    }
+     static EntryState snapshot()
+     {
+         if (!ControllerUi.entryReady()) return null;
+-        // The bank Search button arms a native key callback. Activate that callback
+-        // so a controller can enter search without first pressing a physical key.
+-        if (ControllerUi.hasBank() && Isaac.anIntArray1303 != null && Isaac.anIntArray1303.length > 190
+-            && Isaac.anIntArray1303[190] == 1) scripts.run(new Object[] {1471});
+         int type = active() ? Isaac.anIntArray1303[5] : 0;
+         if (type != previousType) { revision++; previousType = type; }
+         if (type == 0) return null;
+diff --git a/client/src/ControllerSelection.java b/client/src/ControllerSelection.java
+new file mode 100644
+index 0000000..5457414
+--- /dev/null
++++ b/client/src/ControllerSelection.java
+@@ -0,0 +1,53 @@
++/** Binding to the native selected widget. Re-selection always creates a new target token. */
++final class ControllerSelection
++{
++    private static Class46 source;
++    private static int quantity;
++    private static long revision;
++    static void changed(Class46 widget) { source = widget; quantity = widget.anInt781; revision++; }
++    static long token() { return r.aBoolean9722 && valid() ? revision : 0; }
++    static boolean valid()
++    {
++        if (!r.aBoolean9722 || source == null) return false;
++        Class46[][] widgets = Class348_Sub40_Sub33.aClass46ArrayArray9427;
++        int group = Class149.anInt2046 >>> 16, component = Class149.anInt2046 & 65535;
++        if (widgets == null || group >= widgets.length || widgets[group] == null || component >= widgets[group].length
++            || widgets[group][component] == null) return false;
++        Class46 live = Class348_Sub22.method2957(Class9.anInt169,(byte)-54,Class149.anInt2046);
++        if (live != source || live.anInt812 != Class301.anInt3829 || live.anInt781 != quantity) return false;
++        Class348_Sub44 flags = client.method105(live);
++        return flags.method3307(14) == Class38.anInt500 && flags.anInt7093 == Class246.anInt3176
++            && Class239_Sub8.method1753(0,live) != null;
++    }
++    static boolean allows(int mask) { return valid() && (Class38.anInt500 & mask) != 0; }
++    static Class254 parameter()
++    {
++        return Class246.anInt3176 == -1 || Class101_Sub3.aClass326_5764 == null ? null
++            : Class101_Sub3.aClass326_5764.method2600(Class246.anInt3176,28364);
++    }
++    static boolean npc(NPCType def)
++    {
++        if (!allows(2)) return false;
++        Class254 param = parameter();
++        return Class246.anInt3176 == -1 || param != null && def.method805(param.anInt3256,Class246.anInt3176,61) != param.anInt3256;
++    }
++    static boolean object(Class51 def)
++    {
++        if (!allows(4)) return false;
++        Class254 param = parameter();
++        return Class246.anInt3176 == -1 || param != null && def.method487(Class246.anInt3176,param.anInt3256,54) != param.anInt3256;
++    }
++    static boolean ground(ObjType def)
++    {
++        if (!allows(1)) return false;
++        Class254 param = parameter();
++        return Class246.anInt3176 == -1 || param != null && def.getIntParam(param.anInt3256,29,Class246.anInt3176) != param.anInt3256;
++    }
++    static boolean item(Class46 widget)
++    {
++        if (!allows(32) || !client.method105(widget).method3303(1)) return false;
++        Class254 param = parameter();
++        return Class246.anInt3176 == -1 || param != null && widget.method428(param.anInt3256,Class246.anInt3176,-128) != param.anInt3256;
++    }
++    static String label() { return ControllerUi.clean(Class28.aString5001) + " " + ControllerUi.clean(Class28.aString5000) + " →"; }
++}
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+index ce88cf3..30f213c 100644
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -16,6 +16,8 @@ final class ControllerUi
+     private static final int INVENTORY = 149 << 16;
+     private static final Map<Long, Seen> visible = new HashMap<>();
+     private static boolean enabled;
++    private static boolean panelsEnabled = true;
++    static void enablePanels(boolean value) { panelsEnabled = value; }
+     private static long renderFrame;
+     static void beginFrame() { renderFrame++; }
+     private static final Pattern TAGS = Pattern.compile("<[^>]*>");
+@@ -105,7 +107,7 @@ final class ControllerUi
+         return new UiState(inventory, dialogue.toArray(new UiState.Widget[0]), dialogueId, inventoryVisible, panel(open), ControllerEntry.snapshot());
+     }
+ 
+-    static boolean entryReady() { return ready(); }
++    static boolean entryReady() { return panelsEnabled && ready(); }
+     static boolean hasBank() { return openGroups().contains(762); }
+     static Class46 entryPrompt()
+     {
+@@ -115,12 +117,13 @@ final class ControllerUi
+ 
+     private static boolean panelGroup(int group)
+     {
+-        return group == 762 || group == 763 || group == 11 || group == 620 || group == 621;
++        return group == 762 || group == 763 || group == 11 || group == 620 || group == 621 || group == 387 || group == 667 || group == 670 || group == 271
++            || group == 192 || group == 193 || group == 430;
+     }
+ 
+     static boolean hasModalPanel()
+     {
+-        for (int group : openGroups()) if (group == 762 || group == 11 || group == 620) return true;
++        for (int group : openGroups()) if (group == 762 || group == 11 || group == 620 || group == 667) return true;
+         return false;
+     }
+ 
+@@ -135,6 +138,17 @@ final class ControllerUi
+             if (item != null) name = clean(item.name);
+         }
+         UiState.Action[] options = actions(w, true);
++        int group = w.anInt830 >>> 16;
++        if (group == 192 || group == 193 || group == 430)
++        {
++            String select = Class239_Sub8.method1753(0,w);
++            if (select != null)
++            {
++                UiState.Action[] all = new UiState.Action[options.length+1];
++                all[0] = new UiState.Action(clean(select),13,0);
++                System.arraycopy(options,0,all,1,options.length); options = all;
++            }
++        }
+         if (name.isEmpty()) name = options.length > 0 ? options[0].label : "Item";
+         return new UiState.Widget(w.anInt830, w.anInt704, w.anInt812, w.anInt781,
+             name, new Rectangle(seen.bounds), options);
+@@ -142,31 +156,43 @@ final class ControllerUi
+ 
+     private static UiState.Panel panel(Set<Integer> open)
+     {
++        if (!panelsEnabled) return null;
+         int id = open.contains(762) ? 762 : open.contains(11) ? 11 : open.contains(620) ? 620 : -1;
++        if (id < 0 && open.contains(667)) id = 667;
++        boolean modal = id >= 0;
++        if (id < 0)
++        {
++            int[] tabs = {387,271,192,193,430};
++            for (int group : tabs)
++                if (open.contains(group))
++                    for (Seen seen : visible.values())
++                        if (seen.widget.anInt830 >>> 16 == group && fresh(seen) && seen.frame == renderFrame) { id = group; break; }
++        }
+         if (id < 0) return null;
+         List<UiState.Widget> items = new ArrayList<>(), side = new ArrayList<>(), controls = new ArrayList<>();
+         for (Seen seen : visible.values())
+         {
+             Class46 w = seen.widget;
+             int group = w.anInt830 >>> 16;
+-            if (group != id && !(id == 762 && group == 763) && !(id == 620 && group == 621)) continue;
++            if (group != id && !(id == 762 && group == 763) && !(id == 620 && group == 621) && !(id == 667 && group == 670)) continue;
+             if (!open.contains(group) || !fresh(seen) || seen.frame != renderFrame) continue;
+             // Dynamic empty slots can expose inherited operations; never invoke them.
+-            if (w.anInt704 >= 0 && w.anInt812 < 0) continue;
++            if (w.anInt704 >= 0 && w.anInt812 < 0 && id != 271) continue;
+             UiState.Widget widget = describePanel(seen);
+             if (widget.actions.length == 0) continue;
+-            if (group == 763 || group == 621) side.add(widget);
+-            else if (w.anInt812 >= 0 && (id != 762 || (w.anInt830 & 65535) == 93)
++            if (group == 763 || group == 621 || group == 670) side.add(widget);
++            else if ((w.anInt812 >= 0 || !modal) && (id != 762 || (w.anInt830 & 65535) == 93)
+                 && (id != 620 || (w.anInt830 & 65535) == 25 || (w.anInt830 & 65535) == 26)) items.add(widget);
+             else controls.add(widget);
+         }
+         Comparator<UiState.Widget> order = Comparator.comparingInt((UiState.Widget w) -> w.bounds.y).thenComparingInt(w -> w.bounds.x).thenComparingInt(w -> w.child);
+         items.sort(order); side.sort(order); controls.sort(order);
+         List<UiState.Pane> panes = new ArrayList<>();
+-        panes.add(new UiState.Pane(id == 620 ? "Stock" : id == 11 ? "Inventory" : "Bank", items.toArray(new UiState.Widget[0])));
+-        if (id != 11) panes.add(new UiState.Pane("Inventory", side.toArray(new UiState.Widget[0])));
+-        panes.add(new UiState.Pane("Controls / tabs", controls.toArray(new UiState.Widget[0])));
+-        return new UiState.Panel(id, renderFrame, id == 620 ? "Shop" : id == 11 ? "Deposit box" : "Bank", panes.toArray(new UiState.Pane[0]));
++        String name = id == 620 ? "Shop" : id == 11 ? "Deposit box" : id == 762 ? "Bank" : id == 387 || id == 667 ? "Equipment" : id == 271 ? "Prayer" : "Spellbook";
++        panes.add(new UiState.Pane(!modal || id == 667 ? name : id == 620 ? "Stock" : id == 11 ? "Inventory" : "Bank", items.toArray(new UiState.Widget[0])));
++        if (id == 762 || id == 620 || id == 667) panes.add(new UiState.Pane("Inventory", side.toArray(new UiState.Widget[0])));
++        if (modal) panes.add(new UiState.Pane("Controls / tabs", controls.toArray(new UiState.Widget[0])));
++        return new UiState.Panel(id, renderFrame, name, panes.toArray(new UiState.Pane[0]),modal);
+     }
+ 
+     static boolean scroll(UiState.Widget expected, int direction)
+@@ -211,8 +237,13 @@ final class ControllerUi
+     {
+         List<UiState.Action> result = new ArrayList<>();
+         if (!dialogue && w.anInt812 < 0) return new UiState.Action[0];
+-        if (!dialogue && r.aBoolean9722 && client.method105(w).method3303(1) && (Class38.anInt500 & 0x20) != 0)
+-            result.add(new UiState.Action("Use selected item with", 6, 0));
++        if (!dialogue && r.aBoolean9722)
++        {
++            // A selected item/spell expresses targeting intent. Never fall back
++            // to Eat/Drop when its source or destination becomes ineligible.
++            return ControllerSelection.item(w) ? new UiState.Action[]{new UiState.Action(ControllerSelection.label(),6,0,ControllerSelection.token())}
++                : new UiState.Action[0];
++        }
+         for (int op = 0; op < 5; op++) addOperation(result, w, op);
+         String select = Class239_Sub8.method1753(0, w);
+         if (!dialogue && select != null) result.add(new UiState.Action(clean(select), 13, 0));
+@@ -234,6 +265,25 @@ final class ControllerUi
+         return openTab(HomeTab.INVENTORY.ordinal());
+     }
+ 
++    static boolean openTargetInventory()
++    {
++        if (!ready() || !ControllerSelection.allows(32) || hasDialogue() || hasModalPanel()) return false;
++        for (Seen seen : visible.values())
++        {
++            if (!HomeTab.INVENTORY.matches(seen.widget.anInt830) || !fresh(seen)) continue;
++            for (UiState.Action action : actions(seen.widget,true))
++                if (action.type == 18)
++                {
++                    // The ordinary tab operation, including CS2 onOp and permissions,
++                    // without Class325's trailing cancellation of the selected spell.
++                    Class348_Sub9.method2780(seen.widget.anInt704,clean(seen.widget.aString752),(byte)5,
++                        action.operation,seen.widget.anInt830);
++                    return ControllerSelection.valid();
++                }
++        }
++        return false;
++    }
++
+     static int availableTabs()
+     {
+         if (!ready() || hasDialogue() || hasModalPanel() || ControllerEntry.active()) return 0;
+@@ -316,6 +366,7 @@ final class ControllerUi
+         if (seen == null || !fresh(seen)) return false;
+         int group = expected.id >>> 16;
+         boolean dialogue = DIALOGUES.contains(group);
++        if (panelGroup(group) && !panelsEnabled) return false;
+         if ((group == 149 || dialogue || panelGroup(group)) && !openGroups().contains(group)) return false;
+         UiState.Widget current = panelGroup(group) ? describePanel(seen) : describe(seen, dialogue || group != 149);
+         if (!current.same(expected)) return false;
+@@ -326,12 +377,23 @@ final class ControllerUi
+             Class325.method2599((byte) 109, new Class348_Sub42_Sub12(valid.label, current.name, -1,
+                 valid.type, current.itemId, valid.operation, current.child, current.id, true, false, 0, false),
+                 current.bounds.x + current.bounds.width / 2, current.bounds.y + current.bounds.height / 2);
++            if (current.id == (762<<16|17) && valid.label.equalsIgnoreCase("Search")) ControllerEntry.requestBankSearch();
+             return true;
+         }
+         return false;
+     }
+ 
+-    static void cancelSelection() { if (r.aBoolean9722) Class341.method2678(-2049); }
++    static void cancelSelection()
++    {
++        if (!r.aBoolean9722) return;
++        try { Class341.method2678(-2049); }
++        finally
++        {
++            // A disappearing source or failing onTargetLeave callback must not
++            // leave controller input trapped in an invalid selection.
++            r.aBoolean9722 = false; Class301.anInt3829 = Class362.anInt4458 = -1;
++        }
++    }
+ 
+     static void cancelDialogue()
+     {
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+index 91ef695..1e7e0fc 100644
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -21,7 +21,7 @@ final class ControllerWorld
+         return Class240.anInt4674 == 10 && Class132.aPlayer_1907 != null
+             && Class132.aPlayer_1907.method2436((byte) 70) == 1
+             && (Class348_Sub40_Sub21.anInt9282 == 1 || Class348_Sub40_Sub21.anInt9282 == 5)
+-            && !r.aBoolean9722 && !Class305.aBoolean3870 && !ControllerUi.hasDialogue() && !ControllerUi.hasModalPanel() && !ControllerEntry.active()
++            && (!r.aBoolean9722 || ControllerSelection.valid()) && !Class305.aBoolean3870 && !ControllerUi.hasDialogue() && !ControllerUi.hasModalPanel() && !ControllerEntry.active()
+             && Class348_Sub45.aClass361Array7108 != null
+             && Class348_Sub45.aClass361Array7108[Class132.aPlayer_1907.plane] != null;
+     }
+@@ -62,7 +62,7 @@ final class ControllerWorld
+ 
+     static boolean walk(double dx, double dy)
+     {
+-        if (!ready() || !Double.isFinite(dx) || !Double.isFinite(dy) || Math.hypot(dx, dy) < 0.001) return false;
++        if (!ready() || r.aBoolean9722 || !Double.isFinite(dx) || !Double.isFinite(dy) || Math.hypot(dx, dy) < 0.001) return false;
+         Player player = Class132.aPlayer_1907;
+         Class361 map = Class348_Sub45.aClass361Array7108[player.plane];
+         int x = player.x >> 9, y = player.y >> 9;
+@@ -173,7 +173,11 @@ final class ControllerWorld
+                         if (def != null && def.interactive)
+                         {
+                             int option = defaultOption(def.op, def.aByte107);
+-                            addOptions(result, def.name, def.op, NPC_ACTIONS, option, npc.anInt10290, x, y, size, size, allActions);
++                            if (r.aBoolean9722)
++                            {
++                                if (ControllerSelection.npc(def)) result.add(target(def.name,ControllerSelection.label(),30,npc.anInt10290,x,y,size,size));
++                            }
++                            else addOptions(result, def.name, def.op, NPC_ACTIONS, option, npc.anInt10290, x, y, size, size, allActions);
+                         }
+                     }
+                 }
+@@ -204,6 +208,12 @@ final class ControllerWorld
+         int rotation = obj.method41(-32228);
+         int width = (rotation & 1) == 0 ? def.anInt961 : def.anInt926;
+         int height = (rotation & 1) == 0 ? def.anInt926 : def.anInt961;
++        if (r.aBoolean9722)
++        {
++            if (ControllerSelection.object(def)) result.add(target(def.aString884,ControllerSelection.label(),2,
++                Class348_Sub40_Sub21.method3107((byte)95,obj,y,x),x,y,width,height));
++            return;
++        }
+         addOptions(result, def.aString884, def.aStringArray913, OBJECT_ACTIONS, option,
+             Class348_Sub40_Sub21.method3107((byte) 95, obj, y, x), x, y, width, height, allActions);
+     }
+@@ -225,7 +235,11 @@ final class ControllerWorld
+             if (def == null || def.op == null) continue;
+             int option = def.op.length > 2 && def.op[2] != null && !def.op[2].isEmpty() ? 2 : defaultOption(def.op, -1);
+             String name = def.name + (item.anInt6971 > 1 ? " (" + item.anInt6971 + ")" : "");
+-            addOptions(result, name, def.op, GROUND_ACTIONS, option, item.anInt6973, x, y, 1, 1, allActions);
++            if (r.aBoolean9722)
++            {
++                if (ControllerSelection.ground(def)) result.add(target(name,ControllerSelection.label(),49,item.anInt6973,x,y,1,1));
++            }
++            else addOptions(result, name, def.op, GROUND_ACTIONS, option, item.anInt6973, x, y, 1, 1, allActions);
+         }
+     }
+ 
+@@ -253,7 +267,7 @@ final class ControllerWorld
+ 
+     private static ControllerTarget target(String name, String option, int action, long id, int x, int y, int width, int height)
+     {
+-        return new ControllerTarget(name, option, action, id, x, y, Class132.aPlayer_1907.plane, za_Sub2.regionTileX, Class90.regionTileY, width, height);
++        return new ControllerTarget(name, option, action, id, x, y, Class132.aPlayer_1907.plane, za_Sub2.regionTileX, Class90.regionTileY, width, height, ControllerSelection.token());
+     }
+ 
+     private static boolean nearby(Player p, ControllerTarget t)
+@@ -306,7 +320,7 @@ final class ControllerWorld
+     private static boolean reachable(ControllerTarget t)
+     {
+         if (t.kind() == 3) return reachable(t.x, t.y, 1, 1, -3, 0, 0) || reachable(t.x, t.y, 1, 1, -2, 0, 0);
+-        for (int action : NPC_ACTIONS) if (t.action == action)
++        if (t.kind() == 1)
+         {
+             if (Class282.aClass356_3654 == null) return false;
+             Class348_Sub22 entry = (Class348_Sub22) Class282.aClass356_3654.method3480(t.identifier, -6008);
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+index 447fd98..fadb70c 100644
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -345,6 +345,7 @@ public abstract class GameClient extends Applet {
+     }
+ 
+     /** World controller actions run on the client thread through the native dispatcher. */
++    public void setControllerPanelEnabled(boolean enabled) {}
+     public void setControllerUiEnabled(boolean enabled) {}
+     public net.runelite.client.input.controller.UiState getControllerUiState() { return net.runelite.client.input.controller.UiState.EMPTY; }
+     public net.runelite.client.input.controller.UiState getControllerUiState(boolean inventory) { return getControllerUiState(); }
+@@ -352,6 +353,7 @@ public abstract class GameClient extends Applet {
+     public int getControllerAvailableTabs() { return 0; }
+     public boolean openControllerTab(int index) { return false; }
+     public void setControllerServerFeatures(boolean enabled) {}
++    public void prepareControllerUi() {}
+     public boolean editControllerEntry(net.runelite.client.input.controller.EntryState entry, String value) { return false; }
+     public boolean submitControllerEntry(net.runelite.client.input.controller.EntryState entry) { return false; }
+     public void cancelControllerEntry(net.runelite.client.input.controller.EntryState entry) {}
+@@ -366,6 +368,10 @@ public abstract class GameClient extends Applet {
+     public void resetControllerWorld() {}
+     public void clearControllerWalkMarker() {}
+     public net.runelite.api.coords.WorldPoint getControllerWalkDestination() { return null; }
++    public boolean openControllerTargetInventory() { return false; }
++    public String getControllerSelectionHint() { return null; }
++    public boolean isControllerTargeting() { return false; }
++    public int getControllerSelectionMask() { return 0; }
+     public boolean isControllerWorldReady() { return false; }
+     public boolean walkController(double directionX, double directionY) { return false; }
+     public ControllerTarget findControllerTarget(double facingX, double facingY, ControllerTarget previous) { return null; }
+@@ -378,7 +384,7 @@ public abstract class GameClient extends Applet {
+     {
+         public final String name, option;
+         public final int action, x, y, plane, baseX, baseY, width, height;
+-        public final long identifier;
++        public final long identifier, selection;
+         public ControllerTarget(String name, String option, int action, long identifier,
+                                 int x, int y, int plane, int baseX, int baseY)
+         {
+@@ -387,6 +393,12 @@ public abstract class GameClient extends Applet {
+         public ControllerTarget(String name, String option, int action, long identifier,
+                                 int x, int y, int plane, int baseX, int baseY, int width, int height)
+         {
++            this(name,option,action,identifier,x,y,plane,baseX,baseY,width,height,0);
++        }
++        public ControllerTarget(String name, String option, int action, long identifier,
++            int x, int y, int plane, int baseX, int baseY, int width, int height, long selection)
++        {
++            this.selection = selection;
+             this.name = name; this.option = option; this.action = action; this.identifier = identifier;
+             this.x = x; this.y = y; this.plane = plane; this.baseX = baseX; this.baseY = baseY;
+             this.width = Math.max(1, width); this.height = Math.max(1, height);
+@@ -399,21 +411,21 @@ public abstract class GameClient extends Applet {
+         {
+             switch (action)
+             {
+-                case 25: case 20: case 44: case 46: case 60: return 1; // NPC
+-                case 3: case 4: case 9: case 59: case 1007: return 2; // Object
+-                case 21: case 10: case 47: case 22: case 5: return 3; // Ground item
++                case 30: case 25: case 20: case 44: case 46: case 60: return 1; // NPC
++                case 2: case 3: case 4: case 9: case 59: case 1007: return 2; // Object
++                case 49: case 21: case 10: case 47: case 22: case 5: return 3; // Ground item
+                 default: return 0;
+             }
+         }
+         public boolean sameSubject(ControllerTarget other)
+         {
+-            return other != null && kind() == other.kind() && identifier == other.identifier
++            return other != null && selection == other.selection && kind() == other.kind() && identifier == other.identifier
+                 && plane == other.plane && baseX == other.baseX && baseY == other.baseY
+                 && (kind() != 3 || x == other.x && y == other.y);
+         }
+         public boolean same(ControllerTarget other)
+         {
+-            return other != null && action == other.action && identifier == other.identifier
++            return other != null && selection == other.selection && action == other.action && identifier == other.identifier
+                 && x == other.x && y == other.y && plane == other.plane && baseX == other.baseX && baseY == other.baseY;
+         }
+     }
+diff --git a/client/src/net/runelite/client/input/controller/PanelControls.java b/client/src/net/runelite/client/input/controller/PanelControls.java
+index 695fcd6..6c8e2d1 100644
+--- a/client/src/net/runelite/client/input/controller/PanelControls.java
++++ b/client/src/net/runelite/client/input/controller/PanelControls.java
+@@ -12,15 +12,17 @@ public final class PanelControls
+     private UiState.Widget focus, context;
+     private int pane, contextIndex, heldDirection;
+     private long repeatAt, scrollFrame, closingUntil;
+-    private boolean armed, closing;
++    private boolean armed, closing, exitRequested, selectionRequested;
+     private Rectangle scrollAnchor;
+ 
+     public PanelControls(UiControls.Gateway gateway) { this.gateway = gateway; }
+     public void reset()
+     {
+         state = null; focus = context = null; pane = contextIndex = heldDirection = 0;
+-        armed = closing = false; repeatAt = scrollFrame = closingUntil = 0; scrollAnchor = null;
++        armed = closing = exitRequested = selectionRequested = false; repeatAt = scrollFrame = closingUntil = 0; scrollAnchor = null;
+     }
++    public boolean exitRequested() { return exitRequested; }
++    public boolean selectionRequested() { return selectionRequested; }
+     public boolean active() { return state != null; }
+     public UiState.Widget focus() { return focus; }
+     public UiState.Widget context() { return context; }
+@@ -31,7 +33,7 @@ public final class PanelControls
+         if (closing) return "Closing " + state.name + "…";
+         if (context != null) return "A: " + context.actions[contextIndex].label + " " + context.name + " · D-pad: quantity/action · B: back";
+         String label = focus == null ? "No visible items" : "A: " + primary(focus).label + " " + focus.name + (focus.itemId >= 0 ? " ×" + focus.quantity : "");
+-        return state.name + " / " + state.panes[pane].name + " · " + label + " · X: actions · LB/RB: pane · D-pad: move/scroll · B: close";
++        return state.name + " / " + state.panes[pane].name + " · " + label + " · X: actions · LB/RB: pane · D-pad: move/scroll · B: " + (state.modal ? "close" : "world");
+     }
+     public boolean update(UiState.Panel snapshot, GamepadState input, long now)
+     {
+@@ -68,6 +70,7 @@ public final class PanelControls
+         if ((input.buttonsPressed & B) != 0)
+         {
+             if (context != null) context = null;
++            else if (!state.modal) exitRequested = true;
+             else { gateway.closePanel(); closing = true; closingUntil = now + 1_000_000_000L; }
+             armed = false; return true;
+         }
+@@ -84,7 +87,9 @@ public final class PanelControls
+                 contextIndex + (direction == 11 || direction == 13 ? -1 : 1)));
+             if ((input.buttonsPressed & A) != 0)
+             {
+-                gateway.invoke(context, context.actions[contextIndex]); context = null; armed = false;
++                UiState.Action action = context.actions[contextIndex];
++                if (gateway.invoke(context, action) && action.type == 13) selectionRequested = true;
++                context = null; armed = false;
+             }
+             return true;
+         }
+@@ -103,7 +108,9 @@ public final class PanelControls
+         }
+         else if ((input.buttonsPressed & A) != 0 && focus != null)
+         {
+-            gateway.invoke(focus, primary(focus)); armed = false;
++            UiState.Action action = primary(focus);
++            if (gateway.invoke(focus, action) && action.type == 13) selectionRequested = true;
++            armed = false;
+         }
+         return true;
+     }
+diff --git a/client/src/net/runelite/client/input/controller/UiControls.java b/client/src/net/runelite/client/input/controller/UiControls.java
+index fe86e67..6a18419 100644
+--- a/client/src/net/runelite/client/input/controller/UiControls.java
++++ b/client/src/net/runelite/client/input/controller/UiControls.java
+@@ -8,6 +8,8 @@ public final class UiControls
+         UiState snapshot();
+         default UiState snapshot(boolean inventory) { return snapshot(); }
+         boolean openInventory();
++        default int selectionMask() { return 0; }
++        default boolean openTargetInventory() { return false; }
+         boolean invoke(UiState.Widget widget, UiState.Action action);
+         default boolean editEntry(EntryState entry, String value) { return false; }
+         default boolean submitEntry(EntryState entry) { return false; }
+@@ -24,6 +26,8 @@ public final class UiControls
+     private final EntryControls entry;
+     private boolean inventory, armed;
+     private long openingUntil, repeatAt;
++    private int focusedTab = -1;
++    private long tabOpeningUntil;
+     private int slot, choice, dialogueId = -1, heldDirection;
+     private UiState state = UiState.EMPTY;
+     private UiState.Widget context;
+@@ -32,16 +36,30 @@ public final class UiControls
+     public UiControls(Gateway gateway) { this.gateway = gateway; this.panel = new PanelControls(gateway); this.entry = new EntryControls(gateway); }
+     public void reset()
+     {
+-        panel.reset(); entry.reset();
++        panel.reset(); entry.reset(); focusedTab = -1; tabOpeningUntil = 0;
+         inventory = false; armed = false; openingUntil = repeatAt = 0;
+         slot = choice = heldDirection = 0; dialogueId = -1; context = null; state = UiState.EMPTY;
+     }
+-    public boolean active() { return entry.active() || panel.active() || inventory || state.dialogueId >= 0; }
++    public boolean active() { return focusedTab >= 0 || entry.active() || panel.active() || inventory || state.dialogueId >= 0; }
+     public void focusInventory(long now)
+     {
+         reset(); inventory = true; openingUntil = now + 1_000_000_000L;
+     }
+     public EntryControls entry() { return entry; }
++    public void focusTab(int index,long now)
++    {
++        reset();
++        if (index == HomeTab.INVENTORY.ordinal()) { focusInventory(now); return; }
++        if (index == HomeTab.EQUIPMENT.ordinal() || index == HomeTab.PRAYER.ordinal() || index == HomeTab.SPELLBOOK.ordinal())
++        { focusedTab = index; tabOpeningUntil = now+1_000_000_000L; }
++    }
++    private boolean matchesTab(UiState.Panel panel)
++    {
++        if (panel == null || focusedTab < 0) return false;
++        return focusedTab == HomeTab.EQUIPMENT.ordinal() && panel.id == 387
++            || focusedTab == HomeTab.PRAYER.ordinal() && panel.id == 271
++            || focusedTab == HomeTab.SPELLBOOK.ordinal() && (panel.id == 192 || panel.id == 193 || panel.id == 430);
++    }
+     public boolean inDialogue() { return state.dialogueId >= 0; }
+     public UiState.Widget focus()
+     {
+@@ -56,6 +74,7 @@ public final class UiControls
+     {
+         if (entry.active()) return entry.prompt();
+         if (panel.active()) return panel.prompt();
++        if (focusedTab >= 0) return "Opening " + HomeTab.values()[focusedTab].label + "…";
+         UiState.Widget widget = focus();
+         if (inDialogue()) return widget == null ? "Dialogue: waiting · B: close" : "A: " + widget.name + " · B: close";
+         if (!inventory) return null;
+@@ -77,12 +96,24 @@ public final class UiControls
+         {
+             dialogueId = state.dialogueId; choice = 0; context = null; armed = false;
+             heldDirection = 0; repeatAt = 0;
+-            if (dialogueId >= 0) inventory = false;
++            if (dialogueId >= 0) { inventory = false; focusedTab = -1; }
+         }
+         boolean wasPanel = panel.active();
+-        if (!inDialogue() && panel.update(state.panel, input, now))
++        if (!inDialogue() && panel.update(state.panel != null && (state.panel.modal || matchesTab(state.panel)) ? state.panel : null, input, now))
++        {
++            inventory = false; context = null; armed = false;
++            if (panel.exitRequested()) { focusedTab = -1; panel.reset(); gateway.cancelSelection(); }
++            else if (panel.selectionRequested())
++            {
++                focusedTab = -1; panel.reset();
++                if ((gateway.selectionMask() & 32) != 0 && gateway.openTargetInventory()) focusInventory(now);
++            }
++            return true;
++        }
++        if (focusedTab >= 0 && !inDialogue())
+         {
+-            inventory = false; context = null; armed = false; return true;
++            if (now < tabOpeningUntil) return true;
++            focusedTab = -1; armed = false; return true;
+         }
+         if (inDialogue()) panel.reset();
+         if (wasPanel && !panel.active()) { armed = false; return true; }
+diff --git a/client/src/net/runelite/client/input/controller/UiState.java b/client/src/net/runelite/client/input/controller/UiState.java
+index 023bc14..4474dbc 100644
+--- a/client/src/net/runelite/client/input/controller/UiState.java
++++ b/client/src/net/runelite/client/input/controller/UiState.java
+@@ -41,9 +41,11 @@ public final class UiState
+         public final int id;
+         public final String name;
+         public final long frame;
++        public final boolean modal;
+         public final Pane[] panes;
+         public Panel(int id, String name, Pane[] panes) { this(id, 0, name, panes); }
+-        public Panel(int id, long frame, String name, Pane[] panes) { this.id = id; this.frame = frame; this.name = name; this.panes = panes; }
++        public Panel(int id, long frame, String name, Pane[] panes) { this(id,frame,name,panes,true); }
++        public Panel(int id, long frame, String name, Pane[] panes, boolean modal) { this.id = id; this.frame = frame; this.name = name; this.panes = panes; this.modal = modal; }
+     }
+     public static final class Pane
+     {
+@@ -55,8 +57,10 @@ public final class UiState
+     {
+         public final String label;
+         public final int type, operation;
+-        public Action(String label, int type, int operation) { this.label = label; this.type = type; this.operation = operation; }
+-        public boolean same(Action other) { return other != null && type == other.type && operation == other.operation && label.equals(other.label); }
++        public final long selection;
++        public Action(String label, int type, int operation) { this(label,type,operation,0); }
++        public Action(String label, int type, int operation, long selection) { this.label = label; this.type = type; this.operation = operation; this.selection = selection; }
++        public boolean same(Action other) { return other != null && selection == other.selection && type == other.type && operation == other.operation && label.equals(other.label); }
+     }
+     public static final class Widget
+     {
+diff --git a/client/src/net/runelite/client/input/controller/WorldControls.java b/client/src/net/runelite/client/input/controller/WorldControls.java
+index 300d7d3..4f9bfbf 100644
+--- a/client/src/net/runelite/client/input/controller/WorldControls.java
++++ b/client/src/net/runelite/client/input/controller/WorldControls.java
+@@ -8,6 +8,7 @@ public final class WorldControls
+     public interface Gateway
+     {
+         boolean ready();
++        default boolean targeting() { return false; }
+         int yaw();
+         void resetWalk();
+         void walk(double x, double y);
+@@ -57,7 +58,7 @@ public final class WorldControls
+     public void update(GamepadState state, float deadzone, long now, boolean direct)
+     {
+         if (direct != directMode) { reset(); directMode = direct; }
+-        if (!gateway.ready()) { reset(); return; }
++        if (!gateway.ready()) { if (gateway.targeting() && (state.buttonsPressed & 2) != 0) gateway.cancel(); reset(); return; }
+         float scale = StickMath.deadzoneScale(state.leftX, state.leftY, deadzone);
+         float x = state.leftX * scale, y = state.leftY * scale;
+         boolean neutral = x == 0 && y == 0;
+@@ -104,7 +105,7 @@ public final class WorldControls
+             facingX = nextX; facingY = nextY;
+         }
+         // With the stick at rest, panning the camera leaves the world-space target direction alone.
+-        boolean aiming = state.leftTrigger > 0.35f;
++        boolean aiming = gateway.targeting() || state.leftTrigger > 0.35f;
+         if (walkingPaused && (neutral || Math.hypot(x - pausedX, y - pausedY) > 0.35)) walkingPaused = false;
+         if (neutral || aiming) { moving = false; gateway.resetWalk(); }
+         if (directMode && (neutral || aiming || walkingPaused || (state.buttonsHeld & FACE) != 0))
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+index 41aa01a..b55259e 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -34,4 +34,6 @@ public interface SoloScapeControllerConfig extends Config
+     default boolean tabRadial() { return true; }
+     @ConfigItem(keyName = "serverFeatures", name = "SoloScape server features", description = "Enable directional and position-free cancel packets only for the patched SoloScape server. Off uses ordinary walking/cancellation and is safe for older servers.", position = 8)
+     default boolean serverFeatures() { return false; }
++    @ConfigItem(keyName = "interfaceControls", name = "Native interface navigation", description = "Controller focus and keyboard for banks, shops, equipment, prayer and spells. Turn off to use their normal mouse/keyboard controls.", position = 9)
++    default boolean interfaceControls() { return true; }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+index c5101b0..34b9c76 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+@@ -26,7 +26,17 @@ public final class SoloScapeControllerOverlay extends Overlay
+     public Dimension render(Graphics2D graphics)
+     {
+         GameClient.ControllerTarget target = plugin.getTarget();
+-        if (target == null) return null;
++        if (target == null)
++        {
++            String selected = plugin.selectionHint();
++            if (selected == null) return null;
++            String help = "Stick: aim · LB/RB: target · B: cancel";
++            int width = Math.max(graphics.getFontMetrics().stringWidth(selected),graphics.getFontMetrics().stringWidth(help))+12;
++            graphics.setColor(new Color(0,0,0,210)); graphics.fillRect(0,0,width,44);
++            graphics.setColor(new Color(255,215,75));graphics.drawString(selected,6,17);
++            graphics.setColor(Color.WHITE);graphics.drawString(help,6,35);
++            return new Dimension(width,44);
++        }
+         String label = "A: " + target.option + " " + target.name;
+         GameClient.ControllerTarget[] menu = plugin.getWorld().getMenu();
+         if (menu.length > 0)
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index 6c3f7f3..72a30a6 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -41,14 +41,14 @@ public class SoloScapeControllerPlugin extends Plugin
+ 	@Inject private SoloScapeUiOverlay uiOverlay;
+     @Inject private SoloScapeTargetOverlay targetOverlay;
+     @Inject private SoloScapeTabRadialOverlay tabRadialOverlay;
+-    private boolean radialInventoryFocus;
++    private int radialFocusTab = -1;
+     private final TabRadialControls radial = new TabRadialControls(new TabRadialControls.Gateway()
+     {
+         public int availableTabs() { return client.getControllerAvailableTabs(); }
+         public boolean openTab(int index)
+         {
+             boolean opened = client.openControllerTab(index);
+-            radialInventoryFocus = opened && index == HomeTab.INVENTORY.ordinal();
++            radialFocusTab = opened ? index : -1;
+             return opened;
+         }
+     });
+@@ -57,6 +57,8 @@ public class SoloScapeControllerPlugin extends Plugin
+         public UiState snapshot() { return client.getControllerUiState(); }
+         public UiState snapshot(boolean inventory) { return client.getControllerUiState(inventory); }
+         public boolean openInventory() { return client.openControllerInventory(); }
++        public int selectionMask() { return client.getControllerSelectionMask(); }
++        public boolean openTargetInventory() { return client.openControllerTargetInventory(); }
+         public boolean invoke(UiState.Widget widget, UiState.Action action) { return client.invokeControllerUi(widget, action); }
+         public boolean editEntry(net.runelite.client.input.controller.EntryState entry, String value) { return client.editControllerEntry(entry,value); }
+         public boolean submitEntry(net.runelite.client.input.controller.EntryState entry) { return client.submitControllerEntry(entry); }
+@@ -69,6 +71,7 @@ public class SoloScapeControllerPlugin extends Plugin
+     private final WorldControls world = new WorldControls(new WorldControls.Gateway()
+     {
+         public boolean ready() { return client.isControllerWorldReady(); }
++        public boolean targeting() { return client.isControllerTargeting(); }
+         public int yaw() { return client.getCameraYaw(); }
+         public void resetWalk() { client.resetControllerWorld(); }
+         public void direct(double x, double y, boolean run) { client.directControllerMovement(x, y, run); }
+@@ -120,6 +123,8 @@ public class SoloScapeControllerPlugin extends Plugin
+ 
+ 	ControllerTarget getTarget() { return active && !ui.active() && !radial.active() ? world.getTarget() : null; }
+ 
++    String selectionHint() { return active && !ui.active() && !radial.active() ? client.getControllerSelectionHint() : null; }
++
+     TabRadialControls getRadial() { return radial; }
+ 
+ 	WorldControls getWorld() { return world; }
+@@ -136,7 +141,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 		state.clear();
+ 		ui.reset();
+         radial.reset();
+-        radialInventoryFocus = false;
++        radialFocusTab = -1;
+ 		client.setControllerServerFeatures(false);
+ 		client.setControllerUiEnabled(false);
+ 		if (gamepad != null) gamepad.close();
+@@ -175,20 +180,26 @@ public class SoloScapeControllerPlugin extends Plugin
+         try
+         {
+             client.setControllerServerFeatures(config.serverFeatures());
++            client.setControllerPanelEnabled(config.interfaceControls());
+             Canvas canvas = client.getCanvas();
+             if (!state.connected || canvas == null || !canvas.isFocusOwner() || !client.hasLocalPlayer())
+             {
+                 client.setControllerCameraInput(0, 0);
+-                resetWorld(); ui.reset(); radial.reset(); radialInventoryFocus = false;
++                resetWorld(); ui.reset(); radial.reset(); radialFocusTab = -1;
+                 return;
+             }
++            client.prepareControllerUi();
+             long now = System.nanoTime();
+             if (!config.tabRadial()) radial.reset();
+             if (config.tabRadial() && radial.update(state, now))
+             {
+                 client.setControllerCameraInput(0, 0);
+                 resetWorld(); ui.reset();
+-                if (radialInventoryFocus) { ui.focusInventory(now); radialInventoryFocus = false; }
++                if (radialFocusTab >= 0)
++                {
++                    if (config.interfaceControls() || radialFocusTab == HomeTab.INVENTORY.ordinal()) ui.focusTab(radialFocusTab,now);
++                    radialFocusTab = -1;
++                }
+                 return;
+             }
+             float scale = StickMath.deadzoneScale(state.rightX, state.rightY, config.deadzone() / 100f);
+@@ -208,7 +219,7 @@ public class SoloScapeControllerPlugin extends Plugin
+             // Reset intent and rearm, but keep the device/provider alive.
+             try { client.setControllerCameraInput(0, 0); resetWorld(); }
+             catch (RuntimeException cleanup) { ex.addSuppressed(cleanup); }
+-            finally { ui.reset(); radial.reset(); radialInventoryFocus = false; }
++            finally { ui.reset(); radial.reset(); radialFocusTab = -1; }
+             long now = System.nanoTime();
+             if (lastAdapterFailure == 0 || now - lastAdapterFailure >= 5_000_000_000L)
+             {
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+index 89d7515..33d3caf 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+@@ -24,7 +24,10 @@ public final class SoloScapeUiOverlay extends Overlay
+     @Override public Dimension render(Graphics2D graphics)
+     {
+         if (!plugin.isActive()) return null;
+-        UiControls ui = plugin.getUi();
++        return paint(graphics,plugin.getUi());
++    }
++    public static Dimension paint(Graphics2D graphics,UiControls ui)
++    {
+         String prompt = ui.prompt();
+         if (prompt == null) return null;
+         Graphics2D draw = (Graphics2D) graphics.create();
+@@ -37,9 +40,9 @@ public final class SoloScapeUiOverlay extends Overlay
+                 int cellWidth = 58, cellHeight = 32, rows = (keys.length+columns-1)/columns;
+                 int width = Math.max(440,columns*cellWidth+24), height = rows*cellHeight+106;
+                 draw.setColor(new Color(0,0,0,235)); draw.fillRoundRect(8,8,width,height,12,12);
+-                draw.setColor(new Color(255,220,95)); draw.drawString(keyboard.state().prompt,20,30);
++                draw.setColor(new Color(255,220,95)); draw.drawString(fit(draw,keyboard.state().prompt,width-24),20,30);
+                 String value = keyboard.state().value;
+-                if (value.length()>52) value = "…"+value.substring(value.length()-52);
++                while (value.length()>0 && draw.getFontMetrics().stringWidth(value+"_")>width-24) value=value.substring(1);
+                 draw.setColor(Color.WHITE); draw.drawString(value+"_",20,54);
+                 for (int i=0;i<keys.length;i++)
+                 {
+@@ -59,24 +62,48 @@ public final class SoloScapeUiOverlay extends Overlay
+                 draw.setColor(new Color(255, 205, 75, 65)); draw.fill(rect);
+                 draw.setColor(new Color(255, 205, 75)); draw.setStroke(new BasicStroke(2)); draw.draw(rect);
+             }
+-            int width = Math.min(700, draw.getFontMetrics().stringWidth(prompt) + 12);
+-            draw.setColor(new Color(0, 0, 0, 210)); draw.fillRect(8, 8, width, 25);
+-            draw.setColor(Color.WHITE); draw.drawString(prompt, 14, 25);
++            java.util.List<String> lines = wrap(draw,prompt,680);
++            int width = 0;
++            for (String line : lines) width = Math.max(width,draw.getFontMetrics().stringWidth(line)+12);
++            int lineHeight = Math.max(18,draw.getFontMetrics().getHeight()), hintHeight = lines.size()*lineHeight+10;
++            draw.setColor(new Color(0, 0, 0, 210)); draw.fillRect(8, 8, width, hintHeight);
++            draw.setColor(Color.WHITE);
++            for (int i=0;i<lines.size();i++) draw.drawString(lines.get(i),14,8+draw.getFontMetrics().getAscent()+5+i*lineHeight);
++            int menuY = hintHeight+16;
+             UiState.Widget menu = ui.context();
+             if (menu != null)
+             {
+                 int menuWidth = 160;
+                 for (UiState.Action action : menu.actions) menuWidth = Math.max(menuWidth, draw.getFontMetrics().stringWidth(action.label) + 20);
+-                draw.setColor(new Color(0, 0, 0, 230)); draw.fillRect(8, 38, menuWidth, menu.actions.length * 23 + 6);
++                draw.setColor(new Color(0, 0, 0, 230)); draw.fillRect(8, menuY, menuWidth, menu.actions.length * 23 + 6);
+                 for (int i = 0; i < menu.actions.length; i++)
+                 {
+-                    if (i == ui.contextIndex()) { draw.setColor(new Color(110, 90, 35)); draw.fillRect(10, 41 + i * 23, menuWidth - 4, 22); }
++                    if (i == ui.contextIndex()) { draw.setColor(new Color(110, 90, 35)); draw.fillRect(10, menuY+3 + i * 23, menuWidth - 4, 22); }
+                     draw.setColor(i == ui.contextIndex() ? new Color(255, 220, 95) : Color.WHITE);
+-                    draw.drawString(menu.actions[i].label, 16, 57 + i * 23);
++                    draw.drawString(menu.actions[i].label, 16, menuY+19 + i * 23);
+                 }
+             }
+         }
+         finally { draw.dispose(); }
+         return null;
+     }
++    private static String fit(Graphics2D draw,String value,int width)
++    {
++        if (draw.getFontMetrics().stringWidth(value)<=width) return value;
++        while (!value.isEmpty() && draw.getFontMetrics().stringWidth(value+"…")>width) value=value.substring(0,value.length()-1);
++        return value+"…";
++    }
++    private static java.util.List<String> wrap(Graphics2D draw,String text,int width)
++    {
++        java.util.List<String> result = new java.util.ArrayList<>(); String line="";
++        for (String word : text.split(" "))
++        {
++            String next=line.isEmpty()?word:line+" "+word;
++            if (!line.isEmpty() && draw.getFontMetrics().stringWidth(next)>width) { result.add(line);line=word; }
++            else line=next;
++        }
++        if (!line.isEmpty()) result.add(fit(draw,line,width));
++        return result;
++    }
++
+ }
+diff --git a/client/test/ControllerEntryTest.java b/client/test/ControllerEntryTest.java
+index b581673..ba1c72f 100644
+--- a/client/test/ControllerEntryTest.java
++++ b/client/test/ControllerEntryTest.java
+@@ -37,6 +37,7 @@ public class ControllerEntryTest
+         calls=new ArrayList<>();ControllerEntry.testScripts(args->{
+             calls.add(args);
+             if ((Integer)args[0]==1564) Class258_Sub2.aStringArray8532[22]=(String)args[1];
++            if ((Integer)args[0]==1471) { Isaac.anIntArray1303[190]=0; Isaac.anIntArray1303[5]=11; }
+             if ((Integer)args[0]==112) Isaac.anIntArray1303[5]=0;
+         });
+     }
+@@ -68,6 +69,18 @@ public class ControllerEntryTest
+         EntryState fresh=ControllerEntry.snapshot();ControllerEntry.cancel(fresh);
+         assertArrayEquals(new Object[]{112,13,0},calls.get(0));
+     }
++    @Test public void onlyExplicitControllerSearchActivatesNativeBankKeyCallbackOnce()
++    {
++        Class348_Sub41 bank=new Class348_Sub41();bank.anInt7050=762;
++        Class125.aClass356_4915.method3483((byte)120,548<<16|200,bank);
++        Isaac.anIntArray1303[190]=1;ControllerEntry.prepare();assertTrue(calls.isEmpty());
++        ControllerEntry.requestBankSearch();ControllerEntry.prepare();
++        assertEquals(1,calls.size());assertArrayEquals(new Object[]{1471},calls.get(0));
++        ControllerEntry.snapshot();ControllerEntry.prepare();assertEquals(1,calls.size());
++        bank.method2715((byte)57);ControllerEntry.requestBankSearch();Isaac.anIntArray1303[190]=1;
++        ControllerEntry.prepare();assertEquals(1,calls.size());
++    }
++
+     @Test public void hiddenPromptAndUnsupportedEntryTypeNeverExposeOrSubmit()
+     {
+         Isaac.anIntArray1303[5]=7;EntryState state=ControllerEntry.snapshot();assertNotNull(state);
+diff --git a/client/test/ControllerSelectionTest.java b/client/test/ControllerSelectionTest.java
+new file mode 100644
+index 0000000..5f29185
+--- /dev/null
++++ b/client/test/ControllerSelectionTest.java
+@@ -0,0 +1,137 @@
++import com.GameClient.ControllerTarget;
++import org.junit.Before;
++import org.junit.After;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++/** Native selection permission and world target bindings; no packets or cache needed. */
++public class ControllerSelectionTest
++{
++    private final ControllerWorldTest world = new ControllerWorldTest();
++    private Class46[][] oldWidgets;
++    private IterableHashTable oldFlags,oldNpcs;
++    private int oldId,oldChild,oldItem,oldMask,oldParam;
++    private String oldName,oldAction;
++    private Class46 spell;
++    @Before public void selectionSetup()
++    {
++        world.setup();
++        oldWidgets=Class348_Sub40_Sub33.aClass46ArrayArray9427;oldFlags=Class226.aClass356_2959;
++        oldNpcs=Class282.aClass356_3654;
++        oldId=Class149.anInt2046;oldChild=Class9.anInt169;oldItem=Class301.anInt3829;oldMask=Class38.anInt500;oldParam=Class246.anInt3176;
++        oldName=Class28.aString5000;oldAction=Class28.aString5001;
++        Class348_Sub40_Sub33.aClass46ArrayArray9427=new Class46[1000][];Class226.aClass356_2959=new IterableHashTable(8);
++        spell=new Class46();spell.anInt794=-12345;spell.anInt830=192<<16|25;spell.aString780="Cast";spell.aString752="Wind strike";
++        spell.aClass348_Sub44_748=new Class348_Sub44(2<<11,-1);
++        Class348_Sub40_Sub33.aClass46ArrayArray9427[192]=new Class46[30];
++        Class348_Sub40_Sub33.aClass46ArrayArray9427[192][25]=spell;
++        Class149.anInt2046=spell.anInt830;Class9.anInt169=-1;Class301.anInt3829=-1;Class38.anInt500=2;Class246.anInt3176=-1;
++        Class28.aString5000="Wind strike";Class28.aString5001="Cast";
++        Class282.aClass356_3654=new IterableHashTable(8);
++        Npc npc=new Npc();npc.definition=new NPCType();npc.definition.name="Guide";npc.anInt10290=7;
++        npc.x=64*512+256;npc.y=66*512+256;npc.anIntArray10320[0]=64;npc.anIntArray10317[0]=66;
++        Class282.aClass356_3654.method3483((byte)120,7,new Class348_Sub22(npc));
++        Class132.aPlayer_1907.x=Class132.aPlayer_1907.y=64*512+256;
++        ControllerSelection.changed(spell);
++    }
++    @After public void selectionRestore()
++    {
++        Class348_Sub40_Sub33.aClass46ArrayArray9427=oldWidgets;Class226.aClass356_2959=oldFlags;Class282.aClass356_3654=oldNpcs;
++        Class149.anInt2046=oldId;Class9.anInt169=oldChild;Class301.anInt3829=oldItem;Class38.anInt500=oldMask;Class246.anInt3176=oldParam;
++        Class28.aString5000=oldName;Class28.aString5001=oldAction;
++        world.restore();
++    }
++    @Test public void selectedNpcTargetUsesNativeAction30AndReselectionInvalidatesOldTarget()
++    {
++        r.aBoolean9722=true;assertTrue(ControllerSelection.valid());assertTrue(ControllerWorld.ready());
++        assertFalse(ControllerWorld.walk(1,0));
++        ControllerTarget target=ControllerWorld.findTarget(0,1,null);assertNotNull(target);
++        assertEquals(30,target.action);assertEquals(1,target.kind());assertTrue(target.selection>0);
++        assertEquals(1,ControllerWorld.actions(target).length);
++        ControllerSelection.changed(spell);
++        assertEquals(0,ControllerWorld.actions(target).length);assertFalse(ControllerWorld.interact(target));
++        ControllerTarget fresh=ControllerWorld.findTarget(0,1,null);assertFalse(fresh.sameEntity(target));
++    }
++    @Test public void itemTargetActionsBindTheSelectedSourceRevisionAndTargetPermission()
++    {
++        r.aBoolean9722=true;Class38.anInt500=32;spell.aClass348_Sub44_748=new Class348_Sub44(32<<11,-1);
++        ControllerSelection.changed(spell);
++        Class46 item=new Class46();item.anInt812=100;item.aClass348_Sub44_748=new Class348_Sub44(1<<22,-1);
++        net.runelite.client.input.controller.UiState.Action[] old=ControllerUi.actions(item,false);
++        assertEquals(6,old[0].type);assertTrue(old[0].selection>0);
++        ControllerSelection.changed(spell);
++        assertFalse(old[0].same(ControllerUi.actions(item,false)[0]));
++        item.aStringArray833=new String[]{"Eat"};
++        item.aClass348_Sub44_748=new Class348_Sub44(2,-1);assertEquals(0,ControllerUi.actions(item,false).length);
++        item.aClass348_Sub44_748=new Class348_Sub44((1<<22)|2,-1);spell.anInt781++;
++        assertEquals(0,ControllerUi.actions(item,false).length); // invalid source cannot become Eat
++    }
++    @Test public void inventoryTabOperationPreservesSelectedSpellAndQueuesOnlyNativeWidgetPacket()
++    {
++        Class262 oldQueue=Class348_Sub40_Sub13.aClass262_9201;Isaac oldCipher=Class348_Sub23_Sub2.aClass77_9029;
++        int oldBytes=Class348_Sub42_Sub14.anInt9630;
++        IterableHashTable oldInterfaces=Class125.aClass356_4915;
++        try
++        {
++            r.aBoolean9722=true;Class38.anInt500=32;spell.aClass348_Sub44_748=new Class348_Sub44(32<<11,-1);
++            ControllerSelection.changed(spell);long token=ControllerSelection.token();
++            Class348_Sub40_Sub13.aClass262_9201=new Class262();Class348_Sub23_Sub2.aClass77_9029=new Isaac(new int[4]);
++            Class125.aClass356_4915=new IterableHashTable(8);
++            Class46 tab=new Class46();tab.anInt830=548<<16|132;tab.aStringArray833=new String[]{"Open"};
++            tab.aClass348_Sub44_748=new Class348_Sub44(2,-1);
++            Class348_Sub40_Sub33.aClass46ArrayArray9427[548]=new Class46[133];
++            Class348_Sub40_Sub33.aClass46ArrayArray9427[548][132]=tab;
++            ControllerUi.enable(true);ControllerUi.record(tab,600,200,32,32);
++            assertTrue(ControllerUi.openTargetInventory());assertTrue(r.aBoolean9722);assertEquals(token,ControllerSelection.token());
++            Node head=Class348_Sub40_Sub13.aClass262_9201.aClass348_3334;
++            assertNotSame(head,head.next);assertSame(head,head.next.next);
++        }
++        finally
++        {
++            ControllerUi.enable(false);Class125.aClass356_4915=oldInterfaces;
++            Class348_Sub40_Sub13.aClass262_9201=oldQueue;Class348_Sub23_Sub2.aClass77_9029=oldCipher;Class348_Sub42_Sub14.anInt9630=oldBytes;
++        }
++    }
++
++    @Test public void selectedNpcDispatchUsesServerCompatibleNativeSourceAndTargetFields()
++    {
++        Class262 oldQueue=Class348_Sub40_Sub13.aClass262_9201;Isaac oldCipher=Class348_Sub23_Sub2.aClass77_9029;
++        Class346 oldKeyboard=Class182.aClass346_2449;int oldBytes=Class348_Sub42_Sub14.anInt9630;
++        int oldX=Class248.anInt3203,oldY=Class97.anInt1548;
++        try
++        {
++            Class348_Sub40_Sub13.aClass262_9201=new Class262();Class348_Sub23_Sub2.aClass77_9029=new Isaac(new int[4]);
++            Isaac decode=new Isaac(new int[4]);
++            Class182.aClass346_2449=new Class346(){
++                void method2695(int i){} boolean method2696(int i,int j){return false;}
++                Interface6 method2697(int i){return null;} void method2698(int i){}
++            };
++            r.aBoolean9722=true;ControllerTarget target=ControllerWorld.findTarget(0,1,null);
++            assertTrue(ControllerWorld.interact(target));assertFalse(r.aBoolean9722);
++            Node head=Class348_Sub40_Sub13.aClass262_9201.aClass348_3334;
++            Class348_Sub47 packet=(Class348_Sub47)head.next;byte[] b=packet.aClass348_Sub49_Sub2_7116.data;
++            assertEquals(61,(b[0]-decode.method781((byte)-85))&255);
++            assertEquals(65535,((b[1]-128)&255)|((b[2]&255)<<8)); // source child -1
++            int source=((b[3]&255)<<24)|((b[4]&255)<<16)|((b[5]&255)<<8)|(b[6]&255);
++            assertEquals(192<<16|25,source);
++            assertEquals(7,(b[7]&255)|((b[8]&255)<<8));
++            assertEquals(128,b[9]&255);assertEquals(65535,((b[10]&255)<<8)|((b[11]-128)&255));
++            assertSame(head,packet.next);assertFalse(ControllerWorld.interact(target));
++        }
++        finally
++        {
++            Class348_Sub40_Sub13.aClass262_9201=oldQueue;Class348_Sub23_Sub2.aClass77_9029=oldCipher;
++            Class182.aClass346_2449=oldKeyboard;Class348_Sub42_Sub14.anInt9630=oldBytes;
++            Class248.anInt3203=oldX;Class97.anInt1548=oldY;
++        }
++    }
++
++    @Test public void changedPermissionsReplacementAndSourceQuantityInvalidateSelectedSpell()
++    {
++        r.aBoolean9722=true;assertTrue(ControllerSelection.valid());
++        spell.aClass348_Sub44_748=new Class348_Sub44(4<<11,-1);assertFalse(ControllerSelection.valid());
++        spell.aClass348_Sub44_748=new Class348_Sub44(2<<11,-1);spell.anInt781++;assertFalse(ControllerSelection.valid());
++        spell.anInt781--;Class348_Sub40_Sub33.aClass46ArrayArray9427[192][25]=new Class46();assertFalse(ControllerSelection.valid());
++        assertFalse(ControllerWorld.ready());
++    }
++}
+diff --git a/client/test/ControllerUiTest.java b/client/test/ControllerUiTest.java
+index 04b3b8c..46edf7d 100644
+--- a/client/test/ControllerUiTest.java
++++ b/client/test/ControllerUiTest.java
+@@ -36,6 +36,7 @@ public class ControllerUiTest
+         slot = new Class46(); slot.anInt830 = container.anInt830; slot.anInt704 = 0;
+         container.aClass46Array798[0] = slot;
+         slot.aClass348_Sub44_748 = new Class348_Sub44(0, -1);
++        ControllerUi.enablePanels(true);
+         ControllerUi.enable(true);
+     }
+     @After public void restore()
+@@ -133,6 +134,18 @@ public class ControllerUiTest
+         assertEquals(0, ControllerUi.availableTabs());
+     }
+ 
++    @Test public void interfaceToggleRestoresMousePanelsWithoutAffectingInventorySnapshots()
++    {
++        panelSlot(762,93,0,100,"Withdraw-1");
++        assertNotNull(ControllerUi.snapshot(false).panel);
++        try
++        {
++            ControllerUi.enablePanels(false);assertNull(ControllerUi.snapshot(false).panel);
++            assertNotNull(ControllerUi.snapshot(true).inventory);
++        }
++        finally { ControllerUi.enablePanels(true); }
++    }
++
+     @Test public void nativePanelScrollClampsAndRejectsReplacedOrChangedSlots()
+     {
+         Class46 widget = panelSlot(762,93,0,100,"Withdraw-1");
+@@ -147,6 +160,20 @@ public class ControllerUiTest
+         assertFalse(ControllerUi.scroll(expected,11)); assertFalse(ControllerUi.invoke(expected,expected.actions[0]));
+     }
+ 
++    @Test public void prayerAndSpellTabsExposeNonItemActionsAndTargetSelection()
++    {
++        Class46 prayer = panelSlot(271,8,0,-1,"Activate");prayer.aString752="Protect from Melee";
++        UiState.Panel tab = ControllerUi.snapshot(false).panel;
++        assertNotNull(tab);assertFalse(tab.modal);assertEquals(271,tab.id);
++        assertEquals("Protect from Melee",tab.panes[0].widgets[0].name);
++        ControllerUi.beginFrame();
++        Class46 spell = panelSlot(192,25,-1,-1);spell.aString752="Wind strike";spell.aString780="Cast";
++        spell.aClass348_Sub44_748 = new Class348_Sub44(2<<11,-1);
++        ControllerUi.record(spell,100,100,32,32);
++        tab = ControllerUi.snapshot(false).panel;
++        assertEquals(192,tab.id);assertEquals(13,tab.panes[0].widgets[0].actions[0].type);
++    }
++
+     private Class46 tab(int group, int component)
+     {
+         Class46 widget = new Class46(); widget.anInt830 = group << 16 | component;
+diff --git a/client/test/net/runelite/client/input/controller/UiControlsTest.java b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+index 1fb2002..aea76a4 100644
+--- a/client/test/net/runelite/client/input/controller/UiControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+@@ -55,6 +55,30 @@ public class UiControlsTest
+         input.updateButtons(0); ui.update(input, 5); assertFalse(game.inventoryRequested);
+         ui.focusInventory(6); ui.update(input, 7); assertTrue(game.inventoryRequested);
+     }
++    @Test public void radialTabFocusDoesNotTakeOverMouseTabsAndBReturnsToWorldWithoutClosing()
++    {
++        Fake game = new Fake(); GamepadState input = new GamepadState(); UiControls ui = new UiControls(game);
++        UiState.Panel tab = new UiState.Panel(387,1,"Equipment",new UiState.Pane[]{new UiState.Pane("Equipment",new UiState.Widget[]{widget(0,100,"Hat")})},false);
++        game.state = new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,tab);
++        assertFalse(ui.update(input,1));
++        ui.focusTab(HomeTab.EQUIPMENT.ordinal(),2);assertTrue(ui.update(input,3));assertNotNull(ui.focus());
++        press(ui,input,1,10);assertEquals(1,game.actions);
++        int beforeCancel = game.cancels;
++        press(ui,input,2,20);assertEquals(0,game.closes);assertEquals(beforeCancel+1,game.cancels);
++        input.updateButtons(0);assertFalse(ui.update(input,30));
++    }
++
++    @Test public void targetedSpellHandsOffToWorldAndHeldAIsConsumedDuringRadialFocus()
++    {
++        Fake game = new Fake(); GamepadState input = new GamepadState(); UiControls ui = new UiControls(game);
++        UiState.Widget spell = new UiState.Widget(192<<16|25,-1,-1,0,"Wind strike",new Rectangle(100,100,32,32),new UiState.Action[]{new UiState.Action("Cast",13,0)});
++        UiState.Panel tab = new UiState.Panel(192,1,"Spellbook",new UiState.Pane[]{new UiState.Pane("Spells",new UiState.Widget[]{spell})},false);
++        game.state = new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,tab);
++        input.updateButtons(1);ui.focusTab(HomeTab.SPELLBOOK.ordinal(),1);assertTrue(ui.update(input,2));assertEquals(0,game.actions);
++        press(ui,input,1,10);assertEquals(1,game.actions);assertFalse(ui.active());
++        input.updateButtons(0);assertFalse(ui.update(input,20));
++    }
++
+     @Test public void gridStopsAtRowAndColumnEdgesAndIncludesEmptySlots()
+     {
+         assertEquals(0, UiControls.moveSlot(0, 11)); assertEquals(3, UiControls.moveSlot(3, 14));
+diff --git a/client/test/net/runelite/client/input/controller/WorldControlsTest.java b/client/test/net/runelite/client/input/controller/WorldControlsTest.java
+index 9daa182..418b6f6 100644
+--- a/client/test/net/runelite/client/input/controller/WorldControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/WorldControlsTest.java
+@@ -8,7 +8,7 @@ public class WorldControlsTest
+ {
+     private static final class Fake implements WorldControls.Gateway
+     {
+-        boolean ready = true, valid = true;
++        boolean ready = true, valid = true, targeting;
+         int walks, actions, finds, yaw, cycles, direction, directUpdates, stops;
+         boolean running;
+         int cancels;
+@@ -19,6 +19,7 @@ public class WorldControlsTest
+         double x, y;
+         ControllerTarget selected = new ControllerTarget("Tree", "Chop", 3, 100, 5, 6, 0, 1000, 1000);
+         public boolean ready() { return ready; }
++        public boolean targeting() { return targeting; }
+         public int yaw() { return yaw; }
+         public void resetWalk() {}
+         public void direct(double x, double y, boolean run) { if (x != 0 || y != 0) directUpdates++; this.running = run; }
+@@ -31,6 +32,17 @@ public class WorldControlsTest
+         public boolean interact(ControllerTarget target) { acted = target; if (!valid) return false; actions++; return true; }
+     }
+ 
++    @Test public void selectedSpellUsesStickForAimAndCanCancelEvenAfterItsSourceBecomesInvalid()
++    {
++        Fake game = new Fake(); game.targeting = true;
++        WorldControls controls = new WorldControls(game); GamepadState input = new GamepadState();
++        controls.update(input,.18f,1,true); input.leftX = 1;
++        controls.update(input,.18f,200_000_000L,true);
++        assertEquals(0,game.walks); assertEquals(0,game.directUpdates); assertTrue(game.finds > 0);
++        input.updateButtons(1); controls.update(input,.18f,300_000_000L,true); assertEquals(1,game.actions);
++        game.ready = false; input.updateButtons(2); controls.update(input,.18f,400_000_000L,true); assertEquals(1,game.cancels);
++    }
++
+     @Test public void throttlesMovementAndReleasingStickStopsNewRequests()
+     {
+         Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState state = new GamepadState();

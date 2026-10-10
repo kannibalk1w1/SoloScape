@@ -1,0 +1,18 @@
+# Physical playable-loop acceptance
+
+Use a backed-up disposable character first. The automated evidence is in [PLAYABLE_LOOP_EVIDENCE.md](PLAYABLE_LOOP_EVIDENCE.md); these checks require a person holding the Deck/controller. Record Desktop/Gaming Mode, controller preset, canvas size, overlay scale and classic/modern choice with each issue.
+
+1. **Launcher name entry:** try Steam-preferred and local keyboard modes separately. One physical press must produce one character; D-pad navigation must not move the native caret while selecting local keys. Reopen, advance/back through fields and retain entered values after a validation error.
+2. **Home → Settings → Game Settings:** B closes the child, B returns controller Settings to Home, then B returns Home to the world. Repeat with audio/graphics children and after a text prompt. Focus should return to the prior pane/row.
+3. **Scrolling:** use right stick in journal/quests, bank, shop and an action list. Scroll the active pane; change pane and return; scroll at an edge; hold a direction while opening the screen. No accidental world walking or item action should occur.
+4. **Inventory and equipment:** reopen an already visible Inventory, Use a pot then Cancel, Wield a sword, Remove it from Equipment, then return to Inventory. Repeat after quantity/slot changes. A should invoke the currently shown native action once.
+5. **Castle/bank route:** walk through the north courtyard door, use both stair floors from reachable edges and open the upstairs bank. Test against a genuinely blocked wall as well as an open object edge.
+6. **Bank amount Cancel:** deposit an item, choose Withdraw-X on a stack, type an amount, B/Cancel. The bank stays open, counts do not change and another ordinary withdrawal works. Repeat with the matched-server cancellation preference disabled, then restore it.
+7. **Bank Search:** search for a matching item with Steam and local text modes, cancel entry, toggle Search off and verify all items return. B should not accidentally act on the world. Return to another pane and back without losing intended focus.
+8. **Chat and other entry:** use the deliberate text-keyboard action, Enter to submit and Cancel to leave without submission. Native Escape can retain unsent chat; verify the next entry does not surprise you. Report unrecognized widget-specific textboxes.
+9. **Quick slots and source targeting:** bind/use food, a prayer, a spell and supported special attack. Use item/spell on a real target and cancel; test missing requirements and changed/despawned targets. Return focus should make sense.
+10. **Readability:** at normal holding distance, compare Classic and Modern at small/Deck sizes. Read quantities, action selection, long quest/details text, footer/scroll hints and all radial labels; try pointer/touch hit targets.
+11. **Focus/reconnect:** focus another app and return while holding a control; reconnect an external controller with controls held. Require neutral before movement/action resumes. Test suspend/Gaming Mode only as a separate supervised lifecycle check, preserving a verified backup.
+12. **Save/Continue:** Save & Quit, inspect the verified backup, then Continue. Check location, inventory/equipment, earned XP and quest progress. Play the existing Cook/Rune routes physically; automation is not comfort/full-quest acceptance.
+
+For a failure, record the exact screen/parent path, selected pane/item/action, intended and actual B/scroll/text result, and whether it repeats on the native screen with custom presentation disabled. Do not publish cache screenshots, saves, credentials or private deployment logs without reviewing them.

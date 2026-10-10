@@ -1,0 +1,981 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+index aa9369f..7708d09 100644
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1056,6 +1056,8 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+     @Override public void updateControllerConnection() { SoloScapeConnection.update(); }
+     @Override public java.awt.image.BufferedImage getControllerItemImage(int item,int amount){return ControllerItemImages.get(item,amount);}
+     @Override public void prepareControllerUi() { ControllerEntry.prepare(); }
++    @Override public net.runelite.client.input.controller.EntryState getControllerEntryState() { return ControllerEntry.snapshot(); }
++    @Override public boolean finishControllerNativeText(boolean cancel) { return ControllerEntry.nativeKey(cancel); }
+     @Override public boolean editControllerEntry(net.runelite.client.input.controller.EntryState entry, String value) { return ControllerEntry.edit(entry, value); }
+     @Override public boolean submitControllerEntry(net.runelite.client.input.controller.EntryState entry) { return ControllerEntry.submit(entry); }
+     @Override public void cancelControllerEntry(net.runelite.client.input.controller.EntryState entry) { ControllerEntry.cancel(entry); }
+diff --git a/client/src/ControllerEntry.java b/client/src/ControllerEntry.java
+index e171638..bbd7e38 100644
+--- a/client/src/ControllerEntry.java
++++ b/client/src/ControllerEntry.java
+@@ -54,6 +54,15 @@ final class ControllerEntry
+         String label = ControllerUi.clean(prompt.aString792);
+         return new EntryState(type, revision, label.isEmpty() ? type == 7 ? "Enter amount" : "Enter text" : label, value);
+     }
++    static boolean nativeKey(boolean cancel)
++    {
++        if(!ControllerUi.entryReady()||Class305.aCanvas3869==null||!(Class182.aClass346_2449 instanceof Class346_Sub1))return false;
++        int key=cancel?java.awt.event.KeyEvent.VK_ESCAPE:java.awt.event.KeyEvent.VK_ENTER;
++        Class346_Sub1 input=(Class346_Sub1)Class182.aClass346_2449;
++        input.keyPressed(new java.awt.event.KeyEvent(Class305.aCanvas3869,java.awt.event.KeyEvent.KEY_PRESSED,System.currentTimeMillis(),0,key,java.awt.event.KeyEvent.CHAR_UNDEFINED));
++        input.keyReleased(new java.awt.event.KeyEvent(Class305.aCanvas3869,java.awt.event.KeyEvent.KEY_RELEASED,System.currentTimeMillis(),0,key,java.awt.event.KeyEvent.CHAR_UNDEFINED));
++        return true;
++    }
+     static boolean edit(EntryState expected, String value)
+     {
+         EntryState current = snapshot();
+@@ -73,6 +82,6 @@ final class ControllerEntry
+     static void cancel(EntryState expected)
+     {
+         EntryState current = snapshot();
+-        if (current != null && current.sameSession(expected)) scripts.run(new Object[] {112, 13, 0}); // native Escape
++        if (current != null && current.sameSession(expected)) scripts.run(new Object[] {101}); // pinned close_entry: native Escape does not close ordinary amount/name/text prompts
+     }
+ }
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+index 111300d..79e05c5 100644
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -227,7 +227,7 @@ final class ControllerUi
+     private static boolean production(int id) { return id==300 || id==324 || id==438 || id==446 || id==675; }
+     private static boolean extraModal(int id) { return production(id) || id==742 || id==743 || id==178 || id==275 || id==134 || id==499 || id==741; }
+ 
+-    static boolean entryReady() { return panelsEnabled && ready(); }
++    static boolean entryReady() { return ready(); }
+     static boolean hasBank() { return openGroups().contains(762); }
+     static Class46 entryPrompt()
+     {
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+index 46a42a7..c49dfed 100644
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -358,6 +358,8 @@ public abstract class GameClient extends Applet {
+     public void updateControllerConnection() {}
+     public java.awt.image.BufferedImage getControllerItemImage(int item,int amount){return null;}
+     public void prepareControllerUi() {}
++    public net.runelite.client.input.controller.EntryState getControllerEntryState() { return null; }
++    public boolean finishControllerNativeText(boolean cancel) { return false; }
+     public boolean editControllerEntry(net.runelite.client.input.controller.EntryState entry, String value) { return false; }
+     public boolean submitControllerEntry(net.runelite.client.input.controller.EntryState entry) { return false; }
+     public void cancelControllerEntry(net.runelite.client.input.controller.EntryState entry) {}
+diff --git a/client/src/net/runelite/client/input/controller/ActionMap.java b/client/src/net/runelite/client/input/controller/ActionMap.java
+index c11889f..f484faf 100644
+--- a/client/src/net/runelite/client/input/controller/ActionMap.java
++++ b/client/src/net/runelite/client/input/controller/ActionMap.java
+@@ -13,6 +13,7 @@ public final class ActionMap
+         for(int mask:physical){if(Integer.bitCount(mask)!=1 || (mask&~0x7df)!=0 || (used&mask)!=0)return false;used|=mask;}
+         return true;
+     }
++    public boolean uses(int mask){for(int binding:physical)if(binding==mask)return true;return false;}
+     public boolean same(ActionMap other){return other!=null&&java.util.Arrays.equals(physical,other.physical);}
+     private int translate(int buttons)
+     {
+diff --git a/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java b/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
+index 662a686..c713d6a 100644
+--- a/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
++++ b/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
+@@ -22,7 +22,9 @@ public final class ControllerSettingsModel {
+   {new Option("preset","Preset","A selects a preset. It applies its defaults on the next input tick.","CUSTOM","XBOX","PLAYSTATION","STEAM_DECK"),
+    range("deadzone","Stick deadzone (%)",0,90,2,18),range("overlayScale","Overlay size (%)",75,175,5,100),range("runThreshold","Run threshold (%)",50,100,5,90),
+    toggle("directMovement","Direct movement"),toggle("serverFeatures","SoloScape server features"),toggle("invertY","Invert camera Y"),
+-   new Option("glyphs","Button labels","Choose the labels displayed in controller hints.","XBOX","PLAYSTATION"),toggle("showGuide","Controller guide")},
++   new Option("glyphs","Button labels","Choose the labels displayed in controller hints.","XBOX","PLAYSTATION"),toggle("showGuide","Controller guide"),
++   new Option("keyboardMode","Text keyboard","Automatic prefers Steam on Deck. System entry pauses controller actions; Enter or the on-screen controls finish.","AUTO","STEAM","CONTROLLER"),
++   new Option("classicTheme","Classic controller UI","A switches classic stone/brown/gold and modern presentation. Native actions are unchanged.","true","false")},
+   {button("confirmButton","Confirm / interact","A"),button("cancelButton","Back / cancel","B"),button("actionsButton","Actions / assign","X"),
+    button("previousButton","Previous target / pane","LEFT_BUMPER"),button("nextButton","Next target / pane","RIGHT_BUMPER"),
+    button("inventoryButton","Inventory","Y"),button("homeButton","Home wheel","VIEW"),button("quickButton","Quick wheel","START")},
+@@ -41,7 +43,8 @@ public final class ControllerSettingsModel {
+    panes[p]=new UiState.Pane(names[p],widgets);
+   }
+   panes[3]=new UiState.Pane("Finish",new UiState.Widget[]{row(900,"Game settings","","Open the native game settings; all existing submenus remain available.","Open"),
+-    row(901,setup?"Finish controller setup":"Return to Home","","Preferences persist as you change them. You can reopen this screen from Home > Settings.","Done")});
++    row(901,setup?"Finish controller setup":"Return to Home","","Preferences persist as you change them. You can reopen this screen from Home > Settings.","Done"),
++    row(902,"Open text keyboard","","Steam mode: chat or other native text input. Right-stick click also opens it when that button is unbound.","Open")});
+   return new UiState.Panel(ID,0,setup?"Controller setup":"Controller settings",panes,false);
+  }
+  private UiState.Widget row(int component,String name,String status,String detail,String...labels){
+@@ -54,7 +57,7 @@ public final class ControllerSettingsModel {
+   UiState.Widget fresh=null;
+   for(UiState.Pane pane:snapshot(setup).panes)for(UiState.Widget row:pane.widgets)if(row.same(expected)&&row.status.equals(expected.status))fresh=row;
+   if(fresh==null)return -1;boolean permitted=false;for(UiState.Action a:fresh.actions)if(a.same(action))permitted=true;if(!permitted)return -1;
+-  int component=expected.id&65535;if(component==900)return 1;if(component==901){store.set("setupComplete","true");return 2;}
++  int component=expected.id&65535;if(component==900)return 1;if(component==902)return 3;if(component==901){store.set("setupComplete","true");return 2;}
+   int pane=component/100,index=component%100;if(pane>=OPTIONS.length||index>=OPTIONS[pane].length)return -1;
+   Option option=OPTIONS[pane][index];String old=value(option);int next=Arrays.asList(option.values).indexOf(old);
+   next=Math.floorMod((next<0?0:next)+(action.operation==1?-1:1),option.values.length);String replacement=option.values[next];
+diff --git a/client/src/net/runelite/client/input/controller/KeyboardInputPolicy.java b/client/src/net/runelite/client/input/controller/KeyboardInputPolicy.java
+new file mode 100644
+index 0000000..d27bc73
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/KeyboardInputPolicy.java
+@@ -0,0 +1,14 @@
++package net.runelite.client.input.controller;
++import java.awt.event.KeyEvent;
++/** Mapped edit/navigation keys have one owner; ordinary desktop letters remain native. */
++public final class KeyboardInputPolicy {
++    private KeyboardInputPolicy(){}
++    public static boolean localNavigation(KeyEvent event){
++        int key=event.getKeyCode();char character=event.getKeyChar();
++        return key==KeyEvent.VK_LEFT||key==KeyEvent.VK_RIGHT||key==KeyEvent.VK_UP||key==KeyEvent.VK_DOWN||key==KeyEvent.VK_ENTER||key==KeyEvent.VK_ESCAPE||key==KeyEvent.VK_SPACE||key==KeyEvent.VK_BACK_SPACE||key==KeyEvent.VK_DELETE||key==KeyEvent.VK_HOME||key==KeyEvent.VK_END||character=='\n'||character=='\b'||character==' ';
++    }
++    public static boolean adoptTyped(KeyEvent event,int held,long lastButton,long now){
++        char character=event.getKeyChar();
++        return event.getID()==KeyEvent.KEY_TYPED&&character>32&&character<127&&held==0&&(lastButton==0||now-lastButton>=100000000L);
++    }
++}
+diff --git a/client/src/net/runelite/client/input/controller/KeyboardMode.java b/client/src/net/runelite/client/input/controller/KeyboardMode.java
+new file mode 100644
+index 0000000..efa061d
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/KeyboardMode.java
+@@ -0,0 +1,9 @@
++package net.runelite.client.input.controller;
++
++/** Explicit input owner. AUTO prefers Steam only on a detected Deck. */
++public enum KeyboardMode {
++    AUTO("Automatic (Steam on Deck)"), STEAM("Steam / physical keyboard"), CONTROLLER("SoloScape controller keyboard");
++    private final String label;KeyboardMode(String label){this.label=label;}
++    public boolean steam(boolean deck){return this==STEAM||this==AUTO&&deck;}
++    @Override public String toString(){return label;}
++}
+diff --git a/client/src/net/runelite/client/input/controller/SteamKeyboard.java b/client/src/net/runelite/client/input/controller/SteamKeyboard.java
+new file mode 100644
+index 0000000..4270b76
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/SteamKeyboard.java
+@@ -0,0 +1,30 @@
++package net.runelite.client.input.controller;
++
++import java.io.File;
++import java.nio.file.*;
++import java.util.concurrent.*;
++import java.util.function.Consumer;
++
++/** SDL's documented X11 URI transport; visibility requests are not dismissal callbacks. */
++public final class SteamKeyboard {
++    private SteamKeyboard(){}
++    private static final ExecutorService REQUESTS=Executors.newSingleThreadExecutor(task->{Thread thread=new Thread(task,"soloscape-steam-keyboard");thread.setDaemon(true);return thread;});
++    private static final boolean DECK=detectDeck();
++    public static boolean isDeck(){return DECK;}
++    private static boolean detectDeck(){
++        if(Boolean.getBoolean("soloscape.steamDeck")||"1".equals(System.getenv("SteamDeck")))return true;
++        try{String name=new String(Files.readAllBytes(Paths.get("/sys/class/dmi/id/product_name")),"UTF-8").trim();return name.equals("Jupiter")||name.equals("Galileo");}
++        catch(Exception unavailable){return false;}
++    }
++    public static void request(boolean open,boolean numeric,Consumer<String> feedback){
++        REQUESTS.execute(()->{
++            Process process=null;
++            try{
++                String uri=open?"steam://open/keyboard?XPosition=0&YPosition=0&Width=0&Height=0&Mode="+(numeric?3:0):"steam://close/keyboard";
++                process=new ProcessBuilder("xdg-open",uri).redirectOutput(ProcessBuilder.Redirect.to(new File("/dev/null"))).redirectError(ProcessBuilder.Redirect.to(new File("/dev/null"))).start();
++                if(!process.waitFor(3,TimeUnit.SECONDS)){process.destroy();feedback.accept("Steam keyboard request timed out. Use Steam + X or select the controller keyboard.");}
++                else if(process.exitValue()!=0)feedback.accept("Steam keyboard unavailable. Use Steam + X or select the controller keyboard.");
++            }catch(Exception unavailable){feedback.accept("Steam keyboard unavailable. Use Steam + X or select the controller keyboard.");}
++        });
++    }
++}
+diff --git a/client/src/net/runelite/client/input/controller/SystemEntryControls.java b/client/src/net/runelite/client/input/controller/SystemEntryControls.java
+new file mode 100644
+index 0000000..57f3532
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/SystemEntryControls.java
+@@ -0,0 +1,37 @@
++package net.runelite.client.input.controller;
++
++/** Owns controller input until the native prompt ends, or an explicit manual entry finishes.
++ * Client-thread transitions and AWT observations share one synchronized state; no typed values are edited here. */
++public final class SystemEntryControls {
++    public interface Keyboard {void visible(boolean open,boolean numeric);}
++    private final Keyboard keyboard;
++    private EntryState entry;
++    private boolean manual,active,requested;
++    private long revision;
++    public SystemEntryControls(Keyboard keyboard){this.keyboard=keyboard;}
++    public synchronized boolean update(EntryState next,boolean enabled,boolean available){
++        if(!enabled||!available){reset();return false;}
++        if(next!=null){
++            if(!active||entry==null||!entry.sameSession(next)){
++                if(active&&requested)keyboard.visible(false,false);
++                entry=next;manual=false;active=true;requested=true;revision++;keyboard.visible(true,next.numeric());
++            }else entry=next;
++        }else if(active&&!manual)reset();
++        return active;
++    }
++    public synchronized boolean beginManual(boolean enabled,boolean available){return beginManual(enabled,available,true);}
++    public synchronized boolean beginManual(boolean enabled,boolean available,boolean show){
++        if(!enabled||!available)return false;
++        if(active)return true;
++        entry=null;manual=true;active=true;requested=show;revision++;if(show)keyboard.visible(true,false);return true;
++    }
++    public synchronized boolean finishManual(long expected){if(!active||!manual||revision!=expected)return false;reset();return true;}
++    public synchronized void reopen(long expected){if(active&&revision==expected){requested=true;keyboard.visible(true,entry!=null&&entry.numeric());}}
++    public synchronized void reset(){if(active){active=false;manual=false;entry=null;revision++;if(requested)keyboard.visible(false,false);requested=false;}}
++    public synchronized boolean active(){return active;}
++    public synchronized boolean manual(){return active&&manual;}
++    public synchronized EntryState entry(){return entry;}
++    public synchronized long revision(){return revision;}
++    public synchronized boolean owns(long expected){return active&&revision==expected;}
++    public synchronized boolean sameSession(EntryState candidate){return active&&entry!=null&&entry.sameSession(candidate);}
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerTheme.java b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerTheme.java
+index 12d0d82..6cea68e 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerTheme.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerTheme.java
+@@ -2,12 +2,129 @@ package net.runelite.client.plugins.soloscapecontroller;
+ 
+ import java.awt.*;
+ 
+-/** Shared readable controller surfaces; colours and type sizes have one source. */
++/**
++ * Shared readable controller surfaces; colours, type sizes and frame helpers have one source.
++ * Classic (default) is a warm stone/parchment/gold look in the spirit of the 2011 interface;
++ * modern keeps the earlier slate palette. Drawing helpers never change geometry, so hit boxes,
++ * layouts and focus semantics are identical in both palettes.
++ */
+ public final class ControllerTheme {
+     private ControllerTheme(){}
+-    public static final Color BACKGROUND=new Color(18,25,32,247), BORDER=new Color(91,112,130),
+-        CELL=new Color(33,44,55), SELECTED=new Color(65,90,108), FOCUS=new Color(245,203,98),
+-        TEXT=Color.WHITE, MUTED=new Color(170,188,200), COMPLETE=new Color(135,214,158);
++    private static volatile boolean classic;
++    private static final Color SHADOW=new Color(0,0,0,210);
++    // Fields are reassigned only by classic(boolean); a toggle mid-frame can at worst mix palettes for one frame.
++    public static volatile Color BACKGROUND, BORDER, CELL, SELECTED, FOCUS, TEXT, MUTED, COMPLETE,
++        TITLE, ITEM_TEXT, LABEL_TEXT, SECONDARY, ACTION, ACTION_SELECTED, HINT, BEVEL_LIGHT, BEVEL_DARK, TRIM,
++        TOOLTIP, TOOLTIP_TEXT, TOOLTIP_BORDER, SCRIM, WEDGE, WEDGE_SELECTED, WEDGE_EDGE, WEDGE_EDGE_SELECTED,
++        WEDGE_LABEL, WEDGE_LABEL_SELECTED, WEDGE_LABEL_DISABLED, HUB, HUB_TITLE, HUB_TEXT, HUB_MUTED,
++        RADIAL_HEADING, QUICK_LABEL, QUICK_TEXT, GUIDE, GUIDE_TEXT;
++    static {classic(true);}
++
++    /** Selects the palette; true is the classic stone/gold look, false the earlier modern look. */
++    public static synchronized void classic(boolean enabled)
++    {
++        if(BACKGROUND!=null&&classic==enabled)return;
++        if(enabled)
++        {
++            BACKGROUND=new Color(62,53,41,247);BORDER=new Color(20,16,11);CELL=new Color(80,69,53);SELECTED=new Color(109,88,56);
++            FOCUS=new Color(244,200,82);TEXT=new Color(245,233,200);MUTED=new Color(196,180,144);COMPLETE=new Color(132,214,112);
++            TITLE=new Color(255,214,110);ITEM_TEXT=new Color(245,233,200);LABEL_TEXT=new Color(222,208,174);SECONDARY=new Color(200,183,146);
++            ACTION=new Color(48,40,30);ACTION_SELECTED=new Color(112,87,48);HINT=new Color(214,198,160);
++            BEVEL_LIGHT=new Color(118,101,76);BEVEL_DARK=new Color(33,27,20);TRIM=new Color(150,118,62);
++            TOOLTIP=new Color(229,215,172,250);TOOLTIP_TEXT=new Color(48,34,18);TOOLTIP_BORDER=new Color(92,70,38);
++            SCRIM=new Color(10,7,3,120);WEDGE=new Color(62,53,41,240);WEDGE_SELECTED=new Color(122,93,46,245);
++            WEDGE_EDGE=new Color(24,19,13);WEDGE_EDGE_SELECTED=new Color(244,200,82);
++            WEDGE_LABEL=new Color(236,224,192);WEDGE_LABEL_SELECTED=new Color(255,236,170);WEDGE_LABEL_DISABLED=new Color(138,126,104);
++            HUB=new Color(42,35,26,247);HUB_TITLE=new Color(255,214,110);HUB_TEXT=new Color(245,233,200);HUB_MUTED=new Color(200,183,146);
++            RADIAL_HEADING=new Color(255,214,110);QUICK_LABEL=new Color(245,233,200);QUICK_TEXT=new Color(245,233,200);
++            GUIDE=new Color(62,53,41,232);GUIDE_TEXT=new Color(245,233,200);
++        }
++        else
++        {
++            // Exactly the earlier slate palette and the colours previously hard-coded in the overlays.
++            BACKGROUND=new Color(18,25,32,247);BORDER=new Color(91,112,130);CELL=new Color(33,44,55);SELECTED=new Color(65,90,108);
++            FOCUS=new Color(245,203,98);TEXT=Color.WHITE;MUTED=new Color(170,188,200);COMPLETE=new Color(135,214,158);
++            TITLE=Color.WHITE;ITEM_TEXT=Color.WHITE;LABEL_TEXT=new Color(180,192,202);SECONDARY=new Color(166,190,206);
++            ACTION=new Color(34,47,59);ACTION_SELECTED=new Color(75,97,110);HINT=new Color(190,207,218);
++            BEVEL_LIGHT=BORDER;BEVEL_DARK=BORDER;TRIM=BORDER;
++            TOOLTIP=BACKGROUND;TOOLTIP_TEXT=Color.WHITE;TOOLTIP_BORDER=FOCUS;
++            SCRIM=new Color(0,0,0,115);WEDGE=new Color(31,29,26,240);WEDGE_SELECTED=new Color(137,105,39,245);
++            WEDGE_EDGE=new Color(111,91,55);WEDGE_EDGE_SELECTED=new Color(255,218,105);
++            WEDGE_LABEL=new Color(227,220,198);WEDGE_LABEL_SELECTED=new Color(255,237,178);WEDGE_LABEL_DISABLED=new Color(125,122,113);
++            HUB=new Color(20,19,17,245);HUB_TITLE=new Color(255,218,105);HUB_TEXT=Color.WHITE;HUB_MUTED=new Color(194,185,161);
++            RADIAL_HEADING=new Color(255,222,139);QUICK_LABEL=Color.WHITE;QUICK_TEXT=Color.WHITE;
++            GUIDE=new Color(0,0,0,225);GUIDE_TEXT=Color.WHITE;
++        }
++        classic=enabled;
++    }
++    public static boolean classic(){return classic;}
++
++    /** Body text; unchanged in both palettes because line height drives native action hit boxes. */
+     public static Font body(double scale){return new Font(Font.SANS_SERIF,Font.PLAIN,Math.max(12,(int)(14*scale)));}
+-    public static Font heading(double scale){return new Font(Font.SANS_SERIF,Font.BOLD,Math.max(15,(int)(22*scale)));}
++    /** Titles only (never used for layout); classic uses a serif face for the period feel. */
++    public static Font heading(double scale){return new Font(classic?Font.SERIF:Font.SANS_SERIF,Font.BOLD,Math.max(15,(int)(22*scale)));}
++
++    /** Outer panel frame inside {@code box}: classic stone with a restrained bevel and gold trim. */
++    public static void frame(Graphics2D g,Rectangle box,int arc)
++    {
++        if(!classic){g.setColor(BACKGROUND);g.fillRoundRect(box.x,box.y,box.width,box.height,arc,arc);g.setColor(BORDER);g.drawRoundRect(box.x,box.y,box.width-1,box.height-1,arc,arc);return;}
++        g.setColor(BACKGROUND);g.fillRect(box.x,box.y,box.width,box.height);
++        g.setColor(BORDER);g.drawRect(box.x,box.y,box.width-1,box.height-1);
++        bevel(g,box.x+1,box.y+1,box.width-2,box.height-2,BEVEL_LIGHT,BEVEL_DARK);
++        if(box.width>12&&box.height>12){g.setColor(TRIM);g.drawRect(box.x+3,box.y+3,box.width-7,box.height-7);}
++    }
++    /** Grid cell inside its exact bounds; selection adds a two-pixel gold frame, still inside the bounds. */
++    public static void cell(Graphics2D g,Rectangle cell,boolean selected)
++    {
++        if(!classic){g.setColor(selected?SELECTED:CELL);g.fillRoundRect(cell.x,cell.y,cell.width,cell.height,6,6);if(selected){g.setColor(FOCUS);g.drawRoundRect(cell.x,cell.y,cell.width-1,cell.height-1,6,6);}return;}
++        g.setColor(selected?SELECTED:CELL);g.fillRect(cell.x,cell.y,cell.width,cell.height);
++        if(selected){g.setColor(FOCUS);g.drawRect(cell.x,cell.y,cell.width-1,cell.height-1);if(cell.width>4&&cell.height>4)g.drawRect(cell.x+1,cell.y+1,cell.width-3,cell.height-3);}
++        else bevel(g,cell.x,cell.y,cell.width,cell.height,BEVEL_LIGHT,BEVEL_DARK);
++    }
++    /** Action row inside its exact hit box. */
++    public static void action(Graphics2D g,Rectangle row,boolean selected)
++    {
++        g.setColor(selected?ACTION_SELECTED:ACTION);g.fill(row);
++        if(!classic)return;
++        if(selected){g.setColor(FOCUS);g.drawRect(row.x,row.y,row.width-1,row.height-1);}
++        else bevel(g,row.x,row.y,row.width,row.height,BEVEL_DARK,BEVEL_LIGHT);
++    }
++    /** Small floating label (tooltips): classic parchment, modern slate. */
++    public static void label(Graphics2D g,int x,int y,int width,int height)
++    {
++        g.setColor(TOOLTIP);
++        if(classic){g.fillRect(x,y,width,height);g.setColor(TOOLTIP_BORDER);g.drawRect(x,y,width-1,height-1);}
++        else{g.fillRoundRect(x,y,width,height,6,6);g.setColor(TOOLTIP_BORDER);g.drawRoundRect(x,y,width-1,height-1,6,6);}
++    }
++    /** Draws text with the classic one-pixel black shadow; modern draws plain text. */
++    public static void text(Graphics2D g,String text,int x,int y)
++    {
++        if(classic){Color colour=g.getColor();g.setColor(SHADOW);g.drawString(text,x+1,y+1);g.setColor(colour);}
++        g.drawString(text,x,y);
++    }
++    /** Radial wedge fill and edge; the shape itself is supplied by the caller and unchanged. */
++    public static void wedge(Graphics2D g,Shape wedge,boolean selected){wedge(g,wedge,selected,true);}
++    /** {@code thickSelection=false} keeps the modern quick wheel's original one-pixel selected edge. */
++    public static void wedge(Graphics2D g,Shape wedge,boolean selected,boolean thickSelection)
++    {
++        g.setColor(selected?WEDGE_SELECTED:WEDGE);g.fill(wedge);
++        Stroke before=g.getStroke();
++        if(classic&&!selected){g.setStroke(new BasicStroke(2));g.setColor(WEDGE_EDGE);g.draw(wedge);g.setStroke(new BasicStroke(1));g.setColor(TRIM);g.draw(wedge);}
++        else{g.setStroke(new BasicStroke(selected&&(classic||thickSelection)?2:1));g.setColor(selected?WEDGE_EDGE_SELECTED:WEDGE_EDGE);g.draw(wedge);}
++        g.setStroke(before);
++    }
++    /** Radial centre disc; classic adds a dark rim and gold ring. */
++    public static void hub(Graphics2D g,Shape disc)
++    {
++        g.setColor(HUB);g.fill(disc);
++        if(!classic)return;
++        Stroke before=g.getStroke();g.setStroke(new BasicStroke(3));g.setColor(WEDGE_EDGE);g.draw(disc);
++        g.setStroke(new BasicStroke(1));g.setColor(TRIM);g.draw(disc);g.setStroke(before);
++    }
++    private static void bevel(Graphics2D g,int x,int y,int width,int height,Color light,Color dark)
++    {
++        if(width<2||height<2)return;
++        g.setColor(light);g.drawLine(x,y,x+width-1,y);g.drawLine(x,y,x,y+height-1);
++        g.setColor(dark);g.drawLine(x,y+height-1,x+width-1,y+height-1);g.drawLine(x+width-1,y,x+width-1,y+height-1);
++    }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+index add02b1..1715f61 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -95,4 +95,8 @@ public interface SoloScapeControllerConfig extends Config
+     default boolean setupComplete(){return false;}
+     @ConfigItem(keyName="returnToSource",name="Return to selection source",description="After native item/spell targeting completes or is cancelled, reopen its source screen using fresh widgets.",position=34)
+     default boolean returnToSource(){return true;}
++    @ConfigItem(keyName="keyboardMode",name="Text keyboard",description="Automatic uses Steam on Deck. Steam owns controller input until native entry ends; controller mode uses the local grid.",position=35)
++    default net.runelite.client.input.controller.KeyboardMode keyboardMode(){return net.runelite.client.input.controller.KeyboardMode.AUTO;}
++    @ConfigItem(keyName="classicTheme",name="Classic controller UI",description="Warm stone, brown and gold controller panels. Turn off to restore the previous modern palette.",position=36)
++    default boolean classicTheme(){return true;}
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index dbd04f3..6a21fd0 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -46,6 +46,48 @@ public class SoloScapeControllerPlugin extends Plugin
+     @Inject private SoloScapeQuickRadialOverlay quickRadialOverlay;
+     @Inject private ConfigManager configManager;
+     @Inject private SoloScapePanelOverlay panelOverlay;
++    @Inject private SoloScapeTextEntryOverlay textEntryOverlay;
++    @Inject private net.runelite.client.input.KeyManager keyManager;
++    private volatile boolean localTextEntry,steamTextMode,textAvailable;
++    private volatile long lastControllerButton;
++    private volatile String keyboardFeedback;
++    private final net.runelite.client.input.controller.SystemEntryControls systemEntry=new net.runelite.client.input.controller.SystemEntryControls(
++        (open,numeric)->net.runelite.client.input.controller.SteamKeyboard.request(open,numeric,message->keyboardFeedback=message));
++    private final net.runelite.client.input.KeyListener textKeys=new net.runelite.client.input.KeyListener(){
++        public void keyPressed(java.awt.event.KeyEvent event){
++            if(localTextEntry&&net.runelite.client.input.controller.KeyboardInputPolicy.localNavigation(event)){event.consume();return;}
++            if(systemEntry.manual()&&(event.getKeyCode()==java.awt.event.KeyEvent.VK_ENTER||event.getKeyCode()==java.awt.event.KeyEvent.VK_ESCAPE)){
++                long revision=systemEntry.revision();clientThread.invoke(()->{if(client.getControllerEntryState()==null&&systemEntry.finishManual(revision)){mappingArmed=false;cameraArmed=false;}});
++            }
++        }
++        public void keyTyped(java.awt.event.KeyEvent event){
++            if(localTextEntry&&net.runelite.client.input.controller.KeyboardInputPolicy.localNavigation(event)){event.consume();return;}
++            if(active&&steamTextMode&&textAvailable&&net.runelite.client.input.controller.KeyboardInputPolicy.adoptTyped(event,rawState.buttonsHeld,lastControllerButton,System.nanoTime()))systemEntry.beginManual(true,true,false);
++        }
++        public void keyReleased(java.awt.event.KeyEvent event){} // Always let native held-key state clear.
++    };
++    net.runelite.client.input.controller.SystemEntryControls textEntry(){return systemEntry;}
++    String keyboardFeedback(){return keyboardFeedback;}
++    boolean systemTextActive(){return systemEntry.active();}
++    void textEntryAction(long revision,int action){clientThread.invoke(()->{
++        if(!systemEntry.owns(revision))return;
++        if(action==0){keyboardFeedback=null;systemEntry.reopen(revision);return;}
++        net.runelite.client.input.controller.EntryState current=client.getControllerEntryState();
++        if(current!=null){
++            if(!systemEntry.sameSession(current))return;
++            if(action==2)client.cancelControllerEntry(current);
++            else if(!client.submitControllerEntry(current)){keyboardFeedback="Enter a valid value before finishing.";return;}
++            // Native snapshot disappearance, not a guessed timer, releases prompt ownership.
++        }else if(systemEntry.manual()){
++            if(!client.finishControllerNativeText(action==2)){keyboardFeedback="Native text input unavailable; press Enter / Escape on your keyboard.";return;}
++            systemEntry.finishManual(revision);
++        }
++        mappingArmed=false;cameraArmed=false;
++    });}
++    private boolean openTextKeyboard(){
++        if(!steamTextMode||!textAvailable){panelFeedback="Choose Steam / physical keyboard in Text keyboard preferences first.";panelFeedbackUntil=System.nanoTime()+5000000000L;return false;}
++        keyboardFeedback=null;systemEntry.beginManual(true,true);mappingArmed=false;cameraArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();settingsOpen=false;return true;
++    }
+     @Inject private net.runelite.client.input.MouseManager mouseManager;
+     private final net.runelite.client.input.controller.PanelConfirmation confirmation=new net.runelite.client.input.controller.PanelConfirmation();
+     private final net.runelite.client.input.controller.SelectionReturn selectionReturn=new net.runelite.client.input.controller.SelectionReturn();
+@@ -88,7 +130,7 @@ public class SoloScapeControllerPlugin extends Plugin
+     }
+     boolean customPanelActive()
+     {
+-        if(!active || quick.active() || radial.active() || ui.entry().active() || ui.inDialogue())return false;
++        if(!active || systemEntry.active() || quick.active() || radial.active() || ui.entry().active() || ui.inDialogue())return false;
+         UiState.Panel panel=ui.focusedPanel();
+         return panel==null?config.customInventory()&&ui.inventoryFocused():customGroup(panel.id);
+     }
+@@ -99,6 +141,7 @@ public class SoloScapeControllerPlugin extends Plugin
+         if(widget!=null && widget.id>>>16==net.runelite.client.input.controller.ControllerSettingsModel.ID){
+             if(!settingsOpen)return false;
+             int result=settings.invoke(widget,action,!config.setupComplete());
++            if(result==3){return openTextKeyboard();}
+             if(result==1){settingsOpen=false;nativeSettingsChild=true;client.openControllerTab(HomeTab.SETTINGS.ordinal());}
+             else if(result==2){settingsOpen=false;ui.reset();radial.returnTo(HomeTab.SETTINGS.ordinal(),System.nanoTime());}
+             return result>=0;
+@@ -219,6 +262,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 		overlayManager.add(movementOverlay);
+ 		overlayManager.add(uiOverlay);
+         overlayManager.add(panelOverlay);mouseManager.registerMouseListener(0,panelOverlay);mouseManager.registerMouseWheelListener(0,panelOverlay);
++        overlayManager.add(textEntryOverlay);mouseManager.registerMouseListener(0,textEntryOverlay);keyManager.registerKeyListener(textKeys);
+         overlayManager.add(targetOverlay);
+         overlayManager.add(tabRadialOverlay);
+         overlayManager.add(quickRadialOverlay);
+@@ -233,6 +277,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 		overlayManager.remove(movementOverlay);
+ 		overlayManager.remove(uiOverlay);
+         overlayManager.remove(panelOverlay);mouseManager.unregisterMouseListener(panelOverlay);mouseManager.unregisterMouseWheelListener(panelOverlay);
++        overlayManager.remove(textEntryOverlay);mouseManager.unregisterMouseListener(textEntryOverlay);keyManager.unregisterKeyListener(textKeys);
+         overlayManager.remove(targetOverlay);
+         overlayManager.remove(tabRadialOverlay);
+         overlayManager.remove(quickRadialOverlay);
+@@ -261,6 +306,7 @@ public class SoloScapeControllerPlugin extends Plugin
+ 		state.clear();rawState.clear();mappingArmed=false;cameraArmed=false;actionMap=null;
+ 		ui.reset();ui.clearHistory();
+         radial.reset(); quick.reset();
++        systemEntry.reset();localTextEntry=steamTextMode=textAvailable=false;keyboardFeedback=null;
+         radialFocusTab = -1;selectionReturn.clear();restoringSource=null;settingsOpen=settingsPrompted=nativeSettingsChild=false;confirmation.clear();panelFeedback=null;panelFeedbackUntil=0;
+ 		client.setControllerServerFeatures(false);
+ 		client.setControllerUiEnabled(false);
+@@ -324,7 +370,21 @@ public class SoloScapeControllerPlugin extends Plugin
+         if (!pollController()) return;
+         try
+         {
++            ControllerTheme.classic(config.classicTheme());
+             long tickNow=System.nanoTime();
++            if(rawState.buttonsHeld!=0||rawState.buttonsPressed!=0||rawState.buttonsReleased!=0)lastControllerButton=tickNow;
++            steamTextMode=config.keyboardMode().steam(net.runelite.client.input.controller.SteamKeyboard.isDeck());
++            textAvailable=client.hasLocalPlayer();
++            client.setControllerPanelEnabled(config.interfaceControls());client.prepareControllerUi();
++            net.runelite.client.input.controller.EntryState nativeEntry=client.getControllerEntryState();
++            Canvas keyboardCanvas=client.getCanvas();
++            localTextEntry=nativeEntry!=null&&!steamTextMode&&config.interfaceControls()&&rawState.connected&&keyboardCanvas!=null&&keyboardCanvas.isFocusOwner()&&ui.entry().active();
++            boolean ownedBefore=systemEntry.active();
++            boolean systemOwns=systemEntry.update(nativeEntry,steamTextMode,textAvailable);
++            if(systemOwns||ownedBefore){
++                client.setControllerCameraInput(0,0);resetWorld();ui.reset();radial.reset();quick.reset();confirmation.clear();
++                mappingArmed=false;cameraArmed=false;lastInputTick=tickNow;return;
++            }
+             client.updateControllerConnection();
+             if(lastInputTick!=0 && tickNow-lastInputTick>750_000_000L)
+             {mappingArmed=false;cameraArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();confirmation.clear();}
+@@ -355,6 +415,14 @@ public class SoloScapeControllerPlugin extends Plugin
+                 resetWorld(); ui.reset(); radial.reset(); quick.reset();selectionReturn.clear();restoringSource=null; radialFocusTab = -1;mappingArmed=false;cameraArmed=false;
+                 return;
+             }
++            if(nativeEntry!=null){
++                client.setControllerCameraInput(0,0);resetWorld();radial.reset();quick.reset();confirmation.clear();cameraArmed=false;
++                if(config.interfaceControls()){ui.update(state,System.nanoTime());localTextEntry=ui.entry().active();}else ui.reset();
++                return;
++            }
++            if(steamTextMode&&(rawState.buttonsPressed&(1<<8))!=0&&!actionMap.uses(1<<8)){
++                openTextKeyboard();return;
++            }
+             if(!config.returnToSource()){selectionReturn.clear();restoringSource=null;}
+             if(config.returnToSource()){
+                 net.runelite.client.input.controller.SelectionReturn.Origin origin=selectionReturn.observe(client.getControllerSelectionToken());
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+index 96800f3..a92dc84 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+@@ -50,30 +50,28 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+         try
+         {
+             Rectangle box=view.bounds;double scale=view.scale;
+-            draw.setColor(ControllerTheme.BACKGROUND);draw.fillRoundRect(box.x,box.y,box.width,box.height,16,16);
+-            draw.setColor(ControllerTheme.BORDER);draw.drawRoundRect(box.x,box.y,box.width-1,box.height-1,16,16);
+-            draw.setFont(ControllerTheme.heading(scale));draw.setColor(Color.WHITE);
+-            draw.drawString(fit(draw,title,box.width-32),box.x+(int)(16*scale),box.y+(int)(32*scale));
++            ControllerTheme.frame(draw,box,16);
++            draw.setFont(ControllerTheme.heading(scale));draw.setColor(ControllerTheme.TITLE);
++            ControllerTheme.text(draw,fit(draw,title,box.width-32),box.x+(int)(16*scale),box.y+(int)(32*scale));
+             draw.setFont(ControllerTheme.body(scale));
+             int page=view.page(widgets,focus),pages=Math.max(1,(widgets.length+view.pageSize-1)/view.pageSize);
+-            draw.setColor(ControllerTheme.MUTED);draw.drawString((page>0?"↑ ":"")+"Visible page "+(page+1)+" / "+pages+(page+1<pages?" ↓":""),view.content.x,box.y+(int)(50*scale));
++            draw.setColor(ControllerTheme.MUTED);ControllerTheme.text(draw,(page>0?"↑ ":"")+"Visible page "+(page+1)+" / "+pages+(page+1<pages?" ↓":""),view.content.x,box.y+(int)(50*scale));
+             for(UiState.Widget widget:widgets)
+             {
+                 if(!view.visible(widget))continue;
+                 Rectangle cell=widget.bounds;boolean selected=widget.same(focus);
+-                draw.setColor(selected?ControllerTheme.SELECTED:ControllerTheme.CELL);draw.fillRoundRect(cell.x,cell.y,cell.width,cell.height,6,6);
+-                if(selected){draw.setColor(ControllerTheme.FOCUS);draw.drawRoundRect(cell.x,cell.y,cell.width-1,cell.height-1,6,6);}
+-                draw.setColor(widget.itemId>=0?Color.WHITE:new Color(180,192,202));
++                ControllerTheme.cell(draw,cell,selected);
++                draw.setColor(widget.itemId>=0?ControllerTheme.ITEM_TEXT:ControllerTheme.LABEL_TEXT);
+                 String name=widget.name;
+                 int inset=Math.max(4,(int)(6*scale));
+                 java.awt.image.BufferedImage icon=widget.itemId>=0?images.apply(widget):null;
+                 int iconWidth=icon==null?0:Math.min((int)(36*scale),cell.height-inset*2);
+                 if(icon!=null)draw.drawImage(icon,cell.x+inset,cell.y+inset,iconWidth,Math.max(1,iconWidth*32/36),null);
+                 int labelX=cell.x+inset+(iconWidth==0?0:iconWidth+inset);
+-                draw.drawString(fit(draw,name,cell.x+cell.width-inset-labelX),labelX,cell.y+inset+draw.getFontMetrics().getAscent());
+-                draw.setColor(new Color(166,190,206));
++                ControllerTheme.text(draw,fit(draw,name,cell.x+cell.width-inset-labelX),labelX,cell.y+inset+draw.getFontMetrics().getAscent());
++                draw.setColor(ControllerTheme.SECONDARY);
+                 String secondary=widget.itemId>=0?"×"+widget.quantity+(widget.status.isEmpty()?"":" · "+widget.status):!widget.status.isEmpty()?widget.status:widget.actions.length>0?widget.actions[0].label:"";
+-                draw.drawString(fit(draw,secondary,cell.width-inset*2),cell.x+inset,cell.y+cell.height-inset);
++                ControllerTheme.text(draw,fit(draw,secondary,cell.width-inset*2),cell.x+inset,cell.y+cell.height-inset);
+             }
+             int x=view.content.x+view.content.width+(int)(14*scale),y=view.content.y;
+             int width=box.x+box.width-x-(int)(14*scale),line=Math.max(14,draw.getFontMetrics().getHeight()+3);
+@@ -84,7 +82,7 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+                 java.awt.image.BufferedImage icon=focus.itemId>=0?images.apply(focus):null;
+                 if(icon!=null){int size=Math.min(width,(int)(54*scale));draw.drawImage(icon,x,y,size,size*32/36,null);y+=size*32/36+line/2;}
+                 draw.setColor(ControllerTheme.FOCUS);for(String row:focus.name.split("\n")){y=text(draw,row,x,y,width,line);}
+-                if(focus.itemId>=0){draw.setColor(Color.WHITE);y=text(draw,"Quantity: "+focus.quantity,x,y+line/2,width,line);}
++                if(focus.itemId>=0){draw.setColor(ControllerTheme.TEXT);y=text(draw,"Quantity: "+focus.quantity,x,y+line/2,width,line);}
+                 if(!focus.status.isEmpty()){draw.setColor(focus.status.startsWith("Completed")||focus.status.equals("Active")?ControllerTheme.COMPLETE:ControllerTheme.MUTED);y=text(draw,focus.status,x,y+line/2,width,line);}
+                 if(!focus.detail.isEmpty()&&!focus.detail.equals(focus.name)){
+                     draw.setColor(ControllerTheme.MUTED);
+@@ -92,20 +90,19 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+                 }
+                 draw.setColor(ControllerTheme.MUTED);y+=line;
+                 y=text(draw,focus.actions.length==0?"Read only · RS: scroll":"Actions",x,y,width,line);
+-                draw.setColor(Color.WHITE);
+                 int shown=Math.max(1,(view.content.y+view.content.height-y)/(line+5));
+                 int start=Math.max(0,Math.min(Math.max(0,focus.actions.length-shown),selectedAction-shown+1));
+                 for(int i=start;i<Math.min(focus.actions.length,start+shown);i++)
+                 {
+                     if(y>view.content.y+view.content.height-line)break;
+                     Rectangle actionBox=new Rectangle(x,y,width,line+3);actionBounds[i]=actionBox;
+-                    draw.setColor(i==selectedAction?new Color(75,97,110):new Color(34,47,59));draw.fill(actionBox);
+-                    draw.setColor(i==selectedAction?ControllerTheme.FOCUS:Color.WHITE);
+-                    draw.drawString(fit(draw,focus.actions[i].label+(i==start&&start>0?" ↑":i==start+shown-1&&i+1<focus.actions.length?" ↓":""),width-8),x+4,y+draw.getFontMetrics().getAscent());y+=line+5;
++                    ControllerTheme.action(draw,actionBox,i==selectedAction);
++                    draw.setColor(i==selectedAction?ControllerTheme.FOCUS:ControllerTheme.TEXT);
++                    ControllerTheme.text(draw,fit(draw,focus.actions[i].label+(i==start&&start>0?" ↑":i==start+shown-1&&i+1<focus.actions.length?" ↓":""),width-8),x+4,y+draw.getFontMetrics().getAscent());y+=line+5;
+                 }
+             }
+             draw.setClip(beforeDetails);
+-            draw.setColor(confirmation==null?new Color(190,207,218):ControllerTheme.FOCUS);
++            draw.setColor(confirmation==null?ControllerTheme.HINT:ControllerTheme.FOCUS);
+             String hint=confirmation!=null?confirmation:focus!=null&&focus.actions.length==0?"D-pad: move · RS: scroll · LB/RB: pane · B: back":"D-pad: move · RS: scroll · A: use · X / right click: actions · LB/RB: pane · B: back";
+             draw.clipRect(box.x,box.y,box.width,box.height-(int)(8*scale));
+             text(draw,hints.apply(hint),box.x+(int)(16*scale),box.y+box.height-(int)(48*scale),box.width-(int)(32*scale),line);
+@@ -119,10 +116,10 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+         for(String word:text.split(" "))
+         {
+             String candidate=current.isEmpty()?word:current+" "+word;
+-            if(!current.isEmpty()&&draw.getFontMetrics().stringWidth(candidate)>width){draw.drawString(fit(draw,current,width),x,y+draw.getFontMetrics().getAscent());y+=line;current=word;}
++            if(!current.isEmpty()&&draw.getFontMetrics().stringWidth(candidate)>width){ControllerTheme.text(draw,fit(draw,current,width),x,y+draw.getFontMetrics().getAscent());y+=line;current=word;}
+             else current=candidate;
+         }
+-        if(!current.isEmpty()){draw.drawString(fit(draw,current,width),x,y+draw.getFontMetrics().getAscent());y+=line;}
++        if(!current.isEmpty()){ControllerTheme.text(draw,fit(draw,current,width),x,y+draw.getFontMetrics().getAscent());y+=line;}
+         return y;
+     }
+     private static String fit(Graphics2D draw,String text,int width)
+@@ -134,9 +131,8 @@ public final class SoloScapePanelOverlay extends Overlay implements MouseListene
+             int width=Math.min(view.bounds.width-16,g.getFontMetrics().stringWidth(label)+16),height=g.getFontMetrics().getHeight()+12;
+             int x=Math.max(view.bounds.x+8,Math.min(pointer.x+12,view.bounds.x+view.bounds.width-width-8));
+             int y=Math.max(view.bounds.y+8,Math.min(pointer.y+12,view.bounds.y+view.bounds.height-height-8));
+-            g.setColor(ControllerTheme.BACKGROUND);g.fillRoundRect(x,y,width,height,6,6);
+-            g.setColor(ControllerTheme.FOCUS);g.drawRoundRect(x,y,width-1,height-1,6,6);
+-            g.setColor(ControllerTheme.TEXT);g.drawString(fit(g,label,width-16),x+8,y+6+g.getFontMetrics().getAscent());
++            ControllerTheme.label(g,x,y,width,height);
++            g.setColor(ControllerTheme.TOOLTIP_TEXT);g.drawString(fit(g,label,width-16),x+8,y+6+g.getFontMetrics().getAscent());
+         } finally {g.dispose();}
+     }
+     private static final class HitMap
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+index d22a454..804bd5e 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+@@ -40,7 +40,7 @@ public final class SoloScapeQuickRadialOverlay extends Overlay
+             int max=Math.max(100,client.getCanvas().getWidth()-32),w=0,lineHeight=g.getFontMetrics().getHeight()+5;
+             for(String line:lines) w=Math.max(w,Math.min(max,g.getFontMetrics().stringWidth(plugin.hint(line))+20));
+             int y=Math.max(8,client.getCanvas().getHeight()-lines.length*lineHeight-20);
+-            g.setColor(new Color(0,0,0,225));g.fillRoundRect(8,y,w,lines.length*lineHeight+12,10,10);g.setColor(Color.WHITE);
++            if(ControllerTheme.classic())ControllerTheme.frame(g,new Rectangle(8,y,w,lines.length*lineHeight+12),10);else{g.setColor(ControllerTheme.GUIDE);g.fillRoundRect(8,y,w,lines.length*lineHeight+12,10,10);}g.setColor(ControllerTheme.GUIDE_TEXT);
+             for(int i=0;i<lines.length;i++) centreFit(g,plugin.hint(lines[i]),18,y+lineHeight*(i+1),w-20,false);
+         }
+         finally { g.dispose(); }
+@@ -53,7 +53,7 @@ public final class SoloScapeQuickRadialOverlay extends Overlay
+         try
+         {
+             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+-            g.setColor(new Color(0,0,0,115));g.fillRect(0,0,width,height);
++            g.setColor(ControllerTheme.SCRIM);g.fillRect(0,0,width,height);
+             double radius=Math.min(210*scale,Math.min(width/2.0-18,height/2.0-48));if(radius<80)return;
+             double cx=width/2.0,cy=height/2.0,inner=radius*.50,s=Math.min(scale,radius/210);
+             g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,Math.max(10,(int)(13*s))));
+@@ -62,16 +62,17 @@ public final class SoloScapeQuickRadialOverlay extends Overlay
+                 boolean selected=i==quick.selected();
+                 Area wedge=new Area(new Arc2D.Double(cx-radius,cy-radius,2*radius,2*radius,90-i*45-21.5,43,Arc2D.PIE));
+                 wedge.subtract(new Area(new Ellipse2D.Double(cx-inner,cy-inner,2*inner,2*inner)));
+-                g.setColor(selected?new Color(137,105,39,245):new Color(31,29,26,240));g.fill(wedge);
+-                g.setColor(selected?new Color(255,218,105):new Color(111,91,55));g.draw(wedge);
++                ControllerTheme.wedge(g,wedge,selected,false);
+                 double angle=Math.toRadians(i*45);int x=(int)(cx+Math.sin(angle)*radius*.76),y=(int)(cy-Math.cos(angle)*radius*.76);
+-                g.setColor(Color.WHITE);centreFit(g,quick.label(i),x,y,(int)(radius*.52),true);
++                g.setColor(ControllerTheme.QUICK_LABEL);centreFit(g,quick.label(i),x,y,(int)(radius*.52),true);
+             }
+-            g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,Math.max(12,(int)(16*s))));g.setColor(new Color(255,218,105));
++            if(ControllerTheme.classic())ControllerTheme.hub(g,new Ellipse2D.Double(cx-inner+3,cy-inner+3,2*inner-6,2*inner-6));
++            g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,Math.max(12,(int)(16*s))));g.setColor(ControllerTheme.HUB_TITLE);
+             centreFit(g,quick.label(quick.selected()),(int)cx,(int)cy-16,(int)(inner*1.8),true);
+-            g.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,Math.max(10,(int)(12*s))));g.setColor(Color.WHITE);
++            g.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,Math.max(10,(int)(12*s))));g.setColor(ControllerTheme.HUB_TEXT);
+             centreFit(g,hints.apply("A: use · B: back"),(int)cx,(int)cy+8,(int)(inner*1.8),true);
+             centreFit(g,hints.apply("X: assign · Y: clear"),(int)cx,(int)cy+30,(int)(inner*1.8),true);
++            g.setColor(ControllerTheme.QUICK_TEXT);
+             centreFit(g,"QUICK ACTIONS",(int)cx,(int)(cy-radius-14),width-30,true);
+             centreFit(g,quick.message()==null?(quick.canBind()?"Current action ready to assign":"Focus food, potion, prayer, spell or special to assign"):quick.message(),(int)cx,(int)(cy+radius+23),width-30,true);
+         }
+@@ -81,6 +82,6 @@ public final class SoloScapeQuickRadialOverlay extends Overlay
+     {
+         String value=text;while(!value.isEmpty() && g.getFontMetrics().stringWidth(value)>max) value=value.substring(0,value.length()-1);
+         if(!value.equals(text) && value.length()>2) value=value.substring(0,value.length()-2)+"…";
+-        g.drawString(value,centre?x-g.getFontMetrics().stringWidth(value)/2:x,y);
++        ControllerTheme.text(g,value,centre?x-g.getFontMetrics().stringWidth(value)/2:x,y);
+     }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java
+index 32a26e1..a82e175 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java
+@@ -1,8 +1,6 @@
+ package net.runelite.client.plugins.soloscapecontroller;
+ 
+ import com.GameClient;
+-import java.awt.BasicStroke;
+-import java.awt.Color;
+ import java.awt.Dimension;
+ import java.awt.Font;
+ import java.awt.Graphics2D;
+@@ -51,7 +49,7 @@ public final class SoloScapeTabRadialOverlay extends Overlay
+         try
+         {
+             draw.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+-            draw.setColor(new Color(0, 0, 0, 115)); draw.fillRect(0, 0, width, height);
++            draw.setColor(ControllerTheme.SCRIM); draw.fillRect(0, 0, width, height);
+             double radius = Math.min(210*scale, Math.min(width / 2.0 - 18, height / 2.0 - 32));
+             if (radius < 80) return;
+             scale=Math.min(scale,radius/210);
+@@ -65,26 +63,22 @@ public final class SoloScapeTabRadialOverlay extends Overlay
+                 Area wedge = new Area(new Arc2D.Double(cx - radius, cy - radius, 2 * radius, 2 * radius,
+                     90 - i * step - step / 2 + 1, step - 2, Arc2D.PIE));
+                 wedge.subtract(new Area(new Ellipse2D.Double(cx - inner, cy - inner, 2 * inner, 2 * inner)));
+-                draw.setColor(selected ? new Color(137, 105, 39, 245) : new Color(31, 29, 26, 240));
+-                draw.fill(wedge);
+-                draw.setColor(selected ? new Color(255, 218, 105) : new Color(111, 91, 55));
+-                draw.setStroke(new BasicStroke(selected ? 2 : 1)); draw.draw(wedge);
++                ControllerTheme.wedge(draw, wedge, selected);
+                 double angle = Math.toRadians(i * step);
+                 int x = (int) Math.round(cx + Math.sin(angle) * labelRadius);
+                 int y = (int) Math.round(cy - Math.cos(angle) * labelRadius);
+-                draw.setColor(available ? (selected ? new Color(255, 237, 178) : new Color(227, 220, 198)) : new Color(125, 122, 113));
++                draw.setColor(available ? (selected ? ControllerTheme.WEDGE_LABEL_SELECTED : ControllerTheme.WEDGE_LABEL) : ControllerTheme.WEDGE_LABEL_DISABLED);
+                 centre(draw, TABS[i].label, x, y + 4);
+             }
+-            draw.setColor(new Color(20, 19, 17, 245));
+-            draw.fill(new Ellipse2D.Double(cx - inner + 3, cy - inner + 3, 2 * inner - 6, 2 * inner - 6));
++            ControllerTheme.hub(draw, new Ellipse2D.Double(cx - inner + 3, cy - inner + 3, 2 * inner - 6, 2 * inner - 6));
+             draw.setFont(new Font(Font.SANS_SERIF, Font.BOLD, Math.max(12,(int)(19*scale))));
+-            draw.setColor(new Color(255, 218, 105)); centre(draw, TABS[radial.selected()].label, (int) cx, (int) cy - 9);
++            draw.setColor(ControllerTheme.HUB_TITLE); centre(draw, TABS[radial.selected()].label, (int) cx, (int) cy - 9);
+             draw.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, Math.max(10,(int)(12*scale))));
+-            draw.setColor(Color.WHITE);
++            draw.setColor(ControllerTheme.HUB_TEXT);
+             centre(draw, radial.message() != null ? radial.message() : radial.available(radial.selected()) ? hints.apply("A  Open tab") : "Unavailable here", (int) cx, (int) cy + 15);
+-            draw.setColor(new Color(194, 185, 161)); centre(draw, hints.apply("B  Back"), (int) cx, (int) cy + 38);
+-            draw.setFont(new Font(Font.SANS_SERIF, Font.BOLD, Math.max(10,(int)(14*scale))));
+-            draw.setColor(new Color(255, 222, 139)); centre(draw, "HOME TABS", (int) cx, (int) (cy - radius - 13));
++            draw.setColor(ControllerTheme.HUB_MUTED); centre(draw, hints.apply("B  Back"), (int) cx, (int) cy + 38);
++            draw.setFont(new Font(ControllerTheme.classic() ? Font.SERIF : Font.SANS_SERIF, Font.BOLD, Math.max(10,(int)(14*scale))));
++            draw.setColor(ControllerTheme.RADIAL_HEADING); centre(draw, "HOME TABS", (int) cx, (int) (cy - radius - 13));
+             draw.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, Math.max(10,(int)(12*scale))));
+             centre(draw, "Left stick: choose   ·   D-pad / LB / RB: cycle   ·   wheel button: close", (int) cx, (int) (cy + radius + 21));
+         }
+@@ -92,5 +86,5 @@ public final class SoloScapeTabRadialOverlay extends Overlay
+     }
+ 
+     private static void centre(Graphics2D draw, String text, int x, int y)
+-    { draw.drawString(text, x - draw.getFontMetrics().stringWidth(text) / 2, y); }
++    { ControllerTheme.text(draw, text, x - draw.getFontMetrics().stringWidth(text) / 2, y); }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTextEntryOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTextEntryOverlay.java
+new file mode 100644
+index 0000000..e8cbb86
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTextEntryOverlay.java
+@@ -0,0 +1,51 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import com.GameClient;
++import java.awt.*;
++import java.awt.event.MouseEvent;
++import javax.inject.Inject;
++import net.runelite.client.input.MouseListener;
++import net.runelite.client.input.controller.*;
++import net.runelite.client.ui.overlay.*;
++
++/** Pointer/touch escape route while Steam owns SDL input. All native typing stays in the client. */
++public final class SoloScapeTextEntryOverlay extends Overlay implements MouseListener {
++    private final SoloScapeControllerPlugin plugin;private final GameClient client;
++    private volatile Rectangle[] buttons=new Rectangle[0];private volatile Rectangle bounds=new Rectangle();private volatile long revision=-1;private boolean captured;
++    @Inject SoloScapeTextEntryOverlay(SoloScapeControllerPlugin plugin,GameClient client){
++        super(plugin);this.plugin=plugin;this.client=client;setPosition(OverlayPosition.DYNAMIC);setLayer(OverlayLayer.ABOVE_WIDGETS);setPriority(OverlayPriority.HIGH);
++    }
++    @Override public Dimension render(Graphics2D graphics){
++        if(!plugin.isActive()||!plugin.systemTextActive()||client.getCanvas()==null){buttons=new Rectangle[0];bounds=new Rectangle();revision=-1;return null;}
++        SystemEntryControls entry=plugin.textEntry();long current=entry.revision();EntryState state=entry.entry();
++        buttons=paint(graphics,state,plugin.keyboardFeedback(),client.getCanvas().getWidth(),client.getCanvas().getHeight(),plugin.config().overlayScale()/100.0);bounds=box(client.getCanvas().getWidth(),client.getCanvas().getHeight(),plugin.config().overlayScale()/100.0);revision=current;return null;
++    }
++    public static Rectangle[] paint(Graphics2D graphics,EntryState state,String feedback,int canvasWidth,int canvasHeight,double requested){
++        Rectangle box=box(canvasWidth,canvasHeight,requested);int width=box.width,height=box.height;double scale=width/460.0;
++        Graphics2D draw=(Graphics2D)graphics.create();Rectangle[] buttons=new Rectangle[3];
++        try{
++            ControllerTheme.frame(draw,box,12);
++            draw.setFont(ControllerTheme.body(scale));int line=Math.max(14,draw.getFontMetrics().getHeight()+2),x=box.x+10,y=box.y+line;
++            draw.setColor(ControllerTheme.FOCUS);draw.drawString(fit(draw,state==null?"Chat / native text keyboard":state.prompt,width-20),x,y);y+=line;
++            draw.setColor(ControllerTheme.TEXT);draw.drawString(fit(draw,state==null?"Type into the game's normal chat or text input.":state.value+"_",width-20),x,y);y+=line;
++            draw.setColor(ControllerTheme.MUTED);draw.drawString(fit(draw,"Controller paused · Enter / Escape: finish / cancel",width-20),x,y);y+=line;
++            draw.drawString(fit(draw,feedback==null?"Steam + X reopens. Tap below if the keyboard is dismissed.":feedback,width-20),x,y);
++            String[] names={"Reopen","Done","Cancel"};int gap=8,bw=(width-20-gap*2)/3,bh=Math.max(24,(int)(30*scale)),by=box.y+height-bh-10;
++            for(int i=0;i<3;i++){buttons[i]=new Rectangle(x+i*(bw+gap),by,bw,bh);ControllerTheme.cell(draw,buttons[i],false);draw.setColor(ControllerTheme.FOCUS);draw.draw(buttons[i]);draw.setColor(ControllerTheme.TEXT);draw.drawString(names[i],buttons[i].x+8,by+(bh+draw.getFontMetrics().getAscent())/2-2);}
++        }finally{draw.dispose();}return buttons;
++    }
++    private static Rectangle box(int width,int height,double requested){double scale=Math.max(.1,Math.min(requested,Math.min((width-16.0)/460,(height-16.0)/150)));return new Rectangle(8,8,(int)(460*scale),(int)(150*scale));}
++    private static String fit(Graphics2D draw,String value,int width){while(!value.isEmpty()&&draw.getFontMetrics().stringWidth(value)>width)value=value.substring(0,value.length()-1);return value;}
++    @Override public MouseEvent mousePressed(MouseEvent event){
++        if(!plugin.systemTextActive()||!bounds.contains(event.getPoint()))return event;
++        captured=true;event.consume();
++        if(event.getButton()==MouseEvent.BUTTON1){Rectangle[] current=buttons;long token=revision;for(int i=0;i<current.length;i++)if(current[i].contains(event.getPoint())){plugin.textEntryAction(token,i);break;}}
++        return event;
++    }
++    @Override public MouseEvent mouseReleased(MouseEvent event){if(captured)event.consume();captured=false;return event;}
++    @Override public MouseEvent mouseClicked(MouseEvent event){if(plugin.systemTextActive()&&bounds.contains(event.getPoint()))event.consume();return event;}
++    @Override public MouseEvent mouseDragged(MouseEvent event){if(captured)event.consume();return event;}
++    @Override public MouseEvent mouseMoved(MouseEvent event){return event;}
++    @Override public MouseEvent mouseEntered(MouseEvent event){return event;}
++    @Override public MouseEvent mouseExited(MouseEvent event){return event;}
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+index 8cd18d7..f4f66e6 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+@@ -25,7 +25,7 @@ public final class SoloScapeUiOverlay extends Overlay
+     }
+     @Override public Dimension render(Graphics2D graphics)
+     {
+-        if (!plugin.isActive() || plugin.customPanelActive() || plugin.getQuick().active() || plugin.getRadial().active() || client.getCanvas()==null) return null;
++        if (!plugin.isActive() || plugin.systemTextActive() || plugin.customPanelActive() || plugin.getQuick().active() || plugin.getRadial().active() || client.getCanvas()==null) return null;
+         return paint(graphics,plugin.getUi(),client.getCanvas().getWidth(),client.getCanvas().getHeight(),plugin.config().overlayScale()/100.0,plugin.config().glyphs(),plugin::hint);
+     }
+     public static Dimension paint(Graphics2D graphics,UiControls ui)
+@@ -54,16 +54,16 @@ public final class SoloScapeUiOverlay extends Overlay
+                 draw.setColor(ControllerTheme.FOCUS); draw.drawString(fit(draw,keyboard.state().prompt,width-24),20,30);
+                 String value = keyboard.state().value;
+                 while (value.length()>0 && draw.getFontMetrics().stringWidth(value+"_")>width-24) value=value.substring(1);
+-                draw.setColor(Color.WHITE); draw.drawString(value+"_",20,54);
++                draw.setColor(ControllerTheme.TEXT); draw.drawString(value+"_",20,54);
+                 for (int i=0;i<keys.length;i++)
+                 {
+                     int x=20+i%columns*cellWidth,y=66+i/columns*cellHeight;
+                     draw.setColor(i==keyboard.index()?new Color(125,99,35):new Color(55,55,55));
+                     draw.fillRect(x,y,cellWidth-4,cellHeight-4);
+-                    draw.setColor(i==keyboard.index()?ControllerTheme.FOCUS:Color.WHITE);
++                    draw.setColor(i==keyboard.index()?ControllerTheme.FOCUS:ControllerTheme.TEXT);
+                     draw.drawString(keys[i].equals(" ")?"Space":keys[i],x+6,y+20);
+                 }
+-                draw.setColor(Color.WHITE); draw.drawString(prompt,20,86+rows*cellHeight);
++                draw.setColor(ControllerTheme.TEXT); draw.drawString(prompt,20,86+rows*cellHeight);
+                 return null;
+             }
+             UiState.Widget focus = ui.focus();
+@@ -78,7 +78,7 @@ public final class SoloScapeUiOverlay extends Overlay
+             for (String line : lines) width = Math.max(width,draw.getFontMetrics().stringWidth(line)+12);
+             int lineHeight = Math.max(18,draw.getFontMetrics().getHeight()), hintHeight = lines.size()*lineHeight+10;
+             draw.setColor(new Color(0, 0, 0, 210)); draw.fillRect(8, 8, width, hintHeight);
+-            draw.setColor(Color.WHITE);
++            draw.setColor(ControllerTheme.TEXT);
+             for (int i=0;i<lines.size();i++) draw.drawString(lines.get(i),14,8+draw.getFontMetrics().getAscent()+5+i*lineHeight);
+             int menuY = hintHeight+16;
+             UiState.Widget menu = ui.context();
+@@ -95,7 +95,7 @@ public final class SoloScapeUiOverlay extends Overlay
+                 {
+                     int row=i-start;
+                     if(i==ui.contextIndex()) {draw.setColor(new Color(110,90,35));draw.fillRect(10,menuY+3+row*rowHeight,menuWidth-4,rowHeight-1);}
+-                    draw.setColor(i==ui.contextIndex()?ControllerTheme.FOCUS:Color.WHITE);
++                    draw.setColor(i==ui.contextIndex()?ControllerTheme.FOCUS:ControllerTheme.TEXT);
+                     String label=menu.actions[i].label+(row==0 && start>0?" ↑":row==shown-1 && start+shown<menu.actions.length?" ↓":"");
+                     draw.drawString(fit(draw,label,menuWidth-16),16,menuY+5+draw.getFontMetrics().getAscent()+row*rowHeight);
+                 }
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java b/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java
+index 10089ca..136c720 100644
+--- a/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java
++++ b/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java
+@@ -91,15 +91,7 @@ final class LauncherKeyboard extends JPanel
+         boolean consume=key==KeyEvent.VK_LEFT||key==KeyEvent.VK_RIGHT||key==KeyEvent.VK_UP||key==KeyEvent.VK_DOWN||key==KeyEvent.VK_ENTER||key==KeyEvent.VK_BACK_SPACE||key==KeyEvent.VK_SPACE||key==KeyEvent.VK_ESCAPE||ch=='\n'||ch=='\b'||ch==' ';
+         if(consume)event.consume();return consume;
+     }
+-    private static final java.util.concurrent.ExecutorService STEAM_REQUESTS=java.util.concurrent.Executors.newSingleThreadExecutor(task->{Thread thread=new Thread(task,"launcher-steam-keyboard");thread.setDaemon(true);return thread;});
+-    private static void requestSteamKeyboard(boolean open){
+-        // Same URI transport used by SDL's X11 Steam Deck keyboard support.
+-        // This requests visibility; it is not a dismissal callback or proof Steam is running.
+-        STEAM_REQUESTS.execute(()->{
+-            try{Process process=new ProcessBuilder("xdg-open",open?"steam://open/keyboard?XPosition=0&YPosition=0&Width=0&Height=0&Mode=0":"steam://close/keyboard").redirectOutput(ProcessBuilder.Redirect.to(new java.io.File("/dev/null"))).redirectError(ProcessBuilder.Redirect.to(new java.io.File("/dev/null"))).start();if(!process.waitFor(3,java.util.concurrent.TimeUnit.SECONDS)){process.destroy();System.err.println("Steam keyboard request timed out; use Steam + X or choose SoloScape keyboard.");}}
+-            catch(Exception ex){System.err.println("Steam keyboard request unavailable; use Steam + X or choose SoloScape keyboard.");}
+-        });
+-    }
++    private static void requestSteamKeyboard(boolean open){SteamKeyboard.request(open,false,System.err::println);}
+     boolean active(){return field!=null;}
+     boolean systemOwnsInput(){return active()&&systemKeyboard;}
+     boolean systemMode(){return systemKeyboard;}
+diff --git a/client/test/ControllerEntryTest.java b/client/test/ControllerEntryTest.java
+index ba1c72f..7561987 100644
+--- a/client/test/ControllerEntryTest.java
++++ b/client/test/ControllerEntryTest.java
+@@ -38,7 +38,7 @@ public class ControllerEntryTest
+             calls.add(args);
+             if ((Integer)args[0]==1564) Class258_Sub2.aStringArray8532[22]=(String)args[1];
+             if ((Integer)args[0]==1471) { Isaac.anIntArray1303[190]=0; Isaac.anIntArray1303[5]=11; }
+-            if ((Integer)args[0]==112) Isaac.anIntArray1303[5]=0;
++            if ((Integer)args[0]==112 || (Integer)args[0]==101) Isaac.anIntArray1303[5]=0;
+         });
+     }
+     @After public void restore()
+@@ -67,7 +67,7 @@ public class ControllerEntryTest
+         ControllerEntry.observe(event);
+         assertFalse(ControllerEntry.submit(old));ControllerEntry.cancel(old);assertTrue(calls.isEmpty());
+         EntryState fresh=ControllerEntry.snapshot();ControllerEntry.cancel(fresh);
+-        assertArrayEquals(new Object[]{112,13,0},calls.get(0));
++        assertArrayEquals(new Object[]{101},calls.get(0));
+     }
+     @Test public void onlyExplicitControllerSearchActivatesNativeBankKeyCallbackOnce()
+     {
+@@ -88,4 +88,23 @@ public class ControllerEntryTest
+         assertNull(ControllerEntry.snapshot());assertFalse(ControllerEntry.submit(state));
+         Isaac.anIntArray1303[5]=14;assertFalse(ControllerEntry.active());
+     }
++    @Test public void nativePromptOwnershipSurvivesDisablingPanelPresentation(){
++        try{ControllerUi.enablePanels(false);Isaac.anIntArray1303[5]=9;assertNotNull(ControllerEntry.snapshot());}
++        finally{ControllerUi.enablePanels(true);}
++    }
++    @Test public void manualFinishUsesNativeKeyboardQueueForEnterAndEscape(){
++        Class346 previous=Class182.aClass346_2449;java.awt.Canvas canvas=Class305.aCanvas3869;
++        String vendor=Class297.aString3782;int[] mapping=Class285_Sub2.anIntArray8507.clone();Class297.aString3782="OpenJDK";
++        java.awt.Canvas fixture=new java.awt.Canvas();Class346_Sub1 keyboard=new Class346_Sub1(fixture);
++        try{
++            Class305.aCanvas3869=fixture;Class182.aClass346_2449=keyboard;
++            assertTrue(ControllerEntry.nativeKey(false));keyboard.method2695(67);boolean enter=false;Interface6 event;
++            while((event=keyboard.method2697(0))!=null)if(event.method30(false)==84)enter=true;
++            assertTrue("Native Enter was not enqueued",enter);assertTrue(calls.isEmpty());
++            assertTrue(ControllerEntry.nativeKey(true));keyboard.method2695(67);boolean escape=false;
++            while((event=keyboard.method2697(0))!=null)if(event.method30(false)==13)escape=true;
++            assertTrue("Native Escape was not enqueued",escape);assertTrue(calls.isEmpty());
++            Class240.anInt4674=0;assertFalse(ControllerEntry.nativeKey(false));
++        }finally{keyboard.method2698(14174);Class182.aClass346_2449=previous;Class305.aCanvas3869=canvas;Class297.aString3782=vendor;Class285_Sub2.anIntArray8507=mapping;}
++    }
+ }
+diff --git a/client/test/net/runelite/client/input/controller/ControllerSettingsModelTest.java b/client/test/net/runelite/client/input/controller/ControllerSettingsModelTest.java
+index e78832e..bcfb8e9 100644
+--- a/client/test/net/runelite/client/input/controller/ControllerSettingsModelTest.java
++++ b/client/test/net/runelite/client/input/controller/ControllerSettingsModelTest.java
+@@ -31,4 +31,12 @@ public class ControllerSettingsModelTest {
+   assertFalse(ControllerSettingsModel.canPresent(new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,new UiState.Panel(190,0,"Quests",panes,false))));
+   assertFalse(ControllerSettingsModel.canPresent(new UiState(new UiState.Widget[0],new UiState.Widget[0],-1,false,new UiState.Panel(742,0,"Graphics",panes,true))));
+  }
++ @Test public void keyboardStyleAndManualOpenAreDiscoverableAndKeepNativeSettingsIdentity(){
++  Memory store=new Memory();ControllerSettingsModel model=new ControllerSettingsModel(store);
++  UiState.Widget keyboard=model.snapshot(false).panes[0].widgets[9];assertEquals("AUTO",keyboard.status);
++  assertEquals(0,model.invoke(keyboard,keyboard.actions[0],false));assertEquals("STEAM",store.get("keyboardMode"));
++  UiState.Widget style=model.snapshot(false).panes[0].widgets[10];assertEquals("true",style.status);
++  assertEquals(0,model.invoke(style,style.actions[0],false));assertEquals("false",store.get("classicTheme"));
++  UiState.Widget open=model.snapshot(false).panes[3].widgets[2];assertEquals(3,model.invoke(open,open.actions[0],false));assertNull(store.get("setupComplete"));
++ }
+ }
+diff --git a/client/test/net/runelite/client/input/controller/SystemEntryControlsTest.java b/client/test/net/runelite/client/input/controller/SystemEntryControlsTest.java
+new file mode 100644
+index 0000000..689dd04
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/SystemEntryControlsTest.java
+@@ -0,0 +1,53 @@
++package net.runelite.client.input.controller;
++import java.util.*;
++import org.junit.Test;
++import static org.junit.Assert.*;
++public class SystemEntryControlsTest {
++    private final List<String> requests=new ArrayList<>();
++    private final SystemEntryControls controls=new SystemEntryControls((open,numeric)->requests.add(open+":"+numeric));
++    private EntryState text(long revision,String value){return new EntryState(9,revision,"Enter text",value);}
++    @Test public void nativeValueChangesNeverReopenOrEditTheKeyboard(){
++        assertTrue(controls.update(text(1,""),true,true));long token=controls.revision();
++        assertTrue(controls.update(text(1,"steam typed"),true,true));assertEquals(token,controls.revision());assertEquals("steam typed",controls.entry().value);
++        assertEquals(Arrays.asList("true:false"),requests);controls.update(null,true,true);assertFalse(controls.active());assertEquals(Arrays.asList("true:false","false:false"),requests);
++    }
++    @Test public void replacedIdenticalPromptInvalidatesOldPointerActions(){
++        controls.update(text(1,""),true,true);long old=controls.revision();controls.update(text(2,""),true,true);
++        assertFalse(controls.owns(old));controls.reopen(old);assertEquals(3,requests.size());controls.reopen(controls.revision());assertEquals(4,requests.size());
++    }
++    @Test public void amountRequestsNumericModeAndReplacesManualChat(){
++        controls.beginManual(true,true);long old=controls.revision();controls.update(new EntryState(7,4,"Enter amount","10"),true,true);
++        assertFalse(controls.manual());assertFalse(controls.finishManual(old));assertTrue(controls.entry().numeric());assertEquals(Arrays.asList("true:false","false:false","true:true"),requests);
++    }
++    @Test public void manualOwnershipSurvivesAbsenceOfNativePromptUntilExplicitFinish(){
++        assertTrue(controls.beginManual(true,true));long token=controls.revision();assertTrue(controls.update(null,true,true));
++        assertFalse(controls.finishManual(token-1));assertTrue(controls.active());assertTrue(controls.finishManual(token));assertFalse(controls.active());assertEquals(2,requests.size());
++    }
++    @Test public void modeChangeAndLogoutCloseExactlyOnce(){
++        controls.update(text(1,"kept"),true,true);controls.update(text(1,"kept"),false,true);controls.reset();assertEquals(2,requests.size());
++        assertFalse(controls.beginManual(false,true));assertFalse(controls.beginManual(true,false));controls.beginManual(true,true);controls.update(null,true,false);assertEquals(4,requests.size());assertFalse(controls.active());
++    }
++    @Test public void reconnectOrNeutralDoesNotChangeNativeSessionOwnership(){
++        controls.update(text(1,"kept"),true,true);long token=controls.revision();
++        for(int i=0;i<10;i++)assertTrue(controls.update(text(1,"kept"),true,true));assertEquals(token,controls.revision());assertEquals(1,requests.size());
++    }
++    @Test public void manualBeginCannotReplaceAnExistingNativePrompt(){
++        controls.update(text(1,"native"),true,true);long token=controls.revision();assertTrue(controls.beginManual(true,true));assertFalse(controls.manual());assertEquals(token,controls.revision());assertEquals("native",controls.entry().value);
++    }
++    @Test public void keyboardPolicyIsReversibleAndDeviceSpecific(){
++        assertTrue(KeyboardMode.AUTO.steam(true));assertFalse(KeyboardMode.AUTO.steam(false));assertTrue(KeyboardMode.STEAM.steam(false));assertFalse(KeyboardMode.CONTROLLER.steam(true));
++        ActionMap bindings=new ActionMap(1,2,4,1<<9,1<<10,8,1<<4,1<<6);assertFalse(bindings.uses(1<<8));assertTrue(bindings.uses(1<<6));
++    }
++    @Test public void physicalTypingOwnsInputWithoutOpeningOrClosingSteam(){
++        assertTrue(controls.beginManual(true,true,false));assertTrue(controls.active());assertTrue(requests.isEmpty());
++        controls.finishManual(controls.revision());assertTrue(requests.isEmpty());
++        controls.beginManual(true,true,false);controls.reopen(controls.revision());controls.reset();assertEquals(Arrays.asList("true:false","false:false"),requests);
++    }
++    @Test public void mappedNavigationIsSuppressedButOrdinaryLettersAndRecentPadEdgesCannotLatch(){
++        java.awt.Canvas canvas=new java.awt.Canvas();java.awt.event.KeyEvent left=new java.awt.event.KeyEvent(canvas,401,0,0,37,java.awt.event.KeyEvent.CHAR_UNDEFINED);
++        assertTrue(KeyboardInputPolicy.localNavigation(left));java.awt.event.KeyEvent typed=new java.awt.event.KeyEvent(canvas,400,0,0,0,'a');
++        assertFalse(KeyboardInputPolicy.localNavigation(typed));assertTrue(KeyboardInputPolicy.adoptTyped(typed,0,0,100000001L));
++        assertFalse(KeyboardInputPolicy.adoptTyped(typed,1,0,100000001L));assertFalse(KeyboardInputPolicy.adoptTyped(typed,0,100000000L,100000001L));
++        assertFalse(KeyboardInputPolicy.adoptTyped(new java.awt.event.KeyEvent(canvas,400,0,0,0,' '),0,0,100000001L));
++    }
++}
