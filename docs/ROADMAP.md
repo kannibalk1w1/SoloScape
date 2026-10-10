@@ -315,3 +315,15 @@ selected release without the development workspace or undocumented setup steps.
 7. Choose the first fully accepted solo gameplay slice before approving broader art/AI/economy/backport systems.
 
 Keep implemented preparation separate from physical acceptance. ROADMAP.md is the proposed backlog; the journeys task list records this approved batch.
+
+## Recorded owner feedback: exclusive in-game text input
+
+10 October 2026: extend the launcher keyboard ownership work to **every in-game text entry**. Prefer the SteamOS keyboard on Deck; choose one input owner at a time so typing cannot also activate the SoloScape keyboard or background game actions. The fallback D-pad must navigate keyboard keys without also moving the text caret.
+
+- [ ] Inventory all native entry paths: chat, bank/shop search, account/name prompts, dialogue text and numeric/amount prompts.
+- [ ] Add a shared, reversible keyboard mode/ownership policy with Steam keyboard invocation where supported and a usable controller fallback.
+- [ ] Suppress gameplay, menu and local keyboard actions while the system keyboard owns entry; preserve validation, cancellation and entered values.
+- [ ] Handle finish/cancel, focus loss, reopening, reconnect and neutral rearming without double actions.
+- [ ] Physically accept both modes on Deck Desktop and Gaming Mode, including manually opening Steam + X.
+
+This is a parked follow-up, not completed by the launcher fix.

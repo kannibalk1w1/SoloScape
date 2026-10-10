@@ -107,3 +107,5 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing or submitting work.
 Upstream licence notices and the current original-material licensing status are
 in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). SoloScape is independent and
 not affiliated with Jagex, RuneLite or upstream maintainers.
+
+Steam Deck checkpoint: private Desktop deployment/native save and recovery probes now pass. See [combined report](docs/MORNING_REPORT.md), [Deck setup](docs/DECK_SETUP.md) and [evidence/limits](docs/DECK_VALIDATION.md). Launcher keyboard ownership is implemented after physical feedback; Gaming Mode and in-game keyboard ownership remain acceptance/follow-up work.

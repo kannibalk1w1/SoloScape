@@ -79,3 +79,5 @@ same-tile Walk cancellation. See [protocol extensions](docs/PROTOCOL_EXTENSIONS.
 
 
 After changing source, export the patch stack and run `python3 scripts/verify_patches.py client` and `python3 scripts/verify_patches.py server`. These compare every modified/untracked source file with the reproduced stack, including native hooks. The root tests exercise missing files and changed contents. See `docs/MORNING_REPORT.md` for the current verified batch and acceptance steps.
+
+Steam Deck checkpoint: private Desktop deployment/native save and recovery probes now pass. See [combined report](docs/MORNING_REPORT.md), [Deck setup](docs/DECK_SETUP.md) and [evidence/limits](docs/DECK_VALIDATION.md). Launcher keyboard ownership is implemented after physical feedback; Gaming Mode and in-game keyboard ownership remain acceptance/follow-up work.

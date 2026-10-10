@@ -10,6 +10,10 @@ Preserve normal server authority, native collision/pathfinding/transactions, exi
 
 Public repository: https://github.com/kannibalk1w1/SoloScape. Current development: `overnight/controller-sprint`; local branch `soloscape/bootstrap`. Public main stays on the earlier baseline. Ignored upstream checkouts are reproduced by ordered tracked patches; do not switch stacks in the same patched checkout.
 
+## Real Deck checkpoint
+
+The real SteamOS Deck now has a private, project-local-JDK Desktop installation. Native New/Continue/settings/logout/relog/save/cancel and exact-owned client/server recovery pass; 78 root cases pass on host and Deck. Short software-renderer measurements and their limits are in [DECK_VALIDATION.md](DECK_VALIDATION.md). Launcher patch 0029 adds Steam-preferred exclusive keyboard ownership after actual owner feedback: 179 fresh client cases pass, source stacks reproduce across 100 client/33 server files. Physical keyboard/Gaming Mode acceptance is still required. See [combined report](MORNING_REPORT.md) and [private setup](DECK_SETUP.md).
+
 ## What exists now
 
 The two controller sprints, larger console alpha, cohesive menu/session milestone controller-first adventure implementation and controller journeys/recovery sprint are delivered. The owner has confirmed local launch, camera, movement feedback, improved walking/aiming/interaction and that direct movement feels good. The latest custom adventure screens, controller setup and source/target return require a physical acceptance pass; native desktop integration and isolated tests are recorded separately.
@@ -89,3 +93,7 @@ Prepare applies patches/builds/verifies the matched pair without starting a worl
 - Broader quests/skills, Summoning/Dungeoneering, co-op, economy/solo progression/bots/AI population and original world graphics remain future scope.
 
 Recommended next step: accept the adventure screens, controller setup/remapping, native Settings child/B sequence, source targeting/return and special binding on a physical controller. Physically play the now-verified Cook/Rune routes and accept launcher naming/recovery, then measure Deck lifecycle/performance before packaging or widening systems. ROADMAP.md remains the full proposed backlog; CONTROLLER_JOURNEYS_TASKS.md records this approved milestone. MORNING_REPORT.md combines all completed batches and earlier reports remain archived.
+
+## Latest owner feedback to retain
+
+10 October 2026: SteamOS keyboard input and SoloScape's controller keyboard currently compete in launcher name entry; the launcher fix adds exclusive keyboard ownership. **Apply the same policy to every in-game text-entry path in a later task**, including chat, search and numeric prompts. Prefer SteamOS keyboard on Deck and retain an explicit local fallback. See the dedicated backlog in [ROADMAP.md](ROADMAP.md#recorded-owner-feedback-exclusive-in-game-text-input). This in-game extension is parked, not accepted or implemented.
