@@ -1,0 +1,233 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/InstructionHandlers.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/InstructionHandlers.kt
+index 9ac59a7..a60c951 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/InstructionHandlers.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/InstructionHandlers.kt
+@@ -82,6 +82,7 @@ class InstructionHandlers(
+             is ExamineObject -> examineObject.invoke(instruction, player)
+             is ChangeDisplayMode -> changeDisplayMode.invoke(instruction, player)
+             is CancelWorldAction -> CancelWorldActionHandler.handle(player)
++            is CancelTextEntry -> CancelTextEntryHandler.handle(player, instruction.type)
+             is DirectMovement -> DirectMovementHandler.handle(player, instruction)
+             is Walk -> walk.invoke(instruction, player)
+             is WorldMapClick -> worldMapClick.invoke(instruction, player)
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelTextEntryHandler.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelTextEntryHandler.kt
+new file mode 100644
+index 0000000..b921554
+--- /dev/null
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/client/instruction/handle/CancelTextEntryHandler.kt
+@@ -0,0 +1,19 @@
++package world.gregs.voidps.engine.client.instruction.handle
++import world.gregs.voidps.engine.client.ui.closeDialogue
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.suspend.Suspension
++/** Preserve bank/shop and reject type mismatches, missing input and forced busy actions. */
++object CancelTextEntryHandler {
++    fun handle(player: Player, type: Int) {
++        if (player.contains("delay")) return
++        val pending = player.suspension
++        when {
++            type == 7 && pending is Suspension.IntEntry -> pending.cancel()
++            type == 8 && pending is Suspension.NameEntry -> pending.cancel()
++            type == 9 && pending is Suspension.StringEntry -> pending.cancel()
++            else -> return
++        }
++        // A cancelled coroutine may run finally blocks and replace its suspension.
++        if (player.suspension === pending) player.closeDialogue()
++    }
++}
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/queue/ActionQueue.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/queue/ActionQueue.kt
+index 9f85837..cb15bc9 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/queue/ActionQueue.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/queue/ActionQueue.kt
+@@ -116,7 +116,9 @@ class ActionQueue<C : Character>(
+                         is Suspension.Continue -> suspension.resume()
+                         is Suspension.Custom -> suspension.resume()
+                         is Suspension.Delay -> suspension.resume()
+-                        else -> {}
++                        is Suspension.IntEntry -> { suspension.cancel(); if (character.suspension === suspension) character.suspension = null }
++                        is Suspension.NameEntry -> { suspension.cancel(); if (character.suspension === suspension) character.suspension = null }
++                        is Suspension.StringEntry -> { suspension.cancel(); if (character.suspension === suspension) character.suspension = null }
+                     }
+                     suspension = character.suspension
+                 }
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/suspend/Suspension.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/suspend/Suspension.kt
+index 0274077..a046e28 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/suspend/Suspension.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/suspend/Suspension.kt
+@@ -11,6 +11,8 @@ sealed class Suspension {
+      * p_countdialog
+      */
+     class IntEntry(private val continuation: CancellableContinuation<Int>) : Suspension() {
++        fun cancel() { continuation.cancel() }
++
+         fun resume(int: Int) {
+             if (continuation.isCancelled) {
+                 return
+@@ -23,6 +25,8 @@ sealed class Suspension {
+      * Wait for string entry dialogue
+      */
+     class StringEntry(private val continuation: CancellableContinuation<String>) : Suspension() {
++        fun cancel() { continuation.cancel() }
++
+         fun resume(string: String) {
+             if (continuation.isCancelled) {
+                 return
+@@ -35,6 +39,8 @@ sealed class Suspension {
+      * Wait for name entry dialogue
+      */
+     class NameEntry(private val continuation: CancellableContinuation<String>) : Suspension() {
++        fun cancel() { continuation.cancel() }
++
+         fun resume(string: String) {
+             if (continuation.isCancelled) {
+                 return
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/queue/ActionQueueTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/queue/ActionQueueTest.kt
+index 4898e9a..c74b8f1 100644
+--- a/engine/src/test/kotlin/world/gregs/voidps/engine/queue/ActionQueueTest.kt
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/queue/ActionQueueTest.kt
+@@ -165,4 +165,43 @@ internal class ActionQueueTest {
+         assertTrue(pastAwait, "Action should advance when the Custom predicate is already satisfied")
+         assertTrue(queue.isEmpty())
+     }
++    @Test
++    fun `Logout cancels unanswered typed entries without manufacturing an answer`() {
++        for (type in 7..9) {
++            var answered = false
++            var cleaned = false
++            queue.add(Action<Player>("pending_entry", 1, ActionPriority.Long) {
++                try {
++                    if (type == 7) suspendCancellableCoroutine<Int> { suspension = Suspension.IntEntry(it) }
++                    else suspendCancellableCoroutine<String> { suspension = if (type == 8) Suspension.NameEntry(it) else Suspension.StringEntry(it) }
++                    answered = true
++                } finally { cleaned = true }
++            })
++            queue.logout()
++            assertFalse(answered, "Logout must not supply text/quantity")
++            assertTrue(cleaned, "Cancelled continuation must clean up")
++            assertTrue(player.suspension == null)
++            assertTrue(queue.isEmpty())
++        }
++    }
++    @Test
++    fun `Logout drains cleanup suspension installed while cancelling typed entry`() {
++        var cleaned = false
++        queue.add(Action<Player>("entry_with_cleanup", 1, ActionPriority.Long) {
++            try {
++                suspendCancellableCoroutine<Int> { suspension = Suspension.IntEntry(it) }
++            } finally {
++                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
++                    suspendCancellableCoroutine<Unit> { suspension = Suspension.Continue(it) }
++                    suspension = null
++                    cleaned = true
++                }
++            }
++        })
++        queue.logout()
++        assertTrue(cleaned, "Logout must drain the replacement cleanup suspension")
++        assertTrue(player.suspension == null)
++        assertTrue(queue.isEmpty())
++    }
++
+ }
+diff --git a/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt b/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt
+index ec8b57c..17880c4 100644
+--- a/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt
++++ b/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt
+@@ -46,7 +46,7 @@ class PlayerCommands(
+     init {
+         playerCommand("soloscape_capabilities", stringArg("nonce"), desc = "Negotiate SoloScape controller capabilities") { args ->
+             val nonce = args.singleOrNull() ?: return@playerCommand
+-            if (nonce.matches(Regex("[a-f0-9]{32}"))) message("SOLOSCAPE|1|$nonce|direct,cancel", ChatType.Game)
++            if (nonce.matches(Regex("[a-f0-9]{32}"))) message("SOLOSCAPE|1|$nonce|direct,cancel,entry-cancel", ChatType.Game)
+         }
+ 
+         modCommand("save", desc = "Save all players") {
+diff --git a/game/src/test/kotlin/content/entity/player/bank/BankTest.kt b/game/src/test/kotlin/content/entity/player/bank/BankTest.kt
+index 74eaa95..8f032c7 100644
+--- a/game/src/test/kotlin/content/entity/player/bank/BankTest.kt
++++ b/game/src/test/kotlin/content/entity/player/bank/BankTest.kt
+@@ -337,4 +337,23 @@ internal class BankTest : WorldTest() {
+             unmockkStatic("world.gregs.voidps.network.login.protocol.encode.ScriptEncoderKt")
+         }
+     }
++    @Test
++    fun `Cancel Withdraw-X preserves bank and items then allows a normal withdraw and logout`() {
++        val player=createPlayer(emptyTile)
++        val booth=createObject(bankBooth,emptyTile.addY(1))
++        player.bank.add("coins",100)
++        player.objectOption(booth,"Use-quickly");tick(5)
++        player.interfaceOption("bank","inventory","Withdraw-X",item=Item("coins"),slot=0);tick()
++        assertTrue(player.suspension is world.gregs.voidps.engine.suspend.Suspension.IntEntry)
++        runTest { player.instructions.send(world.gregs.voidps.network.client.instruction.CancelTextEntry(8)) };tick()
++        assertNotNull(player.suspension,"Mismatched name cancellation must not cancel an amount")
++        runTest { player.instructions.send(world.gregs.voidps.network.client.instruction.CancelTextEntry(7)) };tick()
++        assertNull(player.suspension)
++        assertTrue(player.interfaces.contains("bank"));assertTrue(player.interfaces.contains("bank_side"))
++        assertEquals(100,player.bank.count("coins"));assertEquals(0,player.inventory.count("coins"))
++        player.interfaceOption("bank","inventory","Withdraw-1",item=Item("coins"),slot=0);tick()
++        assertEquals(99,player.bank.count("coins"));assertEquals(1,player.inventory.count("coins"))
++        player.queue.logout();assertNull(player.suspension)
++    }
++
+ }
+diff --git a/network/src/main/kotlin/world/gregs/voidps/network/client/instruction/CancelTextEntry.kt b/network/src/main/kotlin/world/gregs/voidps/network/client/instruction/CancelTextEntry.kt
+new file mode 100644
+index 0000000..105b2cd
+--- /dev/null
++++ b/network/src/main/kotlin/world/gregs/voidps/network/client/instruction/CancelTextEntry.kt
+@@ -0,0 +1,4 @@
++package world.gregs.voidps.network.client.instruction
++import world.gregs.voidps.network.client.Instruction
++/** Negotiated cancellation only: never an answer, quantity or world destination. */
++data class CancelTextEntry(val type: Int) : Instruction
+diff --git a/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/Decoders.kt b/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/Decoders.kt
+index 915dd53..f4764a5 100644
+--- a/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/Decoders.kt
++++ b/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/Decoders.kt
+@@ -92,5 +92,6 @@ fun decoders(huffman: Huffman): Array<Decoder?> {
+     array[71] = UnknownDecoder()
+     array[85] = DirectMovementDecoder()
+     array[86] = CancelWorldActionDecoder()
++    array[87] = CancelTextEntryDecoder()
+     return array
+ }
+diff --git a/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/decode/CancelTextEntryDecoder.kt b/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/decode/CancelTextEntryDecoder.kt
+new file mode 100644
+index 0000000..a3b4895
+--- /dev/null
++++ b/network/src/main/kotlin/world/gregs/voidps/network/login/protocol/decode/CancelTextEntryDecoder.kt
+@@ -0,0 +1,11 @@
++package world.gregs.voidps.network.login.protocol.decode
++import kotlinx.io.Source
++import world.gregs.voidps.network.client.Instruction
++import world.gregs.voidps.network.client.instruction.CancelTextEntry
++import world.gregs.voidps.network.login.protocol.Decoder
++class CancelTextEntryDecoder : Decoder(1) {
++    override suspend fun decode(packet: Source): Instruction? {
++        val type = packet.readByte().toInt()
++        return if (type in 7..9) CancelTextEntry(type) else null
++    }
++}
+diff --git a/network/src/test/kotlin/world/gregs/voidps/network/login/protocol/CancelTextEntryDecoderTest.kt b/network/src/test/kotlin/world/gregs/voidps/network/login/protocol/CancelTextEntryDecoderTest.kt
+new file mode 100644
+index 0000000..e45cb62
+--- /dev/null
++++ b/network/src/test/kotlin/world/gregs/voidps/network/login/protocol/CancelTextEntryDecoderTest.kt
+@@ -0,0 +1,17 @@
++package world.gregs.voidps.network.login.protocol
++import io.ktor.utils.io.core.*
++import kotlinx.coroutines.test.runTest
++import org.junit.jupiter.api.Assertions.*
++import org.junit.jupiter.api.Test
++import world.gregs.voidps.cache.secure.Huffman
++import world.gregs.voidps.network.client.instruction.CancelTextEntry
++class CancelTextEntryDecoderTest {
++    @Test fun `only native answer prompt types decode without an answer`() = runTest {
++        val decoder=decoders(Huffman())[87]!!
++        assertEquals(1,decoder.length)
++        for(type in 0..15){val packet=ByteReadPacket(byteArrayOf(type.toByte()));val value=decoder.decode(packet)
++            if(type in 7..9)assertEquals(CancelTextEntry(type),value)else assertNull(value)
++            assertTrue(packet.isEmpty)
++        }
++    }
++}

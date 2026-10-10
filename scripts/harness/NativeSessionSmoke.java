@@ -10,7 +10,7 @@ public class NativeSessionSmoke {
   String marker=args[0]; Loader.main(new String[]{"--address","127.0.0.1","--port",args[1]});
   new Thread(()->{
    long started=System.currentTimeMillis();
-   long deadline=started+150000;
+   long deadline=started+(Boolean.getBoolean("soloscape.playable.probe")?420000:150000);
    while(System.currentTimeMillis()<deadline) {
     try {
      Thread.sleep(500);

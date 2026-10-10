@@ -16,10 +16,11 @@ from native_metrics import NativeMetrics
 def _main():
     parser=argparse.ArgumentParser(description="Disposable native New/Continue/save and optional adventure UI probe.")
     parser.add_argument("--adventure",action="store_true",help="Probe real native adventure tabs, local settings and software overlay intervals.")
+    parser.add_argument("--journey",action="store_true",help="Actual Lumbridge kitchen/bank round trip, Withdraw-X cancellation and bank search in disposable worlds.")
     parser.add_argument("--text",action="store_true",help="Focused native text fixture plus logout/relog/save checks; skips adventure-tab/performance stages.")
     parser.add_argument("--desktop",action="store_true",help="Use the explicitly authorized current X11/XWayland display; never stop that display.")
     options=parser.parse_args()
-    if options.text:options.adventure=True
+    if options.text or options.journey:options.adventure=True
     signal.signal(signal.SIGTERM, local_dev.interrupted)
     root=local_dev.ROOT;testroot=root/'.runtime/alpha-tests'/('session-'+str(time.time_ns()));testroot.mkdir(parents=True,exist_ok=True)
     profiles.PROFILES=testroot/'profiles'
@@ -40,7 +41,7 @@ def _main():
     harness.mkdir(parents=True,exist_ok=True)
     clientjar=local_dev.jar(local_dev.CLIENT/'client','void-client-*.jar')
     javac=Path(os.environ['CLIENT_JAVA']).with_name('javac')
-    subprocess.run([str(javac),'-cp',str(clientjar),'-d',str(harness),str(root/'scripts/harness/NativeSessionSmoke.java'),str(root/'scripts/harness/NativeAdventureProbe.java'),str(root/'scripts/harness/NativeTextProbe.java')],check=True)
+    subprocess.run([str(javac),'-cp',str(clientjar),'-d',str(harness),str(root/'scripts/harness/NativeSessionSmoke.java'),str(root/'scripts/harness/NativeAdventureProbe.java'),str(root/'scripts/harness/NativeTextProbe.java'),str(root/'scripts/harness/NativePlayableLoopProbe.java')],check=True)
     x=None
     if options.desktop:
         if not os.environ.get('DISPLAY'):
@@ -63,7 +64,7 @@ def _main():
             if '-jar' in argv and any('void-client-' in arg for arg in argv):
                 i=argv.index('-jar');jar=argv[i+1]
                 label='Existing authorized X11/XWayland desktop; native overlay-render intervals, real Gateway/synthetic UI input and AWT events through native canvas mouse handlers. No physical controller or Gaming Mode acceptance.' if options.desktop else 'Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.'
-                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.probe.awt.mouse=true'] if options.desktop else [])+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+(['-Dsoloscape.text.probe.fast=true'] if options.text else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
+                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.probe.awt.mouse=true'] if options.desktop else [])+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+(['-Dsoloscape.text.probe.fast=true'] if options.text else [])+(['-Dsoloscape.playable.probe=true'] if options.journey else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
             process=original(argv,**kwargs)
             if any('void-server-' in arg for arg in argv):metrics.add(process,'server')
             elif any('void-client-' in arg for arg in argv):metrics.add(process,'client')
@@ -131,7 +132,7 @@ def _main():
         print('New/Continue complete-session seconds (includes client readiness and save):',elapsed)
         (testroot/'native-smoke-summary.json').write_text(json.dumps({'new_session_seconds':elapsed[0],'continue_session_seconds':elapsed[1],
             'native_startup_cancel_preserved':True,'original_mutable_paths_unchanged':before==fingerprint(),
-            'adventure':adventure,'text_focused':options.text,'display':'existing-desktop' if options.desktop else 'private-xvfb',
+            'adventure':adventure,'text_focused':options.text,'playable_journey':options.journey,'display':'existing-desktop' if options.desktop else 'private-xvfb',
             'precondition':'Desktop probes require hands off, awake display; real input/focus may interfere.' if options.desktop else 'Owned private display.',
             'screenshots':'Private evidence only; desktop overlays may appear or Wayland capture may be unavailable. Review before publishing.',
             'note':'Native session totals and overlay-render intervals; not physical controller or Gaming Mode acceptance.'},indent=2)+'\n')

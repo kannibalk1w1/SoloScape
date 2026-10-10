@@ -96,7 +96,8 @@ public final class NativeAdventureProbe {
     require(!settingsOpen.getBoolean(plugin),"B did not close local settings");require(ui.takeHomeBack()==HomeTab.SETTINGS.ordinal(),"B lost Home ancestry");results.put("settings_back_to_home",true);
     step=15;lastStep=now;return false;
    }
-   if(step==15){if(!NativeTextProbe.tick(plugin,results)){lastStep=now;return false;}step=11;lastStep=now;return false;}
+   if(step==15){if(!NativeTextProbe.tick(plugin,results)){lastStep=now;return false;}step=Boolean.getBoolean("soloscape.playable.probe")?16:11;lastStep=now;return false;}
+   if(step==16){if(!NativePlayableLoopProbe.tick(results)){lastStep=now;return false;}step=11;lastStep=now;return false;}
    if(step==11){
     display=null;selected=null;
     if(exitTile==null)exitTile=worldTile();
