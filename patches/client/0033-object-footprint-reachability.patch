@@ -1,0 +1,66 @@
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+index 6a84bbd..16094d5 100644
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -346,7 +346,12 @@ final class ControllerWorld
+         int height = (rotation & 1) == 0 ? def.anInt926 : def.anInt961;
+         int access = def.anInt914;
+         if (rotation != 0) access = (access << rotation & 15) + (access >> (4 - rotation));
+-        return reachable(t.x, t.y, width, height, 0, 0, access);
++        return reachableFootprint(t.x,t.y,width,height,access);
++    }
++
++    /** Rectangular objects require an accessible footprint edge, rather than a wall at its anchor. */
++    static boolean reachableFootprint(int x,int y,int width,int height,int access){
++        return reachable(x,y,width,height,-1,0,access);
+     }
+ 
+     static boolean reachable(int x, int y, int width, int height, int shape, int rotation, int access)
+diff --git a/client/test/ControllerUiTest.java b/client/test/ControllerUiTest.java
+index cf18026..7408013 100644
+--- a/client/test/ControllerUiTest.java
++++ b/client/test/ControllerUiTest.java
+@@ -289,6 +289,17 @@ public class ControllerUiTest
+         assertFalse(ControllerUi.openTab(HomeTab.INVENTORY.ordinal()));
+     }
+ 
++    @Test public void collapsedInventoryStillDispatchesTheOrdinaryNativeOpenPacket(){
++        Class262 oldQueue=Class348_Sub40_Sub13.aClass262_9201;Isaac oldCipher=Class348_Sub23_Sub2.aClass77_9029;int oldBytes=Class348_Sub42_Sub14.anInt9630;
++        try{
++            Class348_Sub40_Sub13.aClass262_9201=new Class262();Class348_Sub23_Sub2.aClass77_9029=new Isaac(new int[4]);Isaac decode=new Isaac(new int[4]);
++            outer.aBoolean813=true;tab(548,132);assertFalse(ControllerUi.snapshot(true).hasInventory());
++            assertTrue(ControllerUi.openInventory());Node head=Class348_Sub40_Sub13.aClass262_9201.aClass348_3334;
++            assertNotSame(head,head.next);Class348_Sub47 packet=(Class348_Sub47)head.next;
++            assertEquals(Class27.aClass351_398.method3456(200),(packet.aClass348_Sub49_Sub2_7116.data[0]-decode.method781((byte)-85))&255);
++            assertSame(head,packet.next);
++        }finally{Class348_Sub40_Sub13.aClass262_9201=oldQueue;Class348_Sub23_Sub2.aClass77_9029=oldCipher;Class348_Sub42_Sub14.anInt9630=oldBytes;}
++    }
+     @Test public void radialDispatchesTheOrdinaryNativeTabOperationPacket()
+     {
+         Class262 oldQueue = Class348_Sub40_Sub13.aClass262_9201;
+diff --git a/client/test/ControllerWorldTest.java b/client/test/ControllerWorldTest.java
+index a2f81e4..fc4fe52 100644
+--- a/client/test/ControllerWorldTest.java
++++ b/client/test/ControllerWorldTest.java
+@@ -58,6 +58,21 @@ public class ControllerWorldTest
+         assertFalse(ControllerWorld.reachable(66, 64, 1, 1, -2, 0, 0));
+     }
+ 
++    @Test public void rectangularObjectCanUseAnOpenEdgeWhenItsAnchorIsAgainstAWall(){
++        // Player is south of the footprint's second tile; the anchor's west/south edges are blocked.
++        for(int y=0;y<128;y++)map.anIntArrayArray4438[62][y]=-1;
++        map.anIntArrayArray4438[63][64]=-1;
++        for(int x=63;x<=64;x++)for(int y=65;y<=67;y++)map.anIntArrayArray4438[x][y]=0x40000000;
++        assertFalse(ControllerWorld.reachable(63,65,2,3,0,0,0));
++        assertTrue(ControllerWorld.reachableFootprint(63,65,2,3,0));
++        assertFalse(ControllerWorld.reachableFootprint(63,65,2,3,15));
++        Class132.aPlayer_1907.anIntArray10317[0]=62;
++        for(int x=0;x<128;x++)map.anIntArrayArray4438[x][64]=-1;
++        assertFalse(ControllerWorld.reachableFootprint(63,65,2,3,0));
++    }
++    @Test public void walkableObjectFootprintCanBeUsedWhileStandingInside(){
++        assertTrue(ControllerWorld.reachableFootprint(64,64,1,1,15));
++    }
+     @Test public void loginScriptedCameraSelectionAndMenusBlockWorldActions()
+     {
+         Class240.anInt4674 = 0; assertFalse(ControllerWorld.ready());

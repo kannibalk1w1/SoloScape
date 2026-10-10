@@ -356,3 +356,182 @@ restore, the radial and quick gateways, and `NativePlayableLoopProbe` step 0), a
   could collapse it in the same resized frame. If that is the native behaviour for every
   side tab, the same "already visible" check could be generalised using that tab's root. Worth
   one native observation before changing anything.
+
+## Stage 8 staircase stall: object reach semantics (static; hypotheses pending the candidate dump)
+I read `ControllerWorld.reachable(ControllerTarget)` and `reachable(x,y,w,h,shape,rot,access)`,
+`interact`, `nearby` and `candidates`. On the native side I read `Class309` (the object route
+dispatch), `Class298.method2252`, `Class59_Sub2_Sub2.method574`, `Class5_Sub1.method187`,
+`Class361.method3495/3497/3503/3504` and `Class239_Sub28.method1842`. I made no edits.
+
+### Established by code reading
+1. **How the native route-finder dispatches on its "shape" code** (`Class5_Sub1.method187`,
+   player size 1):
+
+   | Code | Check | Meaning |
+   |---|---|---|
+   | `-4` | exact tile | |
+   | `-3` | `method1842` | rectangle overlap |
+   | `-2` | `Class361.method3497` | edge adjacency to a w×h rectangle with an access mask, excluding the inside (actor/NPC style) |
+   | `-1` | `Class361.method3503` | object rectangle: inside, or edge-adjacent with access-mask and wall-flag checks; for size > 1 it delegates to `method1842` + `method3497` |
+   | `0,1,2,3,9` | `method3495` | **wall** reach for that wall shape and rotation; **ignores width, height and access** |
+   | `4–8` (and anything else, including 10, 11 and 22 if passed raw) | `method3504` | wall decoration |
+2. **The native client passes code 0 for shapes 10, 11 and 22, with dimensions and access, and
+   `nearest=true`.** `Class309` computes width and height (swapped for odd rotation) and the
+   rotated access, then calls `method2252(true, x, y, …, height=…, access, width=…, shape 0,
+   rotation 0)`. So the native exact-reach test for these objects is "wall shape 0 at rotation
+   0" at the **origin tile**. The rectangle data only feeds the **nearest-tile fallback**
+   (`method574` scores candidate tiles by distance to the w×h rectangle). In practice the native
+   client walks next to the rectangle, and the server decides the actual interaction approach.
+3. **`ControllerWorld` reproduces the native arguments exactly, but with `nearest=false`.**
+   - The width/height swap for odd rotations matches `Class309`.
+   - The rotated access `(access<<rot & 15) + (access >> (4-rot))` matches native precedence.
+   - Rotation `(id>>20)&3` equals native `(0x37d8b0 & id) >> 20`.
+   - Shape 0 and rotation 0 are passed.
+
+   With `nearest=false`, the strict guard therefore accepts a 10/11/22 object **only** if the
+   BFS reaches one of these, within 8 tiles of path:
+   - the origin tile;
+   - the tile **west** of the origin (`x-1, y`; no flag check);
+   - the tile **north** (`x, y+1`; wall mask `0x2c0120` clear);
+   - the tile **south** (`x, y-1`; wall mask `0x2c0102` clear).
+
+   Standing next to any **other** edge of a multi-tile footprint, such as the east side or the
+   south side beyond the origin column, isn't accepted. Wall-shape objects (0–3 and 9) and
+   decorations (4–8) receive their real shape and rotation, which is correct.
+4. **`interact()` enforces this guard for objects.** It requires
+   `nearby && (serverApproach || reachable(current))`. `serverApproach` is true only for attacks
+   and selected-spell casts, so a staircase "Climb-up" always goes through the wall-0 test.
+
+### Likely cause of the stage 8 stall (hypothesis; check against the dump)
+The player stands at (3205,3228), and the staircase origin is (3204,3229). That tile is
+diagonal to the origin and is none of origin, west, north or south. If the origin's south tile
+(3204,3228), west tile (3203,3229) and north tile (3204,3230) are all blocked (wall flags,
+stair footprint, castle wall), or BFS can't reach them within 8 tiles, then
+`reachable(staircase)` is false. `interact("Staircase","Climb-up",3204,3229)` then never
+dispatches, and the stage waits until its 60 s timeout.
+
+That fits what you saw, but it **isn't established**. Other causes the candidate dump can rule
+in or out:
+- **Option text.** The real label might be "Climb up" or similar, rather than "Climb-up".
+- **Origin coordinates.** The target's `x+baseX`/`y+baseY` might differ from (3204,3229), for
+  example if the dump shows a rotated footprint whose origin isn't the tile in the probe.
+- **Object type.** The staircase might not be shape 10/11/22 at all.
+
+### On your question: wall-0 against rectangular −2
+- For a strict, no-fallback guard on 10/11/22 objects, the native code that matches what the
+  rectangle data means is **−1 (`method3503`)**, not −2. For a size-1 player, −1 accepts the
+  inside of the w×h footprint or any edge-adjacent tile. It checks the rotated access mask per
+  side (`0x8`/`0x2`/`0x4`/`0x1`) and the destination-side wall flags. For larger movers it
+  delegates to the −2 logic (`method1842` + `method3497`).
+- **−2 (`method3497`)** is the actor variant. It excludes the inside, and it's what native
+  uses for NPC and player targets.
+- Either way, the call would become `reachable(x, y, width, height, -1, 0, access)` for shapes
+  10, 11 and 22, keeping the existing dimension and rotated-access computation.
+- This deliberately **departs** from native, which uses wall-0 plus nearest. It's a stricter
+  but footprint-correct exact guard. It also lines up better with the server, whose object
+  reach for rectangle locations uses the footprint and the block/access flags.
+
+**Suggested regression, before changing behaviour:** a `ControllerWorldTest` collision fixture
+with a 2×2 rectangle at (10,10) and access 0. The player at (12,10) (east-adjacent) and at
+(11,9) (south of the non-origin column) should be reachable under −1 and not reachable under
+the current shape-0 call. Add a case with the access bit set on one side, which must stay
+unreachable.
+
+### Limits
+- Static. I haven't seen the staircase's id, shape, rotation, size, access or the collision
+  flags around (3204..3206, 3228..3230). The candidate and collision dump should confirm or
+  refute the hypothesis before the guard is changed.
+
+## Footprint reach fix (`reachableFootprint`, −2) and the K1 test: static review
+I read `ControllerWorld.reachable(ControllerTarget)` → `reachableFootprint`, the native
+`Class361.method3497` (−2) and `method3503` (−1) with their argument mapping from
+`Class5_Sub1.method187`, `ControllerWorldTest.rectangularObjectCanUseAnOpenEdgeWhenItsAnchorIsAgainstAWall`,
+and `ControllerUiTest.collapsedInventoryStillDispatchesTheOrdinaryNativeOpenPacket`. I ran
+nothing.
+
+**Verdict: correct. −2 is an appropriate choice, and I withdraw my earlier preference for −1.**
+For a size-1 player, the two give the same answer except for one edge case that doesn't matter.
+
+### Native semantics, with arguments mapped from `method187`
+`method3497(…, destX, access, 1, height, curX, 1, curY, destY, width)`:
+- **Player just east** (`destX+width == curX`, access bit `0x2` clear): accept if some
+  overlapping row has the footprint's east column tile without wall bit `0x8`.
+- **Player just west** (`destX == curX+1`, access `0x8` clear): footprint west column without
+  `0x80`.
+- **Player just north** (`destY+height == curY`, access `0x1` clear): footprint top row without
+  `0x2`.
+- **Player just south** (`destY == curY+1`, access `0x4` clear): footprint bottom row without
+  `0x20`.
+- Rows and columns must overlap, so diagonal tiles and the inside are rejected.
+
+`method3503` for size 1 accepts the **inside**, then makes the same four side tests with the
+**same access bits**. The only difference is that it reads the opposite face of each wall from
+the **player's** tile (`0x8`/`0x80`/`0x2`/`0x20` swapped). RS collision marks both faces of
+a wall, so the two agree on real map data. The only behavioural difference is "player inside
+the footprint", which is impossible for solid 10/11 objects. For walkable 22 decorations, −2
+just requires a one-step move onto an edge, and the BFS supplies that.
+
+−2 is also the code native already uses for NPC and player approach, so it's the
+better-exercised path.
+
+### The rest is unchanged and consistent
+- **Wall shapes.** 0–3 and 9 still use their real shape and rotation, and 4–8 the decoration
+  path.
+- **Size and access.** The width/height swap and the rotated access come before the new call
+  and match `Class309`.
+- **Path limits.** The 8-tile path-distance bound and the `paths` cache (at most 8 geometries)
+  still apply.
+- **`interact()`.** It still re-enumerates, then requires `nearby` and a reachable target.
+
+### The regression is sound
+The fixture: a fully blocked column at x=62, the anchor's south tile (63,64) blocked, and a 2×3
+footprint `0x40000000` (blocks movement, no wall bits). The player at (64,64) is south of the
+second column.
+- **Old shape-0 call: false.** The anchor's west and south tiles are blocked, and north is inside
+  the footprint.
+- **`reachableFootprint`, access 0: true.** This is case 4: `destY == curY+1`, and the
+  footprint tile (64,65) has no `0x20` bit.
+- **Access 15: false.**
+- **Player at y=62 behind a fully blocked row 64: false.**
+
+**Optional additions:**
+- **(a) East or north side with an odd rotation, end to end.** Go through
+  `reachable(ControllerTarget)` with a fake `Class51`, so the dimension swap and access rotation
+  are pinned against an asymmetric footprint (e.g. 1×3 at rotation 1 → 3×1), with one access bit
+  set.
+- **(b) A wall face on the open edge.** Set `0x20` on footprint tile (64,65) and expect false,
+  which checks the wall-bit side rather than only the access mask.
+
+### K1
+**Resolved.** `openInventory()` delegates to `openTab(INVENTORY)` (`ControllerUi.java:487-490`),
+so the new test exercises the collapsed branch of the idempotent shortcut. It hides the
+container, asserts `hasInventory()` is false, and requires exactly one queued packet whose
+decoded opcode is the ordinary native interface-button packet (`Class27.aClass351_398`). It
+restores the queue, cipher and byte counter in `finally`.
+
+No blockers. The native staircase stage still needs your rebuilt host run to confirm it.
+
+## Final clarification: −1 in the final code
+The final code uses `reachableFootprint(...) → reachable(x, y, w, h, -1, 0, access)`
+(`ControllerWorld.java:353-355`). To be clear about the record: my first analysis recommended
+−1, and the follow-up called −2 equally acceptable. **Both are correct for a size-1 player.**
+
+−1 is the native **object** rectangle check (`method3503`). It accepts the inside of the
+footprint, then makes the same four edge tests as −2, with identical access bits (`0x8` west,
+`0x2` east, `0x4` south, `0x1` north). The only other difference is that it reads each wall
+face from the player's tile, and RS collision sets both faces, so this agrees with −2 on real
+map data. Accepting the inside is the one behavioural difference. It matters only for walkable
+footprints (for example shape-22 decorations), and it ignores the access mask there, as native
+does.
+
+- **The existing tests still hold under −1:**
+  - `rectangularObjectCanUseAnOpenEdgeWhenItsAnchorIsAgainstAWall`: the player is outside,
+    the south edge passes with access bit `0x4` clear, and the player's tile has no `0x2`.
+  - The access-15 case is still false.
+  - The case with the player behind the wall is still false.
+- **The new test `walkableObjectFootprintCanBeUsedWhileStandingInside`** (1×1 at the player's
+  tile, access 15 → true) correctly pins the inside branch.
+
+No further code findings. The 208-case suite, the K1 packet case and the rebuild stamp are as
+you reported them. The native staircase and Lumbridge round-trip results are pending and not
+claimed here.

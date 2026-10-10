@@ -100,3 +100,7 @@ The synthetic preview now refreshes tab availability before painting, so the Hom
 ![Classic Home wheel renderer fixture](images/classic-home-fixture.png)
 
 ![Classic journal renderer fixture](images/classic-journal-fixture.png)
+
+## Playable-loop readability follow-up
+
+Claude's next pass corrects page counts from actual grid geometry, uses one-line cells when bonus rows cannot fit two baselines, reserves room for the selected native action, and measures wheel ellipses against wedge width. Hub spacing scales with fonts and selected actions have an accent bar. Small-canvas and long-detail hit-map regressions pass in the full client suite. The 20 classic/modern synthetic fixtures were rendered again; representative inventory, journal and Home layouts were inspected and the pictures above refreshed. See [readability details](DECK_READABILITY_PASS.md). Actual Deck text comfort, touch accuracy and Gaming Mode remain acceptance items.
