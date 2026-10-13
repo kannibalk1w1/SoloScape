@@ -175,3 +175,9 @@ The jar builds and all 138 client modified/patched files reproduce. The native l
 
 ![Normalized bowl alignment](images/launcher-aligned-flames.png)
 ![Eight aligned flame poses at half speed](images/launcher-aligned-slow-flames.gif)
+
+## Launcher refresh restored independently of flame speed
+
+Owner reported the launcher falling to roughly 15–20 FPS after the half-speed change. That change slowed the Swing repaint timer to 66 ms. Client patch `0051-restore-launcher-refresh-preserve-flame-speed.patch` restores its **33 ms** target, while advancing the reference pose every **six** ticks. Pose duration stays approximately **198 ms**, preserving the slower flame loop and measured alignment.
+
+The jar builds and all 138 client modified/patched files reproduce. The native launcher/backend probe passes after making its initial focus precondition explicit instead of sleeping a fixed 150 ms. Its host timer observation is **30.39 Hz**, with a 5.16 ms mean scene paint time; animation visibility, gameplay/hidden pause, resume, disposal, mapped navigation and name entry pass. [Evidence](evidence/launcher-refresh-cadence.json). This measures host Swing callbacks/painting, not presented Deck FPS.
