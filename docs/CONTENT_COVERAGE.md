@@ -1,6 +1,6 @@
 # Early quests and production coverage — 13 October 2026
 
-This batch expands native quest and production checks while the owner playtests the controller-only session on the Deck. It uses isolated host worlds; the active Deck installation and character remain unchanged.
+This batch expands native quest and production checks while the owner playtests the controller-only session on the Deck. Validation used isolated host worlds. This merged batch was subsequently deployed to the Deck as r24; see [release deployment](UI_DECK_RELEASE.md#content-build-r24).
 
 ## Changes
 

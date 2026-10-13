@@ -37,3 +37,11 @@ The uncapped comparisons averaged 60.00 FPS under the compositor. Both samples c
 These are short stationary disposable-world checks with the native inventory shown and custom controller panels closed during timing. They measure overlay callback intervals, not independent scanout; they do not establish sustained 60 FPS during routes or quantify the open Skills panel. The first capped p99 exceeds 20 ms. Physical D-pad/Steam Input mapping remains a user playtest check. AWT Robot captures from Gaming Mode returned black, so the published UI screenshots use the verified host native captures and clearly labelled renderer fixtures.
 
 Previous sustained measurements, with their separate candidate and conditions, remain in [60 FPS report](DECK_60FPS_REPORT.md).
+
+## Content build r24
+
+The merged content batch from [PR #6](https://github.com/kannibalk1w1/SoloScape/pull/6), commit `7a95e1e65e235d1f61b0abd764cc744a760c59b2`, is installed as `deck-content-20261013-r24`. All **10,510** manifest files verified. The ended r22 session was explicitly recovered; a recovery snapshot and a separate pre-deployment backup verified. Recovery does not establish that the original session shut down cleanly.
+
+All **95** copied profile files match their source hashes, and the character save is unchanged. The stable Steam shortcut now selects r24, and its launcher and backend were observed running after launch through Steam. Older builds and the previous wrapper remain available. Continue uses the transferred character and retains the Deck 60 FPS preference.
+
+This build includes launcher mapped-controller navigation, controller **Save & Quit**, readable quest introductions/rewards and recipe names, and the pot-firing selection fix. See [coverage and native screenshots](CONTENT_COVERAGE.md). The performance measurements above were made on r22; r24 has no new sustained-FPS measurement. Physical controller navigation and gameplay remain playtest acceptance.
