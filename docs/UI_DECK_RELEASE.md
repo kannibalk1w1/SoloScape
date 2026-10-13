@@ -65,3 +65,11 @@ Owner feedback then identified atlas-frame misalignment and excessive speed. [PR
 The active Deck build is now `deck-aligned-20261013-r27`, from commit `5d629baeba50394642d71385b3020d775395a64e`. All **10,536** payload files verified. A pre-deployment backup verified, all **101** copied profile files match, and the character save is unchanged. Existing launcher port settings are preserved when present. No live world was interrupted: the idle launcher/backend were closed under build/profile guards before promotion. Older builds and stable wrappers remain available.
 
 The stable Steam shortcut was restarted into r27; its actual launcher/backend were observed running with the saved profile ready. The bold supporting text is retained. Host paint checks and rendered pose previews do not establish physical-controller acceptance or sustained Deck FPS.
+
+## Launcher refresh correction r28
+
+[PR #14](https://github.com/kannibalk1w1/SoloScape/pull/14) restores the launcher's 33 ms repaint target while keeping six ticks per flame pose, so slow playback remains approximately 198 ms per pose. Host Swing observation: 30.39 timer updates/second; this is not a presented-frame Deck measurement. [Evidence and details](JAGEX_UI_OVERHAUL.md#launcher-refresh-restored-independently-of-flame-speed).
+
+The Deck now runs `deck-refresh-20261013-r28`, from commit `3803767b285c89ce4a63eed35fbd5d3c54e32ee4`. All **10,539** payload files verify; all **102** transferred profile files match, the character save is unchanged and a pre-deployment backup verifies. Existing launcher port settings are preserved when present. No live world was interrupted; only the guarded idle launcher/backend were closed. The stable shortcut was restarted through Steam, and the new launcher/backend were observed running with the saved profile ready.
+
+The aligned slow flame loop, heavier supporting text and Deck gameplay pacing preferences remain. The [proposed next large sprint](NEXT_DECK_SESSION_SPRINT.md) covers complete controller-only routes, sustained gameplay performance and save/suspend reliability; it has not started.
