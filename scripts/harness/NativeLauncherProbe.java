@@ -63,6 +63,7 @@ public final class NativeLauncherProbe
             Rectangle launcherScreen=edt(()->{JFrame window=(JFrame)field(launcher,"frame");return new Rectangle(window.getLocationOnScreen(),window.getSize());});
             javax.imageio.ImageIO.write(new Robot().createScreenCapture(launcherScreen),"png",root.resolve("launcher-scene.png").toFile());
             LauncherScene scene=edt(()->(LauncherScene)((JFrame)field(launcher,"frame")).getContentPane());
+            require(edt(()->((java.awt.image.BufferedImage[])field(scene,"flames")).length)==8,"Reference flame frames not loaded");
             long startedFrames=edt(()->(Long)field(scene,"animationFrames"));
             for(int i=0;i<12;i++){Thread.sleep(100);javax.imageio.ImageIO.write(robot.createScreenCapture(launcherScreen),"png",root.resolve(String.format("launcher-animation-%02d.png",i)).toFile());}
             long visibleFrames=edt(()->(Long)field(scene,"animationFrames"))-startedFrames;
