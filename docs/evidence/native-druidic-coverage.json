@@ -1,0 +1,51 @@
+{
+  "imp_catcher_rewards": "Total quest points: 1; 1 Quest Point; 875 Magic XP.; An Amulet of Accuracy.; ",
+  "native_dialogue_operations": 18,
+  "blood_pact_intro_rows": 4,
+  "spinning_recipes": [
+    "Ball of wool (Wool) / Make 1",
+    "Bowstring (Flax) / Make 1",
+    "Crossbow string (Sinew) / Make 1",
+    "Crossbow string (Tree roots) / Make 1",
+    "Magic string (Magic roots) / Make 1"
+  ],
+  "spinning_wool_to_ball_without_mouse": true,
+  "production_recipes_0": [
+    "Pot (unfired) / Make 1",
+    "Pie dish (unfired) / Make 1",
+    "Bowl (unfired) / Make 1",
+    "Unfired plant pot / Make 1",
+    "Unfired pot lid / Make 1"
+  ],
+  "pottery_shape_produced": 1,
+  "production_recipes_1": [
+    "Empty pot / Make 1"
+  ],
+  "pottery_fire_produced": 1,
+  "production_recipes_2": [
+    "Bronze bar / Make All"
+  ],
+  "smelting_bronze_produced": 1,
+  "smithing_dagger_produced": 1,
+  "production_recipes_4": [
+    "Arrow shaft / Make 1",
+    "Shortbow (u) / Make 1",
+    "Longbow (u) / Make 1",
+    "Wooden stock / Make 1"
+  ],
+  "fletching_shafts_produced": 15,
+  "druidic_meats_enchanted": 4,
+  "druidic_meats_handed_in": 4,
+  "druidic_ritual_rewards": "Total quest points: 5; 4 Quest Points; Access to the Herblore Skill; 250 Herblore XP; ",
+  "druidic_completed_journal": "Close; Get QuestHelp; I told Kaqemeex I would help them prepare their ceremony; The ceremony required various meats being placed in the; Cauldron of Thunder. I did this and gave them to Sanfew.; Kaqemeex then tought me the basics of the skill Herblore.; QUEST COMPLETE!; ",
+  "save_reload": {
+    "new_session_seconds": 150.189,
+    "continue_session_seconds": 22.979,
+    "native_startup_cancel_preserved": true,
+    "original_mutable_paths_unchanged": true,
+    "quest_and_rewards_verified": true,
+    "backup_saved_characters_verified": 4,
+    "herblore_xp": 250,
+    "quest_points_from_druidic": 4
+  }
+}

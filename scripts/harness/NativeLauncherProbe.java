@@ -62,6 +62,21 @@ public final class NativeLauncherProbe
             Thread.sleep(200);
             Rectangle launcherScreen=edt(()->{JFrame window=(JFrame)field(launcher,"frame");return new Rectangle(window.getLocationOnScreen(),window.getSize());});
             javax.imageio.ImageIO.write(new Robot().createScreenCapture(launcherScreen),"png",root.resolve("launcher-scene.png").toFile());
+            LauncherScene scene=edt(()->(LauncherScene)((JFrame)field(launcher,"frame")).getContentPane());
+            long startedFrames=edt(()->(Long)field(scene,"animationFrames"));
+            for(int i=0;i<12;i++){Thread.sleep(100);javax.imageio.ImageIO.write(robot.createScreenCapture(launcherScreen),"png",root.resolve(String.format("launcher-animation-%02d.png",i)).toFile());}
+            long visibleFrames=edt(()->(Long)field(scene,"animationFrames"))-startedFrames;
+            require(visibleFrames>10,"Brazier animation did not advance while visible");
+            edt(()->{((javax.swing.Timer)field(launcher,"refresh")).stop();scene.setAnimationEnabled(false);return null;});long pausedFrames=edt(()->(Long)field(scene,"animationFrames"));Thread.sleep(200);
+            require(edt(()->(Long)field(scene,"animationFrames"))==pausedFrames,"Brazier animation ran during gameplay pause");
+            edt(()->{scene.setAnimationEnabled(true);((JFrame)field(launcher,"frame")).setVisible(false);return null;});long hiddenFrames=edt(()->(Long)field(scene,"animationFrames"));Thread.sleep(200);
+            require(edt(()->(Long)field(scene,"animationFrames"))==hiddenFrames,"Brazier animation ran while hidden");
+            edt(()->{((JFrame)field(launcher,"frame")).setVisible(true);return null;});Thread.sleep(200);
+            require(edt(()->(Long)field(scene,"animationFrames"))>hiddenFrames,"Brazier animation did not resume");
+            java.util.Map<String,Object> animation=new java.util.LinkedHashMap<>();animation.put("environment","Private host Swing/Xvfb; no Deck performance acceptance");animation.put("visible_timer_frames",visibleFrames);animation.put("gameplay_pause_verified",true);animation.put("hidden_pause_verified",true);animation.put("resume_verified",true);
+            long paintNanos=edt(()->{java.awt.image.BufferedImage image=new java.awt.image.BufferedImage(1280,800,java.awt.image.BufferedImage.TYPE_INT_ARGB);java.awt.Graphics2D graphics=image.createGraphics();long start=System.nanoTime();try{for(int i=0;i<100;i++)scene.paint(graphics);}finally{graphics.dispose();}return System.nanoTime()-start;});animation.put("host_scene_paint_mean_ms",paintNanos/100000000.0);
+            edt(()->{((javax.swing.Timer)field(launcher,"refresh")).start();return null;});
+            Files.write(root.resolve("launcher-animation.json"),new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(animation).getBytes("UTF-8"));
             LauncherKeyboard second=open();JTextField secondLabel=edt(()->text(second.owner,"Character label"));JTextField secondAccount=edt(()->text(second.owner,"Account name"));
             edt(()->{secondLabel.setText("\u00a0");secondAccount.setText("b");second.deactivate();button(second.owner,"Create character").doClick();return null;});
             waitFor(()->button(second.owner,"Create character").isEnabled(),"Backend validation did not re-enable form");
@@ -82,6 +97,7 @@ public final class NativeLauncherProbe
             edt(()->{require(requests.equals(java.util.Arrays.asList(true,false,true,false)),"Unexpected Steam visibility requests: "+requests);system.owner.dispose();return null;});
             edt(()->{invoke("close");return null;});
             waitFor(()->!((JFrame)field(launcher,"frame")).isDisplayable(),"Launcher did not close gracefully");
+            edt(()->{require(!((javax.swing.Timer)field(scene,"animation")).isRunning(),"Brazier timer survived launcher disposal");return null;});
             System.out.println("Native launcher adapter/backend: held-A guard, controller name entry, account filter, B preserves form, Y advances, private creation and inline backend rejection and exclusive Steam-mode focus/Enter passed. No SDL/hardware acceptance.");System.exit(0);
         }catch(Exception failure){failure.printStackTrace();try{edt(()->{if(launcher!=null){LauncherKeyboard k=(LauncherKeyboard)field(launcher,"keyboard");if(k!=null)k.owner.dispose();invoke("close");}return null;});}catch(Exception ignored){}System.exit(2);}
     }

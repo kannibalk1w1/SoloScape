@@ -1,0 +1,131 @@
+diff --git a/config/src/main/kotlin/world/gregs/config/ConfigReader.kt b/config/src/main/kotlin/world/gregs/config/ConfigReader.kt
+--- a/config/src/main/kotlin/world/gregs/config/ConfigReader.kt
++++ b/config/src/main/kotlin/world/gregs/config/ConfigReader.kt
+@@ -9,9 +9,16 @@
+ 
+ class ConfigReader(
+     private val input: InputStream,
+-    private val stringBuffer: ByteArray = ByteArray(100), // Maximum string length
++    private var stringBuffer: ByteArray = ByteArray(100), // Initial capacity; grows for saved event descriptions
+     private val debug: String = "",
+ ) : Closeable {
++    private fun append(index: Int, value: Byte) {
++        if (index >= stringBuffer.size) {
++            stringBuffer = stringBuffer.copyOf(maxOf(16, stringBuffer.size * 2, index + 1))
++        }
++        stringBuffer[index] = value
++    }
++
+     private var byte: Int = input.read()
+     private var lastSection = ""
+     private var line = 1
+@@ -44,7 +51,7 @@
+         val inherit = byte == DOT
+         var bufferIndex = 0
+         while (byte != EOF && byte != CLOSE_BRACKET) {
+-            stringBuffer[bufferIndex++] = byte.toByte()
++            append(bufferIndex++, byte.toByte())
+             byte = input.read()
+         }
+         byte = input.read() // Skip ]
+@@ -119,15 +126,15 @@
+             if (byte == BACKSLASH) {
+                 byte = input.read()
+                 if (byte == DOUBLE_QUOTE) {
+-                    stringBuffer[bufferIndex++] = DOUBLE_QUOTE.toByte()
++                    append(bufferIndex++, DOUBLE_QUOTE.toByte())
+                     byte = input.read()
+                     continue
+                 } else {
+-                    stringBuffer[bufferIndex++] = BACKSLASH.toByte()
+-                }
+-            }
+-
+-            stringBuffer[bufferIndex++] = byte.toByte()
++                    append(bufferIndex++, BACKSLASH.toByte())
++                }
++            }
++
++            append(bufferIndex++, byte.toByte())
+             byte = input.read()
+         }
+         byte = input.read() // Skip closing quote
+@@ -138,7 +145,7 @@
+         var bufferIndex = 0
+         byte = input.read() // skip opening quote
+         while (byte != EOF && byte != SINGLE_QUOTE) {
+-            stringBuffer[bufferIndex++] = byte.toByte()
++            append(bufferIndex++, byte.toByte())
+             byte = input.read()
+         }
+         require(byte == SINGLE_QUOTE) { "Strings must be quoted" }
+@@ -149,7 +156,7 @@
+     private fun bareKey(): String {
+         var bufferIndex = 0
+         while (byte != EOF && byte != SPACE && byte != TAB && byte != EQUALS && byte != RETURN && byte != NEWLINE) {
+-            stringBuffer[bufferIndex++] = byte.toByte()
++            append(bufferIndex++, byte.toByte())
+             byte = input.read()
+         }
+         require(bufferIndex > 0) { "No key found. ${exception()}" }
+diff --git a/config/src/test/kotlin/world/gregs/config/ConfigReaderLongStringTest.kt b/config/src/test/kotlin/world/gregs/config/ConfigReaderLongStringTest.kt
+new file mode 100644
+--- /dev/null
++++ b/config/src/test/kotlin/world/gregs/config/ConfigReaderLongStringTest.kt
+@@ -0,0 +1,56 @@
++package world.gregs.config
++
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.TestFactory
++import org.junit.jupiter.api.DynamicTest.dynamicTest
++import java.io.BufferedWriter
++import java.io.StringWriter
++
++class ConfigReaderLongStringTest {
++    @TestFactory
++    fun `Quoted strings preserve bytes across the initial buffer boundary`() = listOf(99, 100, 101, 256, 1024).map { length -> dynamicTest("$length bytes") {
++        val expected = "x".repeat(length)
++        Config.stringReader("desc = \"$expected\"\nnext = 42") {
++            assertEquals("desc", key())
++            assertEquals(expected, string())
++            assertEquals("next", key())
++            assertEquals(42, int())
++        }
++    } }
++
++    @Test
++    fun `Recent event descriptions round trip with UTF8`() {
++        val expected = mapOf("recent_events" to listOf(mapOf("time" to 42, "title" to "Druidic Ritual", "desc" to "The druids' Guthix blessing — quest complete! ".repeat(12))))
++        val text = StringWriter()
++        BufferedWriter(text).use { it.writePair("recent_events", expected.getValue("recent_events")) }
++        Config.stringReader(text.toString()) {
++            assertEquals(expected, sections().getValue(""))
++        }
++    }
++
++    @Test
++    fun `Escaped quotes survive growth at the buffer boundary`() {
++        val prefix = "x".repeat(100)
++        Config.stringReader("desc = \"$prefix\\\"Guthix\\\"\"\nnext = 9") {
++            assertEquals("desc", key())
++            assertEquals("$prefix\"Guthix\"", string())
++            assertEquals("next", key())
++            assertEquals(9, int())
++        }
++    }
++
++    @Test
++    fun `Tiny buffers grow for long sections bare keys and literal strings`() {
++        val section = "region".repeat(24)
++        val key = "event".repeat(30)
++        val value = "quest complete ".repeat(30)
++        Config.stringReader("[$section]\n$key = '$value'\nnext = 7", maxStringLength = 0) {
++            assertEquals(section, section())
++            assertEquals(key, key())
++            assertEquals(value, string())
++            assertEquals("next", key())
++            assertEquals(7, int())
++        }
++    }
++}

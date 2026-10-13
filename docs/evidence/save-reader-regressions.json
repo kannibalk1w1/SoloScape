@@ -1,0 +1,33 @@
+{
+  "environment": "Native server config module; boundary, UTF8 event serialization, escaped-quote reading, existing reader/writer/atomic-file regressions",
+  "suites": [
+    {
+      "suite": "world.gregs.config.ConfigReaderLongStringTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "world.gregs.config.AtomicFileWriterTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "world.gregs.config.ConfigReaderTest",
+      "tests": 60,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "world.gregs.config.ConfigWriterTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ]
+}

@@ -132,3 +132,14 @@ The client shadow jar builds. The existing real Swing launcher/backend probe pas
 ![Launcher with 22 px supporting text at 1280×800](images/launcher-readable-1280x800.png)
 
 The r24 Deck installation is ready for the ongoing playtest; this text follow-up is intended for the next build. Animated flames in the original brazier scene remain a requested [UI follow-up](DECK_SPRINT_TASKS.md#launcher-charm-follow-up).
+
+## Animated launcher braziers
+
+Client patch `0048-animated-launcher-braziers.patch` lights both bowls in the original mirrored RS2 scene. Independent small heat fields produce rising pixel flames, warm light flicker, bowl highlights and drifting embers. Their coordinates scale with the original half-scene artwork when the window resizes. The existing image is supplied locally; no standalone cache resource is tracked.
+
+The Swing timer targets 30 updates per second. It stops while the launcher is hidden/minimized, removed/disposed, or its owned world is running, and resumes when appropriate. Missing artwork keeps the static fallback without an animation timer. The stone scene, dimming and vignette are cached per window size; the timer updates the flame fields and redraws the cached scene.
+
+The real launcher/backend probe passes existing mapped-navigation and name-entry checks plus visible animation, gameplay pause, hidden pause and resume. A private host Swing/Xvfb paint microbenchmark at 1280×800 averaged **7.60 ms** over 100 paints, compared with **28.80 ms** before background caching. These are scene/component paint times, not independent scanout FPS or Deck/Gaming Mode performance. [Aggregate evidence](evidence/launcher-animation.json) and sampled actual launcher frames are below.
+
+![Animated braziers — sampled Swing launcher frames](images/launcher-animated-braziers.gif)
+![Launcher braziers at 1280×800](images/launcher-braziers-1280x800.png)
