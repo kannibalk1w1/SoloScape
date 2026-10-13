@@ -122,3 +122,13 @@ java -Djava.awt.headless=true -cp <void-client jar>:<dir> JagexUiPreview <output
 - Deployment and current on-device measurements are recorded in [UI Deck release](UI_DECK_RELEASE.md).
 - The tab-bar check scripted pad states through the plugin's input tick. A physical controller, Steam Input layouts that map the D-pad elsewhere, and Gaming Mode remain acceptance items. While the bar is focused, world movement pauses; the camera stays live.
 - `--adventure` fails at a pre-existing step (see Validation), so that probe gives no full pass here.
+
+## Launcher text readability follow-up
+
+Owner feedback on the r24 launcher: character text and supporting text need another 1–2 px. Client patch `0047-launcher-readable-body-text.patch` increases supporting text from 20 to **22 px**: character names/status, parchment details, subtitle, frame heading, status line, controls and dialog fields. The SoloScape title and button typography retain their existing sizes. Character rows increase from 60 to 68 px to accommodate both lines.
+
+The client shadow jar builds. The existing real Swing launcher/backend probe passes mapped navigation, held-A protection, name entry, account filtering, B/Y transitions, profile creation, rate persistence, inline validation and exclusive Steam text-entry ownership. Its launcher capture now uses **1280×800**; the screenshot below was visually checked for row/footer fit and readable details. The character and rates are disposable fixtures. This check uses a private host display and does not establish physical Deck controller acceptance or FPS.
+
+![Launcher with 22 px supporting text at 1280×800](images/launcher-readable-1280x800.png)
+
+The r24 Deck installation is ready for the ongoing playtest; this text follow-up is intended for the next build. Animated flames in the original brazier scene remain a requested [UI follow-up](DECK_SPRINT_TASKS.md#launcher-charm-follow-up).

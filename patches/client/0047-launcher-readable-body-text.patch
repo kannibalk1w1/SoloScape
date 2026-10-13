@@ -1,0 +1,66 @@
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LauncherTheme.java b/client/src/net/runelite/client/soloscape/launcher/LauncherTheme.java
+--- a/client/src/net/runelite/client/soloscape/launcher/LauncherTheme.java
++++ b/client/src/net/runelite/client/soloscape/launcher/LauncherTheme.java
+@@ -24,14 +24,14 @@
+     /** Selected state for buttons that represent a controller cursor (launcher keyboard keys). */
+     static final String SELECTED="soloscape.selected";
+ 
+-    // The bitmap faces are drawn on a 16 px grid; 20 px keeps Deck text readable with even strokes.
++    // Body text is 22 px for Deck readability; action buttons retain their 20 px size.
+     static Font plain(float size){return FontManager.getRunescapeFont().deriveFont(size);}
+     static Font bold(float size){return FontManager.getRunescapeBoldFont().deriveFont(size);}
+ 
+     static void install()
+     {
+         ControllerTheme.classic(true);
+-        Font body=plain(20),strong=bold(20);
++        Font body=plain(22),strong=bold(20);
+         String[] fonts={"Label.font","CheckBox.font","ComboBox.font","TextField.font","FormattedTextField.font","List.font","TextArea.font",
+             "OptionPane.messageFont","Spinner.font","ToolTip.font","TitledBorder.font","RadioButton.font","ProgressBar.font","Panel.font"};
+         for(String key:fonts)UIManager.put(key,new FontUIResource(body));
+@@ -108,7 +108,7 @@
+                 ControllerTheme.frame(g,new Rectangle(0,0,getWidth(),getHeight()),0);
+                 if(title!=null)
+                 {
+-                    g.setFont(bold(20));FontMetrics metrics=g.getFontMetrics();
++                    g.setFont(bold(22));FontMetrics metrics=g.getFontMetrics();
+                     text(g,title,(getWidth()-metrics.stringWidth(title))/2,10+metrics.getAscent(),ORANGE);
+                     ControllerTheme.separator(g,6,36,getWidth()-12);
+                 }
+@@ -135,7 +135,7 @@
+     /** Parchment backing for the character details, like a classic scroll. */
+     static final class ParchmentArea extends JTextArea
+     {
+-        ParchmentArea(){setOpaque(false);setForeground(INK);setFont(plain(20));setCaretColor(INK);setSelectionColor(new Color(170,140,90));setSelectedTextColor(Color.BLACK);}
++        ParchmentArea(){setOpaque(false);setForeground(INK);setFont(plain(22));setCaretColor(INK);setSelectionColor(new Color(170,140,90));setSelectedTextColor(Color.BLACK);}
+         @Override protected void paintComponent(Graphics graphics)
+         {
+             Graphics2D g=(Graphics2D)graphics.create();
+@@ -305,10 +305,10 @@
+                 Rectangle box=new Rectangle(2,2,getWidth()-4,getHeight()-4);
+                 ControllerTheme.cell(g,box,selected&&focused);
+                 if(selected&&!focused){g.setColor(ORANGE);g.drawRect(box.x+1,box.y+1,box.width-3,box.height-3);}
+-                g.setFont(bold(20));FontMetrics big=g.getFontMetrics();
++                g.setFont(bold(22));FontMetrics big=g.getFontMetrics();
+                 int baseline=box.y+8+big.getAscent();
+                 text(g,fit(big,name,box.width-20),box.x+10,baseline,selected?WHITE:ORANGE);
+-                g.setFont(plain(20));
++                g.setFont(plain(22));
+                 text(g,state,box.x+10,baseline+g.getFontMetrics().getHeight(),stateColour);
+             }
+             finally{g.dispose();}
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -63,9 +63,9 @@
+         content.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+         JLabel title = new LauncherTheme.ShadowLabel("SoloScape", LauncherTheme.bold(32), LauncherTheme.ORANGE);
+         JPanel header = new JPanel(new GridLayout(3, 1, 0, 2)); header.add(title);
+-        JLabel subtitle=new LauncherTheme.ShadowLabel("Your world. Your pace. Your adventure.", LauncherTheme.plain(20), LauncherTheme.YELLOW); header.add(subtitle);
++        JLabel subtitle=new LauncherTheme.ShadowLabel("Your world. Your pace. Your adventure.", LauncherTheme.plain(22), LauncherTheme.YELLOW); header.add(subtitle);
+         nativeNavigation.setFocusable(false);nativeNavigation.setForeground(LauncherTheme.WHITE);nativeNavigation.setOpaque(false);nativeNavigation.setHorizontalAlignment(SwingConstants.CENTER);header.setOpaque(false);header.add(nativeNavigation);content.add(header, BorderLayout.NORTH);
+-        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); list.setFixedCellHeight(60);
++        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); list.setFixedCellHeight(68);
+         list.setCellRenderer(new LauncherTheme.CharacterCell()); list.setBackground(LauncherTheme.WELL); LauncherTheme.repaintOnFocus(list);
+         list.addListSelectionListener(e -> showCharacter());
+         detail.setEditable(false); detail.setLineWrap(true); detail.setWrapStyleWord(true);
