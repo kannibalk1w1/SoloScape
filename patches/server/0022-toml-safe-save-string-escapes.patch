@@ -1,0 +1,439 @@
+diff --git a/config/src/main/kotlin/world/gregs/config/ConfigReader.kt b/config/src/main/kotlin/world/gregs/config/ConfigReader.kt
+--- a/config/src/main/kotlin/world/gregs/config/ConfigReader.kt
++++ b/config/src/main/kotlin/world/gregs/config/ConfigReader.kt
+@@ -57,9 +57,9 @@
+         byte = input.read() // Skip ]
+         require(byte != CLOSE_BRACKET) { "Array of tables are not supported. ${exception()}" }
+         val section = if (inherit) {
+-            "${lastSection}${String(stringBuffer, 0, bufferIndex)}"
++            "${lastSection}${String(stringBuffer, 0, bufferIndex, Charsets.UTF_8)}"
+         } else {
+-            val section = String(stringBuffer, 0, bufferIndex)
++            val section = String(stringBuffer, 0, bufferIndex, Charsets.UTF_8)
+             lastSection = section
+             section
+         }
+@@ -125,20 +125,67 @@
+         while (byte != EOF && byte != DOUBLE_QUOTE) {
+             if (byte == BACKSLASH) {
+                 byte = input.read()
+-                if (byte == DOUBLE_QUOTE) {
+-                    append(bufferIndex++, DOUBLE_QUOTE.toByte())
++                val simple = when (byte) {
++                    DOUBLE_QUOTE, BACKSLASH -> byte
++                    B -> '\b'.code
++                    T -> '\t'.code
++                    N -> '\n'.code
++                    F -> '\u000C'.code
++                    R -> '\r'.code
++                    else -> -1
++                }
++                if (simple != -1) {
++                    append(bufferIndex++, simple.toByte())
+                     byte = input.read()
+-                    continue
++                } else if (byte == U || byte == UPPER_U) {
++                    bufferIndex = unicodeEscape(bufferIndex, if (byte == U) 4 else 8)
+                 } else {
++                    // Legacy saves wrote backslashes raw; keep unknown sequences such as "C:\path" unchanged.
+                     append(bufferIndex++, BACKSLASH.toByte())
+                 }
++                continue
+             }
+ 
+             append(bufferIndex++, byte.toByte())
+             byte = input.read()
+         }
++        require(byte == DOUBLE_QUOTE) { "Unterminated string. ${exception()}" }
+         byte = input.read() // Skip closing quote
+-        return String(stringBuffer, 0, bufferIndex)
++        return String(stringBuffer, 0, bufferIndex, Charsets.UTF_8)
++    }
++
++    /**
++     * Decodes \uXXXX or \UXXXXXXXX as UTF-8. Anything that isn't a complete scalar value is kept
++     * literally, matching how older readers treated unknown escapes.
++     */
++    private fun unicodeEscape(start: Int, digits: Int): Int {
++        var bufferIndex = start
++        val marker = byte
++        var codePoint = 0
++        var read = 0
++        byte = input.read() // Skip u or U
++        val hex = ByteArray(digits)
++        while (read < digits) {
++            val digit = Character.digit(byte, 16)
++            if (digit == -1) {
++                break
++            }
++            hex[read++] = byte.toByte()
++            codePoint = codePoint * 16 + digit
++            byte = input.read()
++        }
++        if (read == digits && codePoint <= Character.MAX_CODE_POINT && codePoint !in Character.MIN_SURROGATE.code..Character.MAX_SURROGATE.code) {
++            for (encoded in String(Character.toChars(codePoint)).toByteArray(Charsets.UTF_8)) {
++                append(bufferIndex++, encoded)
++            }
++        } else {
++            append(bufferIndex++, BACKSLASH.toByte())
++            append(bufferIndex++, marker.toByte())
++            for (index in 0 until read) {
++                append(bufferIndex++, hex[index])
++            }
++        }
++        return bufferIndex
+     }
+ 
+     private fun literalString(): String {
+@@ -150,7 +197,7 @@
+         }
+         require(byte == SINGLE_QUOTE) { "Strings must be quoted" }
+         byte = input.read() // Skip closing quote
+-        return String(stringBuffer, 0, bufferIndex)
++        return String(stringBuffer, 0, bufferIndex, Charsets.UTF_8)
+     }
+ 
+     private fun bareKey(): String {
+@@ -160,7 +207,7 @@
+             byte = input.read()
+         }
+         require(bufferIndex > 0) { "No key found. ${exception()}" }
+-        return String(stringBuffer, 0, bufferIndex)
++        return String(stringBuffer, 0, bufferIndex, Charsets.UTF_8)
+     }
+ 
+     /**
+@@ -539,5 +586,8 @@
+         private const val L = 'l'.code
+         private const val S = 's'.code
+         private const val BACKSLASH = '\\'.code
++        private const val B = 'b'.code
++        private const val N = 'n'.code
++        private const val UPPER_U = 'U'.code
+     }
+ }
+diff --git a/config/src/main/kotlin/world/gregs/config/ConfigWriter.kt b/config/src/main/kotlin/world/gregs/config/ConfigWriter.kt
+--- a/config/src/main/kotlin/world/gregs/config/ConfigWriter.kt
++++ b/config/src/main/kotlin/world/gregs/config/ConfigWriter.kt
+@@ -14,11 +14,7 @@
+ 
+ fun ConfigWriter.writeValue(value: Any?, escapeKey: Boolean = false) {
+     when (value) {
+-        is String -> {
+-            write("\"")
+-            write(value)
+-            write("\"")
+-        }
++        is String -> writeString(value)
+         is Double -> {
+             val string = value.toBigDecimal().stripTrailingZeros().toPlainString()
+             if (string.contains('.')) {
+@@ -42,17 +38,41 @@
+         is Array<*> -> list(value.size) { writeValue(value[it]) }
+         is Map<*, *> -> map(value.keys, escapeKey) { writeValue(value[it]) }
+         null -> write("null")
+-        else -> {
+-            write("\"")
+-            write(value.toString())
+-            write("\"")
++        else -> writeString(value.toString())
++    }
++}
++
++/**
++ * Writes a TOML basic string that both [ConfigReader] and strict TOML parsers decode to [value].
++ * Plain strings are written unchanged; quotes, backslashes and control characters are escaped.
++ */
++fun ConfigWriter.writeString(value: String) {
++    write("\"")
++    if (value.none { it == '"' || it == '\\' || it < ' ' || it == '\u007F' }) {
++        write(value)
++    } else {
++        for (char in value) {
++            when (char) {
++                '"' -> write("\\\"")
++                '\\' -> write("\\\\")
++                '\b' -> write("\\b")
++                '\t' -> write("\\t")
++                '\n' -> write("\\n")
++                '\u000C' -> write("\\f")
++                '\r' -> write("\\r")
++                else -> if (char < ' ' || char == '\u007F') write("\\u%04X".format(char.code)) else write(char.code)
++            }
+         }
+     }
++    write("\"")
+ }
+ 
+-fun ConfigWriter.writeKey(key: String, escapeKey: Boolean = key.any { it == ' ' || it == '\t' || it == '=' }) {
+-    if (escapeKey) {
+-        write("\"${key.replace("\"", "\\\"")}\"")
++/** Keys outside TOML's bare-key alphabet must be quoted to read back as the same single key. */
++private fun requiresQuotes(key: String) = key.isEmpty() || key.any { !(it in 'a'..'z' || it in 'A'..'Z' || it in '0'..'9' || it == '_' || it == '-') }
++
++fun ConfigWriter.writeKey(key: String, escapeKey: Boolean = false) {
++    if (escapeKey || requiresQuotes(key)) {
++        writeString(key)
+     } else {
+         write(key)
+     }
+diff --git a/config/src/test/kotlin/world/gregs/config/ConfigReaderTest.kt b/config/src/test/kotlin/world/gregs/config/ConfigReaderTest.kt
+--- a/config/src/test/kotlin/world/gregs/config/ConfigReaderTest.kt
++++ b/config/src/test/kotlin/world/gregs/config/ConfigReaderTest.kt
+@@ -48,9 +48,12 @@
+         return builder.toString()
+     }
+ 
++    /** Fixture output shows decoded control characters as escapes so CR/LF differences stay visible. */
++    private fun visible(string: String) = string.replace("\r", "\\r").replace("\n", "\\n").replace("\t", "\\t")
++
+     private fun parseValue(builder: StringBuilder, reader: ConfigReader, section: String, key: String, collection: String = "") {
+         when (reader.peek) {
+-            '"', '\'' -> builder.appendLine("[$section] $key$collection = \"${reader.string()}\"")
++            '"', '\'' -> builder.appendLine("[$section] $key$collection = \"${visible(reader.string())}\"")
+             '[' -> {
+                 var index = 0
+                 while (reader.nextElement()) {
+@@ -107,7 +110,7 @@
+         }
+         Config.stringReader("\"quoted \\n key\" = 0") {
+             assertTrue(nextPair())
+-            assertEquals("quoted \\n key", key())
++            assertEquals("quoted \n key", key())
+         }
+         Config.stringReader("'literal \n key' = 0") {
+             assertTrue(nextPair())
+@@ -118,7 +121,7 @@
+     @Test
+     fun `Read string`() {
+         Config.stringReader("\"quoted \\n string\"") {
+-            assertEquals("quoted \\n string", string())
++            assertEquals("quoted \n string", string())
+         }
+         Config.stringReader("'literal \n string'") {
+             assertTrue(nextPair())
+diff --git a/config/src/test/kotlin/world/gregs/config/ConfigStringEscapeTest.kt b/config/src/test/kotlin/world/gregs/config/ConfigStringEscapeTest.kt
+new file mode 100644
+--- /dev/null
++++ b/config/src/test/kotlin/world/gregs/config/ConfigStringEscapeTest.kt
+@@ -0,0 +1,121 @@
++package world.gregs.config
++
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.DynamicTest.dynamicTest
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.TestFactory
++import org.junit.jupiter.api.assertThrows
++
++class ConfigStringEscapeTest {
++
++    private val awkward = listOf(
++        "",
++        "\"",
++        "\\",
++        "ends with backslash \\",
++        "backslash before quote \\\"",
++        "two backslashes \\\\ in the middle",
++        "C:\\Users\\deck\\saves",
++        "say \"hello\" to \"Kaqemeex\"",
++        "single 'quoted' clan",
++        "line one\nline two\r\nline three\ttabbed",
++        "bell \u0007 escape \u001B delete \u007F form \u000C back \b",
++        "Guthix — blessing ✓ café 🙂",
++        "\\u0041 is not an escape here",
++        "x".repeat(99) + "\\\"" + "y".repeat(120),
++    )
++
++    @TestFactory
++    fun `Writer output reads back unchanged`() = awkward.mapIndexed { index, expected ->
++        dynamicTest("value $index") {
++            val text = Config.stringWriter { writePair("desc", expected) }
++            Config.stringReader(text) {
++                assertEquals("desc", key())
++                assertEquals(expected, string())
++            }
++        }
++    }
++
++    @Test
++    fun `Escaped strings survive inside lists and maps followed by more fields`() {
++        val events = listOf(mapOf("title" to "Quest \"complete\"", "desc" to "ends \\", "time" to 7), mapOf("title" to "next", "desc" to "ok", "time" to 8))
++        val text = Config.stringWriter {
++            writePair("recent_events", events)
++            writePair("after", 42)
++        }
++        Config.stringReader(text) {
++            assertEquals(mapOf("recent_events" to events, "after" to 42), sections().getValue(""))
++        }
++    }
++
++    @Test
++    fun `Keys that are not bare-safe are quoted and read back as one key`() {
++        val map = linkedMapOf("Zezima \"the\" great" to 1, "back\\slash" to 2, "dotted.name" to 3, "" to 4, "plain_key-1" to 5)
++        val text = Config.stringWriter { writePair("friends", map) }
++        assertEquals("friends = {\"Zezima \\\"the\\\" great\" = 1, \"back\\\\slash\" = 2, \"dotted.name\" = 3, \"\" = 4, plain_key-1 = 5}\n", text)
++        Config.stringReader(text) {
++            assertEquals(mapOf("friends" to map), sections().getValue(""))
++        }
++    }
++
++    @Test
++    fun `Plain strings and keys are written exactly as before`() {
++        assertEquals("display_name = \"Durial321\"\n", Config.stringWriter { writePair("display_name", "Durial321") })
++        assertEquals("clan = \"falador fun\"\n", Config.stringWriter { writePair("clan", "falador fun") })
++    }
++
++    @Test
++    fun `Writer emits TOML basic string escapes`() {
++        // The same bytes are decoded by scripts/test_profiles.py with Python's strict tomllib.
++        assertEquals(
++            "desc = \"q\\\" b\\\\ n\\n t\\t r\\r e\\u001B d\\u007F é\"\n",
++            Config.stringWriter { writePair("desc", "q\" b\\ n\n t\t r\r e\u001B d\u007F é") },
++        )
++    }
++
++    @Test
++    fun `TOML escapes written by other tools decode`() {
++        Config.stringReader("desc = \"tab\\tquote\\\" \\u00e9 \\U0001F642 \\b\\f\"") {
++            key()
++            assertEquals("tab\tquote\" é 🙂 \b\u000C", string())
++        }
++    }
++
++    @Test
++    fun `Legacy raw backslashes keep reading as before`() {
++        Config.stringReader("a = \"C:\\path\\dir\"\nb = \"\\users\\uZZ\\u12\"\nc = \"say \\\"hi\\\"\"\nd = 5") {
++            assertEquals("a", key())
++            assertEquals("C:\\path\\dir", string())
++            assertEquals("b", key())
++            assertEquals("\\users\\uZZ\\u12", string())
++            assertEquals("c", key())
++            assertEquals("say \"hi\"", string())
++            assertEquals("d", key())
++            assertEquals(5, int())
++        }
++    }
++
++    @Test
++    fun `Surrogate and out of range unicode escapes stay literal`() {
++        Config.stringReader("a = \"\\uD800 \\U00110000\"") {
++            key()
++            assertEquals("\\uD800 \\U00110000", string())
++        }
++    }
++
++    @Test
++    fun `Unterminated strings are rejected rather than swallowing the rest of a save`() {
++        assertThrows<IllegalArgumentException> {
++            Config.stringReader("desc = \"legacy trailing backslash \\\"\nnext = 1") {
++                key()
++                string()
++            }
++        }
++        assertThrows<IllegalArgumentException> {
++            Config.stringReader("desc = \"ends at backslash\\") {
++                key()
++                string()
++            }
++        }
++    }
++}
+diff --git a/config/src/test/resources/world/gregs/config/read/valid/basic-string.txt b/config/src/test/resources/world/gregs/config/read/valid/basic-string.txt
+--- a/config/src/test/resources/world/gregs/config/read/valid/basic-string.txt
++++ b/config/src/test/resources/world/gregs/config/read/valid/basic-string.txt
+@@ -1 +1 @@
+-[] str = "I'm a string. "You can quote me". Name\tJos\u00E9\nLocation\tSF."
++[] str = "I'm a string. "You can quote me". Name\tJosé\nLocation\tSF."
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/data/PlayerSaveEscapeTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/data/PlayerSaveEscapeTest.kt
+new file mode 100644
+--- /dev/null
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/data/PlayerSaveEscapeTest.kt
+@@ -0,0 +1,88 @@
++package world.gregs.voidps.engine.data
++
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.assertThrows
++import org.junit.jupiter.api.io.TempDir
++import world.gregs.voidps.engine.data.exchange.ExchangeOffer
++import world.gregs.voidps.engine.data.file.FileStorage
++import world.gregs.voidps.engine.entity.character.player.chat.clan.ClanRank
++import java.io.File
++import kotlin.test.assertContentEquals
++import kotlin.test.assertEquals
++
++/**
++ * Player-entered text (clan names, friends, events) must survive Save & Quit, Continue and backup copies byte-for-byte.
++ */
++internal class PlayerSaveEscapeTest {
++
++    @field:TempDir
++    lateinit var directory: File
++
++    private val save = StorageTest.save.copy(
++        variables = StorageTest.save.variables + mapOf(
++            "clan_name" to "Ye \"Olde\" C:\\Clan\\",
++            "display_name" to "Zezima",
++            "quest:last_note" to "ends with a backslash \\",
++            "multi_line" to "line one\nline two\r\n\ttabbed — café 🙂",
++            "name_history" to listOf("quote\"", "back\\slash", ""),
++        ),
++        friends = mapOf("Greg" to ClanRank.Friend, "Mod \"Mark\"" to ClanRank.Corporeal, "back\\slash" to ClanRank.Recruit),
++        ignores = listOf("Mod Murdoch", "say \"hi\"", "\\"),
++        // Loading always restores six exchange slots.
++        offers = Array(6) { StorageTest.save.offers.getOrElse(it) { ExchangeOffer.EMPTY } },
++        recentEvents = listOf(
++            RecentEvent(42, "Druidic Ritual", "The druids' \"Guthix\" blessing — quest complete! \\o/ ".repeat(8)),
++            RecentEvent(43, "Blood Pact \\", ""),
++        ),
++    )
++
++    @Test
++    fun `Awkward strings survive save and reload`() {
++        val storage = FileStorage(directory)
++        storage.save(listOf(save))
++        assertSameAccount(storage.load(save.name)!!)
++    }
++
++    @Test
++    fun `Repeated save and reload cycles keep every string`() {
++        val storage = FileStorage(directory)
++        storage.save(listOf(save))
++        // Variable order may change between saves, so compare decoded content rather than bytes.
++        repeat(3) {
++            storage.save(listOf(storage.load(save.name)!!))
++        }
++        assertSameAccount(storage.load(save.name)!!)
++    }
++
++    @Test
++    fun `Backup copies reload to the same account`() {
++        val storage = FileStorage(directory)
++        storage.save(listOf(save))
++        val backup = directory.resolve("backup").apply { mkdirs() }
++        directory.resolve("${save.name}.toml").copyTo(backup.resolve("${save.name}.toml"))
++        assertSameAccount(FileStorage(backup).load(save.name)!!)
++    }
++
++    private fun assertSameAccount(loaded: PlayerSave) {
++        assertEquals(save.variables, loaded.variables)
++        assertEquals(save.friends, loaded.friends)
++        assertEquals(save.ignores, loaded.ignores)
++        assertEquals(save.recentEvents, loaded.recentEvents)
++        assertEquals(save.inventories.keys, loaded.inventories.keys)
++        for ((key, items) in save.inventories) {
++            assertContentEquals(items, loaded.inventories.getValue(key), key)
++        }
++        // Remaining fields compare by content once arrays are excluded.
++        assertEquals(save.copy(inventories = emptyMap()), loaded.copy(inventories = emptyMap()))
++    }
++
++    @Test
++    fun `Truncated save fails loudly instead of loading partial progress`() {
++        val storage = FileStorage(directory)
++        storage.save(listOf(save))
++        val file = directory.resolve("${save.name}.toml")
++        val text = file.readText()
++        file.writeText(text.substring(0, text.indexOf("Guthix") + 3))
++        assertThrows<IllegalArgumentException> { storage.load(save.name) }
++    }
++}

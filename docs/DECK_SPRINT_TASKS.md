@@ -24,4 +24,4 @@ Physical owner feedback then identified launcher keyboard input ownership; patch
 
 ## Save-format audit follow-up
 
-- [ ] Audit embedded double quotes/backslashes in native-writer string values. The current writer does not escape embedded quotes; this was observed while adding long-string reader regressions. The reader buffer growth fix covers the real long quest-event description and escaped-quote reading, without changing writer serialization in this pass.
+- [x] Audit embedded double quotes/backslashes in native-writer string values. Server patch 0022 writes TOML basic-string escapes, quotes unsafe keys and teaches the native reader the same escapes while keeping unknown legacy sequences literal. Regressions cover save/reload, backups and the strict `tomllib` profile validator; see [sprint progress](DECK_SESSION_SPRINT.md).
