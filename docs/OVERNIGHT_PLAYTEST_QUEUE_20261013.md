@@ -48,9 +48,9 @@ Worker: Claude Sonnet 5.5 (`claude-sonnet-5-5`, medium effort, as verified in th
 
 | # | Item | Status | Model | Evidence / PR |
 | --- | --- | --- | --- | --- |
-| 1 | Blood Pact staff magic | passed 13 Oct 19:55 BST | Sonnet 5.5 | `docs/evidence/overnight/blood-pact-magic-*`; `scripts/smoke-profile.sh --blood-pact-magic` |
-| 2 | Blood Pact mixed choices | passed 13 Oct 20:20 BST | Sonnet 5.5 | `docs/evidence/overnight/mixed-*`, `reese-mercy-*`; `--blood-pact-kayle/--blood-pact-caitlin/--blood-pact-reese` |
-| 3 | Druidic Ritual earned route | queued | | |
+| 1 | Blood Pact staff magic | passed 13 Oct (before 19:29 BST) | Sonnet 5.5 | PR #20 (9dd8ff9);  `docs/evidence/overnight/blood-pact-magic-*`; `scripts/smoke-profile.sh --blood-pact-magic` |
+| 2 | Blood Pact mixed choices | passed 13 Oct (before 19:29 BST) | Sonnet 5.5 | PR #20 (9dd8ff9);  `docs/evidence/overnight/mixed-*`, `reese-mercy-*`; `--blood-pact-kayle/--blood-pact-caitlin/--blood-pact-reese` |
+| 3 | Druidic Ritual earned route | running (route research done; probe code in progress) | | |
 | 4 | Gather / fire / cook | queued | | |
 | 5 | Bank / shop / pottery | queued | | |
 | 6 | Per-world settings and lifecycle | queued | | |
@@ -60,5 +60,7 @@ Worker: Claude Sonnet 5.5 (`claude-sonnet-5-5`, medium effort, as verified in th
 
 Log (BST, 13–14 October):
 - 18:51 Started. Read the queue; checkout clean on `coverage/overnight-playtests-20261013`.
-- 19:55 Item 1 passed after three diagnostic reruns. Findings: a new character already carries 25 air and 15 mind runes (Mikasi refuses more), Caitlin's staff supplies air itself (air stayed 25, mind 15→11 for 4 casts), the tutor is named "Magic instructor" in the native menu, and the spellbook panel offers a native `Autocast` action on Wind Strike. No production change was needed.
-- 20:20 Item 2 passed once per route: spare Kayle/kill Caitlin, kill Kayle/spare Caitlin, and Reese mercy (the quest script still kills him by poison; saved state `killed`). The mixed routes pick Reese's pre-fight line "I'm the one who defeated your lackeys", which exists only for mixed fates. No production change.
+- Item 1 passed after three diagnostic reruns. Findings: a new character already carries 25 air and 15 mind runes (Mikasi refuses more), Caitlin's staff supplies air itself (air stayed 25, mind 15→11 for 4 casts), the tutor is named "Magic instructor" in the native menu, and the spellbook panel offers a native `Autocast` action on Wind Strike. No production change was needed.
+- Item 2 passed once per route: spare Kayle/kill Caitlin, kill Kayle/spare Caitlin, and Reese mercy (the quest script still kills him by poison; saved state `killed`). The mixed routes pick Reese's pre-fight line "I'm the one who defeated your lackeys", which exists only for mixed fates. No production change.
+- 19:29 PR #20 merged (CI green, `--admin` squash). Branch `coverage/overnight-druidic-20261013` started for item 3.
+- 19:45 No tool/API error stopped the run: several read-only shell commands were refused by the permission classifier when run from a nested `upstream/` working directory; running them from the repo root works. No world or build was active; nothing lost. Item 3 research: the quest needs raw beef, chicken, rat meat and bear meat. Sources in this server's data: cows (3254,3260) and chickens (3231,3299) near Lumbridge, giant rats (3260,3350) and a black bear (3296,3347) east of Varrock, then Kaqemeex (2925,3486), Sanfew (2897,3426 plane 1) and the Cauldron of Thunder (2893,9831) in Taverley Dungeon, whose entrance room holds blue dragons. Plan: add a `druidic` route mode to `NativeBloodPactProbe` (shared pad/travel helpers), train on cows first for survivability, and a tabu-style long-distance walker.
