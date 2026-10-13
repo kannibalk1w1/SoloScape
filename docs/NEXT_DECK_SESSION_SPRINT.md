@@ -12,4 +12,4 @@ The UI and individual quest/production gateways now have fixture coverage. The n
 
 A reproducible mouse-free Deck session completes a real quest and production/banking loop; it survives save/reload and suspend/resume with progress intact. Performance results report actual canvas/settings, frame-time tails, power conditions and any unresolved 60 FPS shortfall. Physical controller acceptance comes from the owner playtest, supported by independent native automation and trace evidence.
 
-This document is a recommendation, not a claim that the new sprint has started or its acceptance has passed.
+The sprint started on 13 October 2026; completed batches and their limits are recorded in [sprint progress](DECK_SESSION_SPRINT.md). Acceptance has not passed.

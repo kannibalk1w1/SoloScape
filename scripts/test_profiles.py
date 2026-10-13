@@ -195,6 +195,16 @@ class ProfileTests(unittest.TestCase):
         self.assertTrue(origin.exists());self.assertEqual(self.profile.state,old)
         self.assertEqual((old/'saves/tester.toml').read_bytes(),native_save())
 
+    def test_native_writer_escapes_decode_identically_in_strict_toml(self):
+        # Exact bytes asserted by server ConfigStringEscapeTest's writer test.
+        escaped=b'desc = "q\\" b\\\\ n\\n t\\t r\\r e\\u001B d\\u007F \xc3\xa9"\n'
+        save=native_save().replace(b'[variables]\n',b'[variables]\n'+escaped+b'"Mod \\"Mark\\"" = "Ye \\"Olde\\" C:\\\\Clan\\\\"\n')
+        variables=profiles.validate_save(save)['variables']
+        self.assertEqual(variables['desc'],'q" b\\ n\n t\t r\r e\x1b d\x7f \u00e9')
+        self.assertEqual(variables['Mod "Mark"'],'Ye "Olde" C:\\Clan\\')
+        # Before server 0022 a trailing backslash was written raw and broke strict validation.
+        with self.assertRaises(ValueError):profiles.validate_save(native_save().replace(b'[variables]\n',b'[variables]\nclan = "C:\\Clan\\"\n'))
+
     def test_derived_logs_and_cache_are_not_backed_up_but_failed_saves_are(self):
         (self.profile.state/'temp/derived.map').write_bytes(b'cache')
         (self.profile.state/'logs/session.log').write_text('logs')
