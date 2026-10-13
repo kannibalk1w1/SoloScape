@@ -9,6 +9,10 @@ promised before the relevant subsystem has been inspected.
 
 The owner has set sustained 60 FPS as the Deck target (12 October 2026). Prioritise [the Deck 60 FPS sprint](DECK_60FPS_SPRINT.md): verify frame pacing and actual renderer/settings, establish a full-screen Gaming Mode route and frame-time budget, profile controller/rendering costs, implement measured fixes, then validate sustained performance and current playtest controls on hardware. M4 remains pending until these checks pass. Automatic save sync and broader content expansion follow this milestone.
 
+## Parallel content coverage — 13 October 2026
+
+The owner is playtesting the controller-only session while implementation audits broader content in isolated host worlds. The first batch covers Blood Pact/Imp Catcher/Druidic Ritual logic and spinning, pottery, smelting, smithing and fletching; see [coverage and limits](CONTENT_COVERAGE.md). It adds readable quest introductions/rewards and repairs mixed-inventory pottery firing. Hardware/session/performance acceptance remains open. New content builds do not replace the active Deck playtest without a stopped, verified save.
+
 ## Product direction
 
 A local RuneScape RPG with 2010–2011 mechanics, native console controls, a dependable
