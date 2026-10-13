@@ -26,6 +26,13 @@ public final class NativeBloodPactProbe {
  private static final int A=1,B=2,X=4,LB=1<<9,RB=1<<10,UP=1<<11,DOWN=1<<12;
  private static final int DONE=99;
  private static final boolean KILL_CULTISTS=Boolean.getBoolean("soloscape.bloodpact.killCultists");
+ /** Per-cultist fates; the all-kill flag is the default for both. Reese's end choice defaults to kill. */
+ private static final boolean KILL_KAYLE=choice("kayle");private static final boolean KILL_CAITLIN=choice("caitlin");
+ private static final boolean SPARE_REESE="spare".equals(System.getProperty("soloscape.bloodpact.reese"));
+ /** Wield Caitlin's staff and beat Reese with an autocast spell. */
+ private static final boolean MAGIC=Boolean.getBoolean("soloscape.bloodpact.magic");
+ private static boolean choice(String who){String v=System.getProperty("soloscape.bloodpact."+who);return v==null?KILL_CULTISTS:v.equals("kill");}
+ private static Map<String,Integer> beforeReese;
  private static int stage,phase,sub,heldBefore,attempts,cycles,represses;private static long stageAt,phaseAt,subAt,started,lastPress;
  private static SoloScapeControllerPlugin plugin;private static Method process;private static Field failed;
  private static GamepadState raw;private static WorldControls world;
@@ -225,6 +232,55 @@ public final class NativeBloodPactProbe {
  }
  private static final Set<Integer> seenPanels=new HashSet<>();
 
+ // ---- magic: the new character's own starter runes, then Wind Strike as the staff's autocast ----
+ private static long lastTab;
+ /** Opens the spellbook tab and uses Wind Strike's native Autocast action. */
+ private static boolean autocast()throws Exception{
+  long now=System.currentTimeMillis();UiState state=ControllerUi.snapshot(true);
+  if(state.panel==null||!state.panel.name.equals("Spellbook")){if(now-lastTab>900){lastTab=now;ControllerUi.openTab(HomeTab.SPELLBOOK.ordinal());}return false;}
+  if(now-lastTab<600)return false;
+  StringBuilder seen=new StringBuilder();
+  for(UiState.Pane pane:state.panel.panes)for(UiState.Widget w:state.panel.panes.length>0?pane.widgets:new UiState.Widget[0]){
+   if(w==null)continue;if(seen.length()<900&&!w.name.isEmpty())seen.append(w.name).append(w.actions.length>0?Arrays.toString(Arrays.stream(w.actions).map(a->a.label).toArray()):"").append(" | ");
+   if(!w.name.equalsIgnoreCase("Wind Strike"))continue;
+   for(UiState.Action a:w.actions)if(a.label.toLowerCase(Locale.ROOT).contains("autocast")){
+    ControllerUi.invoke(w,a);results.put("autocast_action",a.label+" on "+w.name);timeline.add("selected Wind Strike autocast");lastTab=now;
+    ControllerUi.cancelWorld();return true;}
+   StringBuilder labels=new StringBuilder();for(UiState.Action a:w.actions)labels.append(a.label).append(',');
+   throw new IllegalStateException("Wind Strike offers no Autocast action; actions="+labels+" panel widgets="+seen);
+  }
+  require(now-subAt<10_000,"Wind Strike not found in the spellbook panel: "+seen);
+  return false;
+ }
+ private static int[] runesBefore;private static boolean shot;
+ /** Window screenshot from a side thread so the client thread is never stalled past the 750 ms input reset. */
+ private static void screenshot(String suffix){
+  try{Canvas canvas=client().getCanvas();Rectangle area=new Rectangle(canvas.getLocationOnScreen(),canvas.getSize());String file=probeMarker+suffix;
+   new Thread(()->{try{javax.imageio.ImageIO.write(new Robot().createScreenCapture(area),"png",new java.io.File(file));}catch(Exception ignored){}}).start();
+  }catch(Exception ignored){}
+ }
+ /** Before Reese: the starter rune counts that his fight must spend. */
+ private static boolean noteRunes(){
+  if(!MAGIC||runesBefore!=null)return true;int air=count("Air rune"),mind=count("Mind rune");if(air<0||mind<0)return false;
+  runesBefore=new int[]{air,mind};results.put("runes_before_reese",air+" air, "+mind+" mind");return true;
+ }
+ /** During Reese's fight: a screenshot once the first cast has paid out Magic XP. */
+ private static void watchCasting(){
+  if(!MAGIC||shot)return;if(experience().get("Magic")>beforeReese.get("Magic")){shot=true;screenshot(".magic-fight.png");timeline.add("first Magic XP: screenshot");}
+ }
+ /** Runes spent and Magic XP gained during Reese's fight, with Attack XP unchanged: the staff really cast. */
+ private static boolean magicEvidence(){
+  if(!MAGIC)return true;Map<String,Integer> now=experience();
+  results.put("magic_xp_before_reese",beforeReese.get("Magic"));results.put("magic_xp_after_reese",now.get("Magic"));
+  results.put("attack_xp_before_reese",beforeReese.get("Attack"));results.put("attack_xp_after_reese",now.get("Attack"));
+  require(now.get("Magic")>beforeReese.get("Magic"),"No Magic XP earned against Reese: "+beforeReese.get("Magic")+" -> "+now.get("Magic"));
+  require(now.get("Attack").equals(beforeReese.get("Attack")),"Reese fight gave melee XP, so the staff meleed: "+beforeReese.get("Attack")+" -> "+now.get("Attack"));
+  int air=count("Air rune"),mind=count("Mind rune");if(air<0||mind<0)return false;
+  results.put("runes_after_reese",air+" air, "+mind+" mind");
+  // The inventory widget can lag the server by a tick or two; the authoritative rune counts are checked in the saved file.
+  return true;
+ }
+
  // ---- top-level ----
  public static boolean tick(String marker)throws Exception{
   GameClient client=client();
@@ -240,7 +296,8 @@ public final class NativeBloodPactProbe {
    RuneLite.getInjector().getInstance(OverlayManager.class).add(observation);
    started=System.currentTimeMillis();probeMarker=marker;
    results.put("fixtures","none: no admin commands, item grants, teleports or injected damage");
-   results.put("cultist_choices",KILL_CULTISTS?"kill Kayle and Caitlin":"spare Kayle and Caitlin");
+   results.put("cultist_choices","Kayle: "+(KILL_KAYLE?"kill":"spare")+", Caitlin: "+(KILL_CAITLIN?"kill":"spare")+", Reese: "+(SPARE_REESE?"offer mercy (he still dies)":"kill"));
+   results.put("route_variant",MAGIC?"magic: starter runes, staff, autocast Wind Strike against Reese":"melee Reese");
    results.put("start_tile",worldX()+","+worldY()+","+plane());results.put("start_experience",experience());
    results.put("start_inventory",inventory());
    next("setup");
@@ -309,7 +366,8 @@ public final class NativeBloodPactProbe {
     if(now-lastPress>800)for(UiState.Action action:sword.actions)if(action.label.equalsIgnoreCase("Wield")){lastPress=now;ControllerUi.invoke(sword,action);subAt=now;}
     return;
    }
-   case 2:if(travel(3244,3199,2,"Xenia in Lumbridge cemetery"))next("walked to Xenia");return;
+   case 2:{
+    if(travel(3244,3199,2,"Xenia in Lumbridge cemetery"))next("walked to Xenia");return;}
    case 3:{preferred=new String[]{"What do you need help with?","I'll help you."};
     if(press("Xenia","Talk-to",A)!=null){results.put("xenia_target_focus","Xenia/Talk-to");next("talked to Xenia");}return;}
    case 4:if(now-stageAt>2500&&ControllerWorld.ready())next("quest accepted");return;
@@ -327,7 +385,7 @@ public final class NativeBloodPactProbe {
    case 9:{int[] t=instance(3877,5537);if(find("Kayle","Talk-to")!=null||travel(t[0],t[1],1,"Kayle's approach")){results.put("movement_tile_plane1_pixels",observation.pixels(1));next("approached Kayle");}return;}
    case 10:{ControllerTarget p=press("Kayle","Attack",A);if(p!=null||find("Kayle","Talk-to")!=null){results.put("kayle_target",p==null?"defeated by retaliation":p.name+"/"+p.option+" serverApproach="+p.serverApproach);observation.watch("Kayle");next("attacked Kayle");}return;}
    case 11:if(fight("Kayle")){results.put("kayle_health_hud",observation.health());results.put("hp_after_kayle",hp());next("Kayle defeated");}return;
-   case 12:{preferred=new String[]{KILL_CULTISTS?"Yes. Now die!":"give me your stuff"};if(talk("Kayle"))next(KILL_CULTISTS?"killed Kayle":"spared Kayle");return;}
+   case 12:{preferred=new String[]{KILL_KAYLE?"Yes. Now die!":"give me your stuff"};if(talk("Kayle"))next(KILL_KAYLE?"killed Kayle":"spared Kayle");return;}
    case 13:if(loot("Kayle's sling",3877,5543,"kayle"))next("looted Kayle's sling");return;
    case 14:if(cancelWalk(3868,5540))next("B cancelled a walk");return;
    case 15:{if(sub==0){neutral();if(wield("Kayle's sling"))sub(1);return;} // Xenia: ranged beats magic users
@@ -335,15 +393,17 @@ public final class NativeBloodPactProbe {
    case 16:{ControllerTarget p=press("Caitlin","Attack",A);if(p!=null||find("Caitlin","Talk-to")!=null){results.put("caitlin_target",p==null?"defeated by retaliation":p.name+"/"+p.option);observation.watch("Caitlin");next("attacked Caitlin");}return;}
    case 17:if(fight("Caitlin")){results.put("caitlin_health_hud",observation.health());results.put("hp_after_caitlin",hp());next("Caitlin defeated");}return;
    case 18:if(walkThenPress(3871,5535,2,"","Operate"))next("operated winch: gallery gates open");return;
-   case 19:{if(now-stageAt<1500)return;preferred=new String[]{KILL_CULTISTS?"Time for you to die!":"I'm not killing you"};if(talk("Caitlin"))next(KILL_CULTISTS?"killed Caitlin":"spared Caitlin");return;}
+   case 19:{if(now-stageAt<1500)return;preferred=new String[]{KILL_CAITLIN?"Time for you to die!":"I'm not killing you"};if(talk("Caitlin"))next(KILL_CAITLIN?"killed Caitlin":"spared Caitlin");return;}
    case 20:if(loot("Caitlin's staff",3864,5538,"caitlin"))next("looted Caitlin's staff");return;
    case 21:if(now-stageAt>1500&&walkThenPress(3859,5533,2,"","Climb-down"))next("climbed down to Reese's level");return;
-   case 22:{if(plane()!=0||!ControllerWorld.ready())return;if(sub==0){neutral();if(wield("Bronze sword"))sub(1);return;}observation.request(0);int[] t=instance(3866,5528);if(travel(t[0],t[1],1,"tomb door")){results.put("movement_tile_plane0_pixels",observation.pixels(0));next("reached tomb door");}return;}
-   case 23:{preferred=new String[]{"I'm an adventurer"};if(press("","Open",A)!=null)next("opened tomb door");return;}
-   case 24:{if(now-stageAt<2000||now-lastNotReady<1000){neutral();return;}ControllerTarget p=press("Reese","Attack",A);
+   case 22:{if(plane()!=0||!ControllerWorld.ready())return;if(sub==0){neutral();if(wield(MAGIC?"Caitlin's staff":"Bronze sword"))sub(MAGIC?2:1);return;}
+    if(sub==2){neutral();if(autocast())sub(1);return;}
+    observation.request(0);int[] t=instance(3866,5528);if(travel(t[0],t[1],1,"tomb door")){results.put("movement_tile_plane0_pixels",observation.pixels(0));next("reached tomb door");}return;}
+   case 23:{preferred=new String[]{KILL_KAYLE!=KILL_CAITLIN?"I'm the one who":"I'm an adventurer"};if(press("","Open",A)!=null)next("opened tomb door");return;}
+   case 24:{if(now-stageAt<2000||now-lastNotReady<1000){neutral();return;}if(!noteRunes())return;if(beforeReese==null)beforeReese=experience();ControllerTarget p=press("Reese","Attack",A);
     if(p!=null||find("Reese","Talk-to")!=null){results.put("reese_target",p==null?"defeated by retaliation":p.name+"/"+p.option);observation.watch("Reese");next("attacked Reese");}return;}
-   case 25:if(fight("Reese")){results.put("reese_health_hud",observation.health());results.put("hp_after_reese",hp());next("Reese defeated");}return;
-   case 26:{preferred=new String[]{"Time for you to die!"};if(talk("Reese"))next("killed Reese");return;}
+   case 25:{watchCasting();if(fight("Reese")){if(!magicEvidence())return;results.put("reese_health_hud",observation.health());results.put("hp_after_reese",hp());next("Reese defeated");}return;}
+   case 26:{preferred=new String[]{SPARE_REESE?"I'm not killing you":"Time for you to die!"};if(talk("Reese"))next(SPARE_REESE?"offered Reese mercy; he drank poison":"killed Reese");return;}
    case 27:if(now-stageAt>3000&&loot("Reese's sword",3865,5525,"reese"))next("looted Reese's sword");return;
    case 28:{preferred=new String[]{"Yes, rescue Ilona."};if(walkThenPress(3864,5524,1,"Ilona","Untie"))next("untied Ilona");return;}
    case 29:{preferred=new String[]{"Yes, rescue Ilona.","I'm ready for my reward."};if(!instanced()&&ControllerWorld.ready()&&now-stageAt>3000)next("back on the surface");return;}

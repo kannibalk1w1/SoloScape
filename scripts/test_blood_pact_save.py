@@ -47,6 +47,33 @@ class BloodPactSaveTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 smoke_profile.verify_blood_pact_save(save)
 
+    def test_mixed_fates_are_checked_per_cultist(self):
+        save = completed_save()
+        save['variables'].update(blood_pact_kayle='spared', blood_pact_caitlin='killed')
+        smoke_profile.verify_blood_pact_save(save, kayle='spare', caitlin='kill')
+        for kwargs in ({}, {'kayle': 'kill', 'caitlin': 'kill'}, {'kayle': 'kill', 'caitlin': 'spare'}, {'kill_cultists': True}):
+            with self.subTest(kwargs=kwargs), self.assertRaises(RuntimeError):
+                smoke_profile.verify_blood_pact_save(save, **kwargs)
+
+    def magic_save(self):
+        save = completed_save()
+        save['inventories']['inventory'] = [{'id': 'kayles_sling'}, {'id': 'reeses_sword'}, {'id': 'bronze_sword'}, {'id': 'mind_rune', 'amount': 11}]
+        save['inventories']['worn_equipment'] = [{'id': 'caitlins_staff'}]
+        save['experience'][6] = 1015
+        return save
+
+    def test_magic_route_needs_a_wielded_staff_casting_xp_and_spent_runes(self):
+        smoke_profile.verify_blood_pact_save(self.magic_save(), magic=True)
+        for mutate in (
+            lambda s: s['inventories'].update(worn_equipment=[{'id': 'bronze_sword'}]),
+            lambda s: s['experience'].__setitem__(6, 1000),
+            lambda s: s['inventories']['inventory'].__setitem__(3, {'id': 'mind_rune', 'amount': 15}),
+        ):
+            save = self.magic_save()
+            mutate(save)
+            with self.assertRaises(RuntimeError):
+                smoke_profile.verify_blood_pact_save(save, magic=True)
+
 
 if __name__ == '__main__':
     unittest.main()
