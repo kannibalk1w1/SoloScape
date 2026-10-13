@@ -25,10 +25,11 @@ def verify_content_save(saved):
         raise RuntimeError('Druidic Ritual XP/quest-point rewards were not preserved.')
 
 
-def verify_blood_pact_save(saved):
+def verify_blood_pact_save(saved, *, kill_cultists=False):
     """Earned Blood Pact progress must survive Save & Quit and Continue."""
     variables = saved.get('variables', {})
-    expected = {'blood_pact': 'completed', 'blood_pact_kayle': 'spared', 'blood_pact_caitlin': 'spared', 'blood_pact_reese': 'killed', 'quest_points': 1}
+    fate = 'killed' if kill_cultists else 'spared'
+    expected = {'blood_pact': 'completed', 'blood_pact_kayle': fate, 'blood_pact_caitlin': fate, 'blood_pact_reese': 'killed', 'quest_points': 1}
     wrong = {key: variables.get(key) for key, value in expected.items() if variables.get(key) != value}
     if wrong:
         raise RuntimeError(f'Blood Pact progress was not preserved: {wrong}')
@@ -57,6 +58,7 @@ def _main():
     parser.add_argument("--map",action="store_true",help="Open and close the real world map through native controller gateways.")
     parser.add_argument("--content-coverage",action="store_true",help="Native quest intro/reward and production fixtures with supplied materials; no actual-route claim.")
     parser.add_argument("--blood-pact",action="store_true",help="Play The Blood Pact from a fresh character with controller input only: real travel, earned combat, loot and B cancellation; no admin fixtures.")
+    parser.add_argument("--blood-pact-kill-cultists",action="store_true",help="Run the earned Blood Pact route choosing to kill Kayle and Caitlin; implies --blood-pact.")
     parser.add_argument("--save-quit",action="store_true",help="Confirm the in-game Save & Quit gateway and verify normal server save/shutdown.")
     parser.add_argument("--artwork",action="store_true",help="Capture actual native cache item sprites for UI previews in a disposable world.")
     parser.add_argument("--tab-bar",action="store_true",help="Drive D-pad tab-bar focus through the plugin input tick: order, highlight, A ownership, opening and B to world.")
@@ -64,6 +66,7 @@ def _main():
     parser.add_argument("--deck60-gl-only",action="store_true",help="Skip software stages and compare OpenGL pacing at full resolution.")
     parser.add_argument("--deck-route-seconds",type=int,default=0,help="Repeat the real-map full-resolution route for 60–3600 seconds, then verify a no-action reload.")
     options=parser.parse_args()
+    if options.blood_pact_kill_cultists:options.blood_pact=True
     if options.fullscreen_gl_only:options.fullscreen=True
     if options.deck60_gl_only:options.deck60=True
     if options.deck_route_seconds and not 60<=options.deck_route_seconds<=3600:parser.error('Route duration must be 60–3600 seconds.')
@@ -113,7 +116,7 @@ def _main():
             if '-jar' in argv and any('void-client-' in arg for arg in argv):
                 i=argv.index('-jar');jar=argv[i+1]
                 label='Existing authorized X11/XWayland desktop; native overlay-render intervals, real Gateway/synthetic UI input and AWT events through native canvas mouse handlers. No physical controller or Gaming Mode acceptance.' if options.desktop else 'Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.'
-                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.probe.awt.mouse=true'] if options.desktop else [])+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+(['-Dsoloscape.text.probe.fast=true'] if options.text else [])+(['-Dsoloscape.playable.probe=true'] if options.journey else [])+(['-Dsoloscape.deck60.route=true','-Dsoloscape.deck60.route.seconds='+str(options.deck_route_seconds if iteration==0 else 0),'-Dsoloscape.performance.timings=true'] if options.deck_route_seconds else [])+(['-Dsoloscape.deck60.startStage=5'] if options.deck60_gl_only else [])+(['-Dsoloscape.deck60.probe=true','-Dsoloscape.performance.timings=true'] if options.deck60 else [])+(['-Dsoloscape.fullscreen.glOnly=true'] if options.fullscreen_gl_only else [])+(['-Dsoloscape.fullscreen.probe=true']+([] if options.desktop else ['-Dsoloscape.fullscreen.softwareOnly=true']) if options.fullscreen else [])+(['-Dsoloscape.playtest2.probe=true'] if options.playtest_two and iteration==0 else [])+(['-Dsoloscape.map.probe=true'] if options.map else [])+(['-Dsoloscape.content.probe=true'] if options.content_coverage and iteration==0 else [])+(['-Dsoloscape.bloodpact.probe=true'] if options.blood_pact and iteration==0 else [])+(['-Dsoloscape.quit.probe=true'] if options.save_quit and iteration==0 else [])+(['-Dsoloscape.artwork.probe=true'] if options.artwork and iteration==0 else [])+(['-Dsoloscape.tabbar.probe=true'] if options.tab_bar and iteration==0 else [])+(['-Dsoloscape.performance.probe=true'] if options.performance else [])+(['-Dsoloscape.sidebar.probe=true'] if options.sidebar else [])+(['-Dsoloscape.sidebar.baseline=true'] if options.sidebar_baseline else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
+                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.probe.awt.mouse=true'] if options.desktop else [])+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+(['-Dsoloscape.text.probe.fast=true'] if options.text else [])+(['-Dsoloscape.playable.probe=true'] if options.journey else [])+(['-Dsoloscape.deck60.route=true','-Dsoloscape.deck60.route.seconds='+str(options.deck_route_seconds if iteration==0 else 0),'-Dsoloscape.performance.timings=true'] if options.deck_route_seconds else [])+(['-Dsoloscape.deck60.startStage=5'] if options.deck60_gl_only else [])+(['-Dsoloscape.deck60.probe=true','-Dsoloscape.performance.timings=true'] if options.deck60 else [])+(['-Dsoloscape.fullscreen.glOnly=true'] if options.fullscreen_gl_only else [])+(['-Dsoloscape.fullscreen.probe=true']+([] if options.desktop else ['-Dsoloscape.fullscreen.softwareOnly=true']) if options.fullscreen else [])+(['-Dsoloscape.playtest2.probe=true'] if options.playtest_two and iteration==0 else [])+(['-Dsoloscape.map.probe=true'] if options.map else [])+(['-Dsoloscape.content.probe=true'] if options.content_coverage and iteration==0 else [])+(['-Dsoloscape.bloodpact.probe=true'] + (['-Dsoloscape.bloodpact.killCultists=true'] if options.blood_pact_kill_cultists else []) if options.blood_pact and iteration==0 else [])+(['-Dsoloscape.quit.probe=true'] if options.save_quit and iteration==0 else [])+(['-Dsoloscape.artwork.probe=true'] if options.artwork and iteration==0 else [])+(['-Dsoloscape.tabbar.probe=true'] if options.tab_bar and iteration==0 else [])+(['-Dsoloscape.performance.probe=true'] if options.performance else [])+(['-Dsoloscape.sidebar.probe=true'] if options.sidebar else [])+(['-Dsoloscape.sidebar.baseline=true'] if options.sidebar_baseline else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
             if (options.deck60 or options.deck_route_seconds) and any("void-server-" in arg for arg in argv):
                 argv=argv[:1]+["-Dsoloscape.performance.timings.file="+str(testroot/("server-new.csv" if iteration==0 else "server-continue.csv"))]+argv[1:]
             if options.journey and any("void-server-" in arg for arg in argv):
@@ -162,7 +165,7 @@ def _main():
             if options.content_coverage:
                 verify_content_save(saved)
             if options.blood_pact:
-                verify_blood_pact_save(saved)
+                verify_blood_pact_save(saved, kill_cultists=options.blood_pact_kill_cultists)
                 if iteration==0:
                     Path(str(marker)+'.bloodpact.json').replace(testroot/'blood-pact.json')
             if savebefore is not None:

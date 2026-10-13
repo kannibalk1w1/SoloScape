@@ -17,6 +17,23 @@ class BloodPactSaveTests(unittest.TestCase):
     def test_earned_completion_is_accepted(self):
         smoke_profile.verify_blood_pact_save(completed_save())
 
+    def test_kill_choices_survive_with_the_same_loot_and_rewards(self):
+        save = completed_save()
+        save['variables'].update(blood_pact_kayle='killed', blood_pact_caitlin='killed')
+        smoke_profile.verify_blood_pact_save(save, kill_cultists=True)
+        with self.assertRaises(RuntimeError):
+            smoke_profile.verify_blood_pact_save(save)
+
+    def test_kill_route_rejects_spared_or_unresolved_cultists(self):
+        for cultist in ('blood_pact_kayle', 'blood_pact_caitlin'):
+            for fate in ('spared', 'defeated', None):
+                with self.subTest(cultist=cultist, fate=fate):
+                    save = completed_save()
+                    save['variables'].update(blood_pact_kayle='killed', blood_pact_caitlin='killed')
+                    save['variables'][cultist] = fate
+                    with self.assertRaises(RuntimeError):
+                        smoke_profile.verify_blood_pact_save(save, kill_cultists=True)
+
     def test_missing_progress_loot_or_xp_is_rejected(self):
         for mutate in (
             lambda s: s['variables'].update(blood_pact='reese'),
