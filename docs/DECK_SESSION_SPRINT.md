@@ -69,3 +69,20 @@ New regressions cover:
 - the kill branches for Kayle and Caitlin.
 
 The health check is geometric, not a reviewed screenshot.
+
+## Deck deployment status
+
+A matched private candidate was exported from main `cfad366` on 13 October 2026. It contains 10,547 manifest files, server 0022, client 0052 and the Blood Pact probe. The Deck did not answer ping or SSH, so nothing was staged or activated. The r28 installation, its stable wrapper and the real character save are untouched.
+
+Before activation, follow the guarded r28 procedure:
+1. Confirm no world, launcher session or `session.json` is active.
+2. Take and verify a fresh backup, copy the profile with hash checks under build/profile locks, and switch `launch.sh` reversibly.
+3. **Server 0022 adds one precondition.** Count raw backslashes in the real save without printing its contents. If there are none, the new reader decodes the save exactly as before. If there are any, review them first, because `\n`-style sequences now decode as TOML escapes.
+
+## Next priorities
+
+1. Druidic Ritual with real ingredient gathering and travel, and a bank/shop/crafting round trip, reusing the Blood Pact probe's stick travel and pad gateways.
+2. The 30-minute 1280×800 Gaming Mode route on battery and external power, once the Deck is reachable. Include combat and loot from this batch.
+3. Suspend/resume and controller reconnection across a saved session, with owner participation for physical acceptance.
+4. Blood Pact variants not yet covered: kill branches for Kayle and Caitlin, and magic combat with Caitlin's staff.
+5. Owner decision: should world input re-arm without a neutral stick after cutscenes and fades (see batch 2)?
