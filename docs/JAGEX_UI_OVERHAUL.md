@@ -143,3 +143,24 @@ The real launcher/backend probe passes existing mapped-navigation and name-entry
 
 ![Animated braziers — sampled Swing launcher frames](images/launcher-animated-braziers.gif)
 ![Launcher braziers at 1280×800](images/launcher-braziers-1280x800.png)
+
+## Reference flame frames and heavier launcher text
+
+Owner feedback found the procedural flame silhouette/scale and thin body font still missed the original login scene. Client patch `0049-reference-brazier-frames-and-bold-launcher-text.patch` replaces the procedural fire with the owner-supplied eight-frame RS login sheet. It extracts the warm flame pixels at runtime, retains their original RGB and sequence, and excludes the stone backdrop, bowls and corner badges. The source PNG stays private in `.runtime/launcher-art/brazier-flames.png` and ships only in the private owner-to-Deck snapshot.
+
+The reference bowl lip (49 px) aligns with the original scene lip (96 px), so flame height/width scale uniformly relative to the bowl. Mirroring and resizing follow the existing scene, with the right flame four frames out of phase. The 30 Hz visibility/gameplay timer displays each source frame for three ticks. The character frame has wider side insets so it no longer covers most of the flames. Missing/invalid reference art leaves the static scene without a flame timer.
+
+Supporting text now uses the existing **RuneScape bold face at 22 px**, including character status, parchment details, subtitle, status and dialogs. The title/button styles remain unchanged. The actual 1280×800 capture below was checked for complete flame visibility, stronger glyph strokes and wrapped detail text.
+
+The matched client jar builds; the exported client stack reproduces all 138 modified/patched files. The real Swing launcher/backend probe verifies eight loaded reference frames, animated visibility, pause/resume/disposal, mapped navigation, name entry and world-rate persistence. The final host paint check averages **6.30 ms** over 100 paints; this is private host/Xvfb evidence, not Deck scanout FPS or physical input acceptance. [Aggregate result](evidence/launcher-reference-flames.json).
+
+To install the owner's sheet on another private checkout:
+
+```bash
+python3 scripts/setup_launcher_art.py --spritesheet /path/to/640x480-brazier-sheet.png
+```
+
+The private exporter and launcher fixture copy both art files. No standalone supplied sheet is committed; the published images are complete launcher captures with disposable character data.
+
+![Reference flames and heavier supporting text](images/launcher-reference-flames-bold-text.png)
+![Sampled reference-frame animation](images/launcher-reference-flames.gif)

@@ -18,10 +18,11 @@ def main():
     (root/'scripts').mkdir(parents=True)
     for source in (local_dev.ROOT/'scripts').glob('*.py'):
         shutil.copyfile(source,root/'scripts'/source.name)
-    artwork=local_dev.ROOT/'.runtime/launcher-art/brazier.jpg'
-    if artwork.is_file():
-        (root/'.runtime/launcher-art').mkdir(parents=True)
-        shutil.copyfile(artwork,root/'.runtime/launcher-art/brazier.jpg')
+    for name in ('brazier.jpg', 'brazier-flames.png'):
+        artwork=local_dev.ROOT/'.runtime/launcher-art'/name
+        if artwork.is_file():
+            (root/'.runtime/launcher-art').mkdir(parents=True,exist_ok=True)
+            shutil.copyfile(artwork,root/'.runtime/launcher-art'/name)
     java=Path(os.environ.get('CLIENT_JAVA','java')).resolve()
     javac=java.with_name('javac')
     classes=root/'classes';classes.mkdir()

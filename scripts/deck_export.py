@@ -90,9 +90,10 @@ def export():
             copy_pin_metadata(repo, destination / 'upstream' / name, pin)
         for source in (server, client, local_dev.RUNTIME / 'build-stamp.json'):
             copy_file(source, destination / source.relative_to(local_dev.ROOT))
-        artwork = local_dev.RUNTIME / 'launcher-art/brazier.jpg'
-        if artwork.is_file():
-            copy_file(artwork, destination / '.runtime/launcher-art/brazier.jpg')
+        for name in ('brazier.jpg', 'brazier-flames.png'):
+            artwork = local_dev.RUNTIME / 'launcher-art' / name
+            if artwork.is_file():
+                copy_file(artwork, destination / '.runtime/launcher-art' / name)
         cache = local_dev.SERVER / 'data/cache'
         if any(path.is_symlink() for path in cache.rglob('*')) or cache.is_symlink():
             raise ValueError('Cache symlinks are refused; supply ordinary compatible cache files.')
