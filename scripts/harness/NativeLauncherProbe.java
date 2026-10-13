@@ -58,6 +58,8 @@ public final class NativeLauncherProbe
             edt(()->{button(worldDialog(),"OK").doClick();return null;});
             waitFor(()->{Object row=((JList<?>)field(launcher,"list")).getSelectedValue();if(row==null)return false;com.google.gson.JsonObject data=(com.google.gson.JsonObject)field(row,"data");return data.getAsJsonObject("world").get("xp").getAsDouble()==5.0&&data.getAsJsonObject("world").get("drops").getAsDouble()==3.0;},"World rates did not persist through backend refresh");
             Thread.sleep(200);
+            edt(()->{JFrame window=(JFrame)field(launcher,"frame");window.setSize(1280,800);window.setLocation(0,0);return null;});
+            Thread.sleep(200);
             Rectangle launcherScreen=edt(()->{JFrame window=(JFrame)field(launcher,"frame");return new Rectangle(window.getLocationOnScreen(),window.getSize());});
             javax.imageio.ImageIO.write(new Robot().createScreenCapture(launcherScreen),"png",root.resolve("launcher-scene.png").toFile());
             LauncherKeyboard second=open();JTextField secondLabel=edt(()->text(second.owner,"Character label"));JTextField secondAccount=edt(()->text(second.owner,"Account name"));
