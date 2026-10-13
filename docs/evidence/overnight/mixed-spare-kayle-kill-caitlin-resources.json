@@ -1,0 +1,26 @@
+{
+ "resources-new.json": {
+  "sample_count": 470,
+  "peak_rss_mib_by_role": {
+   "server": 1674.76,
+   "client": 2492.91
+  },
+  "peak_combined_rss_mib": 4141.1,
+  "mean_cpu_percent_one_core_100": {
+   "server": 13.09,
+   "client": 81.77
+  }
+ },
+ "resources-continue.json": {
+  "sample_count": 43,
+  "peak_rss_mib_by_role": {
+   "server": 1317.76,
+   "client": 1616.04
+  },
+  "peak_combined_rss_mib": 2933.8,
+  "mean_cpu_percent_one_core_100": {
+   "server": 69.76,
+   "client": 139.39
+  }
+ }
+}

@@ -44,4 +44,21 @@ Do useful work on later independent items when one item is blocked. Limit repeat
 
 ## Progress ledger
 
-Created by Codex on 13 October; ready for the lower-tier Claude worker. No overnight item has started yet. Replace this line with timestamped entries as work proceeds.
+Worker: Claude Sonnet 5.5 (`claude-sonnet-5-5`, medium effort, as verified in the launch banner). No Opus, no Haiku sub-agents used so far; no escalation.
+
+| # | Item | Status | Model | Evidence / PR |
+| --- | --- | --- | --- | --- |
+| 1 | Blood Pact staff magic | passed 13 Oct 19:55 BST | Sonnet 5.5 | `docs/evidence/overnight/blood-pact-magic-*`; `scripts/smoke-profile.sh --blood-pact-magic` |
+| 2 | Blood Pact mixed choices | passed 13 Oct 20:20 BST | Sonnet 5.5 | `docs/evidence/overnight/mixed-*`, `reese-mercy-*`; `--blood-pact-kayle/--blood-pact-caitlin/--blood-pact-reese` |
+| 3 | Druidic Ritual earned route | queued | | |
+| 4 | Gather / fire / cook | queued | | |
+| 5 | Bank / shop / pottery | queued | | |
+| 6 | Per-world settings and lifecycle | queued | | |
+| 7 | Sustained host session | queued | | |
+| 8 | Deck delivery | queued | | |
+| 9 | Morning report and Git | queued | | |
+
+Log (BST, 13–14 October):
+- 18:51 Started. Read the queue; checkout clean on `coverage/overnight-playtests-20261013`.
+- 19:55 Item 1 passed after three diagnostic reruns. Findings: a new character already carries 25 air and 15 mind runes (Mikasi refuses more), Caitlin's staff supplies air itself (air stayed 25, mind 15→11 for 4 casts), the tutor is named "Magic instructor" in the native menu, and the spellbook panel offers a native `Autocast` action on Wind Strike. No production change was needed.
+- 20:20 Item 2 passed once per route: spare Kayle/kill Caitlin, kill Kayle/spare Caitlin, and Reese mercy (the quest script still kills him by poison; saved state `killed`). The mixed routes pick Reese's pre-fight line "I'm the one who defeated your lackeys", which exists only for mixed fates. No production change.

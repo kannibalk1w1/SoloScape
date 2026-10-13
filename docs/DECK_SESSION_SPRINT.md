@@ -98,3 +98,20 @@ Before activation, follow the guarded r28 procedure:
 3. Suspend/resume and controller reconnection across a saved session, with owner participation for physical acceptance.
 4. Blood Pact variants not yet covered: magic combat with Caitlin's staff and mixed spare/kill choices. The all-kill route passed in batch 3.
 5. Owner decision resolved: retain release-and-push after cutscenes and fades. World input still requires a neutral stick before re-arming (see batch 2).
+
+## Overnight batch A — staff magic and mixed Blood Pact choices (13 October 2026)
+
+Run by Claude Sonnet 5.5 from [the overnight queue](OVERNIGHT_PLAYTEST_QUEUE_20261013.md). All routes are earned on isolated native worlds with no admin commands, grants, teleports or injected damage; synthetic gamepad input on a private Xvfb display (892×529, software rendering), not physical Deck evidence.
+
+| Route | Command | Result |
+| --- | --- | --- |
+| Reese beaten with Caitlin's staff | `scripts/smoke-profile.sh --blood-pact-magic` | passed; 4 Wind Strike casts |
+| Spare Kayle, kill Caitlin | `--blood-pact-kayle spare --blood-pact-caitlin kill` | passed |
+| Kill Kayle, spare Caitlin | `--blood-pact-kayle kill --blood-pact-caitlin spare` | passed |
+| Reese "I'm not killing you" | `--blood-pact-reese spare` | passed; he still dies by poison, state `killed` |
+
+**Magic.** The new character already carries 25 air and 15 mind runes (the Magic instructor refuses a second grant, so no errand is needed). The probe wields Caitlin's staff from the native inventory, opens the spellbook tab and uses Wind Strike's native `Autocast` action, then attacks Reese with A. Evidence: Magic XP 0 → 20 during the fight while Attack XP stayed 8 (so the staff did not melee), mind runes 15 → 11 in the saved file, air runes unchanged at 25 (Caitlin's staff supplies air). After Save & Quit and Continue the staff is still wielded, Magic XP exceeds the 100 XP quest reward, the quest is complete and all backups verified. [Fight screenshot](evidence/overnight/blood-pact-magic-fight.png) (disposable AlphaTest character, reviewed). No production code changed; the probe, `smoke_profile.py` validators and their unit tests did.
+
+**Mixed fates.** The saved validators now check each cultist separately, and the Reese pre-fight choice takes the mixed-only line "I'm the one who defeated your lackeys". Each route verified native saved fates, sling/staff/sword drops with B-cancelled loot piles, reward panel and Continue.
+
+Evidence and per-run resource peaks: `docs/evidence/overnight/`. Peak sampled RSS on the magic New run was 2,533 MiB client and 1,779 MiB server (host software renderer). Routes took 245–263 s for New and about 22.6 s for Continue.
