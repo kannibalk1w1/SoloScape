@@ -1,0 +1,1459 @@
+diff --git a/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java b/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
+--- a/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
++++ b/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
+@@ -24,7 +24,7 @@
+    toggle("directMovement","Direct movement"),toggle("serverFeatures","SoloScape server features"),toggle("invertY","Invert camera Y"),
+    new Option("glyphs","Button labels","Choose the labels displayed in controller hints.","XBOX","PLAYSTATION"),toggle("showGuide","Controller guide"),
+    new Option("keyboardMode","Text keyboard","Automatic prefers Steam on Deck. System entry pauses controller actions; Enter or the on-screen controls finish.","AUTO","STEAM","CONTROLLER"),
+-   new Option("classicTheme","Classic controller UI","A switches classic stone/brown/gold and modern presentation. Native actions are unchanged.","true","false"),new Option("serverEntryCancel","Matched-server text cancellation","Cancel releases a pending amount/name/text prompt only after a fresh SoloScape capability check. Disable for client-only cancellation.","true","false"),new Option("deck60","Deck 60 FPS target","OpenGL, full native resolution and a 60 FPS cap; animated scenery shadows off. No reduced draw distance or simulation speed changes. Turn off to restore this session's previous graphics settings.","false","true")},
++   new Option("classicTheme","Classic controller UI","A switches the classic RuneScape-style stone panels and fonts or the modern presentation. Native actions are unchanged.","true","false"),new Option("serverEntryCancel","Matched-server text cancellation","Cancel releases a pending amount/name/text prompt only after a fresh SoloScape capability check. Disable for client-only cancellation.","true","false"),new Option("deck60","Deck 60 FPS target","OpenGL, full native resolution and a 60 FPS cap; animated scenery shadows off. No reduced draw distance or simulation speed changes. Turn off to restore this session's previous graphics settings.","false","true")},
+   {button("confirmButton","Confirm / interact","A"),button("cancelButton","Back / cancel","B"),button("actionsButton","Actions / assign","X"),
+    button("previousButton","Previous target / pane","LEFT_BUMPER"),button("nextButton","Next target / pane","RIGHT_BUMPER"),
+    button("inventoryButton","Inventory","Y"),button("homeButton","Home wheel","VIEW"),button("quickButton","Quick wheel","START")},
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerMenu.java b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerMenu.java
+new file mode 100644
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerMenu.java
+@@ -0,0 +1,59 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import java.awt.*;
++
++/**
++ * The classic "Choose Option" menu shared by inventory context actions and world/loot menus:
++ * black title strip, brown body, white option text followed by the coloured target name, and
++ * the selected row lit yellow. Only presentation; callers own selection and native actions.
++ */
++public final class ControllerMenu
++{
++    private ControllerMenu(){}
++    /**
++     * Paints rows {@code start..start+shown-1} at {@code (x,y)} and returns the menu size.
++     * {@code more} adds scroll arrows when rows exist above or below the visible window.
++     */
++    public static Dimension paint(Graphics2D g,int x,int y,int maxWidth,String header,String[] options,String[] targets,Color[] targetColours,int selected,int start,int shown)
++    {
++        FontMetrics metrics=g.getFontMetrics();
++        int pad=5,space=metrics.stringWidth(" "),width=metrics.stringWidth(header)+pad*2;
++        for(int i=start;i<start+shown;i++)width=Math.max(width,metrics.stringWidth(options[i])+(targets[i].isEmpty()?0:space+metrics.stringWidth(targets[i]))+pad*2+metrics.stringWidth(" ↓"));
++        width=Math.min(width,Math.max(60,maxWidth));
++        int row=metrics.getHeight()+4,headerHeight=metrics.getHeight()+2;
++        int height=headerHeight+1+shown*row+3;
++        Rectangle box=new Rectangle(x,y,width,height);
++        int top=y+ControllerTheme.menu(g,box,header,headerHeight);
++        if(!ControllerTheme.classic())top=y+3;
++        for(int i=start;i<start+shown;i++)
++        {
++            int r=i-start,baseline=top+r*row+(row+metrics.getAscent()-metrics.getDescent())/2;
++            boolean chosen=i==selected;
++            if(chosen)
++            {
++                g.setColor(ControllerTheme.classic()?new Color(0,0,0,70):new Color(110,90,35));
++                g.fillRect(x+2,top+r*row,width-4,row);
++                if(ControllerTheme.classic()){g.setColor(ControllerTheme.FOCUS);g.fillRect(x+2,top+r*row+2,2,row-4);}
++            }
++            String arrow=r==0&&start>0?" ↑":r==shown-1&&start+shown<options.length?" ↓":"";
++            int room=width-pad*2-metrics.stringWidth(arrow),cx=x+pad+(ControllerTheme.classic()?2:0);
++            String option=fit(metrics,options[i],room);
++            g.setColor(chosen?ControllerTheme.FOCUS:ControllerTheme.TEXT);ControllerTheme.text(g,option,cx,baseline);
++            cx+=metrics.stringWidth(option);room-=metrics.stringWidth(option);
++            if(!targets[i].isEmpty()&&room>space+metrics.stringWidth("…"))
++            {
++                String target=fit(metrics,targets[i],room-space);
++                g.setColor(chosen&&!ControllerTheme.classic()?ControllerTheme.FOCUS:targetColours[i]);
++                ControllerTheme.text(g,target,cx+space,baseline);cx+=space+metrics.stringWidth(target);
++            }
++            if(!arrow.isEmpty()){g.setColor(ControllerTheme.MUTED);ControllerTheme.text(g,arrow,cx,baseline);}
++        }
++        return new Dimension(width,height);
++    }
++    static String fit(FontMetrics metrics,String value,int width)
++    {
++        if(metrics.stringWidth(value)<=width)return value;
++        while(!value.isEmpty()&&metrics.stringWidth(value+"…")>width)value=value.substring(0,value.length()-1);
++        return value+"…";
++    }
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerTheme.java b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerTheme.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerTheme.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/ControllerTheme.java
+@@ -1,43 +1,61 @@
+ package net.runelite.client.plugins.soloscapecontroller;
+ 
+ import java.awt.*;
++import java.awt.image.BufferedImage;
++import net.runelite.client.ui.FontManager;
+ 
+ /**
+  * Shared readable controller surfaces; colours, type sizes and frame helpers have one source.
+- * Classic (default) is a warm stone/parchment/gold look in the spirit of the 2011 interface;
+- * modern keeps the earlier slate palette. Drawing helpers never change geometry, so hit boxes,
+- * layouts and focus semantics are identical in both palettes.
++ * Classic (default) follows the Jagex RS2/OSRS interface conventions: mottled brown stone, black
++ * keylines with a stone bevel, the RuneScape bitmap fonts with a one-pixel black shadow, orange
++ * titles, white/yellow focus text, yellow stack counts, red/yellow/green quest states, the
++ * "Choose Option" menu and pale yellow tooltips. Modern keeps the earlier slate palette exactly.
++ * Drawing helpers never change geometry, so hit boxes and focus semantics are identical in both.
++ * All textures are generated in code; no game cache artwork is copied.
+  */
+ public final class ControllerTheme {
+     private ControllerTheme(){}
+     private static volatile boolean classic;
+     private static final Color SHADOW=new Color(0,0,0,210);
++    private static final java.util.Map<Integer,TexturePaint> TEXTURES=new java.util.concurrent.ConcurrentHashMap<>();
++    // Declared before the static palette initializer below, which reads them.
++    /** Jagex text colours, kept constant so documentation and tests can name them. */
++    public static final Color JAGEX_ORANGE=new Color(255,152,31), JAGEX_YELLOW=new Color(255,255,0), JAGEX_GREEN=new Color(0,255,0),
++        JAGEX_RED=new Color(255,0,0), JAGEX_CYAN=new Color(0,255,255), JAGEX_ITEM=new Color(255,144,64), JAGEX_WHITE=Color.WHITE;
+     // Fields are reassigned only by classic(boolean); a toggle mid-frame can at worst mix palettes for one frame.
+     public static volatile Color BACKGROUND, BORDER, CELL, SELECTED, FOCUS, TEXT, MUTED, COMPLETE,
+         TITLE, ITEM_TEXT, LABEL_TEXT, SECONDARY, ACTION, ACTION_SELECTED, HINT, BEVEL_LIGHT, BEVEL_DARK, TRIM,
+         TOOLTIP, TOOLTIP_TEXT, TOOLTIP_BORDER, SCRIM, WEDGE, WEDGE_SELECTED, WEDGE_EDGE, WEDGE_EDGE_SELECTED,
+         WEDGE_LABEL, WEDGE_LABEL_SELECTED, WEDGE_LABEL_DISABLED, HUB, HUB_TITLE, HUB_TEXT, HUB_MUTED,
+-        RADIAL_HEADING, QUICK_LABEL, QUICK_TEXT, GUIDE, GUIDE_TEXT;
++        RADIAL_HEADING, QUICK_LABEL, QUICK_TEXT, GUIDE, GUIDE_TEXT,
++        WELL, PROGRESS, NOT_STARTED, NPC_NAME, OBJECT_NAME, PLAYER_NAME, MENU, MENU_HEADER, MENU_HEADER_TEXT,
++        PARCHMENT, PARCHMENT_TEXT, PARCHMENT_INPUT, KEY, KEY_SELECTED;
+     static {classic(true);}
+ 
+-    /** Selects the palette; true is the classic stone/gold look, false the earlier modern look. */
++
++    /** Selects the palette; true is the Jagex classic look, false the earlier modern look. */
+     public static synchronized void classic(boolean enabled)
+     {
+         if(BACKGROUND!=null&&classic==enabled)return;
+         if(enabled)
+         {
+-            BACKGROUND=new Color(62,53,41,247);BORDER=new Color(20,16,11);CELL=new Color(80,69,53);SELECTED=new Color(109,88,56);
+-            FOCUS=new Color(244,200,82);TEXT=new Color(245,233,200);MUTED=new Color(196,180,144);COMPLETE=new Color(132,214,112);
+-            TITLE=new Color(255,214,110);ITEM_TEXT=new Color(245,233,200);LABEL_TEXT=new Color(222,208,174);SECONDARY=new Color(200,183,146);
+-            ACTION=new Color(48,40,30);ACTION_SELECTED=new Color(112,87,48);HINT=new Color(214,198,160);
+-            BEVEL_LIGHT=new Color(118,101,76);BEVEL_DARK=new Color(33,27,20);TRIM=new Color(150,118,62);
+-            TOOLTIP=new Color(229,215,172,250);TOOLTIP_TEXT=new Color(48,34,18);TOOLTIP_BORDER=new Color(92,70,38);
+-            SCRIM=new Color(10,7,3,120);WEDGE=new Color(62,53,41,240);WEDGE_SELECTED=new Color(122,93,46,245);
+-            WEDGE_EDGE=new Color(24,19,13);WEDGE_EDGE_SELECTED=new Color(244,200,82);
+-            WEDGE_LABEL=new Color(236,224,192);WEDGE_LABEL_SELECTED=new Color(255,236,170);WEDGE_LABEL_DISABLED=new Color(138,126,104);
+-            HUB=new Color(42,35,26,247);HUB_TITLE=new Color(255,214,110);HUB_TEXT=new Color(245,233,200);HUB_MUTED=new Color(200,183,146);
+-            RADIAL_HEADING=new Color(255,214,110);QUICK_LABEL=new Color(245,233,200);QUICK_TEXT=new Color(245,233,200);
+-            GUIDE=new Color(62,53,41,232);GUIDE_TEXT=new Color(245,233,200);
++            BACKGROUND=new Color(62,53,41,250);BORDER=Color.BLACK;CELL=new Color(72,62,48);SELECTED=new Color(101,88,67);
++            FOCUS=JAGEX_YELLOW;TEXT=JAGEX_WHITE;MUTED=new Color(190,176,148);COMPLETE=JAGEX_GREEN;
++            TITLE=JAGEX_ORANGE;ITEM_TEXT=JAGEX_ITEM;LABEL_TEXT=JAGEX_ORANGE;SECONDARY=JAGEX_YELLOW;
++            ACTION=new Color(52,45,35);ACTION_SELECTED=new Color(93,84,71);HINT=new Color(214,200,170);
++            BEVEL_LIGHT=new Color(112,99,79);BEVEL_DARK=new Color(30,26,20);TRIM=new Color(84,74,58);
++            TOOLTIP=new Color(255,255,160);TOOLTIP_TEXT=Color.BLACK;TOOLTIP_BORDER=Color.BLACK;
++            SCRIM=new Color(0,0,0,110);WEDGE=new Color(62,53,41,245);WEDGE_SELECTED=new Color(104,90,68,250);
++            WEDGE_EDGE=Color.BLACK;WEDGE_EDGE_SELECTED=JAGEX_YELLOW;
++            WEDGE_LABEL=JAGEX_ORANGE;WEDGE_LABEL_SELECTED=JAGEX_YELLOW;WEDGE_LABEL_DISABLED=new Color(128,118,100);
++            HUB=new Color(46,40,31,250);HUB_TITLE=JAGEX_ORANGE;HUB_TEXT=JAGEX_WHITE;HUB_MUTED=new Color(190,176,148);
++            RADIAL_HEADING=JAGEX_ORANGE;QUICK_LABEL=JAGEX_ORANGE;QUICK_TEXT=JAGEX_WHITE;
++            GUIDE=new Color(62,53,41,240);GUIDE_TEXT=JAGEX_WHITE;
++            WELL=new Color(40,34,26);PROGRESS=JAGEX_YELLOW;NOT_STARTED=JAGEX_RED;
++            NPC_NAME=JAGEX_YELLOW;OBJECT_NAME=JAGEX_CYAN;PLAYER_NAME=JAGEX_WHITE;
++            MENU=new Color(93,84,71);MENU_HEADER=Color.BLACK;MENU_HEADER_TEXT=new Color(93,84,71);
++            PARCHMENT=new Color(206,188,150);PARCHMENT_TEXT=Color.BLACK;PARCHMENT_INPUT=new Color(0,0,255);
++            KEY=new Color(72,62,48);KEY_SELECTED=new Color(110,96,73);
+         }
+         else
+         {
+@@ -54,75 +72,230 @@
+             HUB=new Color(20,19,17,245);HUB_TITLE=new Color(255,218,105);HUB_TEXT=Color.WHITE;HUB_MUTED=new Color(194,185,161);
+             RADIAL_HEADING=new Color(255,222,139);QUICK_LABEL=Color.WHITE;QUICK_TEXT=Color.WHITE;
+             GUIDE=new Color(0,0,0,225);GUIDE_TEXT=Color.WHITE;
++            WELL=CELL;PROGRESS=FOCUS;NOT_STARTED=MUTED;NPC_NAME=Color.WHITE;OBJECT_NAME=Color.WHITE;PLAYER_NAME=Color.WHITE;
++            MENU=new Color(0,0,0,230);MENU_HEADER=new Color(0,0,0,230);MENU_HEADER_TEXT=new Color(255,215,75);
++            PARCHMENT=BACKGROUND;PARCHMENT_TEXT=FOCUS;PARCHMENT_INPUT=Color.WHITE;KEY=new Color(55,55,55);KEY_SELECTED=new Color(125,99,35);
+         }
+         classic=enabled;
+     }
+     public static boolean classic(){return classic;}
+ 
+-    /** Body text; unchanged in both palettes because line height drives native action hit boxes. */
+-    public static Font body(double scale){return new Font(Font.SANS_SERIF,Font.PLAIN,Math.max(12,(int)(14*scale)));}
+-    /** Titles only (never used for layout); classic uses a serif face for the period feel. */
+-    public static Font heading(double scale){return new Font(classic?Font.SERIF:Font.SANS_SERIF,Font.BOLD,Math.max(15,(int)(22*scale)));}
++    // The bitmap faces are pixel-designed at 16 px; whole and half steps keep their strokes even.
++    private static int snap(double size){return size<18?16:size<22?20:size<28?24:32;}
++    /** Body text. Classic uses the RuneScape plain face; modern is unchanged. Layout reads its metrics. */
++    public static Font body(double scale)
++    {return classic?FontManager.getRunescapeFont().deriveFont((float)snap(16*scale)):new Font(Font.SANS_SERIF,Font.PLAIN,Math.max(12,(int)(14*scale)));}
++    /** Titles. Classic uses the RuneScape bold face. */
++    public static Font heading(double scale)
++    {return classic?FontManager.getRunescapeBoldFont().deriveFont((float)snap(20*scale)):new Font(Font.SANS_SERIF,Font.BOLD,Math.max(15,(int)(22*scale)));}
++    /** Emphasised labels such as wheel wedges and hub titles at a requested modern point size. */
++    public static Font bold(int size)
++    {return classic?FontManager.getRunescapeBoldFont().deriveFont((float)snap(size*1.2)):new Font(Font.SANS_SERIF,Font.BOLD,size);}
++    /** Plain labels at a requested modern point size. */
++    public static Font plain(int size)
++    {return classic?FontManager.getRunescapeFont().deriveFont((float)snap(size*1.2)):new Font(Font.SANS_SERIF,Font.PLAIN,size);}
++    /** A narrower face for labels that must fit a fixed width; still the period face in classic. */
++    public static Font compact(int size)
++    {return classic?FontManager.getRunescapeSmallFont().deriveFont((float)snap(size*1.2)):new Font(Font.SANS_SERIF,Font.PLAIN,size);}
+ 
+-    /** Outer panel frame inside {@code box}: classic stone with a restrained bevel and gold trim. */
++    /** Outer panel frame inside {@code box}: mottled stone, black keyline, raised bevel and an inner stone wall. */
+     public static void frame(Graphics2D g,Rectangle box,int arc)
+     {
+         if(!classic){g.setColor(BACKGROUND);g.fillRoundRect(box.x,box.y,box.width,box.height,arc,arc);g.setColor(BORDER);g.drawRoundRect(box.x,box.y,box.width-1,box.height-1,arc,arc);return;}
+-        g.setColor(BACKGROUND);g.fillRect(box.x,box.y,box.width,box.height);
++        stone(g,box,BACKGROUND);
+         g.setColor(BORDER);g.drawRect(box.x,box.y,box.width-1,box.height-1);
+         bevel(g,box.x+1,box.y+1,box.width-2,box.height-2,BEVEL_LIGHT,BEVEL_DARK);
+-        if(box.width>12&&box.height>12){g.setColor(TRIM);g.drawRect(box.x+3,box.y+3,box.width-7,box.height-7);}
++        if(box.width>16&&box.height>16)
++        {
++            // The thin dark inner line gives the two-tone Jagex border without moving any content.
++            bevel(g,box.x+4,box.y+4,box.width-8,box.height-8,BEVEL_DARK,BEVEL_LIGHT);
++            g.setColor(TRIM);g.drawRect(box.x+2,box.y+2,box.width-5,box.height-5);
++            corners(g,box);
++        }
+     }
+-    /** Grid cell inside its exact bounds; selection adds a two-pixel gold frame, still inside the bounds. */
++    /** A recessed area such as the bank item well or a details column, inside its exact bounds. */
++    public static void well(Graphics2D g,Rectangle area)
++    {
++        if(!classic||area.width<4||area.height<4)return;
++        stone(g,area,WELL);
++        bevel(g,area.x,area.y,area.width,area.height,BEVEL_DARK,BEVEL_LIGHT);
++    }
++    /** A two-tone horizontal separator, as under classic interface titles. */
++    public static void separator(Graphics2D g,int x,int y,int width)
++    {
++        if(!classic||width<2)return;
++        g.setColor(BEVEL_DARK);g.drawLine(x,y,x+width-1,y);g.setColor(BEVEL_LIGHT);g.drawLine(x,y+1,x+width-1,y+1);
++    }
++    /** Grid cell inside its exact bounds; selection lightens the stone and draws a yellow keyline inside the bounds. */
+     public static void cell(Graphics2D g,Rectangle cell,boolean selected)
+     {
+         if(!classic){g.setColor(selected?SELECTED:CELL);g.fillRoundRect(cell.x,cell.y,cell.width,cell.height,6,6);if(selected){g.setColor(FOCUS);g.drawRoundRect(cell.x,cell.y,cell.width-1,cell.height-1,6,6);}return;}
+-        g.setColor(selected?SELECTED:CELL);g.fillRect(cell.x,cell.y,cell.width,cell.height);
+-        if(selected){g.setColor(FOCUS);g.drawRect(cell.x,cell.y,cell.width-1,cell.height-1);if(cell.width>4&&cell.height>4)g.drawRect(cell.x+1,cell.y+1,cell.width-3,cell.height-3);}
++        stone(g,cell,selected?SELECTED:CELL);
++        if(selected)
++        {
++            g.setColor(BORDER);g.drawRect(cell.x,cell.y,cell.width-1,cell.height-1);
++            if(cell.width>4&&cell.height>4){g.setColor(FOCUS);g.drawRect(cell.x+1,cell.y+1,cell.width-3,cell.height-3);}
++        }
+         else bevel(g,cell.x,cell.y,cell.width,cell.height,BEVEL_LIGHT,BEVEL_DARK);
+     }
+-    /** Action row inside its exact hit box. */
++    /** Action row inside its exact hit box: a stone button, pressed-in and lit when selected. */
+     public static void action(Graphics2D g,Rectangle row,boolean selected)
+     {
+-        g.setColor(selected?ACTION_SELECTED:ACTION);g.fill(row);
+-        // A solid focus bar inside the left edge marks the selected action without relying on hue alone.
+-        if(selected&&row.width>6){g.setColor(FOCUS);g.fillRect(row.x,row.y,3,row.height);}
+-        if(!classic)return;
+-        if(selected){g.setColor(FOCUS);g.drawRect(row.x,row.y,row.width-1,row.height-1);}
+-        else bevel(g,row.x,row.y,row.width,row.height,BEVEL_DARK,BEVEL_LIGHT);
++        if(!classic)
++        {
++            g.setColor(selected?ACTION_SELECTED:ACTION);g.fill(row);
++            if(selected&&row.width>6){g.setColor(FOCUS);g.fillRect(row.x,row.y,3,row.height);}
++            return;
++        }
++        button(g,row,selected,true);
++        // A solid marker inside the left edge keeps selection visible without relying on hue alone.
++        if(selected&&row.width>8&&row.height>6){g.setColor(FOCUS);g.fillRect(row.x+2,row.y+2,3,row.height-4);}
+     }
+-    /** Small floating label (tooltips): classic parchment, modern slate. */
++    /** Classic stone button: raised when idle, lighter with a yellow keyline when selected, flat when disabled. */
++    public static void button(Graphics2D g,Rectangle box,boolean selected,boolean enabled)
++    {
++        if(!classic){g.setColor(selected?ACTION_SELECTED:ACTION);g.fill(box);if(selected){g.setColor(FOCUS);g.drawRect(box.x,box.y,box.width-1,box.height-1);}return;}
++        stone(g,box,!enabled?WELL:selected?SELECTED:CELL);
++        g.setColor(BORDER);g.drawRect(box.x,box.y,box.width-1,box.height-1);
++        if(box.width>4&&box.height>4)
++        {
++            if(selected){g.setColor(FOCUS);g.drawRect(box.x+1,box.y+1,box.width-3,box.height-3);}
++            else bevel(g,box.x+1,box.y+1,box.width-2,box.height-2,enabled?BEVEL_LIGHT:TRIM,BEVEL_DARK);
++        }
++    }
++    /** Small floating label (tooltips): classic pale yellow with a black keyline, modern slate. */
+     public static void label(Graphics2D g,int x,int y,int width,int height)
+     {
+         g.setColor(TOOLTIP);
+         if(classic){g.fillRect(x,y,width,height);g.setColor(TOOLTIP_BORDER);g.drawRect(x,y,width-1,height-1);}
+         else{g.fillRoundRect(x,y,width,height,6,6);g.setColor(TOOLTIP_BORDER);g.drawRoundRect(x,y,width-1,height-1,6,6);}
+     }
+-    /** Draws text with the classic one-pixel black shadow; modern draws plain text. */
++    /** Parchment, as the classic chatbox and amount prompts; modern falls back to the panel frame. */
++    public static void parchment(Graphics2D g,Rectangle box)
++    {
++        if(!classic){frame(g,box,12);return;}
++        stone(g,box,PARCHMENT);
++        g.setColor(BORDER);g.drawRect(box.x,box.y,box.width-1,box.height-1);
++        bevel(g,box.x+1,box.y+1,box.width-2,box.height-2,new Color(232,218,186),new Color(132,112,80));
++    }
++    /** "Choose Option" menu body with its black title strip; returns the strip height. */
++    public static int menu(Graphics2D g,Rectangle box,String header,int headerHeight)
++    {
++        if(!classic){g.setColor(MENU);g.fill(box);return 0;}
++        g.setColor(MENU);g.fill(box);
++        g.setColor(BORDER);g.drawRect(box.x,box.y,box.width-1,box.height-1);
++        g.setColor(MENU_HEADER);g.fillRect(box.x+1,box.y+1,box.width-2,headerHeight);
++        g.setColor(MENU_HEADER_TEXT);
++        g.drawString(header,box.x+4,box.y+1+(headerHeight+g.getFontMetrics().getAscent()-g.getFontMetrics().getDescent())/2);
++        return headerHeight+1;
++    }
++    /** Draws text with the classic black shadow (one pixel per 16 px of type); modern draws plain text. */
+     public static void text(Graphics2D g,String text,int x,int y)
+     {
+-        if(classic){Color colour=g.getColor();g.setColor(SHADOW);g.drawString(text,x+1,y+1);g.setColor(colour);}
++        if(classic)
++        {
++            // Bitmap faces stay crisp only without text antialiasing.
++            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
++            int offset=Math.max(1,g.getFont().getSize()/16);
++            Color colour=g.getColor();g.setColor(Color.BLACK);g.drawString(text,x+offset,y+offset);g.setColor(colour);
++        }
+         g.drawString(text,x,y);
+     }
++    /** Stack quantity colour: yellow below 100K, white to 10M, green above, as in classic inventories. */
++    public static Color quantity(long amount){return !classic?SECONDARY:amount>=10_000_000L?JAGEX_GREEN:amount>=100_000L?JAGEX_WHITE:JAGEX_YELLOW;}
++    /** Short stack label: 100K and 10M abbreviations follow the classic item counters. */
++    public static String quantityLabel(long amount)
++    {
++        if(!classic||amount<100_000L)return Long.toString(amount);
++        return amount<10_000_000L?amount/1000+"K":amount/1_000_000+"M";
++    }
++    /** Quest-list colour: red not started, yellow in progress, green complete. */
++    public static Color status(String status)
++    {
++        if(status==null||status.isEmpty())return MUTED;
++        if(status.startsWith("Completed")||status.equals("Active"))return COMPLETE;
++        if(!classic)return MUTED;
++        if(status.equals("In progress"))return PROGRESS;
++        if(status.equals("Not started"))return NOT_STARTED;
++        return MUTED;
++    }
++    /** Target name colour by native target kind: NPC yellow, object cyan, ground item orange. */
++    public static Color targetName(int kind){return kind==1?NPC_NAME:kind==2?OBJECT_NAME:kind==3?ITEM_TEXT:PLAYER_NAME;}
+     /** Radial wedge fill and edge; the shape itself is supplied by the caller and unchanged. */
+     public static void wedge(Graphics2D g,Shape wedge,boolean selected){wedge(g,wedge,selected,true);}
+     /** {@code thickSelection=false} keeps the modern quick wheel's original one-pixel selected edge. */
+     public static void wedge(Graphics2D g,Shape wedge,boolean selected,boolean thickSelection)
+     {
+-        g.setColor(selected?WEDGE_SELECTED:WEDGE);g.fill(wedge);
+         Stroke before=g.getStroke();
+-        if(classic&&!selected){g.setStroke(new BasicStroke(2));g.setColor(WEDGE_EDGE);g.draw(wedge);g.setStroke(new BasicStroke(1));g.setColor(TRIM);g.draw(wedge);}
+-        else{g.setStroke(new BasicStroke(selected&&(classic||thickSelection)?2:1));g.setColor(selected?WEDGE_EDGE_SELECTED:WEDGE_EDGE);g.draw(wedge);}
++        if(!classic)
++        {
++            g.setColor(selected?WEDGE_SELECTED:WEDGE);g.fill(wedge);
++            g.setStroke(new BasicStroke(selected&&thickSelection?2:1));g.setColor(selected?WEDGE_EDGE_SELECTED:WEDGE_EDGE);g.draw(wedge);
++            g.setStroke(before);return;
++        }
++        Paint paint=g.getPaint();g.setPaint(texture(selected?WEDGE_SELECTED:WEDGE));g.fill(wedge);g.setPaint(paint);
++        Shape clip=g.getClip();g.clip(wedge);
++        // Inner bevel: a light stroke offset up-left and a dark one down-right, clipped to the wedge.
++        g.setStroke(new BasicStroke(3));
++        g.translate(1,1);g.setColor(BEVEL_LIGHT);g.draw(wedge);g.translate(-2,-2);g.setColor(BEVEL_DARK);g.draw(wedge);g.translate(1,1);
++        g.setClip(clip);
++        g.setStroke(new BasicStroke(selected?2:1.5f));g.setColor(selected?WEDGE_EDGE_SELECTED:WEDGE_EDGE);g.draw(wedge);
+         g.setStroke(before);
+     }
+-    /** Radial centre disc; classic adds a dark rim and gold ring. */
++    /** Radial centre disc; classic draws a stone boss with a black rim and a bronze bezel. */
+     public static void hub(Graphics2D g,Shape disc)
+     {
+-        g.setColor(HUB);g.fill(disc);
+-        if(!classic)return;
+-        Stroke before=g.getStroke();g.setStroke(new BasicStroke(3));g.setColor(WEDGE_EDGE);g.draw(disc);
+-        g.setStroke(new BasicStroke(1));g.setColor(TRIM);g.draw(disc);g.setStroke(before);
++        if(!classic){g.setColor(HUB);g.fill(disc);return;}
++        Paint paint=g.getPaint();g.setPaint(texture(HUB));g.fill(disc);g.setPaint(paint);
++        Stroke before=g.getStroke();
++        g.setStroke(new BasicStroke(5));g.setColor(Color.BLACK);g.draw(disc);
++        g.setStroke(new BasicStroke(2));g.setColor(new Color(150,128,86));g.draw(disc);
++        g.setStroke(before);
++    }
++
++    private static void corners(Graphics2D g,Rectangle box)
++    {
++        // Small raised studs in each corner echo the riveted classic interface frame.
++        int size=Math.min(7,Math.min(box.width,box.height)/6);if(size<4)return;
++        int[][] at={{box.x+2,box.y+2},{box.x+box.width-2-size,box.y+2},{box.x+2,box.y+box.height-2-size},{box.x+box.width-2-size,box.y+box.height-2-size}};
++        for(int[] p:at)
++        {
++            g.setColor(TRIM);g.fillRect(p[0],p[1],size,size);
++            bevel(g,p[0],p[1],size,size,BEVEL_LIGHT,BORDER);
++        }
++    }
++    private static void stone(Graphics2D g,Rectangle area,Color base)
++    {
++        Paint paint=g.getPaint();g.setPaint(texture(base));g.fill(area);g.setPaint(paint);
++    }
++    /** Deterministic mottled stone generated once per colour; tiles seamlessly at 64 px. */
++    static TexturePaint texture(Color base)
++    {
++        return TEXTURES.computeIfAbsent(base.getRGB(),key->{
++            int size=64;BufferedImage tile=new BufferedImage(size,size,BufferedImage.TYPE_INT_ARGB);
++            java.util.Random random=new java.util.Random(0x5A1E5CA9L);
++            float[] noise=new float[size*size];
++            // Two octaves of wrapped value noise give soft blotches rather than television static.
++            for(int octave=8,weight=6;octave<=32;octave*=4,weight/=2)
++            {
++                float[] grid=new float[octave*octave];for(int i=0;i<grid.length;i++)grid[i]=random.nextFloat()*2-1;
++                int cell=size/octave;
++                for(int y=0;y<size;y++)for(int x=0;x<size;x++)
++                {
++                    int gx=x/cell,gy=y/cell;float fx=(x%cell)/(float)cell,fy=(y%cell)/(float)cell;
++                    float a=grid[gy*octave+gx],b=grid[gy*octave+(gx+1)%octave],c=grid[((gy+1)%octave)*octave+gx],d=grid[((gy+1)%octave)*octave+(gx+1)%octave];
++                    noise[y*size+x]+=weight*((a*(1-fx)+b*fx)*(1-fy)+(c*(1-fx)+d*fx)*fy);
++                }
++            }
++            for(int i=0;i<noise.length;i++)
++            {
++                int shift=Math.round(noise[i])+(random.nextInt(9)==0?random.nextInt(7)-3:0);
++                tile.setRGB(i%size,i/size,new Color(clamp(base.getRed()+shift),clamp(base.getGreen()+shift),clamp(base.getBlue()+shift),base.getAlpha()).getRGB());
++            }
++            return new TexturePaint(tile,new Rectangle(0,0,size,size));
++        });
+     }
++    private static int clamp(int value){return Math.max(0,Math.min(255,value));}
+     private static void bevel(Graphics2D g,int x,int y,int width,int height,Color light,Color dark)
+     {
+         if(width<2||height<2)return;
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -97,7 +97,7 @@
+     default boolean returnToSource(){return true;}
+     @ConfigItem(keyName="keyboardMode",name="Text keyboard",description="Automatic uses Steam on Deck. Steam owns controller input until native entry ends; controller mode uses the local grid.",position=35)
+     default net.runelite.client.input.controller.KeyboardMode keyboardMode(){return net.runelite.client.input.controller.KeyboardMode.AUTO;}
+-    @ConfigItem(keyName="classicTheme",name="Classic controller UI",description="Warm stone, brown and gold controller panels. Turn off to restore the previous modern palette.",position=36)
++    @ConfigItem(keyName="classicTheme",name="Classic controller UI",description="Jagex-style stone panels, RuneScape fonts and classic menu colours for controller screens. Turn off to restore the previous modern palette.",position=36)
+     default boolean classicTheme(){return true;}
+     @ConfigItem(keyName="serverEntryCancel",name="Matched-server text cancellation",description="Cancel a pending native amount/name/text action without closing its bank/shop, only after fresh entry-cancel capability negotiation. Off retains client-only close.",position=37)
+     default boolean serverEntryCancel(){return true;}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+@@ -30,6 +30,7 @@
+         GameClient.ControllerTarget target=plugin.getTarget();
+         GameClient.ControllerTarget[] menu=plugin.getWorld().getMenu();
+         String feedback=plugin.getWorld().feedback(System.nanoTime());
++        if(ControllerTheme.classic())return classic(graphics,target,menu,feedback);
+         if(menu.length>0)
+         {
+             int selected=plugin.getWorld().getMenuIndex(), start=Math.max(0,Math.min(selected-3,menu.length-7));
+@@ -74,4 +75,71 @@
+         }
+         finally {g.dispose();}
+     }
++    /** Classic corner HUD: mouseover-style action text, the Choose Option menu and hint/feedback lines. */
++    private Dimension classic(Graphics2D graphics,GameClient.ControllerTarget target,GameClient.ControllerTarget[] menu,String feedback)
++    {
++        double scale=plugin.config().overlayScale()/100.0;
++        java.util.List<String> notes=new java.util.ArrayList<>();
++        String action=null,name=null;int kind=0;
++        if(menu.length==0&&target!=null)
++        {
++            action=plugin.hint("A: "+target.option);name=target.name;kind=target.kind();
++            notes.add("LT: aim · LB/RB: target · X: "+(target.kind()==3?"loot pile":"actions")+" · B: cancel");
++        }
++        else if(menu.length==0)
++        {
++            String selection=plugin.selectionHint();
++            if(selection!=null){action=plugin.hint(selection);notes.add("Stick: aim · LB/RB: target · B: cancel");}
++        }
++        else notes.add("LS / D-pad: choose · A: confirm · B: back");
++        if(feedback!=null)notes.add(feedback);
++        if(plugin.config().debug()&&client.hasLocalPlayer())
++            notes.add("Tile: "+(client.getBaseX()+client.getLocalPlayerSceneX())+","+(client.getBaseY()+client.getLocalPlayerSceneY())+","+client.getPlane());
++        if(action==null&&menu.length==0&&notes.isEmpty())return null;
++        return paintClassic(graphics,scale,plugin.canvasWidth(),action,name,kind,menu,plugin.getWorld().getMenuIndex(),notes,feedback,plugin::hint);
++    }
++    /** Static so renderer fixtures can draw the HUD without a live client. */
++    public static Dimension paintClassic(Graphics2D graphics,double scale,int canvasWidth,String action,String name,int kind,GameClient.ControllerTarget[] menu,int selected,java.util.List<String> notes,String feedback,java.util.function.Function<String,String> hints)
++    {
++        Graphics2D g=(Graphics2D)graphics.create();
++        try
++        {
++            g.setFont(ControllerTheme.body(scale));
++            java.awt.FontMetrics metrics=g.getFontMetrics();
++            int max=canvasWidth-24,lineHeight=metrics.getHeight()+3,width=0,y=4;
++            if(action!=null)
++            {
++                // The mouseover line: white option text, then the target name in its classic kind colour.
++                String first=ControllerMenu.fit(metrics,action,max);
++                String second=name==null?"":ControllerMenu.fit(metrics,name,Math.max(0,max-metrics.stringWidth(first+" ")));
++                int lineWidth=metrics.stringWidth(first)+(second.isEmpty()?0:metrics.stringWidth(" "+second))+12;
++                g.setColor(new Color(0,0,0,110));g.fillRect(0,y-2,lineWidth,lineHeight+2);
++                g.setColor(ControllerTheme.TEXT);ControllerTheme.text(g,first,6,y+metrics.getAscent());
++                if(!second.isEmpty()){g.setColor(ControllerTheme.targetName(kind));ControllerTheme.text(g,second,6+metrics.stringWidth(first+" "),y+metrics.getAscent());}
++                width=Math.max(width,lineWidth);y+=lineHeight;
++            }
++            if(menu.length>0)
++            {
++                int start=Math.max(0,Math.min(selected-3,menu.length-7)),shown=Math.min(7,menu.length-start);
++                String[] options=new String[menu.length],targets=new String[menu.length];Color[] colours=new Color[menu.length];
++                for(int i=0;i<menu.length;i++){options[i]=menu[i].option;targets[i]=menu[i].name==null?"":menu[i].name;colours[i]=ControllerTheme.targetName(menu[i].kind());}
++                String header=menu[0].kind()==3?"Loot pile · "+(selected+1)+" / "+menu.length:"Choose Option";
++                Dimension size=ControllerMenu.paint(g,2,y,max,header,options,targets,colours,selected,start,shown);
++                width=Math.max(width,size.width+2);y+=size.height+4;
++            }
++            g.setFont(ControllerTheme.body(scale));metrics=g.getFontMetrics();
++            for(int i=0;i<notes.size();i++)
++            {
++                String text=ControllerMenu.fit(metrics,hints.apply(notes.get(i)),max);
++                int lineWidth=metrics.stringWidth(text)+12;
++                g.setColor(new Color(0,0,0,110));g.fillRect(0,y-2,lineWidth,lineHeight+2);
++                // Feedback stands out in yellow like a classic game message; hints stay pale.
++                g.setColor(feedback!=null&&notes.get(i).equals(feedback)?ControllerTheme.FOCUS:ControllerTheme.HINT);
++                ControllerTheme.text(g,text,6,y+metrics.getAscent());
++                width=Math.max(width,lineWidth);y+=lineHeight;
++            }
++            return new Dimension(width,y);
++        }
++        finally {g.dispose();}
++    }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapePanelOverlay.java
+@@ -51,18 +51,47 @@
+         {
+             Rectangle box=view.bounds;double scale=view.scale;
+             ControllerTheme.frame(draw,box,16);
+-            draw.setFont(ControllerTheme.heading(scale));draw.setColor(ControllerTheme.TITLE);
+-            ControllerTheme.text(draw,fit(draw,title,box.width-32),box.x+(int)(16*scale),box.y+(int)(32*scale));
+-            draw.setFont(ControllerTheme.body(scale));
+             int[] paging=view.pages(widgets);int page=paging[0],pages=paging[1];
+-            draw.setColor(ControllerTheme.MUTED);ControllerTheme.text(draw,fit(draw,(page>1?"↑ ":"")+"Page "+page+" / "+pages+(page<pages?" ↓":""),view.content.width),view.content.x,box.y+(int)(50*scale));
++            String pageLabel=(page>1?"↑ ":"")+"Page "+page+" / "+pages+(page<pages?" ↓":"");
++            int x=view.content.x+view.content.width+(int)(14*scale),y=view.content.y;
++            int width=box.x+box.width-x-(int)(14*scale);
++            if(ControllerTheme.classic())
++            {
++                // Classic interfaces centre an orange title over a two-tone rule; the page sits at the right.
++                draw.setFont(ControllerTheme.body(scale));
++                int pageWidth=draw.getFontMetrics().stringWidth(pageLabel),titleBase=box.y+(int)(30*scale);
++                draw.setColor(ControllerTheme.MUTED);ControllerTheme.text(draw,pageLabel,box.x+box.width-(int)(16*scale)-pageWidth,titleBase);
++                draw.setFont(ControllerTheme.heading(scale));
++                int room=box.width-2*(pageWidth+(int)(24*scale));
++                String shown=fit(draw,title,Math.max(40,room));
++                int titleX=Math.max(box.x+(int)(16*scale),box.x+(box.width-draw.getFontMetrics().stringWidth(shown))/2);
++                draw.setColor(ControllerTheme.TITLE);ControllerTheme.text(draw,shown,titleX,titleBase);
++                ControllerTheme.separator(draw,box.x+6,box.y+(int)(42*scale),box.width-12);
++                ControllerTheme.well(draw,new Rectangle(view.content.x-3,view.content.y-3,view.content.width+2,view.content.height+2));
++                ControllerTheme.well(draw,new Rectangle(x-4,view.content.y-3,width+8,view.content.height+2));
++                draw.setFont(ControllerTheme.body(scale));
++            }
++            else
++            {
++                draw.setFont(ControllerTheme.heading(scale));draw.setColor(ControllerTheme.TITLE);
++                ControllerTheme.text(draw,fit(draw,title,box.width-32),box.x+(int)(16*scale),box.y+(int)(32*scale));
++                draw.setFont(ControllerTheme.body(scale));
++                draw.setColor(ControllerTheme.MUTED);ControllerTheme.text(draw,fit(draw,pageLabel,view.content.width),view.content.x,box.y+(int)(50*scale));
++            }
++            boolean shownAny=false;
+             for(UiState.Widget widget:widgets)
+             {
+                 if(!view.visible(widget))continue;
+-                cell(draw,widget,widget.same(focus),scale,images);
++                cell(draw,widget,widget.same(focus),scale,images);shownAny=true;
+             }
+-            int x=view.content.x+view.content.width+(int)(14*scale),y=view.content.y;
+-            int width=box.x+box.width-x-(int)(14*scale),line=Math.max(14,draw.getFontMetrics().getHeight()+3);
++            if(!shownAny&&ControllerTheme.classic())
++            {
++                // An empty well otherwise reads as a rendering fault; say so plainly, as classic panels do.
++                String empty="There is nothing here.";
++                draw.setColor(ControllerTheme.MUTED);
++                ControllerTheme.text(draw,empty,view.content.x+(view.content.width-draw.getFontMetrics().stringWidth(empty))/2,view.content.y+view.content.height/2);
++            }
++            int line=Math.max(14,draw.getFontMetrics().getHeight()+3);
+             int bottom=view.content.y+view.content.height;
+             Shape beforeDetails=draw.getClip();
+             draw.clipRect(x,view.content.y,width,view.content.height);
+@@ -73,9 +102,9 @@
+                 int reserved=2*line+Math.min(3,focus.actions.length)*(line+5),limit=Math.max(view.content.y+line,bottom-reserved);
+                 java.awt.image.BufferedImage icon=focus.itemId>=0?images.apply(focus):null;
+                 if(icon!=null){int size=Math.min(width,(int)(54*scale));if(y+size*32/36<=limit){draw.drawImage(icon,x,y,size,size*32/36,null);y+=size*32/36+line/2;}}
+-                draw.setColor(ControllerTheme.FOCUS);y=text(draw,focus.name,x,y,width,line,limit);
++                draw.setColor(!ControllerTheme.classic()?ControllerTheme.FOCUS:focus.itemId>=0?ControllerTheme.ITEM_TEXT:ControllerTheme.TITLE);y=text(draw,focus.name,x,y,width,line,limit);
+                 if(focus.itemId>=0){draw.setColor(ControllerTheme.TEXT);y=text(draw,"Quantity: "+focus.quantity,x,y+line/2,width,line,limit);}
+-                if(!focus.status.isEmpty()){draw.setColor(focus.status.startsWith("Completed")||focus.status.equals("Active")?ControllerTheme.COMPLETE:ControllerTheme.MUTED);y=text(draw,focus.status,x,y+line/2,width,line,limit);}
++                if(!focus.status.isEmpty()){draw.setColor(ControllerTheme.status(focus.status));y=text(draw,focus.status,x,y+line/2,width,line,limit);}
+                 if(!focus.detail.isEmpty()&&!focus.detail.equals(focus.name)){
+                     draw.setColor(ControllerTheme.MUTED);y=text(draw,focus.detail,x,y+line/2,width,line,limit);
+                 }
+@@ -91,7 +120,8 @@
+                     Rectangle actionBox=new Rectangle(x,y,width,line+3);actionBounds[i]=actionBox;
+                     ControllerTheme.action(draw,actionBox,i==selectedAction);
+                     draw.setColor(i==selectedAction?ControllerTheme.FOCUS:ControllerTheme.TEXT);
+-                    ControllerTheme.text(draw,fit(draw,focus.actions[i].label+(i==start&&start>0?" ↑":i==start+shown-1&&i+1<focus.actions.length?" ↓":""),width-10),x+6,y+draw.getFontMetrics().getAscent());y+=line+5;
++                    int inset=ControllerTheme.classic()?9:6;
++                    ControllerTheme.text(draw,fit(draw,focus.actions[i].label+(i==start&&start>0?" ↑":i==start+shown-1&&i+1<focus.actions.length?" ↓":""),width-inset-4),x+inset,y+(line+3+draw.getFontMetrics().getAscent()-draw.getFontMetrics().getDescent())/2);y+=line+5;
+                 }
+             }
+             draw.setClip(beforeDetails);
+@@ -116,12 +146,24 @@
+         int iconWidth=icon==null?0:Math.max(0,Math.min((int)(36*scale),cell.height-inset*2));
+         if(iconWidth>0)draw.drawImage(icon,cell.x+inset,cell.y+inset,iconWidth,Math.max(1,iconWidth*32/36),null);
+         int labelX=cell.x+inset+(iconWidth==0?0:iconWidth+inset),right=cell.x+cell.width-inset;
+-        String secondary=widget.itemId>=0?"×"+widget.quantity+(widget.status.isEmpty()?"":" · "+widget.status):!widget.status.isEmpty()?widget.status:widget.actions.length>0?widget.actions[0].label:"";
+-        Color nameColour=widget.itemId>=0?ControllerTheme.ITEM_TEXT:ControllerTheme.LABEL_TEXT;
+-        if(cell.height>=inset*2+metrics.getAscent()*2)
++        boolean classic=ControllerTheme.classic(),counter=classic&&iconWidth>0;
++        if(counter&&widget.quantity>1)
++        {
++            // Classic stack counter: top-left of the item picture, yellow/white/green by size.
++            Font before=draw.getFont();draw.setFont(ControllerTheme.compact(10));
++            draw.setColor(ControllerTheme.quantity(widget.quantity));
++            ControllerTheme.text(draw,ControllerTheme.quantityLabel(widget.quantity),cell.x+inset,cell.y+inset+draw.getFontMetrics().getAscent()-1);
++            draw.setFont(before);metrics=draw.getFontMetrics();
++        }
++        String secondary=widget.itemId>=0?(counter?widget.status:"×"+widget.quantity+(widget.status.isEmpty()?"":" · "+widget.status)):!widget.status.isEmpty()?widget.status:widget.actions.length>0?widget.actions[0].label:"";
++        Color quest=ControllerTheme.status(widget.status);
++        boolean questState=classic&&widget.itemId<0&&(quest==ControllerTheme.COMPLETE||quest==ControllerTheme.PROGRESS||quest==ControllerTheme.NOT_STARTED);
++        Color nameColour=selected&&classic?ControllerTheme.TEXT:questState?quest:widget.itemId>=0?ControllerTheme.ITEM_TEXT:ControllerTheme.LABEL_TEXT;
++        Color secondaryColour=!classic?ControllerTheme.SECONDARY:widget.itemId>=0&&!counter?ControllerTheme.quantity(widget.quantity):!widget.status.isEmpty()?(questState?quest:ControllerTheme.SECONDARY):ControllerTheme.MUTED;
++        if((!classic||!secondary.isEmpty())&&cell.height>=inset*2+metrics.getAscent()*2)
+         {
+             draw.setColor(nameColour);ControllerTheme.text(draw,fit(draw,widget.name,right-labelX),labelX,cell.y+inset+metrics.getAscent());
+-            draw.setColor(ControllerTheme.SECONDARY);ControllerTheme.text(draw,fit(draw,secondary,cell.width-inset*2),cell.x+inset,cell.y+cell.height-inset);
++            draw.setColor(secondaryColour);ControllerTheme.text(draw,fit(draw,secondary,cell.width-inset*2),counter?labelX:cell.x+inset,cell.y+cell.height-inset);
+             return;
+         }
+         // Short cells (two-column bonuses, small resized canvases) previously overlapped both lines.
+@@ -129,7 +171,7 @@
+         String value=secondary.isEmpty()?"":fit(draw,secondary,Math.max(0,(right-labelX)/2));
+         int valueWidth=value.isEmpty()?0:metrics.stringWidth(value);
+         draw.setColor(nameColour);ControllerTheme.text(draw,fit(draw,widget.name,right-labelX-(valueWidth==0?0:valueWidth+inset)),labelX,baseline);
+-        if(valueWidth>0){draw.setColor(ControllerTheme.SECONDARY);ControllerTheme.text(draw,value,right-valueWidth,baseline);}
++        if(valueWidth>0){draw.setColor(secondaryColour);ControllerTheme.text(draw,value,right-valueWidth,baseline);}
+     }
+     private static java.util.List<String> wrap(Graphics2D draw,String text,int width)
+     {
+@@ -171,6 +213,7 @@
+             int x=Math.max(view.bounds.x+8,Math.min(pointer.x+12,view.bounds.x+view.bounds.width-width-8));
+             int y=Math.max(view.bounds.y+8,Math.min(pointer.y+12,view.bounds.y+view.bounds.height-height-8));
+             ControllerTheme.label(g,x,y,width,height);
++            if(ControllerTheme.classic())g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+             g.setColor(ControllerTheme.TOOLTIP_TEXT);g.drawString(fit(g,label,width-16),x+8,y+6+g.getFontMetrics().getAscent());
+         } finally {g.dispose();}
+     }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+@@ -28,7 +28,7 @@
+         Graphics2D g=(Graphics2D)graphics.create();
+         try
+         {
+-            g.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,(int)(13*plugin.config().overlayScale()/100.0)));
++            g.setFont(ControllerTheme.plain((int)(13*plugin.config().overlayScale()/100.0)));
+             String[] lines=plugin.bindingWarning()!=null?new String[]{plugin.bindingWarning()}:new String[]{
+                 "CONTROLLER GUIDE — hide in SoloScape Controller settings",
+                 "Left stick: move / aim · Right stick: camera / menu scroll · LT: aim · Full tilt: direct-mode run",
+@@ -41,7 +41,7 @@
+             for(String line:lines) w=Math.max(w,Math.min(max,g.getFontMetrics().stringWidth(plugin.hint(line))+20));
+             int y=Math.max(8,client.getCanvas().getHeight()-lines.length*lineHeight-20);
+             if(ControllerTheme.classic())ControllerTheme.frame(g,new Rectangle(8,y,w,lines.length*lineHeight+12),10);else{g.setColor(ControllerTheme.GUIDE);g.fillRoundRect(8,y,w,lines.length*lineHeight+12,10,10);}g.setColor(ControllerTheme.GUIDE_TEXT);
+-            for(int i=0;i<lines.length;i++) centreFit(g,plugin.hint(lines[i]),18,y+lineHeight*(i+1),w-20,false);
++            for(int i=0;i<lines.length;i++){if(ControllerTheme.classic())g.setColor(i==0&&plugin.bindingWarning()==null?ControllerTheme.TITLE:ControllerTheme.GUIDE_TEXT);centreFit(g,plugin.hint(lines[i]),18,y+lineHeight*(i+1),w-20,false);}
+         }
+         finally { g.dispose(); }
+     }
+@@ -56,7 +56,7 @@
+             g.setColor(ControllerTheme.SCRIM);g.fillRect(0,0,width,height);
+             double radius=Math.min(210*scale,Math.min(width/2.0-18,height/2.0-48));if(radius<80)return;
+             double cx=width/2.0,cy=height/2.0,inner=radius*.50,s=Math.min(scale,radius/210);
+-            g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,Math.max(10,(int)(13*s))));
++            g.setFont(ControllerTheme.bold(Math.max(10,(int)(13*s))));
+             for(int i=0;i<8;i++)
+             {
+                 boolean selected=i==quick.selected();
+@@ -64,17 +64,18 @@
+                 wedge.subtract(new Area(new Ellipse2D.Double(cx-inner,cy-inner,2*inner,2*inner)));
+                 ControllerTheme.wedge(g,wedge,selected,false);
+                 double angle=Math.toRadians(i*45);int x=(int)(cx+Math.sin(angle)*radius*.76),y=(int)(cy-Math.cos(angle)*radius*.76);
+-                g.setColor(ControllerTheme.QUICK_LABEL);centreFit(g,quick.label(i),x,y,(int)(radius*.52),true);
++                g.setColor(ControllerTheme.classic()&&selected?ControllerTheme.WEDGE_LABEL_SELECTED:ControllerTheme.QUICK_LABEL);centreFit(g,quick.label(i),x,y,(int)(radius*.52),true);
+             }
+             if(ControllerTheme.classic())ControllerTheme.hub(g,new Ellipse2D.Double(cx-inner+3,cy-inner+3,2*inner-6,2*inner-6));
+-            g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,Math.max(12,(int)(16*s))));g.setColor(ControllerTheme.HUB_TITLE);
++            g.setFont(ControllerTheme.bold(Math.max(12,(int)(16*s))));g.setColor(ControllerTheme.HUB_TITLE);
+             double gap=Math.max(1,s);
+             centreFit(g,quick.label(quick.selected()),(int)cx,(int)(cy-16*gap),(int)(inner*1.8),true);
+-            g.setFont(new Font(Font.SANS_SERIF,Font.PLAIN,Math.max(10,(int)(12*s))));g.setColor(ControllerTheme.HUB_TEXT);
++            g.setFont(ControllerTheme.plain(Math.max(10,(int)(12*s))));g.setColor(ControllerTheme.HUB_TEXT);
+             centreFit(g,hints.apply("A: use · B: back"),(int)cx,(int)(cy+8*gap),(int)(inner*1.8),true);
+             centreFit(g,hints.apply("X: assign · Y: clear"),(int)cx,(int)(cy+30*gap),(int)(inner*1.8),true);
+-            g.setColor(ControllerTheme.QUICK_TEXT);
++            g.setColor(ControllerTheme.classic()?ControllerTheme.RADIAL_HEADING:ControllerTheme.QUICK_TEXT);
+             centreFit(g,"QUICK ACTIONS",(int)cx,(int)(cy-radius-14),width-30,true);
++            g.setColor(ControllerTheme.QUICK_TEXT);
+             centreFit(g,quick.message()==null?(quick.canBind()?"Current action ready to assign":"Focus food, potion, prayer, spell or special to assign"):quick.message(),(int)cx,(int)(cy+radius+23),width-30,true);
+         }
+         finally {g.dispose();}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabRadialOverlay.java
+@@ -59,6 +59,14 @@
+             // Labels must fit their own wedge: measure the chord at the label radius, shrink, then ellipsize.
+             int labelWidth = (int) (2 * labelRadius * Math.sin(Math.toRadians(step / 2)) * .92);
+             double gap = Math.max(1, scale);
++            // Classic labels share one face and size, like a native tab row; most labels then fit whole.
++            Font uniform = null;
++            if (ControllerTheme.classic())
++            {
++                uniform = ControllerTheme.bold(Math.max(10, (int) (12 * scale)));
++                draw.setFont(uniform);
++                for (HomeTab tab : TABS) if (draw.getFontMetrics().stringWidth(tab.label) > labelWidth) uniform = ControllerTheme.compact(Math.max(10, (int) (12 * scale)));
++            }
+             for (int i = 0; i < TABS.length; i++)
+             {
+                 boolean selected = i == radial.selected(), available = radial.available(i);
+@@ -70,20 +78,21 @@
+                 int x = (int) Math.round(cx + Math.sin(angle) * labelRadius);
+                 int y = (int) Math.round(cy - Math.cos(angle) * labelRadius);
+                 draw.setColor(available ? (selected ? ControllerTheme.WEDGE_LABEL_SELECTED : ControllerTheme.WEDGE_LABEL) : ControllerTheme.WEDGE_LABEL_DISABLED);
+-                fitFont(draw, TABS[i].label, Font.BOLD, Math.max(10, (int) (12 * scale)), labelWidth);
++                if (uniform != null) draw.setFont(uniform);
++                else fitFont(draw, TABS[i].label, Font.BOLD, Math.max(10, (int) (12 * scale)), labelWidth);
+                 centre(draw, TABS[i].label, x, y + 4, labelWidth);
+             }
+             ControllerTheme.hub(draw, new Ellipse2D.Double(cx - inner + 3, cy - inner + 3, 2 * inner - 6, 2 * inner - 6));
+-            draw.setFont(new Font(Font.SANS_SERIF, Font.BOLD, Math.max(12,(int)(19*scale))));
++            draw.setFont(ControllerTheme.bold(Math.max(12,(int)(19*scale))));
+             int hubWidth = (int) (inner * 1.7);
+             draw.setColor(ControllerTheme.HUB_TITLE); centre(draw, TABS[radial.selected()].label, (int) cx, (int) (cy - 9 * gap), hubWidth);
+-            draw.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, Math.max(10,(int)(12*scale))));
++            draw.setFont(ControllerTheme.plain(Math.max(10,(int)(12*scale))));
+             draw.setColor(ControllerTheme.HUB_TEXT);
+             centre(draw, radial.message() != null ? radial.message() : radial.available(radial.selected()) ? hints.apply("A  Open tab") : "Unavailable here", (int) cx, (int) (cy + 15 * gap), hubWidth);
+             draw.setColor(ControllerTheme.HUB_MUTED); centre(draw, hints.apply("B  Back"), (int) cx, (int) (cy + 38 * gap), hubWidth);
+-            draw.setFont(new Font(ControllerTheme.classic() ? Font.SERIF : Font.SANS_SERIF, Font.BOLD, Math.max(10,(int)(14*scale))));
++            draw.setFont(ControllerTheme.bold(Math.max(10,(int)(14*scale))));
+             draw.setColor(ControllerTheme.RADIAL_HEADING); centre(draw, "HOME TABS", (int) cx, (int) (cy - radius - 13), width - 30);
+-            draw.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, Math.max(10,(int)(12*scale))));
++            draw.setFont(ControllerTheme.plain(Math.max(10,(int)(12*scale))));
+             centre(draw, "Left stick: choose   ·   D-pad / LB / RB: cycle   ·   wheel button: close", (int) cx, (int) (cy + radius + 21), width - 30);
+         }
+         finally { draw.dispose(); }
+@@ -104,8 +113,11 @@
+     {
+         for (int candidate = size; ; candidate--)
+         {
+-            draw.setFont(new Font(Font.SANS_SERIF, style, candidate));
+-            if (candidate <= 10 || draw.getFontMetrics().stringWidth(text) <= max) return;
++            draw.setFont(style == Font.BOLD ? ControllerTheme.bold(candidate) : ControllerTheme.plain(candidate));
++            if (draw.getFontMetrics().stringWidth(text) <= max) return;
++            if (candidate <= 10) break;
+         }
++        // Classic sizes snap to the bitmap grid; the narrow face is the last step before an ellipsis.
++        if (ControllerTheme.classic()) draw.setFont(ControllerTheme.compact(10));
+     }
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTextEntryOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTextEntryOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTextEntryOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTextEntryOverlay.java
+@@ -24,6 +24,7 @@
+         Rectangle box=box(canvasWidth,canvasHeight,requested);int width=box.width,height=box.height;double scale=width/460.0;
+         Graphics2D draw=(Graphics2D)graphics.create();Rectangle[] buttons=new Rectangle[3];
+         try{
++            if(ControllerTheme.classic())return classic(draw,box,state,feedback,scale);
+             ControllerTheme.frame(draw,box,12);
+             draw.setFont(ControllerTheme.body(scale));int line=Math.max(14,draw.getFontMetrics().getHeight()+2),x=box.x+10,y=box.y+line;
+             draw.setColor(ControllerTheme.FOCUS);draw.drawString(fit(draw,state==null?"Chat / native text keyboard":state.prompt,width-20),x,y);y+=line;
+@@ -34,6 +35,27 @@
+             for(int i=0;i<3;i++){buttons[i]=new Rectangle(x+i*(bw+gap),by,bw,bh);ControllerTheme.cell(draw,buttons[i],false);draw.setColor(ControllerTheme.FOCUS);draw.draw(buttons[i]);draw.setColor(ControllerTheme.TEXT);draw.drawString(names[i],buttons[i].x+8,by+(bh+draw.getFontMetrics().getAscent())/2-2);}
+         }finally{draw.dispose();}return buttons;
+     }
++    /** Classic chatbox look: parchment prompt with the blue entry and asterisk cursor, stone buttons below. */
++    private static Rectangle[] classic(Graphics2D draw,Rectangle box,EntryState state,String feedback,double scale){
++        int width=box.width,height=box.height;Rectangle[] buttons=new Rectangle[3];
++        ControllerTheme.frame(draw,box,12);
++        draw.setFont(ControllerTheme.body(scale));FontMetrics metrics=draw.getFontMetrics();
++        int line=Math.max(14,metrics.getHeight()+2),x=box.x+10,y=box.y+line;
++        String[] names={"Reopen","Done","Cancel"};int gap=8,bw=(width-20-gap*2)/3,bh=Math.max(24,(int)(30*scale)),by=box.y+height-bh-10;
++        Rectangle strip=new Rectangle(box.x+6,box.y+6,width-12,Math.max(line*2+6,Math.min(by-box.y-6-line*2,line*2+10)));
++        ControllerTheme.parchment(draw,strip);
++        draw.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
++        draw.setColor(ControllerTheme.PARCHMENT_TEXT);draw.drawString(fit(draw,state==null?"Chat / native text keyboard":state.prompt+":",width-20),x,y);y+=line;
++        draw.setColor(ControllerTheme.PARCHMENT_INPUT);draw.drawString(fit(draw,state==null?"Type into the game's normal chat or text input.":state.value+"*",width-20),x,y);
++        y=strip.y+strip.height+metrics.getAscent()+2;
++        draw.setColor(ControllerTheme.HINT);ControllerTheme.text(draw,fit(draw,"Controller paused · Enter / Escape: finish / cancel",width-20),x,y);y+=line;
++        if(y<by-2){draw.setColor(feedback==null?ControllerTheme.HINT:ControllerTheme.FOCUS);ControllerTheme.text(draw,fit(draw,feedback==null?"Steam + X reopens. Tap below if the keyboard is dismissed.":feedback,width-20),x,y);}
++        for(int i=0;i<3;i++){
++            buttons[i]=new Rectangle(x+i*(bw+gap),by,bw,bh);ControllerTheme.button(draw,buttons[i],false,true);
++            draw.setColor(ControllerTheme.TITLE);ControllerTheme.text(draw,names[i],buttons[i].x+(bw-metrics.stringWidth(names[i]))/2,by+(bh+metrics.getAscent()-metrics.getDescent())/2);
++        }
++        return buttons;
++    }
+     private static Rectangle box(int width,int height,double requested){double scale=Math.max(.1,Math.min(requested,Math.min((width-16.0)/460,(height-16.0)/150)));return new Rectangle(8,8,(int)(460*scale),(int)(150*scale));}
+     private static String fit(Graphics2D draw,String value,int width){while(!value.isEmpty()&&draw.getFontMetrics().stringWidth(value)>width)value=value.substring(0,value.length()-1);return value;}
+     @Override public MouseEvent mousePressed(MouseEvent event){
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeUiOverlay.java
+@@ -5,7 +5,9 @@
+ import java.awt.Dimension;
+ import java.awt.Graphics2D;
+ import com.GameClient;
++import java.awt.FontMetrics;
+ import java.awt.Rectangle;
++import java.awt.RenderingHints;
+ import javax.inject.Inject;
+ import net.runelite.client.input.controller.UiControls;
+ import net.runelite.client.input.controller.UiState;
+@@ -38,6 +40,7 @@
+     {
+         String prompt = hints.apply(ui.prompt());
+         if (prompt == null) return null;
++        if (ControllerTheme.classic()) return classic(graphics,ui,prompt,canvasWidth,canvasHeight,scale);
+         Graphics2D draw = (Graphics2D) graphics.create();
+         try
+         {
+@@ -102,6 +105,72 @@
+             }
+         }
+         finally { draw.dispose(); }
++        return null;
++    }
++    /** Jagex presentation: parchment amount/name prompts, stone keys, keyline focus and the Choose Option menu. */
++    private static Dimension classic(Graphics2D graphics,UiControls ui,String prompt,int canvasWidth,int canvasHeight,double scale)
++    {
++        Graphics2D draw = (Graphics2D) graphics.create();
++        try
++        {
++            draw.setFont(ControllerTheme.body(scale));
++            if (ui.entry().active())
++            {
++                net.runelite.client.input.controller.EntryControls keyboard = ui.entry();
++                String[] keys = keyboard.keys(); int columns = keyboard.columns();
++                int cellWidth = 58, cellHeight = 32, rows = (keys.length+columns-1)/columns;
++                int width = Math.max(440,columns*cellWidth+24), height = rows*cellHeight+106;
++                double keyboardScale=Math.min(scale,Math.min((canvasWidth-16.0)/(width+8),(canvasHeight-16.0)/(height+8)));
++                draw.scale(keyboardScale,keyboardScale);draw.setFont(ControllerTheme.body(1));
++                ControllerTheme.frame(draw,new Rectangle(8,8,width,height),12);
++                // The entered text sits on a parchment strip like the classic chatbox amount prompt.
++                Rectangle strip=new Rectangle(16,14,width-16,48);ControllerTheme.parchment(draw,strip);
++                draw.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
++                draw.setColor(ControllerTheme.PARCHMENT_TEXT); draw.drawString(fit(draw,keyboard.state().prompt+":",width-32),24,32);
++                String value = keyboard.state().value;
++                while (value.length()>0 && draw.getFontMetrics().stringWidth(value+"*")>width-32) value=value.substring(1);
++                draw.setColor(ControllerTheme.PARCHMENT_INPUT); draw.drawString(value+"*",24,52);
++                for (int i=0;i<keys.length;i++)
++                {
++                    int x=20+i%columns*cellWidth,y=68+i/columns*cellHeight;
++                    boolean selected=i==keyboard.index();
++                    ControllerTheme.button(draw,new Rectangle(x,y,cellWidth-4,cellHeight-4),selected,true);
++                    String label=keys[i].equals(" ")?"Space":keys[i];
++                    draw.setColor(selected?ControllerTheme.FOCUS:label.length()>1?ControllerTheme.TEXT:ControllerTheme.TITLE);
++                    ControllerTheme.text(draw,label,x+(cellWidth-4-draw.getFontMetrics().stringWidth(label))/2,y+(cellHeight-4+draw.getFontMetrics().getAscent()-draw.getFontMetrics().getDescent())/2);
++                }
++                draw.setColor(ControllerTheme.HINT); ControllerTheme.text(draw,fit(draw,prompt,width-24),20,86+rows*cellHeight);
++                return null;
++            }
++            UiState.Widget focus = ui.focus();
++            if (focus != null)
++            {
++                // A black-backed yellow keyline reads against both light parchment and dark stone widgets.
++                Rectangle rect = focus.bounds;
++                draw.setColor(new Color(255,255,0,40)); draw.fill(rect);
++                draw.setStroke(new BasicStroke(3)); draw.setColor(Color.BLACK); draw.draw(rect);
++                draw.setStroke(new BasicStroke(1)); draw.setColor(ControllerTheme.FOCUS); draw.drawRect(rect.x,rect.y,rect.width,rect.height);
++            }
++            java.util.List<String> lines = wrap(draw,prompt,Math.max(100,canvasWidth-40));
++            int width = 0;
++            for (String line : lines) width = Math.max(width,draw.getFontMetrics().stringWidth(line)+20);
++            int lineHeight = Math.max(18,draw.getFontMetrics().getHeight()+2), hintHeight = lines.size()*lineHeight+12;
++            ControllerTheme.frame(draw,new Rectangle(8,8,width,hintHeight),0);
++            for (int i=0;i<lines.size();i++) { draw.setColor(i==0?ControllerTheme.TEXT:ControllerTheme.HINT); ControllerTheme.text(draw,lines.get(i),18,8+6+draw.getFontMetrics().getAscent()+i*lineHeight); }
++            int menuY = hintHeight+16;
++            UiState.Widget menu = ui.context();
++            if (menu != null)
++            {
++                FontMetrics metrics=draw.getFontMetrics();
++                int rowHeight=metrics.getHeight()+4,headerHeight=metrics.getHeight()+3;
++                int shown=Math.max(1,Math.min(menu.actions.length,(canvasHeight-menuY-14-headerHeight)/rowHeight));
++                int start=Math.max(0,Math.min(menu.actions.length-shown,ui.contextIndex()-shown+1));
++                String[] options=new String[menu.actions.length],targets=new String[options.length];Color[] colours=new Color[options.length];
++                for(int i=0;i<options.length;i++){options[i]=menu.actions[i].label;targets[i]=menu.name==null?"":menu.name;colours[i]=menu.itemId>=0?ControllerTheme.ITEM_TEXT:ControllerTheme.TITLE;}
++                ControllerMenu.paint(draw,8,menuY,Math.max(100,canvasWidth-16),"Choose Option",options,targets,colours,ui.contextIndex(),start,shown);
++            }
++        }
++        finally { draw.dispose(); }
+         return null;
+     }
+     private static String fit(Graphics2D draw,String value,int width)
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java b/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java
+--- a/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java
++++ b/client/src/net/runelite/client/soloscape/launcher/LauncherKeyboard.java
+@@ -28,13 +28,13 @@
+     LauncherKeyboard(boolean preferred,java.util.function.Consumer<Boolean> request)
+     {
+         super(new BorderLayout(5,5));systemKeyboard=preferred;steamKeyboard=request;
+-        JPanel heading=new JPanel(new BorderLayout(5,5));
++        JPanel heading=new JPanel(new BorderLayout(5,5));setOpaque(false);heading.setOpaque(false);grid.setOpaque(false);prompt.setForeground(LauncherTheme.WHITE);
+         JComboBox<String> mode=new JComboBox<>(new String[]{"Steam / physical keyboard","SoloScape controller keyboard"});
+         mode.setSelectedIndex(preferred?0:1);
+         mode.addActionListener(e->{JTextField previous=field;deactivate();systemKeyboard=mode.getSelectedIndex()==0;if(previous!=null){previous.requestFocusInWindow();activate(previous);}});
+         JButton reopen=new JButton("Open Steam keyboard");reopen.setFocusable(false);
+         reopen.addActionListener(e->{if(active()&&systemKeyboard)steamKeyboard.accept(true);});
+-        JPanel choice=new JPanel();choice.add(mode);choice.add(reopen);
++        JPanel choice=new JPanel();choice.setOpaque(false);choice.add(mode);choice.add(reopen);
+         heading.add(choice,BorderLayout.NORTH);heading.add(prompt,BorderLayout.SOUTH);
+         add(heading,BorderLayout.NORTH);add(grid,BorderLayout.CENTER);setVisible(false);
+         controls=new EntryControls(new UiControls.Gateway(){
+@@ -116,6 +116,7 @@
+             }
+             grid.revalidate();grid.repaint();
+         }
+-        for(int i=0;i<buttons.size();i++)buttons.get(i).setBackground(i==controls.index()?new Color(140,190,230):UIManager.getColor("Button.background"));
++        // The controller cursor lights the key with the same yellow keyline as focus.
++        for(int i=0;i<buttons.size();i++){JButton key=buttons.get(i);Boolean selected=i==controls.index();if(!selected.equals(key.getClientProperty(LauncherTheme.SELECTED))){key.putClientProperty(LauncherTheme.SELECTED,selected);key.repaint();}}
+     }
+ }
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java b/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java
+--- a/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java
++++ b/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java
+@@ -17,7 +17,7 @@
+         try { if(java.nio.file.Files.isRegularFile(artwork)) loaded=ImageIO.read(artwork.toFile()); }
+         catch(IOException ex) { System.err.println("Launcher artwork unavailable: "+ex.getMessage()); }
+         scene=loaded;
+-        setBackground(new Color(29,26,22));
++        setBackground(new Color(29,26,22));setOpaque(true);
+     }
+     @Override protected void paintComponent(Graphics graphics)
+     {
+@@ -31,6 +31,10 @@
+             g.drawImage(scene,0,0,half,getHeight(),null);
+             g.drawImage(scene,getWidth(),0,half-getWidth(),getHeight(),null);
+             g.setColor(new Color(0,0,0,65));g.fillRect(0,0,getWidth(),getHeight());
++            // A soft vignette pulls the eye to the stone frame, as on the classic login screen.
++            float radius=Math.max(getWidth(),getHeight())*.75f;
++            g.setPaint(new RadialGradientPaint(new java.awt.geom.Point2D.Float(getWidth()/2f,getHeight()/2f),radius,new float[]{.45f,1f},new Color[]{new Color(0,0,0,0),new Color(0,0,0,150)}));
++            g.fillRect(0,0,getWidth(),getHeight());
+         }
+         finally {g.dispose();}
+     }
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LauncherTheme.java b/client/src/net/runelite/client/soloscape/launcher/LauncherTheme.java
+new file mode 100644
+--- /dev/null
++++ b/client/src/net/runelite/client/soloscape/launcher/LauncherTheme.java
+@@ -0,0 +1,346 @@
++package net.runelite.client.soloscape.launcher;
++
++import java.awt.*;
++import java.awt.event.*;
++import javax.swing.*;
++import javax.swing.border.*;
++import javax.swing.plaf.*;
++import javax.swing.plaf.basic.*;
++import net.runelite.client.plugins.soloscapecontroller.ControllerTheme;
++import net.runelite.client.ui.FontManager;
++
++/**
++ * Jagex-style Swing presentation for the launcher and every dialog it opens: mottled stone,
++ * black keylines, raised stone buttons, the RuneScape bitmap fonts with black shadows and
++ * parchment for readable details. Presentation only: component names, texts, focus order and
++ * actions are untouched, so keyboard/controller ownership and probes keep working.
++ */
++final class LauncherTheme
++{
++    private LauncherTheme(){}
++    static final Color STONE=new Color(62,53,41), WELL=new Color(40,34,26), ORANGE=ControllerTheme.JAGEX_ORANGE, YELLOW=ControllerTheme.JAGEX_YELLOW,
++        WHITE=Color.WHITE, GREEN=ControllerTheme.JAGEX_GREEN, RED=new Color(255,48,48), DISABLED=new Color(128,118,100), PARCHMENT=new Color(206,188,150),
++        INK=new Color(32,22,10), LIGHT=new Color(112,99,79), DARK=new Color(30,26,20);
++    /** Selected state for buttons that represent a controller cursor (launcher keyboard keys). */
++    static final String SELECTED="soloscape.selected";
++
++    // The bitmap faces are drawn on a 16 px grid; 20 px keeps Deck text readable with even strokes.
++    static Font plain(float size){return FontManager.getRunescapeFont().deriveFont(size);}
++    static Font bold(float size){return FontManager.getRunescapeBoldFont().deriveFont(size);}
++
++    static void install()
++    {
++        ControllerTheme.classic(true);
++        Font body=plain(20),strong=bold(20);
++        String[] fonts={"Label.font","CheckBox.font","ComboBox.font","TextField.font","FormattedTextField.font","List.font","TextArea.font",
++            "OptionPane.messageFont","Spinner.font","ToolTip.font","TitledBorder.font","RadioButton.font","ProgressBar.font","Panel.font"};
++        for(String key:fonts)UIManager.put(key,new FontUIResource(body));
++        UIManager.put("Button.font",new FontUIResource(strong));UIManager.put("OptionPane.buttonFont",new FontUIResource(strong));
++        ColorUIResource stone=new ColorUIResource(STONE),well=new ColorUIResource(WELL),orange=new ColorUIResource(ORANGE),white=new ColorUIResource(WHITE),yellow=new ColorUIResource(YELLOW);
++        for(String key:new String[]{"Panel.background","OptionPane.background","CheckBox.background","RadioButton.background","Viewport.background","ScrollPane.background","SplitPane.background","ProgressBar.background","Spinner.background"})UIManager.put(key,stone);
++        for(String key:new String[]{"Label.foreground","OptionPane.messageForeground","CheckBox.foreground","RadioButton.foreground","TitledBorder.titleColor"})UIManager.put(key,orange);
++        for(String key:new String[]{"TextField.background","FormattedTextField.background","TextArea.background","List.background","ComboBox.background","ComboBox.buttonBackground"})UIManager.put(key,well);
++        for(String key:new String[]{"TextField.foreground","FormattedTextField.foreground","TextArea.foreground","List.foreground","ComboBox.foreground","Button.foreground"})UIManager.put(key,white);
++        for(String key:new String[]{"TextField.caretForeground","FormattedTextField.caretForeground","TextArea.caretForeground"})UIManager.put(key,yellow);
++        for(String key:new String[]{"List.selectionBackground","ComboBox.selectionBackground","TextField.selectionBackground","TextArea.selectionBackground","FormattedTextField.selectionBackground"})UIManager.put(key,new ColorUIResource(new Color(101,88,67)));
++        for(String key:new String[]{"List.selectionForeground","ComboBox.selectionForeground","TextField.selectionForeground","TextArea.selectionForeground","FormattedTextField.selectionForeground"})UIManager.put(key,yellow);
++        UIManager.put("TextField.inactiveForeground",new ColorUIResource(DISABLED));UIManager.put("ComboBox.disabledForeground",new ColorUIResource(DISABLED));
++        UIManager.put("Label.disabledForeground",new ColorUIResource(DISABLED));UIManager.put("Button.disabledText",new ColorUIResource(DISABLED));
++        UIManager.put("ProgressBar.foreground",orange);UIManager.put("ProgressBar.selectionForeground",white);UIManager.put("ProgressBar.selectionBackground",white);
++        UIManager.put("ToolTip.background",new ColorUIResource(255,255,160));UIManager.put("ToolTip.foreground",new ColorUIResource(Color.BLACK));
++        UIManager.put("ToolTip.border",new BorderUIResource(BorderFactory.createLineBorder(Color.BLACK)));
++        Border field=new BorderUIResource(BorderFactory.createCompoundBorder(new Bevel(true),BorderFactory.createEmptyBorder(4,6,4,6)));
++        for(String key:new String[]{"TextField.border","FormattedTextField.border","ComboBox.border","Spinner.border","ScrollPane.border","ProgressBar.border"})UIManager.put(key,field);
++        UIManager.put("OptionPane.border",new BorderUIResource(BorderFactory.createEmptyBorder(14,16,10,16)));
++        UIManager.put("SplitPane.border",new BorderUIResource(BorderFactory.createEmptyBorder()));UIManager.put("SplitPaneDivider.border",new BorderUIResource(BorderFactory.createEmptyBorder()));
++        UIManager.put("SplitPane.dividerSize",8);
++        // Buttons, scrollbars, combo boxes, split panes and check boxes paint their own flat stone.
++        UIManager.put("ButtonUI",StoneButtonUI.class.getName());UIManager.put(StoneButtonUI.class.getName(),StoneButtonUI.class);
++        UIManager.put("ScrollBarUI",StoneScrollBarUI.class.getName());UIManager.put(StoneScrollBarUI.class.getName(),StoneScrollBarUI.class);
++        UIManager.put("ComboBoxUI",StoneComboBoxUI.class.getName());UIManager.put(StoneComboBoxUI.class.getName(),StoneComboBoxUI.class);
++        UIManager.put("SplitPaneUI",StoneSplitPaneUI.class.getName());UIManager.put(StoneSplitPaneUI.class.getName(),StoneSplitPaneUI.class);
++        UIManager.put("CheckBox.icon",new IconUIResource(new CheckIcon()));
++        // Modern question/information glyphs clash with the stone dialogs; warnings and errors keep theirs.
++        Icon none=new IconUIResource(new ImageIcon(new java.awt.image.BufferedImage(1,1,java.awt.image.BufferedImage.TYPE_INT_ARGB)));
++        UIManager.put("OptionPane.questionIcon",none);UIManager.put("OptionPane.informationIcon",none);
++    }
++
++    /** Text drawn the classic way: bitmap face, no antialiasing, a black shadow one pixel per 16 px. */
++    static void text(Graphics2D g,String text,int x,int y,Color colour)
++    {
++        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
++        int offset=Math.max(1,g.getFont().getSize()/16);
++        g.setColor(Color.BLACK);g.drawString(text,x+offset,y+offset);g.setColor(colour);g.drawString(text,x,y);
++    }
++
++    /** A label painted with the classic shadow, for titles over the artwork. */
++    static final class ShadowLabel extends JLabel
++    {
++        ShadowLabel(String text,Font font,Color colour){super(text,SwingConstants.CENTER);setFont(font);setForeground(colour);setOpaque(false);}
++        @Override protected void paintComponent(Graphics graphics)
++        {
++            Graphics2D g=(Graphics2D)graphics.create();
++            try
++            {
++                FontMetrics metrics=g.getFontMetrics(getFont());g.setFont(getFont());
++                String value=getText();
++                int x=(getWidth()-metrics.stringWidth(value))/2,y=(getHeight()+metrics.getAscent()-metrics.getDescent())/2;
++                text(g,value,x,y,getForeground());
++            }
++            finally{g.dispose();}
++        }
++    }
++
++    /** A stone interface frame with an optional orange title and two-tone rule. */
++    static class StonePanel extends JPanel
++    {
++        private final String title;
++        StonePanel(LayoutManager layout,String title)
++        {
++            super(layout);this.title=title;setOpaque(false);
++            int top=title==null?12:44;setBorder(BorderFactory.createEmptyBorder(top,14,12,14));
++        }
++        @Override protected void paintComponent(Graphics graphics)
++        {
++            Graphics2D g=(Graphics2D)graphics.create();
++            try
++            {
++                ControllerTheme.frame(g,new Rectangle(0,0,getWidth(),getHeight()),0);
++                if(title!=null)
++                {
++                    g.setFont(bold(20));FontMetrics metrics=g.getFontMetrics();
++                    text(g,title,(getWidth()-metrics.stringWidth(title))/2,10+metrics.getAscent(),ORANGE);
++                    ControllerTheme.separator(g,6,36,getWidth()-12);
++                }
++            }
++            finally{g.dispose();}
++        }
++    }
++
++    /** Recessed bevel used around wells, lists and text fields. */
++    static final class Bevel extends AbstractBorder
++    {
++        private final boolean inset;
++        Bevel(boolean inset){this.inset=inset;}
++        @Override public void paintBorder(Component c,Graphics g,int x,int y,int width,int height)
++        {
++            g.setColor(Color.BLACK);g.drawRect(x,y,width-1,height-1);
++            g.setColor(inset?DARK:LIGHT);g.drawLine(x+1,y+1,x+width-2,y+1);g.drawLine(x+1,y+1,x+1,y+height-2);
++            g.setColor(inset?LIGHT:DARK);g.drawLine(x+1,y+height-2,x+width-2,y+height-2);g.drawLine(x+width-2,y+1,x+width-2,y+height-2);
++        }
++        @Override public Insets getBorderInsets(Component c){return new Insets(2,2,2,2);}
++        @Override public Insets getBorderInsets(Component c,Insets insets){insets.set(2,2,2,2);return insets;}
++    }
++
++    /** Parchment backing for the character details, like a classic scroll. */
++    static final class ParchmentArea extends JTextArea
++    {
++        ParchmentArea(){setOpaque(false);setForeground(INK);setFont(plain(20));setCaretColor(INK);setSelectionColor(new Color(170,140,90));setSelectedTextColor(Color.BLACK);}
++        @Override protected void paintComponent(Graphics graphics)
++        {
++            Graphics2D g=(Graphics2D)graphics.create();
++            try
++            {
++                ControllerTheme.parchment(g,new Rectangle(0,0,getWidth(),getHeight()));
++                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
++            }
++            finally{g.dispose();}
++            ((Graphics2D)graphics).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
++            super.paintComponent(graphics);
++        }
++    }
++
++    /** Stone button: raised idle, yellow keyline when focused, hovered or controller-selected, sunk when pressed. */
++    public static final class StoneButtonUI extends BasicButtonUI
++    {
++        private static final StoneButtonUI SHARED=new StoneButtonUI();
++        public static ComponentUI createUI(JComponent component){return SHARED;}
++        @Override protected void installDefaults(AbstractButton button)
++        {
++            super.installDefaults(button);
++            button.setOpaque(false);button.setRolloverEnabled(true);button.setFocusPainted(false);
++            if(button.getBorder()==null||button.getBorder() instanceof UIResource)button.setBorder(new BorderUIResource(BorderFactory.createEmptyBorder(6,14,6,14)));
++        }
++        @Override public void paint(Graphics graphics,JComponent component)
++        {
++            AbstractButton button=(AbstractButton)component;ButtonModel model=button.getModel();
++            Graphics2D g=(Graphics2D)graphics.create();
++            try
++            {
++                boolean lit=button.isEnabled()&&(model.isRollover()||button.isFocusOwner()||Boolean.TRUE.equals(button.getClientProperty(SELECTED)));
++                Rectangle box=new Rectangle(0,0,button.getWidth(),button.getHeight());
++                ControllerTheme.button(g,box,lit||model.isPressed(),button.isEnabled());
++                if(model.isArmed()&&model.isPressed()){g.setColor(new Color(0,0,0,60));g.fillRect(2,2,box.width-4,box.height-4);}
++                g.setFont(button.getFont());FontMetrics metrics=g.getFontMetrics();
++                String label=button.getText()==null?"":button.getText();
++                int room=box.width-8;
++                if(metrics.stringWidth(label)>room){while(!label.isEmpty()&&metrics.stringWidth(label+"…")>room)label=label.substring(0,label.length()-1);label+="…";}
++                int x=(box.width-metrics.stringWidth(label))/2+(model.isPressed()?1:0),y=(box.height+metrics.getAscent()-metrics.getDescent())/2+(model.isPressed()?1:0);
++                text(g,label,x,y,!button.isEnabled()?DISABLED:lit?YELLOW:WHITE);
++            }
++            finally{g.dispose();}
++        }
++    }
++
++    /** Classic scrollbar: dark track, stone thumb and stone arrow buttons. */
++    public static final class StoneScrollBarUI extends BasicScrollBarUI
++    {
++        public static ComponentUI createUI(JComponent component){return new StoneScrollBarUI();}
++        @Override protected void configureScrollBarColors(){super.configureScrollBarColors();trackColor=WELL;thumbColor=STONE;}
++        @Override protected Dimension getMinimumThumbSize(){return new Dimension(16,24);}
++        @Override public Dimension getPreferredSize(JComponent component){return scrollbar.getOrientation()==JScrollBar.VERTICAL?new Dimension(18,48):new Dimension(48,18);}
++        @Override protected void paintTrack(Graphics graphics,JComponent component,Rectangle bounds)
++        {graphics.setColor(WELL);graphics.fillRect(bounds.x,bounds.y,bounds.width,bounds.height);graphics.setColor(Color.BLACK);graphics.drawRect(bounds.x,bounds.y,bounds.width-1,bounds.height-1);}
++        @Override protected void paintThumb(Graphics graphics,JComponent component,Rectangle bounds)
++        {if(bounds.isEmpty()||!scrollbar.isEnabled())return;ControllerTheme.button((Graphics2D)graphics,bounds,isThumbRollover(),true);}
++        @Override protected JButton createDecreaseButton(int orientation){return new Arrow(orientation);}
++        @Override protected JButton createIncreaseButton(int orientation){return new Arrow(orientation);}
++    }
++    /** Small stone arrow button for scrollbars and combo boxes. */
++    static final class Arrow extends JButton
++    {
++        private final int direction;
++        Arrow(int direction){this.direction=direction;setFocusable(false);setBorder(BorderFactory.createEmptyBorder());setPreferredSize(new Dimension(18,18));}
++        @Override public void paint(Graphics graphics)
++        {
++            Graphics2D g=(Graphics2D)graphics.create();
++            try
++            {
++                ControllerTheme.button(g,new Rectangle(0,0,getWidth(),getHeight()),getModel().isRollover(),isEnabled());
++                int cx=getWidth()/2,cy=getHeight()/2,s=Math.max(3,Math.min(getWidth(),getHeight())/4);
++                Polygon arrow=new Polygon();
++                switch(direction)
++                {
++                    case NORTH:arrow.addPoint(cx-s,cy+s/2);arrow.addPoint(cx+s,cy+s/2);arrow.addPoint(cx,cy-s/2-1);break;
++                    case SOUTH:arrow.addPoint(cx-s,cy-s/2);arrow.addPoint(cx+s,cy-s/2);arrow.addPoint(cx,cy+s/2+1);break;
++                    case WEST:arrow.addPoint(cx+s/2,cy-s);arrow.addPoint(cx+s/2,cy+s);arrow.addPoint(cx-s/2-1,cy);break;
++                    default:arrow.addPoint(cx-s/2,cy-s);arrow.addPoint(cx-s/2,cy+s);arrow.addPoint(cx+s/2+1,cy);
++                }
++                g.setColor(Color.BLACK);g.translate(1,1);g.fill(arrow);g.translate(-1,-1);
++                g.setColor(isEnabled()?ORANGE:DISABLED);g.fill(arrow);
++            }
++            finally{g.dispose();}
++        }
++    }
++
++    /** Combo box with a recessed value well and a stone arrow. */
++    public static final class StoneComboBoxUI extends BasicComboBoxUI
++    {
++        public static ComponentUI createUI(JComponent component){return new StoneComboBoxUI();}
++        @Override protected JButton createArrowButton(){return new Arrow(SwingConstants.SOUTH);}
++        @Override public void paintCurrentValueBackground(Graphics graphics,Rectangle bounds,boolean focus)
++        {graphics.setColor(WELL);graphics.fillRect(bounds.x,bounds.y,bounds.width,bounds.height);if(comboBox.isFocusOwner()){graphics.setColor(YELLOW);graphics.drawRect(bounds.x,bounds.y,bounds.width-1,bounds.height-1);}}
++        @Override protected ListCellRenderer<Object> createRenderer()
++        {
++            return new BasicComboBoxRenderer.UIResource(){
++                @Override public Component getListCellRendererComponent(JList list,Object value,int index,boolean selected,boolean focus)
++                {
++                    super.getListCellRendererComponent(list,value,index,selected,focus);
++                    setBorder(BorderFactory.createEmptyBorder(2,6,2,6));
++                    setBackground(selected&&index>=0?new Color(101,88,67):WELL);setForeground(selected?YELLOW:WHITE);
++                    return this;
++                }
++            };
++        }
++    }
++
++    /** Split pane whose divider is a narrow stone rule. */
++    public static final class StoneSplitPaneUI extends BasicSplitPaneUI
++    {
++        public static ComponentUI createUI(JComponent component){return new StoneSplitPaneUI();}
++        @Override public BasicSplitPaneDivider createDefaultDivider()
++        {
++            return new BasicSplitPaneDivider(this){
++                @Override public void paint(Graphics graphics)
++                {
++                    graphics.setColor(STONE);graphics.fillRect(0,0,getWidth(),getHeight());
++                    graphics.setColor(LIGHT);graphics.drawLine(getWidth()/2-1,0,getWidth()/2-1,getHeight());
++                    graphics.setColor(DARK);graphics.drawLine(getWidth()/2,0,getWidth()/2,getHeight());
++                }
++            };
++        }
++    }
++
++    /** Check box drawn as a recessed stone square with a yellow tick. */
++    static final class CheckIcon implements Icon
++    {
++        @Override public int getIconWidth(){return 18;}
++        @Override public int getIconHeight(){return 18;}
++        @Override public void paintIcon(Component c,Graphics graphics,int x,int y)
++        {
++            Graphics2D g=(Graphics2D)graphics.create();
++            try
++            {
++                AbstractButton box=(AbstractButton)c;
++                g.setColor(WELL);g.fillRect(x,y,18,18);new Bevel(true).paintBorder(c,g,x,y,18,18);
++                if(box.isFocusOwner()||box.getModel().isRollover()){g.setColor(YELLOW);g.drawRect(x,y,17,17);}
++                if(box.isSelected())
++                {
++                    g.setStroke(new BasicStroke(3,BasicStroke.CAP_SQUARE,BasicStroke.JOIN_MITER));
++                    g.setColor(Color.BLACK);g.drawPolyline(new int[]{x+5,x+8,x+14},new int[]{y+9,y+13,y+5},3);
++                    g.setColor(box.isEnabled()?YELLOW:DISABLED);g.drawPolyline(new int[]{x+4,x+7,x+13},new int[]{y+8,y+12,y+4},3);
++                }
++            }
++            finally{g.dispose();}
++        }
++    }
++
++    /** Character list rows: orange name, coloured state, lit stone when selected. */
++    static final class CharacterCell extends JComponent implements ListCellRenderer<Object>
++    {
++        private String name="",state="";private Color stateColour=WHITE;private boolean selected,focused;
++        CharacterCell(){setOpaque(false);}
++        @Override public Component getListCellRendererComponent(JList<?> list,Object value,int index,boolean selected,boolean focus)
++        {
++            String text=String.valueOf(value);int split=text.lastIndexOf(" • ");
++            name=split<0?text:text.substring(0,split);state=split<0?"":text.substring(split+3);
++            stateColour=state.equals("Continue")?GREEN:state.equals("New")?YELLOW:RED;
++            this.selected=selected;this.focused=list.isFocusOwner();return this;
++        }
++        @Override protected void paintComponent(Graphics graphics)
++        {
++            Graphics2D g=(Graphics2D)graphics.create();
++            try
++            {
++                Rectangle box=new Rectangle(2,2,getWidth()-4,getHeight()-4);
++                ControllerTheme.cell(g,box,selected&&focused);
++                if(selected&&!focused){g.setColor(ORANGE);g.drawRect(box.x+1,box.y+1,box.width-3,box.height-3);}
++                g.setFont(bold(20));FontMetrics big=g.getFontMetrics();
++                int baseline=box.y+8+big.getAscent();
++                text(g,fit(big,name,box.width-20),box.x+10,baseline,selected?WHITE:ORANGE);
++                g.setFont(plain(20));
++                text(g,state,box.x+10,baseline+g.getFontMetrics().getHeight(),stateColour);
++            }
++            finally{g.dispose();}
++        }
++        private static String fit(FontMetrics metrics,String value,int width)
++        {
++            if(metrics.stringWidth(value)<=width)return value;
++            while(!value.isEmpty()&&metrics.stringWidth(value+"…")>width)value=value.substring(0,value.length()-1);
++            return value+"…";
++        }
++    }
++
++    /** World rate choices read as multipliers ("5×") while the selected values stay numeric. */
++    static ListCellRenderer<Object> rates()
++    {
++        return new DefaultListCellRenderer(){
++            @Override public Component getListCellRendererComponent(JList<?> list,Object value,int index,boolean selected,boolean focus)
++            {
++                super.getListCellRendererComponent(list,value,index,selected,focus);
++                if(value instanceof Double){double rate=(Double)value;setText((rate==Math.rint(rate)?Long.toString((long)rate):Double.toString(rate))+"×");}
++                setBorder(BorderFactory.createEmptyBorder(2,6,2,6));setOpaque(index>=0);
++                setBackground(selected&&index>=0?new Color(101,88,67):WELL);setForeground(selected?YELLOW:WHITE);
++                return this;
++            }
++        };
++    }
++    /** Repaints a component whenever focus moves, so keylines follow controller/keyboard focus. */
++    static void repaintOnFocus(JComponent component)
++    {
++        component.addFocusListener(new FocusAdapter(){
++            @Override public void focusGained(FocusEvent e){component.repaint();}
++            @Override public void focusLost(FocusEvent e){component.repaint();}
++        });
++    }
++}
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -14,11 +14,13 @@
+ /** Desktop shell for the local, owned profile backend. No external web service. */
+ public final class SoloScapeLauncher
+ {
++    // Installed before any instance field creates a Swing component, so every control adopts it.
++    static { LauncherTheme.install(); }
+     private final JFrame frame = new JFrame("SoloScape • Local Worlds");
+     private final DefaultListModel<CharacterRow> characters = new DefaultListModel<>();
+     private final JList<CharacterRow> list = new JList<>(characters);
+     private final JLabel status = new JLabel("Checking your characters…");
+-    private final JTextArea detail = new JTextArea();
++    private final JTextArea detail = new LauncherTheme.ParchmentArea();
+     private final JProgressBar progress = new JProgressBar();
+     private final JButton play = new LauncherButton("Continue"), stop = new LauncherButton("Save & Quit");
+     private final JButton create = new LauncherButton("New Character"), backup = new LauncherButton("Back Up"), restore = new LauncherButton("Restore Backup");
+@@ -59,30 +61,32 @@
+         JPanel content = new LauncherScene(root.resolve(".runtime/launcher-art/brazier.jpg"));
+         content.setLayout(new BorderLayout(18, 18));
+         content.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+-        JLabel title = new JLabel("SoloScape"); title.setFont(new Font(Font.SERIF, Font.BOLD, 36)); title.setForeground(new Color(239,204,128)); title.setHorizontalAlignment(SwingConstants.CENTER);
+-        JPanel header = new JPanel(new GridLayout(3, 1, 0, 6)); header.add(title);
+-        JLabel subtitle=new JLabel("Your world. Your pace. Your adventure.", SwingConstants.CENTER); subtitle.setForeground(new Color(223,211,187)); header.add(subtitle);
+-        nativeNavigation.setFocusable(false);nativeNavigation.setForeground(new Color(223,211,187));nativeNavigation.setOpaque(false);header.setOpaque(false);header.add(nativeNavigation);content.add(header, BorderLayout.NORTH);
++        JLabel title = new LauncherTheme.ShadowLabel("SoloScape", LauncherTheme.bold(32), LauncherTheme.ORANGE);
++        JPanel header = new JPanel(new GridLayout(3, 1, 0, 2)); header.add(title);
++        JLabel subtitle=new LauncherTheme.ShadowLabel("Your world. Your pace. Your adventure.", LauncherTheme.plain(20), LauncherTheme.YELLOW); header.add(subtitle);
++        nativeNavigation.setFocusable(false);nativeNavigation.setForeground(LauncherTheme.WHITE);nativeNavigation.setOpaque(false);nativeNavigation.setHorizontalAlignment(SwingConstants.CENTER);header.setOpaque(false);header.add(nativeNavigation);content.add(header, BorderLayout.NORTH);
+         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); list.setFixedCellHeight(60);
+-        list.setFont(list.getFont().deriveFont(17f));
++        list.setCellRenderer(new LauncherTheme.CharacterCell()); list.setBackground(LauncherTheme.WELL); LauncherTheme.repaintOnFocus(list);
+         list.addListSelectionListener(e -> showCharacter());
+         detail.setEditable(false); detail.setLineWrap(true); detail.setWrapStyleWord(true);
+-        detail.setFont(detail.getFont().deriveFont(16f)); detail.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+-        JSplitPane body = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(list), new JScrollPane(detail));
+-        body.setResizeWeight(.43); body.setDividerLocation(340);
+-        JPanel inset=new JPanel(new BorderLayout());inset.setOpaque(false);inset.setBorder(BorderFactory.createEmptyBorder(0,100,0,100));inset.add(body);content.add(inset, BorderLayout.CENTER);
+-        Color stone=new Color(35,32,29), parchment=new Color(232,219,191);
+-        list.setBackground(stone);list.setForeground(parchment);list.setSelectionBackground(new Color(96,72,36));list.setSelectionForeground(Color.WHITE);
+-        detail.setBackground(stone);detail.setForeground(parchment);body.setBorder(BorderFactory.createLineBorder(new Color(143,111,58),2));
+-        JPanel footer = new JPanel(new BorderLayout(0, 12));
++        detail.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
++        JScrollPane characterScroll=new JScrollPane(list),detailScroll=new JScrollPane(detail);
++        characterScroll.getViewport().setBackground(LauncherTheme.WELL);detailScroll.getViewport().setOpaque(false);detailScroll.setOpaque(false);
++        JSplitPane body = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, characterScroll, detailScroll);
++        body.setResizeWeight(.43); body.setDividerLocation(340); body.setOpaque(false);
++        // The character browser sits in a classic stone interface frame over the brazier scene.
++        JPanel framed=new LauncherTheme.StonePanel(new BorderLayout(),"Select a Character");framed.add(body);
++        JPanel inset=new JPanel(new BorderLayout());inset.setOpaque(false);inset.setBorder(BorderFactory.createEmptyBorder(0,80,0,80));inset.add(framed);content.add(inset, BorderLayout.CENTER);
++        JPanel footer = new JPanel(new BorderLayout(0, 10));
+         JPanel buttons = new JPanel(new GridLayout(2, 5, 8, 8));
+         for (JButton button : new JButton[]{play, create, backup, restore, stop, settings, diagnostics, retention, recover, worldSettings})
+-        { button.setFont(button.getFont().deriveFont(15f)); button.setPreferredSize(new Dimension(145, 44)); buttons.add(button); }
++        { button.setPreferredSize(new Dimension(145, 44)); buttons.add(button); }
+ 
+         footer.setOpaque(false);buttons.setOpaque(false);
+         footer.add(buttons, BorderLayout.CENTER);
+-        JPanel state = new JPanel(new BorderLayout(8, 8)); state.setBackground(new Color(35,32,29));status.setForeground(new Color(232,219,191));state.add(status, BorderLayout.CENTER);
+-        progress.setPreferredSize(new Dimension(110, 16)); state.add(progress, BorderLayout.EAST); footer.add(state, BorderLayout.SOUTH);
++        JPanel state = new LauncherTheme.StonePanel(new BorderLayout(8, 8),null); state.setBorder(BorderFactory.createEmptyBorder(6,12,6,10));
++        status.setForeground(LauncherTheme.YELLOW);state.add(status, BorderLayout.CENTER);
++        progress.setPreferredSize(new Dimension(120, 18)); state.add(progress, BorderLayout.EAST); footer.add(state, BorderLayout.SOUTH);
+         content.add(footer, BorderLayout.SOUTH);
+         frame.setContentPane(content); frame.setMinimumSize(new Dimension(880, 540)); frame.setSize(1024, 650);
+         frame.setLocationRelativeTo(null);
+@@ -177,6 +181,7 @@
+         JsonObject world=row.data.has("world")?row.data.getAsJsonObject("world"):new JsonObject();
+         Double[] rates={1.0,2.0,3.0,5.0,10.0,25.0,50.0,100.0};
+         JComboBox<Double> xp=new JComboBox<>(rates),drops=new JComboBox<>(rates);
++        xp.setRenderer(LauncherTheme.rates());drops.setRenderer(LauncherTheme.rates());
+         xp.setSelectedItem(world.has("xp")?world.get("xp").getAsDouble():1.0);
+         drops.setSelectedItem(world.has("drops")?world.get("drops").getAsDouble():1.0);
+         JCheckBox infinite=new JCheckBox("Unlimited run energy",world.has("infinite_run")&&world.get("infinite_run").getAsBoolean());
+@@ -203,11 +208,11 @@
+         LauncherKeyboard entry=new LauncherKeyboard();entry.owner=dialog;keyboard=entry;
+         entry.register(label,net.runelite.client.input.controller.EntryState.LAUNCHER_LABEL,()->{account.requestFocusInWindow();entry.activate(account);});
+         entry.register(account,net.runelite.client.input.controller.EntryState.LAUNCHER_ACCOUNT,confirm::requestFocusInWindow);
+-        JPanel fields=new JPanel(new GridLayout(0,1,4,6));
++        JPanel fields=new JPanel(new GridLayout(0,1,4,6));fields.setOpaque(false);tutorial.setOpaque(false);problem.setForeground(LauncherTheme.RED);
+         fields.add(new JLabel("Character label (1–48 characters)"));fields.add(label);
+         fields.add(new JLabel("Account name (1–12 letters, numbers, spaces or underscores)"));fields.add(account);fields.add(tutorial);fields.add(problem);
+-        JPanel actions=new JPanel();actions.add(confirm);actions.add(cancel);
+-        JPanel content=new JPanel(new BorderLayout(8,8));content.setBorder(BorderFactory.createEmptyBorder(16,16,16,16));content.add(fields,BorderLayout.NORTH);content.add(entry,BorderLayout.CENTER);content.add(actions,BorderLayout.SOUTH);
++        JPanel actions=new JPanel();actions.setOpaque(false);actions.add(confirm);actions.add(cancel);
++        JPanel content=new LauncherTheme.StonePanel(new BorderLayout(8,8),"New Character");content.add(fields,BorderLayout.NORTH);content.add(entry,BorderLayout.CENTER);content.add(actions,BorderLayout.SOUTH);
+         dialog.setContentPane(content);dialog.setSize(840,600);dialog.setLocationRelativeTo(frame);
+         cancel.addActionListener(e->dialog.dispose());
+         confirm.addActionListener(e->{
+@@ -332,16 +337,9 @@
+             if ((state.buttonsPressed & (1<<10)) != 0 && focus != null) focus.transferFocus();
+         }); timer.start();
+     }
++    /** Stone buttons come from the installed theme; this keeps the launcher's existing construction sites. */
+     private static final class LauncherButton extends JButton {
+-        LauncherButton(String text) {
+-            super(text);setContentAreaFilled(false);setOpaque(false);
+-            setForeground(new Color(237,218,174));
+-            setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(143,111,58)),BorderFactory.createEmptyBorder(6,8,6,8)));
+-        }
+-        @Override protected void paintComponent(Graphics graphics) {
+-            graphics.setColor(!isEnabled()?new Color(42,39,34):getModel().isPressed()?new Color(102,77,40):getModel().isRollover()?new Color(83,67,44):new Color(57,49,37));
+-            graphics.fillRect(0,0,getWidth(),getHeight());super.paintComponent(graphics);
+-        }
++        LauncherButton(String text) { super(text); }
+     }
+ 
+     private static final class CharacterRow
+diff --git a/client/test/net/runelite/client/plugins/soloscapecontroller/ControllerThemeTest.java b/client/test/net/runelite/client/plugins/soloscapecontroller/ControllerThemeTest.java
+new file mode 100644
+--- /dev/null
++++ b/client/test/net/runelite/client/plugins/soloscapecontroller/ControllerThemeTest.java
+@@ -0,0 +1,60 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import java.awt.*;
++import java.awt.image.BufferedImage;
++import java.lang.reflect.Field;
++import java.lang.reflect.Modifier;
++import org.junit.After;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class ControllerThemeTest {
++    @After public void restoreDefault(){ControllerTheme.classic(true);}
++
++    @Test public void everyPaletteColourIsInitialisedInBothPalettes() throws Exception {
++        for(boolean classic:new boolean[]{true,false,true}) {
++            ControllerTheme.classic(classic);
++            for(Field field:ControllerTheme.class.getFields())
++                if(Modifier.isStatic(field.getModifiers())&&field.getType()==Color.class)
++                    assertNotNull(field.getName()+" unset in "+(classic?"classic":"modern"),field.get(null));
++        }
++    }
++    @Test public void classicUsesRuneScapeFacesAndModernKeepsSansSerif() {
++        ControllerTheme.classic(true);
++        assertTrue(ControllerTheme.body(1).getFontName().startsWith("RuneScape"));
++        assertTrue(ControllerTheme.heading(1).getFontName().startsWith("RuneScape"));
++        assertEquals(16,ControllerTheme.body(1).getSize());
++        assertEquals(32,ControllerTheme.body(2).getSize());
++        ControllerTheme.classic(false);
++        assertEquals(new Font(Font.SANS_SERIF,Font.PLAIN,14),ControllerTheme.body(1));
++        assertEquals(new Font(Font.SANS_SERIF,Font.BOLD,22),ControllerTheme.heading(1));
++    }
++    @Test public void classicStackAndQuestColoursFollowTheOriginalRules() {
++        ControllerTheme.classic(true);
++        assertEquals(ControllerTheme.JAGEX_YELLOW,ControllerTheme.quantity(99_999));
++        assertEquals(Color.WHITE,ControllerTheme.quantity(100_000));
++        assertEquals(ControllerTheme.JAGEX_GREEN,ControllerTheme.quantity(10_000_000));
++        assertEquals("99999",ControllerTheme.quantityLabel(99_999));
++        assertEquals("184K",ControllerTheme.quantityLabel(184_520));
++        assertEquals("12M",ControllerTheme.quantityLabel(12_480_000));
++        assertEquals(ControllerTheme.JAGEX_GREEN,ControllerTheme.status("Completed"));
++        assertEquals(ControllerTheme.JAGEX_YELLOW,ControllerTheme.status("In progress"));
++        assertEquals(ControllerTheme.JAGEX_RED,ControllerTheme.status("Not started"));
++        assertEquals(ControllerTheme.JAGEX_YELLOW,ControllerTheme.targetName(1));
++        assertEquals(ControllerTheme.JAGEX_CYAN,ControllerTheme.targetName(2));
++        ControllerTheme.classic(false);
++        assertEquals("184520",ControllerTheme.quantityLabel(184_520));
++        assertEquals(ControllerTheme.MUTED,ControllerTheme.status("Not started"));
++    }
++    @Test public void helpersDrawOnlyInsideTheirBounds() {
++        BufferedImage canvas=new BufferedImage(200,120,BufferedImage.TYPE_INT_ARGB);
++        Graphics2D g=canvas.createGraphics();
++        try {
++            Rectangle box=new Rectangle(40,30,100,50);
++            ControllerTheme.frame(g,box,0);ControllerTheme.well(g,box);ControllerTheme.cell(g,box,true);
++            ControllerTheme.button(g,box,false,true);ControllerTheme.action(g,box,true);ControllerTheme.parchment(g,box);
++        } finally {g.dispose();}
++        for(int y=0;y<canvas.getHeight();y++)for(int x=0;x<canvas.getWidth();x++)
++            if(x<40||x>=140||y<30||y>=80)assertEquals("pixel outside bounds at "+x+","+y,0,canvas.getRGB(x,y)>>>24);
++    }
++}

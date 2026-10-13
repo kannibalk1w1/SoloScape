@@ -1,0 +1,262 @@
+diff --git a/client/src/net/runelite/client/config/RuneLiteConfig.java b/client/src/net/runelite/client/config/RuneLiteConfig.java
+index c505df4..724e68b 100644
+--- a/client/src/net/runelite/client/config/RuneLiteConfig.java
++++ b/client/src/net/runelite/client/config/RuneLiteConfig.java
+@@ -423,6 +423,18 @@ public interface RuneLiteConfig extends Config
+ 		return new Keybind(KeyEvent.VK_F12, InputEvent.CTRL_DOWN_MASK);
+ 	}
+ 
++	@ConfigItem(
++		keyName = "fullscreenToggleKey",
++		name = "Fullscreen Toggle Key",
++		description = "Toggle fullscreen and restore the previous window size (accepts modifiers)",
++		position = 47,
++		section = windowSettings
++	)
++	default Keybind fullscreenToggleKey()
++	{
++		return new Keybind(KeyEvent.VK_F11, 0);
++	}
++
+ 	@ConfigItem(
+ 		keyName = "blockExtraMouseButtons",
+ 		name = "Block extra mouse buttons",
+diff --git a/client/src/net/runelite/client/ui/ClientUI.java b/client/src/net/runelite/client/ui/ClientUI.java
+index 2e36599..3a94e48 100644
+--- a/client/src/net/runelite/client/ui/ClientUI.java
++++ b/client/src/net/runelite/client/ui/ClientUI.java
+@@ -129,6 +129,13 @@ public class ClientUI
+ 	private Rectangle lastNormalClientBounds;
+ 	private boolean applyingStoredBounds;
+ 	private boolean windowPersistenceReady;
++	private GraphicsDevice fullscreenDevice;
++	private boolean exclusiveFullscreen;
++	private Rectangle windowedBounds;
++	private int windowedState;
++	private int windowedDecorationStyle;
++	private javax.swing.border.Border windowedBorder;
++	private boolean windowedUndecorated;
+ 
+ 	@Inject
+ 	private ClientUI(
+@@ -469,6 +476,17 @@ public class ClientUI
+ 			pluginPanelListener.setEnabledOnLoginScreen(true);
+ 			keyManager.registerKeyListener(pluginPanelListener);
+ 
++			final HotkeyListener fullscreenListener = new HotkeyListener(config::fullscreenToggleKey)
++			{
++				@Override
++				public void hotkeyPressed()
++				{
++					toggleFullscreen();
++				}
++			};
++			fullscreenListener.setEnabledOnLoginScreen(true);
++			keyManager.registerKeyListener(fullscreenListener);
++
+ 			// Add mouse listener
+ 			/*final MouseListener mouseListener = new MouseAdapter()
+ 			{
+@@ -1112,7 +1130,7 @@ public class ClientUI
+ 		sidebarOpen = !sidebarOpen;
+ 		if (sidebarOpen)
+ 		{
+-			sidebarClosedWindowWidth = frame.getWidth();
++			sidebarClosedWindowWidth = isFullscreen() ? windowedBounds.width : frame.getWidth();
+ 		}
+ 
+ 		// Select/deselect buttons
+@@ -1376,7 +1394,7 @@ public class ClientUI
+ 		int expandBy = width - (pluginPanel != null ? pluginPanel.getWrappedPanel().getPreferredSize().width : 0);
+ 		if (pluginPanel == null)
+ 		{
+-			pluginPanelWindowBaseWidth = frame.getWidth();
++			pluginPanelWindowBaseWidth = isFullscreen() ? windowedBounds.width : frame.getWidth();
+ 		}
+ 		pluginPanel = panel;
+ 
+@@ -1437,6 +1455,125 @@ public class ClientUI
+ 		}
+ 	}
+ 
++	/** Toggle on the Swing thread; keep fullscreen geometry out of remembered window bounds. */
++	public void toggleFullscreen()
++	{
++		if (!SwingUtilities.isEventDispatchThread())
++		{
++			SwingUtilities.invokeLater(this::toggleFullscreen);
++			return;
++		}
++		if (frame == null)
++		{
++			return;
++		}
++		if (fullscreenDevice != null)
++		{
++			restoreWindowedMode();
++			return;
++		}
++
++		saveClientBoundsConfig();
++		windowedBounds = frame.getBounds();
++		windowedState = frame.getExtendedState();
++		windowedDecorationStyle = frame.getRootPane().getWindowDecorationStyle();
++		windowedBorder = frame.getRootPane().getBorder();
++		windowedUndecorated = frame.isUndecorated();
++		fullscreenDevice = frame.getGraphicsConfiguration().getDevice();
++		// Gamescope already owns the display. Java's exclusive fullscreen handoff
++		// loses XWayland focus on a software canvas; fill its screen without that handoff.
++		exclusiveFullscreen = !"gamescope".equalsIgnoreCase(System.getenv("XDG_CURRENT_DESKTOP"));
++		try
++		{
++			frame.setFullscreen(true);
++			frame.setContainedInScreen(ContainableFrame.Mode.NEVER);
++			frame.setExtendedState(JFrame.NORMAL);
++			frame.setOpacity(1.0f);
++			// Native decorations require recreating the peer; custom chrome does not.
++			if (!windowedUndecorated)
++			{
++				frame.dispose();
++				frame.setUndecorated(true);
++			}
++			frame.getRootPane().setWindowDecorationStyle(JRootPane.NONE);
++			frame.getRootPane().setBorder(null);
++			if (exclusiveFullscreen)
++			{
++				fullscreenDevice.setFullScreenWindow(frame);
++			}
++			else
++			{
++				frame.setBounds(fullscreenDevice.getDefaultConfiguration().getBounds());
++			}
++			frame.validate();
++			focusAfterFullscreenChange();
++		}
++		catch (RuntimeException ex)
++		{
++			log.warn("Unable to enter fullscreen", ex);
++			restoreWindowedMode();
++		}
++	}
++
++	public boolean isFullscreen()
++	{
++		return fullscreenDevice != null;
++	}
++
++	private void restoreWindowedMode()
++	{
++		if (exclusiveFullscreen)
++		{
++			fullscreenDevice.setFullScreenWindow(null);
++		}
++		if (!windowedUndecorated)
++		{
++			frame.dispose();
++			frame.setUndecorated(false);
++		}
++		frame.getRootPane().setWindowDecorationStyle(windowedDecorationStyle);
++		if (withTitleBar)
++		{
++			JComponent titleBar = SubstanceCoreUtilities.getTitlePaneComponent(frame);
++			if (titleBar != null && titleToolbar.getParent() != titleBar)
++			{
++				installTitleToolbar(titleBar);
++			}
++		}
++		frame.getRootPane().setBorder(windowedBorder);
++		frame.setBounds(windowedBounds);
++		frame.setExtendedState(windowedState);
++		fullscreenDevice = null;
++		frame.setFullscreen(false);
++		updateFrameConfig(true);
++		frame.revalidateMinimumSize();
++		frame.setVisible(true);
++		frame.validate();
++		focusAfterFullscreenChange();
++	}
++
++	private void focusAfterFullscreenChange()
++	{
++		frame.toFront();
++		requestFocus();
++		// The game thread may replace its native canvas after the window resize.
++		// Focus that replacement once Swing and the native peer have settled.
++		Timer focusTimer = new Timer(150, null);
++		final int[] attempts = {0};
++		focusTimer.addActionListener(event ->
++		{
++			if (frame.isActive())
++			{
++				giveClientFocus();
++			}
++			if (++attempts[0] == 5 || !frame.isVisible())
++			{
++				focusTimer.stop();
++			}
++		});
++		focusTimer.start();
++	}
++
+ 	private void updateFrameConfig(boolean updateResizable)
+ 	{
+ 		if (frame == null)
+@@ -1445,7 +1582,7 @@ public class ClientUI
+ 		}
+ 
+ 		// Update window opacity if the frame is undecorated, translucency capable and not fullscreen
+-		if (frame.isUndecorated() &&
++		if (!isFullscreen() && frame.isUndecorated() &&
+ 			frame.getGraphicsConfiguration().isTranslucencyCapable() &&
+ 			frame.getGraphicsConfiguration().getDevice().getFullScreenWindow() == null)
+ 		{
+@@ -1485,7 +1622,7 @@ public class ClientUI
+ 			// so we can't contain to screen always.
+ 			containMode = ContainableFrame.Mode.RESIZING;
+ 		}
+-		frame.setContainedInScreen(containMode);
++		frame.setContainedInScreen(isFullscreen() ? ContainableFrame.Mode.NEVER : containMode);
+ 
+ 		if (!config.rememberScreenBounds())
+ 		{
+@@ -1512,7 +1649,7 @@ public class ClientUI
+ 			client.getParent().setPreferredSize(size);
+ 			client.getParent().setSize(size);
+ 
+-			if (frame.isVisible())
++			if (frame.isVisible() && !isFullscreen())
+ 			{
+ 				frame.pack();
+ 			}
+@@ -1521,7 +1658,7 @@ public class ClientUI
+ 
+ 	private void saveClientBoundsConfig()
+ 	{
+-		if (frame == null || !windowPersistenceReady || applyingStoredBounds || safeMode || !config.rememberScreenBounds())
++		if (frame == null || isFullscreen() || !windowPersistenceReady || applyingStoredBounds || safeMode || !config.rememberScreenBounds())
+ 		{
+ 			return;
+ 		}
+diff --git a/client/src/net/runelite/client/ui/ContainableFrame.java b/client/src/net/runelite/client/ui/ContainableFrame.java
+index f97baf0..c94750d 100644
+--- a/client/src/net/runelite/client/ui/ContainableFrame.java
++++ b/client/src/net/runelite/client/ui/ContainableFrame.java
+@@ -103,6 +103,8 @@ public class ContainableFrame extends JFrame
+ 	@Setter
+ 	private ExpandResizeType expandResizeType;
+ 	private Mode containedInScreen;
++	@Setter
++	private boolean fullscreen;
+ 	private boolean expandedClientOppositeDirection;
+ 
+ 	public void setContainedInScreen(Mode cost)
+@@ -388,7 +390,8 @@ public class ContainableFrame extends JFrame
+ 
+ 	private boolean isFullScreen()
+ 	{
+-		return (getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH;
++		return fullscreen || getGraphicsConfiguration().getDevice().getFullScreenWindow() == this
++			|| (getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH;
+ 	}
+ 
+ 	private boolean isFrameCloseToLeftEdge()

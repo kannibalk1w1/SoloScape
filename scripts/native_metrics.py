@@ -14,6 +14,7 @@ def number(path):
 
 
 class NativeMetrics:
+    MAX_SAMPLES = 7200  # One hour at 0.5-second sampling; sustained Deck runs stay bounded.
     def __init__(self):
         self.children = []
         self.samples = []
@@ -56,6 +57,10 @@ class NativeMetrics:
                     'clock_ticks_per_second': os.sysconf('SC_CLK_TCK')})
             except (OSError, ValueError, KeyError):
                 pass  # An exiting child or unavailable sensor is not a fabricated zero.
+        result['external_power'] = [
+            {'supply': path.parent.name, 'online': value}
+            for path in Path('/sys/class/power_supply').glob('*/online')
+            if (value := number(path)) is not None]
         result['battery'] = []
         for battery in Path('/sys/class/power_supply').glob('BAT*'):
             try:
@@ -65,7 +70,9 @@ class NativeMetrics:
             result['battery'].append({'status': status, 'capacity_percent': number(battery / 'capacity'),
                 'power_now_microwatts': number(battery / 'power_now'),
                 'current_now_microamps': number(battery / 'current_now'),
-                'voltage_now_microvolts': number(battery / 'voltage_now')})
+                'voltage_now_microvolts': number(battery / 'voltage_now'),
+                'energy_now_microwatt_hours': number(battery / 'energy_now'),
+                'charge_now_microamp_hours': number(battery / 'charge_now')})
         result['temperatures_millicelsius'] = []
         for device in Path('/sys/class/hwmon').glob('hwmon*'):
             try:
@@ -76,6 +83,10 @@ class NativeMetrics:
                 value = number(sensor)
                 if value is not None:
                     result['temperatures_millicelsius'].append({'device': name, 'sensor': sensor.name, 'value': value})
+        result['power_caps_microwatts'] = [
+            {'device': str(path.parent), 'sensor': path.name, 'value': value}
+            for path in Path('/sys/class/hwmon').glob('hwmon*/power*_cap')
+            if (value := number(path)) is not None]
         result['gpu_busy_percent'] = [value for path in Path('/sys/class/drm').glob('card*/device/gpu_busy_percent')
                                       if (value := number(path)) is not None]
         return result
@@ -83,7 +94,7 @@ class NativeMetrics:
     def collect(self):
         while not self.closed.is_set():
             with self.lock:
-                if len(self.samples) >= 1200:
+                if len(self.samples) >= self.MAX_SAMPLES:
                     break
             sample = self.sample()
             with self.lock:
@@ -96,5 +107,5 @@ class NativeMetrics:
         with self.lock:
             samples, phases = list(self.samples), list(self.phases)
         return {'method': '0.5-second owned PID/start RSS/CPU samples; host-wide sysfs sensors, not per-game GPU/power attribution. Xvfb uses software rendering. Charging power is not battery-life evidence.',
-                'sample_count': len(samples), 'truncated': len(samples) >= 1200,
+                'sample_count': len(samples), 'truncated': len(samples) >= self.MAX_SAMPLES,
                 'worker_alive': self.worker.is_alive(), 'phases': phases, 'samples': samples}

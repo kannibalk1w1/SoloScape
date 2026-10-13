@@ -67,6 +67,8 @@ class Backend:
             return self.current()
         if action == 'create':
             return profiles.create(request.get('label'), request.get('account'), tutorial=bool(request.get('tutorial', False))).metadata()
+        if action == 'world_settings':
+            return profiles.configure_world(request.get('profile'), request.get('world'))
         if action == 'diagnostics':
             out = io.StringIO()
             ok = local_dev.doctor(port=self.port(request), output=lambda *args, **kw: print(*args, file=out, **kw))

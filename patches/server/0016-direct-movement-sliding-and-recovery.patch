@@ -1,0 +1,119 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/mode/move/ControllerAvoidTiles.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/mode/move/ControllerAvoidTiles.kt
+new file mode 100644
+index 0000000..ea90bdc
+--- /dev/null
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/mode/move/ControllerAvoidTiles.kt
+@@ -0,0 +1,26 @@
++package world.gregs.voidps.engine.entity.character.mode.move
++
++import java.nio.file.Files
++import java.nio.file.Path
++import world.gregs.voidps.type.Tile
++
++/** Optional developer-authored exclusions for controller direct movement only. */
++internal object ControllerAvoidTiles {
++    private val tiles: Set<Tile> by lazy {
++        val path = Path.of(System.getenv("SOLOSCAPE_CONTROLLER_AVOID_TILES") ?: "data/controller-avoid-tiles.txt")
++        if (!Files.exists(path)) emptySet() else runCatching {
++            require(Files.size(path) <= 262144) { "Avoidance file is too large" }
++            val lines = Files.readAllLines(path).filter { it.isNotBlank() && !it.startsWith("#") }
++            require(lines.size <= 4096) { "Too many avoidance tiles" }
++            lines.map { line ->
++                val values = line.split(',').map { it.trim().toInt() }
++                require(values.size == 3 && values[0] in 0..16383 && values[1] in 0..16383 && values[2] in 0..3) { "Invalid avoidance tile" }
++                Tile(values[0], values[1], values[2])
++            }.toSet()
++        }.getOrElse {
++            System.err.println("Controller tile avoidance could not load; native collision remains active.")
++            emptySet()
++        }
++    }
++    fun contains(tile: Tile): Boolean = tile in tiles
++}
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementMode.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementMode.kt
+index 5bc24ec..d7faefe 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementMode.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementMode.kt
+@@ -12,13 +12,27 @@ class DirectMovementMode(
+     private var input: DirectMovement,
+     private val clock: () -> Long = System::nanoTime,
+ ) : Movement(character) {
+-    fun update(input: DirectMovement) { this.input = input }
++    private var exhausted = false
++    private var stepX = 0
++    private var stepY = 0
++    fun update(input: DirectMovement) {
++        this.input = input
++        if (!input.run) exhausted = false
++    }
+ 
+     override fun start() { clearSteps() }
+     override fun stop(replacement: Mode) { clearSteps() }
+     override fun onCompletion() {} // Keep held intent when blocked; expire if updates stop.
+ 
+-    override fun shouldRun(): Boolean = character.mode === this && input.run && character["energy", 10000] > 0 && !TargetStrategy.noRun(character)
++    override fun shouldRun(): Boolean {
++        val energy = character["energy", 10000]
++        if (energy <= 0) exhausted = true
++        // Held run resumes at 5%, rather than alternating on each recovery tick.
++        if (exhausted && energy >= 500) exhausted = false
++        return character.mode === this && input.run && energy > 0 && !exhausted && !TargetStrategy.noRun(character) && !ControllerAvoidTiles.contains(character.tile.add(stepX, stepY))
++    }
++
++    private fun canDirectStep(dx: Int, dy: Int) = !ControllerAvoidTiles.contains(character.tile.add(dx, dy)) && canStep(dx, dy)
+ 
+     override fun tick() {
+         clearSteps()
+@@ -26,9 +40,22 @@ class DirectMovementMode(
+             if (character.mode === this) character.mode = EmptyMode
+             return
+         }
+-        val first = character.tile.add(input.dx, input.dy)
+-        val second = first.add(input.dx, input.dy)
+-        character.steps.queueSteps(if (shouldRun()) listOf(first, second) else listOf(first), noRun = !shouldRun())
++        // Resolve collision before queuing both steps. Otherwise a diagonal slide
++        // on step one makes the absolute second destination turn back into the wall.
++        val dx: Int
++        val dy: Int
++        when {
++            canDirectStep(input.dx, input.dy) -> { dx = input.dx; dy = input.dy }
++            input.dx != 0 && input.dy != 0 && canDirectStep(input.dx, 0) -> { dx = input.dx; dy = 0 }
++            input.dx != 0 && input.dy != 0 && canDirectStep(0, input.dy) -> { dx = 0; dy = input.dy }
++            else -> { super.tick(); return }
++        }
++        stepX = dx
++        stepY = dy
++        val first = character.tile.add(dx, dy)
++        val second = first.add(dx, dy)
++        val run = shouldRun()
++        character.steps.queueSteps(if (run) listOf(first, second) else listOf(first), noRun = !run)
+         super.tick() // Existing delays, viewport gates, collision, animations, movement events and energy.
+         if (character.mode === this) clearSteps() // Preserve a new route if a movement event replaced this mode.
+     }
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementModeTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementModeTest.kt
+index d44aa0a..6cc1d55 100644
+--- a/engine/src/test/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementModeTest.kt
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementModeTest.kt
+@@ -97,4 +97,22 @@ class DirectMovementModeTest : KoinMock() {
+         assertTrue(player.steps.isEmpty())
+         assertNotSame(mode, player.mode)
+     }
++
++    @Test fun `held run waits for useful energy recovery instead of alternating speeds`() {
++        player["energy"] = 0
++        val mode = mode(run = true)
++        mode.tick(); assertEquals(Tile(65, 64), player.tile)
++        player["energy"] = 27
++        mode.tick(); assertEquals(Tile(66, 64), player.tile)
++        player["energy"] = 500
++        mode.tick(); assertEquals(Tile(68, 64), player.tile)
++    }
++    @Test fun `diagonal running slides along the wall without stepping back toward it`() {
++        every { validator.canTravel(any(), any(), any(), any(), any(), any(), any(), any()) } answers {
++            // Horizontal travel remains legal; vertical and diagonal travel blocked.
++            arg<Int>(4) == 0
++        }
++        val mode = mode(x = 1, y = 1, run = true)
++        mode.tick(); assertEquals(Tile(66, 64), player.tile); assertTrue(player.steps.isEmpty())
++    }
+ }

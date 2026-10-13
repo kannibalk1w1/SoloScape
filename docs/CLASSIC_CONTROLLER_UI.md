@@ -104,3 +104,7 @@ The synthetic preview now refreshes tab availability before painting, so the Hom
 ## Playable-loop readability follow-up
 
 Claude's next pass corrects page counts from actual grid geometry, uses one-line cells when bonus rows cannot fit two baselines, reserves room for the selected native action, and measures wheel ellipses against wedge width. Hub spacing scales with fonts and selected actions have an accent bar. Small-canvas and long-detail hit-map regressions pass in the full client suite. The 20 classic/modern synthetic fixtures were rendered again; representative inventory, journal and Home layouts were inspected and the pictures above refreshed. See [readability details](DECK_READABILITY_PASS.md). Actual Deck text comfort, touch accuracy and Gaming Mode remain acceptance items.
+
+## Superseded palette (13 October 2026)
+
+The classic palette described above has been replaced by the Jagex-style presentation in [JAGEX_UI_OVERHAUL.md](JAGEX_UI_OVERHAUL.md). The setting, the modern fallback and the geometry-preserving helper contract are unchanged.

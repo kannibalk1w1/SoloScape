@@ -1,0 +1,81 @@
+diff --git a/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt b/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt
+--- a/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt
++++ b/game/src/main/kotlin/content/entity/player/command/PlayerCommands.kt
+@@ -15,6 +15,7 @@
+ import content.social.trade.exchange.GrandExchange
+ import world.gregs.voidps.engine.GameLoop
+ import world.gregs.voidps.engine.Script
++import world.gregs.voidps.network.login.protocol.encode.message
+ import world.gregs.voidps.engine.client.command.*
+ import world.gregs.voidps.engine.client.message
+ import world.gregs.voidps.engine.client.ui.open
+@@ -61,7 +62,7 @@
+ 
+         playerCommand("soloscape_capabilities", stringArg("nonce"), desc = "Negotiate SoloScape controller capabilities") { args ->
+             val nonce = args.singleOrNull() ?: return@playerCommand
+-            if (nonce.matches(Regex("[a-f0-9]{32}"))) message("SOLOSCAPE|1|$nonce|direct,cancel,entry-cancel", ChatType.Game)
++            if (nonce.matches(Regex("[a-f0-9]{32}"))) client?.message("SOLOSCAPE|1|$nonce|direct,cancel,entry-cancel,fire-use", ChatType.Game.id)
+         }
+ 
+         modCommand("save", desc = "Save all players") {
+diff --git a/game/src/main/kotlin/content/skill/cooking/Cooking.kt b/game/src/main/kotlin/content/skill/cooking/Cooking.kt
+--- a/game/src/main/kotlin/content/skill/cooking/Cooking.kt
++++ b/game/src/main/kotlin/content/skill/cooking/Cooking.kt
+@@ -9,6 +9,7 @@
+ import world.gregs.voidps.engine.client.ui.closeDialogue
+ import world.gregs.voidps.engine.data.config.RowDefinition
+ import world.gregs.voidps.engine.data.definition.ItemDefinitions
++import world.gregs.voidps.engine.data.definition.ObjectDefinitions
+ import world.gregs.voidps.engine.data.definition.Rows
+ import world.gregs.voidps.engine.entity.character.player.Player
+ import world.gregs.voidps.engine.entity.character.player.chat.ChatType
+@@ -34,6 +35,15 @@
+     val GameObject.cookingRange: Boolean get() = id.startsWith("cooking_range")
+ 
+     init {
++        // The 634 cache gives player-lit fires no direct option, although cooking
++        // already handles Use. Match the negotiated client action with validation.
++        for (id in listOf("fire_orange", "fire_red", "fire_green", "fire_blue", "fire_white", "fire_purple")) {
++            val definition = ObjectDefinitions.get(id)
++            val options = definition.options?.copyOf(5) ?: arrayOfNulls<String>(5)
++            if (options[0] == null) options[0] = "Use"
++            definition.options = options
++        }
++
+         itemOnObjectOperate(obj = "fire_*,cooking_range*") { (target, item) ->
+             val start = GameLoop.tick
+             var sinew = false
+diff --git a/game/src/test/kotlin/content/skill/cooking/CookingTest.kt b/game/src/test/kotlin/content/skill/cooking/CookingTest.kt
+--- a/game/src/test/kotlin/content/skill/cooking/CookingTest.kt
++++ b/game/src/test/kotlin/content/skill/cooking/CookingTest.kt
+@@ -6,6 +6,7 @@
+ import interfaceOption
+ import itemOnItem
+ import itemOnObject
++import objectOption
+ import org.junit.jupiter.api.Assertions.assertEquals
+ import org.junit.jupiter.api.Assertions.assertTrue
+ import org.junit.jupiter.api.Test
+@@ -16,6 +17,22 @@
+ import kotlin.test.assertFalse
+ 
+ internal class CookingTest : WorldTest() {
++
++    @Test
++    fun `Player lit fire supports direct Use cooking without item targeting`() {
++        val player = createPlayer(emptyTile)
++        player.levels.set(Skill.Cooking, 100)
++        player.inventory.add("raw_shrimps", 2)
++        scripts.filterIsInstance<content.skill.firemaking.Firemaking>().single().spawnFire(player, emptyTile.addY(1), world.gregs.voidps.engine.data.definition.Rows.get("firemaking.logs"))
++        val fire = world.gregs.voidps.engine.entity.obj.GameObjects.findOrNull(emptyTile.addY(1), "fire_orange")!!
++        assertEquals("Use", fire.def.options!![0])
++        player.objectOption(fire, "Use")
++        tick(2)
++        player.dialogueOption(id = "dialogue_skill_creation", component = "choice1")
++        tick(8)
++        assertTrue(player.inventory.count("shrimps") > 0)
++        assertTrue(player.experience.get(Skill.Cooking) > 0)
++    }
+ 
+     @Test
+     fun `Cooking a raw item gives a cooked item and experience`() {

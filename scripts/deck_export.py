@@ -66,6 +66,14 @@ def export():
         root_names += ['scripts/harness/NativeSidebarProbe.java',
                        'patches/client/0036-sidebar-resize-thread-and-controller-default.patch',
                        'patches/server/0015-stop-game-loop-before-saving.patch']
+        root_names += ['scripts/save_sync.py', 'scripts/test_save_sync.py',
+                       'scripts/paint_controller_tiles.py', 'scripts/harness/NativePerformanceProbe.java',
+                       'scripts/harness/NativeMapProbe.java', 'docs/PLAYTEST_FOLLOWUP.md',
+                       'docs/SAVE_SYNC.md', 'patches/client/0037-playtest-controller-and-ui.patch',
+                       'patches/server/0016-direct-movement-sliding-and-recovery.patch']
+        root_names += ['scripts/harness/NativeFullscreenProbe.java', 'patches/client/0039-fullscreen-keybind.patch', 'scripts/xwayland_present_trace.py', 'scripts/summarise_present_trace.py', 'scripts/test_present_trace.py', 'scripts/deck-benchmark.sh', 'scripts/summarise_frame_trace.py', 'scripts/test_frame_trace.py', 'scripts/deck_awake.py', 'scripts/test_deck_awake.py', 'scripts/harness/NativeDeckRouteProbe.java', 'scripts/harness/NativeDeck60Probe.java', 'docs/DECK_60FPS_SPRINT.md',
+                       'docs/DECK_60FPS_REPORT.md', 'patches/server/0017-opt-in-game-loop-timings.patch', 'patches/client/0038-deck-frame-pacing-and-profiling.patch']
+        root_names += ['docs/PLAYTEST_2.md', 'patches/client/0040-playtest-two.patch', 'patches/client/0041-remove-approach-wording.patch', 'scripts/setup_launcher_art.py', 'scripts/test_world_settings.py', 'scripts/harness/NativePlaytestTwoProbe.java', 'patches/server/0018-player-lit-fire-use.patch']
         for name in sorted(set(root_names)):
             if name and name != 'config/local.env' and not name.startswith(('upstream/', '.runtime/')):
                 source = local_dev.ROOT / name
@@ -82,6 +90,9 @@ def export():
             copy_pin_metadata(repo, destination / 'upstream' / name, pin)
         for source in (server, client, local_dev.RUNTIME / 'build-stamp.json'):
             copy_file(source, destination / source.relative_to(local_dev.ROOT))
+        artwork = local_dev.RUNTIME / 'launcher-art/brazier.jpg'
+        if artwork.is_file():
+            copy_file(artwork, destination / '.runtime/launcher-art/brazier.jpg')
         cache = local_dev.SERVER / 'data/cache'
         if any(path.is_symlink() for path in cache.rglob('*')) or cache.is_symlink():
             raise ValueError('Cache symlinks are refused; supply ordinary compatible cache files.')

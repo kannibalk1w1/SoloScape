@@ -36,6 +36,18 @@ class NativeMetricTests(unittest.TestCase):
         self.assertTrue(result['truncated'])
         self.assertNotIn('battery_life', result)
 
+    def test_external_power_is_not_inferred_from_battery_status(self):
+        samples = [{'elapsed_seconds': 0, 'children': [],
+                    'battery': [{'status': 'Discharging'}],
+                    'external_power': [{'supply': 'ACAD', 'online': 1}]},
+                   {'elapsed_seconds': 1, 'children': [],
+                    'battery': [{'status': 'Discharging'}],
+                    'external_power': [{'supply': 'ACAD', 'online': 0}]}]
+        result = summarise({'samples': samples})
+        self.assertEqual(result['external_power_states'], {'ACAD': [0, 1]})
+        self.assertEqual(result['battery_statuses'], ['Discharging'])
+        self.assertEqual(summarise({'samples': []})['external_power_states'], {})
+
     def test_unreadable_and_malformed_sensor_is_absent(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / 'sensor'

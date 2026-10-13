@@ -1,0 +1,665 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1163,24 +1163,7 @@
+             return null;
+         }
+ 
+-        int[] point = new int[3];
+-        int worldX = localX << 2;
+-        int worldY = localY << 2;
+-        if (!Class305.aBoolean3870) {
+-            Class348_Sub8.aHa6654.da(worldX, height, worldY, point);
+-        } else {
+-            Class348_Sub8.aHa6654.HA(worldX, height, worldY, Math.max(1, Class132.anInt1906), point);
+-        }
+-
+-        if (point[0] < 0 || point[1] < 0) {
+-            return null;
+-        }
+-
+-        if (point[0] > Class321.anInt4017 || point[1] > Class348_Sub42_Sub8_Sub2.anInt10432) {
+-            return null;
+-        }
+-
+-        return new net.runelite.api.Point(point[0], point[1]);
++        return ControllerProjection.project(Class348_Sub8.aHa6654, localX << 2, height, localY << 2);
+     }
+ 
+     @Override
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -149,10 +149,16 @@
+     {
+         if (!ready() || target == null) return new ControllerTarget[0];
+         List<ControllerTarget> result = new ArrayList<>();
+-        for (ControllerTarget current : candidates(true))
+-            if (current.sameSubject(target) && java.util.Objects.equals(current.name, target.name)
++        for (ControllerTarget current : candidates(target.kind() != 3))
++            if ((target.kind() == 3 ? samePile(current, target) : current.sameSubject(target) && java.util.Objects.equals(current.name, target.name))
+                 && nearby(Class132.aPlayer_1907, current)) result.add(current);
+         return result.toArray(new ControllerTarget[0]);
++    }
++
++    private static boolean samePile(ControllerTarget a, ControllerTarget b)
++    {
++        return a.kind() == 3 && b.kind() == 3 && a.x == b.x && a.y == b.y && a.plane == b.plane
++            && a.baseX == b.baseX && a.baseY == b.baseY && a.selection == b.selection;
+     }
+ 
+     private static List<ControllerTarget> candidates() { return candidates(false); }
+@@ -211,7 +217,8 @@
+         Class51 def = Class348_Sub40_Sub12.aClass263_9195.method2005(0, obj.method42(-100));
+         if (def.anIntArray945 != null) def = def.method480(Class318_Sub1_Sub3_Sub3.aClass170_10209, (byte) 47);
+         if (def == null) return;
+-        int option = defaultOption(def.aStringArray913, -1);
++        String[] options = objectOptions(def, SoloScapeConnection.fireUse());
++        int option = defaultOption(options, -1);
+         int rotation = obj.method41(-32228);
+         int width = (rotation & 1) == 0 ? def.anInt961 : def.anInt926;
+         int height = (rotation & 1) == 0 ? def.anInt926 : def.anInt961;
+@@ -221,8 +228,20 @@
+                 Class348_Sub40_Sub21.method3107((byte)95,obj,y,x),x,y,width,height));
+             return;
+         }
+-        addOptions(result, def.aString884, def.aStringArray913, OBJECT_ACTIONS, option,
++        addOptions(result, def.aString884, options, OBJECT_ACTIONS, option,
+             Class348_Sub40_Sub21.method3107((byte) 95, obj, y, x), x, y, width, height, allActions);
++    }
++
++    static String[] objectOptions(Class51 def, boolean fireUse)
++    {
++        if (fireUse && (def.anInt941 == 2732 || def.anInt941 == 11404 || def.anInt941 == 11405
++            || def.anInt941 == 11406 || def.anInt941 == 20000 || def.anInt941 == 20001))
++        {
++            String[] options = def.aStringArray913 == null ? new String[5] : def.aStringArray913.clone();
++            if (options.length > 0 && options[0] == null) options[0] = "Use";
++            return options;
++        }
++        return def.aStringArray913;
+     }
+ 
+     private static void addGroundItems(List<ControllerTarget> result, int x, int y, boolean allActions)
+diff --git a/client/src/OutputStream_Sub1.java b/client/src/OutputStream_Sub1.java
+--- a/client/src/OutputStream_Sub1.java
++++ b/client/src/OutputStream_Sub1.java
+@@ -94,6 +94,7 @@
+                 Class157.aClass101_2123.method903(Class286_Sub4.anInt6246, Class305.anInt3855, Class59_Sub2_Sub2.anInt8685, -Class348_Sub42_Sub19.anInt9701 & 0x3fff, -Class5.anInt4638 & 0x3fff, 0x3fff & -Class338.anInt4186);
+                 Class348_Sub8.aHa6654.method3638(Class157.aClass101_2123);
+                 Class348_Sub8.aHa6654.DA(i_0_ / 2 + i_1_, i_3_ + i_2_ / 2, Class97.anInt1550 << 1, Class97.anInt1550 << 1);
++                ControllerProjection.capture(Class348_Sub8.aHa6654);
+                 Class30.method319(Class97.anInt1550 << 1, Class97.anInt1550 << 1, (byte) -18, i_1_ + i_0_ / 2, i_3_ + i_2_ / 2);
+                 Class348_Sub42_Sub20.method3282(0x3fff & -(Class348_Sub42_Sub19.anInt9701), Class59_Sub2_Sub2.anInt8685, Class305.anInt3855, 0, -Class5.anInt4638 & 0x3fff, Class286_Sub4.anInt6246, -Class338.anInt4186 & 0x3fff);
+                 byte i_16_ = (Class316.aClass348_Sub51_3959.aClass239_Sub14_7264.method1778(-32350) != 2 ? (byte) 1 : (byte) Class239_Sub15.anInt6006);
+diff --git a/client/src/SoloScapeConnection.java b/client/src/SoloScapeConnection.java
+--- a/client/src/SoloScapeConnection.java
++++ b/client/src/SoloScapeConnection.java
+@@ -6,6 +6,7 @@
+     private static final ServerCapabilities capabilities=new ServerCapabilities();
+     static void reset(){capabilities.reset();ControllerDirectMovement.enableServerFeatures(false);}
+     static boolean verified(){return capabilities.verified();}
++    static boolean fireUse(){return capabilities.fireUse();}
+     static boolean entryCancel(){return capabilities.entryCancel();}
+     static String status(){return capabilities.status(System.nanoTime());}
+     static void update()
+diff --git a/client/src/net/runelite/client/input/controller/ServerCapabilities.java b/client/src/net/runelite/client/input/controller/ServerCapabilities.java
+--- a/client/src/net/runelite/client/input/controller/ServerCapabilities.java
++++ b/client/src/net/runelite/client/input/controller/ServerCapabilities.java
+@@ -5,8 +5,8 @@
+ {
+     private String nonce;
+     private long started;
+-    private boolean verified,entryCancel;
+-    public void reset(){nonce=null;started=0;verified=entryCancel=false;}
++    private boolean verified,entryCancel,fireUse;
++    public void reset(){nonce=null;started=0;verified=entryCancel=fireUse=false;}
+     public String request(long now)
+     {
+         if(nonce!=null)return null;
+@@ -16,10 +16,11 @@
+     public boolean receive(String text,long now)
+     {
+         if(text==null||!text.startsWith("SOLOSCAPE|"))return false;
+-        if(nonce!=null && now-started<=10_000_000_000L && (text.equals("SOLOSCAPE|1|"+nonce+"|direct,cancel")||text.equals("SOLOSCAPE|1|"+nonce+"|direct,cancel,entry-cancel"))){verified=true;entryCancel=text.endsWith(",entry-cancel");}
++        if(nonce!=null && now-started<=10_000_000_000L && (text.equals("SOLOSCAPE|1|"+nonce+"|direct,cancel")||text.equals("SOLOSCAPE|1|"+nonce+"|direct,cancel,entry-cancel")||text.equals("SOLOSCAPE|1|"+nonce+"|direct,cancel,entry-cancel,fire-use"))){verified=true;entryCancel=text.contains(",entry-cancel");fireUse=text.endsWith(",fire-use");}
+         return true; // Reserved protocol replies do not appear as ordinary game chat.
+     }
+     public boolean verified(){return verified;}
++    public boolean fireUse(){return verified&&fireUse;}
+     public boolean entryCancel(){return verified&&entryCancel;}
+     public String status(long now)
+     {return verified?"SoloScape server verified":nonce==null?"Waiting for game connection":now-started>10_000_000_000L?"Server features unavailable; using compatible controls":"Checking SoloScape server features";}
+diff --git a/client/src/net/runelite/client/input/controller/UiControls.java b/client/src/net/runelite/client/input/controller/UiControls.java
+--- a/client/src/net/runelite/client/input/controller/UiControls.java
++++ b/client/src/net/runelite/client/input/controller/UiControls.java
+@@ -9,6 +9,7 @@
+         default UiState snapshot(boolean inventory) { return snapshot(); }
+         boolean openInventory();
+         default boolean openTab(int index){return false;}
++        default boolean skipEmptyInventorySlots() { return false; }
+         default float scrollDeadzone(){return .25f;}
+         default int selectionMask() { return 0; }
+         default boolean openTargetInventory() { return false; }
+@@ -111,7 +112,7 @@
+         if(entry.active()||inDialogue()||(direction!=11&&direction!=12))return false;
+         if(panel.active())return panel.mouseScroll(direction);
+         if(!inventory)return false;
+-        slot=clamp(slot+(direction==11?-4:4),state.inventory.length);context=null;armed=false;return true;
++        slot=inventorySlot(direction);context=null;armed=false;return true;
+     }
+     public boolean mouseFocus(UiState.Widget expected,boolean menu)
+     {
+@@ -272,6 +273,8 @@
+             return true;
+         }
+         openingUntil = 0;
++        if (gateway.skipEmptyInventorySlots() && !occupied(slot) && context == null)
++            for (int i=0;i<state.inventory.length;i++) if (occupied(i)) { slot=i; break; }
+         UiState.Widget widget = focus();
+         if(context!=null){
+             UiState.Action selected=context.actions[contextIndex];int fresh=-1;
+@@ -291,7 +294,7 @@
+         }
+         if (direction != 0)
+         {
+-            slot = moveSlot(slot, direction);
++            slot = inventorySlot(direction);
+             widget = focus();
+         }
+         if ((input.buttonsPressed & X) != 0 && widget != null && widget.actions.length > 0)
+@@ -335,6 +338,21 @@
+         if (now >= repeatAt) { repeatAt = now + 100_000_000L; return direction; }
+         return 0;
+     }
++    private boolean occupied(int index)
++    {
++        return index >= 0 && index < state.inventory.length && state.inventory[index] != null && state.inventory[index].itemId >= 0;
++    }
++    private int inventorySlot(int direction)
++    {
++        if (!gateway.skipEmptyInventorySlots()) return moveSlot(slot, direction);
++        UiState.Widget origin = focus();
++        if (origin == null) return slot;
++        java.util.List<UiState.Widget> items = new java.util.ArrayList<>();
++        for (int i=0;i<state.inventory.length;i++) if (occupied(i)) items.add(state.inventory[i]);
++        UiState.Widget next = PanelControls.neighbor(origin, items.toArray(new UiState.Widget[0]), direction);
++        if (next != null) for (int i=0;i<state.inventory.length;i++) if (next == state.inventory[i]) return i;
++        return slot;
++    }
+     private static int clamp(int index, int size) { return Math.max(0, Math.min(Math.max(0, size - 1), index)); }
+     public static int moveSlot(int slot, int direction)
+     {
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+@@ -32,13 +32,15 @@
+         String feedback=plugin.getWorld().feedback(System.nanoTime());
+         if(menu.length>0)
+         {
+-            for(int i=0;i<menu.length;i++) lines.add((i==plugin.getWorld().getMenuIndex()?"> ":"  ")+menu[i].option+" "+menu[i].name);
++            int selected=plugin.getWorld().getMenuIndex(), start=Math.max(0,Math.min(selected-3,menu.length-7));
++            lines.add(menu[0].kind()==3?"Loot pile · "+(selected+1)+" / "+menu.length:"Actions");
++            for(int i=start;i<Math.min(menu.length,start+7);i++) lines.add((i==plugin.getWorld().getMenuIndex()?"> ":"  ")+menu[i].option+" "+menu[i].name);
+             lines.add("LS / D-pad: choose · A: confirm · B: back");
+         }
+         else if(target!=null)
+         {
+-            lines.add("A: "+target.option+" "+target.name+(target.serverApproach?" · server approach":""));
+-            lines.add("LT: aim · LB/RB: target · X: actions · B: cancel");
++            lines.add("A: "+target.option+" "+target.name+(target.serverApproach?" · move into range":""));
++            lines.add("LT: aim · LB/RB: target · X: "+(target.kind()==3?"loot pile":"actions")+" · B: cancel");
+         }
+         else
+         {
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -211,6 +211,7 @@
+         public UiState snapshot(boolean inventory) { return presented(client.getControllerUiState(inventory)); }
+         public boolean openInventory() { settingsOpen=nativeSettingsChild=false;return client.openControllerInventory(); }
+         public boolean openTab(int index){return openHomeTab(index);}
++        public boolean skipEmptyInventorySlots() { return config.customInventory(); }
+         public float scrollDeadzone(){return config.deadzone()/100f;}
+         public int selectionMask() { return client.getControllerSelectionMask(); }
+         public boolean openTargetInventory() { return client.openControllerTargetInventory(); }
+@@ -496,7 +497,7 @@
+                 return;
+             }
+             float scale = StickMath.deadzoneScale(state.rightX, state.rightY, config.deadzone() / 100f);
+-            float yaw = state.rightX * scale;
++            float yaw = -state.rightX * scale;
+             float pitch = state.rightY * scale * (config.invertY() ? 1 : -1);
+             if(Math.hypot(state.rightX,state.rightY)<=config.deadzone()/100f)cameraArmed=true;
+             client.setControllerCameraInput(cameraArmed?yaw * config.yawSpeed():0,cameraArmed?pitch * config.pitchSpeed():0);
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeMovementOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeMovementOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeMovementOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeMovementOverlay.java
+@@ -45,16 +45,14 @@
+             || client.getCanvas() == null || !client.getCanvas().isFocusOwner()) return null;
+         // This is the validated destination from the native walk adapter, not stick prediction.
+         WorldPoint destination = client.getControllerWalkDestination();
+-        if (destination == null) return null;
+-        LocalPoint local = LocalPoint.fromWorld(client, destination);
+-        if (local == null) return null;
++        LocalPoint local = destination == null ? null : LocalPoint.fromWorld(client, destination);
+         Graphics2D draw = (Graphics2D) graphics.create();
+         try
+         {
+             // Native player coordinates use 512 units per tile; RuneLite uses 128.
+             LocalPoint player = LocalPoint.fromScene(client.getLocalPlayerLocalX() >> 9, client.getLocalPlayerLocalY() >> 9);
+             renderTile(draw, player, PLAYER, PLAYER_FILL);
+-            renderTile(draw, local, DESTINATION, DESTINATION_FILL);
++            if (local != null) renderTile(draw, local, DESTINATION, DESTINATION_FILL);
+         }
+         finally { draw.dispose(); }
+         return null;
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTargetOverlay.java
+@@ -7,7 +7,6 @@
+ import java.awt.Dimension;
+ import java.awt.Graphics2D;
+ import java.awt.Polygon;
+-import java.awt.Rectangle;
+ import javax.inject.Inject;
+ import net.runelite.api.Perspective;
+ import net.runelite.api.coords.LocalPoint;
+@@ -47,21 +46,7 @@
+         {
+             Color gold = new Color(255, 215, 75);
+             OverlayUtil.renderPolygon(draw, footprint, gold, new Color(255, 215, 75, 55), target.serverApproach?new BasicStroke(3,BasicStroke.CAP_BUTT,BasicStroke.JOIN_ROUND,10,new float[]{6,4},0):new BasicStroke(3));
+-            draw.setFont(new java.awt.Font(java.awt.Font.SANS_SERIF,java.awt.Font.BOLD,(int)(13*plugin.config().overlayScale()/100.0)));
+-            String label = plugin.hint("A: " + target.option + " " + target.name + (target.serverApproach?" · server approach":""));
+-            int max=client.getCanvas().getWidth()-20;
+-            String full=label;
+-            while(!label.isEmpty() && draw.getFontMetrics().stringWidth(label)>max) label=label.substring(0,label.length()-1);
+-            if(!label.equals(full) && label.length()>2) label=label.substring(0,label.length()-2)+"…";
+-            Rectangle bounds = footprint.getBounds();
+-            int width = draw.getFontMetrics().stringWidth(label), height = draw.getFontMetrics().getHeight();
+-            int x = bounds.x + (bounds.width - width) / 2, y = bounds.y - 8;
+-            x=Math.max(8,Math.min(client.getCanvas().getWidth()-width-8,x));
+-            y=Math.max(draw.getFontMetrics().getAscent()+8,Math.min(client.getCanvas().getHeight()-8,y));
+-            draw.setColor(new Color(0, 0, 0, 190));
+-            draw.fillRoundRect(x - 5, y - draw.getFontMetrics().getAscent() - 3, width + 10, height + 4, 6, 6);
+-            draw.setColor(gold);
+-            draw.drawString(label, x, y);
++
+         }
+         finally { draw.dispose(); }
+         return null;
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -20,9 +20,9 @@
+     private final JLabel status = new JLabel("Checking your characters…");
+     private final JTextArea detail = new JTextArea();
+     private final JProgressBar progress = new JProgressBar();
+-    private final JButton play = new JButton("Continue"), stop = new JButton("Save & Quit");
+-    private final JButton create = new JButton("New Character"), backup = new JButton("Back Up"), restore = new JButton("Restore Backup");
+-    private final JButton diagnostics = new JButton("Diagnostics"), settings = new JButton("Launcher Settings"), retention=new JButton("Manage Backups");
++    private final JButton play = new LauncherButton("Continue"), stop = new LauncherButton("Save & Quit");
++    private final JButton create = new LauncherButton("New Character"), backup = new LauncherButton("Back Up"), restore = new LauncherButton("Restore Backup");
++    private final JButton diagnostics = new LauncherButton("Diagnostics"), settings = new LauncherButton("Launcher Settings"), retention=new LauncherButton("Manage Backups"), worldSettings=new LauncherButton("World Settings");
+     private final ExecutorService requests = Executors.newSingleThreadExecutor();
+     private final Process backend;
+     private final BufferedWriter input;
+@@ -35,7 +35,7 @@
+     private String error;
+     private LauncherKeyboard keyboard;
+     private final JCheckBox nativeNavigation=new JCheckBox("Desktop keyboard navigation (disables launcher controller)");
+-    private final JButton recover=new JButton("Recover Session");
++    private final JButton recover=new LauncherButton("Recover Session");
+ 
+     public static void main(String[] args) throws Exception
+     {
+@@ -56,12 +56,13 @@
+         output = new BufferedReader(new InputStreamReader(backend.getInputStream(), StandardCharsets.UTF_8));
+         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+         frame.addWindowListener(new WindowAdapter() { @Override public void windowClosing(WindowEvent e) { close(); } });
+-        JPanel content = new JPanel(new BorderLayout(18, 18));
++        JPanel content = new LauncherScene(root.resolve(".runtime/launcher-art/brazier.jpg"));
++        content.setLayout(new BorderLayout(18, 18));
+         content.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+-        JLabel title = new JLabel("SoloScape"); title.setFont(title.getFont().deriveFont(Font.BOLD, 30f));
++        JLabel title = new JLabel("SoloScape"); title.setFont(new Font(Font.SERIF, Font.BOLD, 36)); title.setForeground(new Color(239,204,128)); title.setHorizontalAlignment(SwingConstants.CENTER);
+         JPanel header = new JPanel(new GridLayout(3, 1, 0, 6)); header.add(title);
+-        header.add(new JLabel("Your characters. Independent local worlds. Verified save backups."));
+-        nativeNavigation.setFocusable(false);header.add(nativeNavigation);content.add(header, BorderLayout.NORTH);
++        JLabel subtitle=new JLabel("Your world. Your pace. Your adventure.", SwingConstants.CENTER); subtitle.setForeground(new Color(223,211,187)); header.add(subtitle);
++        nativeNavigation.setFocusable(false);nativeNavigation.setForeground(new Color(223,211,187));nativeNavigation.setOpaque(false);header.setOpaque(false);header.add(nativeNavigation);content.add(header, BorderLayout.NORTH);
+         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); list.setFixedCellHeight(60);
+         list.setFont(list.getFont().deriveFont(17f));
+         list.addListSelectionListener(e -> showCharacter());
+@@ -69,14 +70,18 @@
+         detail.setFont(detail.getFont().deriveFont(16f)); detail.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+         JSplitPane body = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(list), new JScrollPane(detail));
+         body.setResizeWeight(.43); body.setDividerLocation(340);
+-        content.add(body, BorderLayout.CENTER);
++        JPanel inset=new JPanel(new BorderLayout());inset.setOpaque(false);inset.setBorder(BorderFactory.createEmptyBorder(0,100,0,100));inset.add(body);content.add(inset, BorderLayout.CENTER);
++        Color stone=new Color(35,32,29), parchment=new Color(232,219,191);
++        list.setBackground(stone);list.setForeground(parchment);list.setSelectionBackground(new Color(96,72,36));list.setSelectionForeground(Color.WHITE);
++        detail.setBackground(stone);detail.setForeground(parchment);body.setBorder(BorderFactory.createLineBorder(new Color(143,111,58),2));
+         JPanel footer = new JPanel(new BorderLayout(0, 12));
+-        JPanel buttons = new JPanel(new GridLayout(3, 3, 10, 10));
+-        for (JButton button : new JButton[]{play, create, backup, restore, stop, settings, diagnostics, retention, recover})
++        JPanel buttons = new JPanel(new GridLayout(2, 5, 8, 8));
++        for (JButton button : new JButton[]{play, create, backup, restore, stop, settings, diagnostics, retention, recover, worldSettings})
+         { button.setFont(button.getFont().deriveFont(15f)); button.setPreferredSize(new Dimension(145, 44)); buttons.add(button); }
+ 
++        footer.setOpaque(false);buttons.setOpaque(false);
+         footer.add(buttons, BorderLayout.CENTER);
+-        JPanel state = new JPanel(new BorderLayout(8, 8)); state.add(status, BorderLayout.CENTER);
++        JPanel state = new JPanel(new BorderLayout(8, 8)); state.setBackground(new Color(35,32,29));status.setForeground(new Color(232,219,191));state.add(status, BorderLayout.CENTER);
+         progress.setPreferredSize(new Dimension(110, 16)); state.add(progress, BorderLayout.EAST); footer.add(state, BorderLayout.SOUTH);
+         content.add(footer, BorderLayout.SOUTH);
+         frame.setContentPane(content); frame.setMinimumSize(new Dimension(880, 540)); frame.setSize(1024, 650);
+@@ -90,6 +95,7 @@
+         settings.addActionListener(e -> settings());
+         retention.addActionListener(e -> retention());
+         recover.addActionListener(e -> recoverSession());
++        worldSettings.addActionListener(e -> worldSettings());
+         frame.setVisible(true); list.requestFocusInWindow();
+         refresh = new javax.swing.Timer(1000, e -> poll()); refresh.start(); request(command("settings"), result -> {port=result.getAsJsonObject().get("port").getAsInt();poll();});
+         startController();
+@@ -145,15 +151,18 @@
+         stop.setEnabled(running); create.setEnabled(!running); backup.setEnabled(!running); restore.setEnabled(!running);
+         play.setEnabled(!running && list.getSelectedValue() != null && !list.getSelectedValue().damaged && !list.getSelectedValue().needsRecovery);
+         recover.setEnabled(!running&&list.getSelectedValue()!=null&&list.getSelectedValue().recoverable);
++        worldSettings.setEnabled(!running&&list.getSelectedValue()!=null&&!list.getSelectedValue().damaged&&!list.getSelectedValue().needsRecovery);
+         settings.setEnabled(!running);retention.setEnabled(!running&&list.getSelectedValue()!=null&&!list.getSelectedValue().damaged);
+     }
+     private void showCharacter()
+     {
+         CharacterRow row = list.getSelectedValue();
+         detail.setText(row == null ? "Create your first character to start an independent local world.\n\nCache setup and runtime checks are available under Diagnostics." : row.description());
++        detail.setCaretPosition(0);
+         play.setText(row != null && !row.saved ? "Start Character" : "Continue");
+         play.setEnabled(!running && row != null && !row.damaged && !row.needsRecovery);
+         recover.setEnabled(!running&&row!=null&&row.recoverable);
++        worldSettings.setEnabled(!running&&row!=null&&!row.damaged&&!row.needsRecovery);
+     }
+     private void selected(String action, String backupName)
+     {
+@@ -162,11 +171,33 @@
+         if (backupName != null) cmd.addProperty("backup", backupName);
+         request(cmd, result -> { if (action.equals("start")||action.equals("recover")) applySession(result); else { status.setText(action.equals("restore") ? "Backup restored; previous generation retained." : "Verified backup created."); poll(); } });
+     }
++    private void worldSettings()
++    {
++        CharacterRow row=list.getSelectedValue(); if(row==null)return;
++        JsonObject world=row.data.has("world")?row.data.getAsJsonObject("world"):new JsonObject();
++        Double[] rates={1.0,2.0,3.0,5.0,10.0,25.0,50.0,100.0};
++        JComboBox<Double> xp=new JComboBox<>(rates),drops=new JComboBox<>(rates);
++        xp.setSelectedItem(world.has("xp")?world.get("xp").getAsDouble():1.0);
++        drops.setSelectedItem(world.has("drops")?world.get("drops").getAsDouble():1.0);
++        JCheckBox infinite=new JCheckBox("Unlimited run energy",world.has("infinite_run")&&world.get("infinite_run").getAsBoolean());
++        JPanel fields=new JPanel(new GridLayout(0,1,6,6));
++        fields.add(new JLabel("XP multiplier"));fields.add(xp);fields.add(new JLabel("Drop chance multiplier"));fields.add(drops);fields.add(infinite);
++        fields.add(new JLabel("LS / D-pad: change rate · LB/RB: move between fields"));
++        fields.add(new JLabel("Applies to this world on its next launch."));
++        fields.add(new JLabel("Higher drop rates favour rarer loot; quantities stay unchanged."));
++        if(JOptionPane.showConfirmDialog(frame,fields,"World Settings · "+row.label,JOptionPane.OK_CANCEL_OPTION)==JOptionPane.OK_OPTION)
++        {
++            JsonObject value=new JsonObject();value.addProperty("xp",(Double)xp.getSelectedItem());value.addProperty("drops",(Double)drops.getSelectedItem());value.addProperty("infinite_run",infinite.isSelected());
++            JsonObject cmd=command("world_settings");cmd.addProperty("profile",row.id);cmd.add("world",value);
++            request(cmd,result->{status.setText("World settings saved. Ready for your next adventure.");poll();});
++        }
++    }
++
+     private void newCharacter()
+     {
+         JTextField label=new JTextField(),account=new JTextField();label.setName("Character label");account.setName("Account name");
+         JCheckBox tutorial=new JCheckBox("Start on Tutorial Island",false);
+-        JButton confirm=new JButton("Create character"),cancel=new JButton("Cancel");
++        JButton confirm=new LauncherButton("Create character"),cancel=new LauncherButton("Cancel");
+         JLabel problem=new JLabel(" ");
+         JDialog dialog=new JDialog(frame,"New Character",true);
+         LauncherKeyboard entry=new LauncherKeyboard();entry.owner=dialog;keyboard=entry;
+@@ -291,6 +322,7 @@
+             if ((previous || forward) && now >= next[0] && focus != null)
+             {
+                 if (focus instanceof JList) { JList<?> choices = (JList<?>) focus; choices.setSelectedIndex(Math.max(0, Math.min(choices.getModel().getSize()-1, choices.getSelectedIndex()+(previous?-1:1)))); choices.ensureIndexIsVisible(choices.getSelectedIndex()); }
++                else if (focus instanceof JComboBox) { JComboBox<?> choices=(JComboBox<?>)focus; choices.setSelectedIndex(Math.max(0,Math.min(choices.getItemCount()-1,choices.getSelectedIndex()+(previous?-1:1)))); }
+                 else if (previous) focus.transferFocusBackward(); else focus.transferFocus();
+                 next[0] = now + 180_000_000L;
+             }
+@@ -300,11 +332,51 @@
+             if ((state.buttonsPressed & (1<<10)) != 0 && focus != null) focus.transferFocus();
+         }); timer.start();
+     }
++    private static final class LauncherButton extends JButton {
++        LauncherButton(String text) {
++            super(text);setContentAreaFilled(false);setOpaque(false);
++            setForeground(new Color(237,218,174));
++            setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(143,111,58)),BorderFactory.createEmptyBorder(6,8,6,8)));
++        }
++        @Override protected void paintComponent(Graphics graphics) {
++            graphics.setColor(!isEnabled()?new Color(42,39,34):getModel().isPressed()?new Color(102,77,40):getModel().isRollover()?new Color(83,67,44):new Color(57,49,37));
++            graphics.fillRect(0,0,getWidth(),getHeight());super.paintComponent(graphics);
++        }
++    }
++
+     private static final class CharacterRow
+     {
+         final JsonObject data; final String id, label; final boolean saved, damaged, needsRecovery, recoverable, archiveable;
+         CharacterRow(JsonObject row) { data=row; id=row.get("id").getAsString(); label=row.get("label").getAsString(); saved=row.get("saved").getAsBoolean(); damaged=row.has("error")&&!row.get("error").isJsonNull();needsRecovery=row.has("recovery")&&!row.get("recovery").isJsonNull();recoverable=needsRecovery&&row.getAsJsonObject("recovery").get("recoverable").getAsBoolean();archiveable=needsRecovery&&row.getAsJsonObject("recovery").has("archiveable")&&row.getAsJsonObject("recovery").get("archiveable").getAsBoolean(); }
+         @Override public String toString() { return label + (needsRecovery ? " • Earlier session" : damaged ? " • Needs recovery" : saved ? " • Continue" : " • New"); }
+-        String description() { StringBuilder text=new StringBuilder(label+"\n\n"); for(String field:new String[]{"account","created","last_played","saved_at","location","storage_bytes","save_bytes","backup_bytes","cache_bytes","backup_count","retention","error"}) if(data.has(field)&&!data.get(field).isJsonNull()) text.append(field.replace('_',' ')).append(": ").append(data.get(field).isJsonPrimitive()?data.get(field).getAsString():data.get(field)).append("\n\n"); if(needsRecovery)text.append(data.getAsJsonObject("recovery").get("message").getAsString()).append("\n");return text.toString(); }
++        private String value(String key,String fallback) { return !data.has(key)||data.get(key).isJsonNull()?fallback:data.get(key).getAsString(); }
++        private String size(String key) {
++            long bytes=data.has(key)?data.get(key).getAsLong():0;
++            return bytes<1024?bytes+" B":bytes<1024*1024?String.format(java.util.Locale.ROOT,"%.1f KiB",bytes/1024.0):String.format(java.util.Locale.ROOT,"%.1f MiB",bytes/(1024.0*1024));
++        }
++        String description() {
++            StringBuilder text=new StringBuilder(label+"\n\n");
++            if(data.has("world")) {
++                JsonObject w=data.getAsJsonObject("world");
++                text.append("XP ×").append(w.get("xp").getAsString()).append("   Drops ×").append(w.get("drops").getAsString()).append("\n")
++                    .append(w.get("infinite_run").getAsBoolean()?"Unlimited run energy\n\n":"Normal run energy\n\n");
++            }
++            text.append(saved?"Ready to continue your adventure.\n\n":"Ready for your first adventure.\n\n");
++            text.append("Character: ").append(value("account","Unknown")).append("\n");
++            if(data.has("location")&&!data.get("location").isJsonNull()) {
++                JsonObject tile=data.getAsJsonObject("location");
++                text.append("Location: ").append(tile.get("x")).append(", ").append(tile.get("y"));
++                if(tile.has("level"))text.append(" · floor ").append(tile.get("level"));
++                text.append("\n");
++            }
++            text.append("Last played: ").append(value("last_played","Never")).append("\n\n")
++                .append("Saves: ").append(size("save_bytes")).append("\n")
++                .append("Backups: ").append(value("backup_count","0")).append(" · ").append(size("backup_bytes")).append("\n")
++                .append("Game cache: ").append(size("cache_bytes")).append("\n\n")
++                .append("Backups stay available until you remove them.\n");
++            if(damaged)text.append("\n").append(value("error","World needs recovery")).append("\n");
++            if(needsRecovery)text.append("\n").append(data.getAsJsonObject("recovery").get("message").getAsString()).append("\n");
++            return text.toString();
++        }
+     }
+ }
+diff --git a/client/test/ControllerWorldActionsTest.java b/client/test/ControllerWorldActionsTest.java
+--- a/client/test/ControllerWorldActionsTest.java
++++ b/client/test/ControllerWorldActionsTest.java
+@@ -44,6 +44,14 @@
+         cache.method582(def, id, (byte) -100);
+         destination.aClass262_6998.method1999(new Class348_Sub34(id, quantity), -20180);
+     }
++    @Test public void fireUseIsLimitedToNegotiatedPlayerLitFireDefinitions()
++    {
++        Class51 fire=new Class51();fire.anInt941=2732;
++        assertNull(ControllerWorld.objectOptions(fire,false)[0]);
++        assertEquals("Use",ControllerWorld.objectOptions(fire,true)[0]);
++        assertNull(fire.aStringArray913[0]);
++        fire.anInt941=1;assertNull(ControllerWorld.objectOptions(fire,true)[0]);
++    }
+     @Test public void lootUsesTakeAndAllPileEntriesCanBeCycled()
+     {
+         for (int i = 100; i < 105; i++) item(i, 1);
+@@ -54,8 +62,23 @@
+         for (int i = 0; i < 4; i++) { next = ControllerWorld.findTarget(0, 1, next, 1); ids.add(next.identifier); }
+         assertEquals(5, ids.size()); // Includes items beyond the three rendered pile models.
+         ControllerTarget[] actions = ControllerWorld.actions(first);
+-        assertEquals(2, actions.length); assertEquals("Take", actions[0].option); assertEquals("Inspect", actions[1].option);
++        assertEquals(5, actions.length);
++        for (ControllerTarget action : actions) assertEquals("Take", action.option);
+     }
++    @Test public void lootMenuStaysOnItsPileAndRejectsRemovedEntries()
++    {
++        item(100,1);item(101,3);
++        ControllerTarget first=ControllerWorld.findTarget(0,1,null);
++        ControllerTarget[] actions=ControllerWorld.actions(first);assertEquals(2,actions.length);
++        Class348_Sub37 other=new Class348_Sub37();
++        int key=(66+Class90.regionTileY)<<14|(64+za_Sub2.regionTileX);
++        Class130.aClass356_1895.method3483((byte)120,key,other);item(other,200,1);
++        assertEquals(2,ControllerWorld.actions(first).length);
++        pile.aClass262_6998.method1996(100);
++        assertEquals(0,ControllerWorld.actions(first).length);
++        assertFalse(ControllerWorld.interact(actions[1]));
++    }
++
+     @Test public void largePileCyclesEveryItemInBothDirectionsAndWraps()
+     {
+         for (int i = 100; i < 112; i++) item(i, 1);
+diff --git a/client/test/net/runelite/client/input/controller/ServerCapabilitiesTest.java b/client/test/net/runelite/client/input/controller/ServerCapabilitiesTest.java
+--- a/client/test/net/runelite/client/input/controller/ServerCapabilitiesTest.java
++++ b/client/test/net/runelite/client/input/controller/ServerCapabilitiesTest.java
+@@ -28,4 +28,13 @@
+         c.reset();assertFalse(c.entryCancel());
+     }
+ 
++    @Test public void directFireUseRequiresAFreshExplicitAcknowledgement()
++    {
++        ServerCapabilities c=new ServerCapabilities();String request=c.request(1),nonce=request.substring(request.indexOf(' ')+1);
++        c.receive("SOLOSCAPE|1|"+nonce+"|direct,cancel,entry-cancel",2);assertFalse(c.fireUse());
++        c.receive("SOLOSCAPE|1|"+nonce+"|direct,cancel,entry-cancel,fire-use",3);assertTrue(c.fireUse());assertTrue(c.entryCancel());
++        c.reset();assertFalse(c.fireUse());c.request(4);
++        c.receive("SOLOSCAPE|1|"+nonce+"|direct,cancel,entry-cancel,fire-use",5);assertFalse(c.fireUse());
++    }
++
+ }
+diff --git a/client/test/net/runelite/client/input/controller/UiControlsTest.java b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+--- a/client/test/net/runelite/client/input/controller/UiControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+@@ -21,6 +21,8 @@
+         PanelConfirmation confirmation;
+         UiState.Widget acted;
+         UiState.Action action;
++        boolean skipEmpty;
++        public boolean skipEmptyInventorySlots() { return skipEmpty; }
+         Fake()
+         {
+             UiState.Widget[] slots = new UiState.Widget[28];
+@@ -197,6 +199,22 @@
+         press(ui, input, 1 << 12, 40); assertEquals(5, ui.focus().child);
+     }
+ 
++    @Test public void customInventorySkipsHolesAndKeepsSparseItemsReachable()
++    {
++        Fake game=new Fake();game.skipEmpty=true;
++        for(int slot=0;slot<28;slot++)game.state.inventory[slot]=widget(slot,-1,"Empty");
++        for(int slot:new int[]{2,7,20})game.state.inventory[slot]=widget(slot,100,"Fish");
++        GamepadState input=new GamepadState();UiControls ui=enter(game,input);
++        assertEquals(2,ui.focus().child);
++        press(ui,input,1<<14,20);assertEquals(7,ui.focus().child);
++        press(ui,input,1<<12,30);assertEquals(20,ui.focus().child);
++        press(ui,input,1<<12,40);assertEquals(20,ui.focus().child);
++        game.state.inventory[20]=widget(20,-1,"Empty");
++        input.updateButtons(0);ui.update(input,50);assertEquals(2,ui.focus().child);
++        game.state.inventory[2]=widget(2,-1,"Empty");game.state.inventory[7]=widget(7,-1,"Empty");
++        press(ui,input,1,60);assertEquals(0,game.actions);
++    }
++
+     @Test public void onlyNavigationRepeatsAndInventoryConsumesWorldInput()
+     {
+         Fake game = new Fake(); GamepadState input = new GamepadState(); UiControls ui = enter(game, input);
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java b/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java
+new file mode 100644
+--- /dev/null
++++ b/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java
+@@ -0,0 +1,37 @@
++package net.runelite.client.soloscape.launcher;
++
++import java.awt.*;
++import java.awt.image.BufferedImage;
++import java.io.IOException;
++import java.nio.file.Path;
++import javax.imageio.ImageIO;
++import javax.swing.JPanel;
++
++/** The original login art is a mirrored half-scene, supplied locally. */
++final class LauncherScene extends JPanel
++{
++    private final BufferedImage scene;
++    LauncherScene(Path artwork)
++    {
++        BufferedImage loaded=null;
++        try { if(java.nio.file.Files.isRegularFile(artwork)) loaded=ImageIO.read(artwork.toFile()); }
++        catch(IOException ex) { System.err.println("Launcher artwork unavailable: "+ex.getMessage()); }
++        scene=loaded;
++        setBackground(new Color(29,26,22));
++    }
++    @Override protected void paintComponent(Graphics graphics)
++    {
++        super.paintComponent(graphics);
++        if(scene==null)return;
++        Graphics2D g=(Graphics2D)graphics.create();
++        try
++        {
++            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);
++            int half=(getWidth()+1)/2;
++            g.drawImage(scene,0,0,half,getHeight(),null);
++            g.drawImage(scene,getWidth(),0,half-getWidth(),getHeight(),null);
++            g.setColor(new Color(0,0,0,65));g.fillRect(0,0,getWidth(),getHeight());
++        }
++        finally {g.dispose();}
++    }
++}
+diff --git a/client/src/ControllerProjection.java b/client/src/ControllerProjection.java
+new file mode 100644
+--- /dev/null
++++ b/client/src/ControllerProjection.java
+@@ -0,0 +1,44 @@
++import net.runelite.api.Point;
++
++/** Save the scene projection before native widget models replace its matrix/viewport. */
++final class ControllerProjection
++{
++    private static ha owner;
++    private static Class101 scene, previous;
++    private static int[] viewport;
++    private static final int[] clip=new int[4], restoreClip=new int[4], point=new int[3];
++    private static int baseX,baseY,plane;
++
++    static void capture(ha renderer)
++    {
++        if(renderer!=owner) {
++            owner=renderer;scene=renderer.method3654();previous=renderer.method3654();
++        }
++        scene.method898(renderer.method3640());
++        viewport=renderer.Y().clone();renderer.K(clip);
++        baseX=za_Sub2.regionTileX;baseY=Class90.regionTileY;
++        plane=Class132.aPlayer_1907==null?-1:Class132.aPlayer_1907.plane;
++    }
++
++    static Point project(ha renderer,int x,int height,int y)
++    {
++        if(renderer!=owner||scene==null||viewport==null||Class132.aPlayer_1907==null
++            ||Class132.aPlayer_1907.plane!=plane||za_Sub2.regionTileX!=baseX||Class90.regionTileY!=baseY)return null;
++        previous.method898(renderer.method3640());
++        int[] restoreViewport=renderer.Y();renderer.K(restoreClip);
++        try {
++            renderer.method3638(scene);
++            renderer.KA(clip[0],clip[1],clip[2],clip[3]);
++            renderer.DA(viewport[0],viewport[1],viewport[2],viewport[3]);
++            if(!Class305.aBoolean3870)renderer.da(x,height,y,point);
++            else renderer.HA(x,height,y,Math.max(1,Class132.anInt1906),point);
++            if(point[0]<0||point[1]<0||point[0]>Class321.anInt4017||point[1]>Class348_Sub42_Sub8_Sub2.anInt10432)return null;
++            return new Point(point[0],point[1]);
++        }
++        finally {
++            renderer.method3638(previous);
++            renderer.KA(restoreClip[0],restoreClip[1],restoreClip[2],restoreClip[3]);
++            renderer.DA(restoreViewport[0],restoreViewport[1],restoreViewport[2],restoreViewport[3]);
++        }
++    }
++}

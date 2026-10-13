@@ -20,6 +20,8 @@ public final class NativeLauncherProbe
     static JTextField text(Component root,String name){if(root instanceof JTextField&&name.equals(root.getName()))return (JTextField)root;if(root instanceof Container)for(Component child:((Container)root).getComponents()){JTextField found=text(child,name);if(found!=null)return found;}return null;}
     static JButton button(Component root,String name){if(root instanceof JButton&&name.equals(((JButton)root).getText()))return (JButton)root;if(root instanceof Container)for(Component child:((Container)root).getComponents()){JButton found=button(child,name);if(found!=null)return found;}return null;}
     static void press(LauncherKeyboard keyboard,int mask){GamepadState pad=new GamepadState();keyboard.update(pad,System.nanoTime());pad.buttonsHeld=pad.buttonsPressed=mask;keyboard.update(pad,System.nanoTime());}
+    static java.util.List<JComboBox<?>> combos(Component component){java.util.List<JComboBox<?>> result=new java.util.ArrayList<>();if(component instanceof JComboBox)result.add((JComboBox<?>)component);if(component instanceof Container)for(Component child:((Container)component).getComponents())result.addAll(combos(child));return result;}
+    static JDialog worldDialog(){for(Window window:Window.getWindows())if(window instanceof JDialog&&window.isShowing()&&((JDialog)window).getTitle().startsWith("World Settings"))return (JDialog)window;return null;}
     static LauncherKeyboard open()throws Exception{
         SwingUtilities.invokeLater(()->{try{invoke("newCharacter");}catch(Exception e){throw new RuntimeException(e);}});
         waitFor(()->field(launcher,"keyboard")!=null&&((LauncherKeyboard)field(launcher,"keyboard")).owner.isShowing(),"Character dialog did not open");
@@ -39,6 +41,16 @@ public final class NativeLauncherProbe
             edt(()->{press(keyboard,8);require(!keyboard.active(),"Y did not finish name entry");button(keyboard.owner,"Create character").doClick();return null;});
             waitFor(()->!keyboard.owner.isShowing(),"Valid create did not close form");
             waitFor(()->((DefaultListModel<?>)field(launcher,"characters")).size()==1,"Backend did not create exactly one private profile");
+            SwingUtilities.invokeLater(()->{try{invoke("worldSettings");}catch(Exception ex){throw new RuntimeException(ex);}});
+            waitFor(()->worldDialog()!=null,"World settings did not open");
+            edt(()->{JDialog dialog=worldDialog();java.util.List<JComboBox<?>> choices=combos(dialog);require(choices.size()==2,"Missing XP/drop controls");choices.get(0).setSelectedItem(5.0);choices.get(1).setSelectedItem(3.0);return null;});
+            Thread.sleep(200);
+            Rectangle worldScreen=edt(()->new Rectangle(worldDialog().getLocationOnScreen(),worldDialog().getSize()));javax.imageio.ImageIO.write(new Robot().createScreenCapture(worldScreen),"png",root.resolve("launcher-world-settings.png").toFile());
+            edt(()->{button(worldDialog(),"OK").doClick();return null;});
+            waitFor(()->{Object row=((JList<?>)field(launcher,"list")).getSelectedValue();if(row==null)return false;com.google.gson.JsonObject data=(com.google.gson.JsonObject)field(row,"data");return data.getAsJsonObject("world").get("xp").getAsDouble()==5.0&&data.getAsJsonObject("world").get("drops").getAsDouble()==3.0;},"World rates did not persist through backend refresh");
+            Thread.sleep(200);
+            Rectangle launcherScreen=edt(()->{JFrame window=(JFrame)field(launcher,"frame");return new Rectangle(window.getLocationOnScreen(),window.getSize());});
+            javax.imageio.ImageIO.write(new Robot().createScreenCapture(launcherScreen),"png",root.resolve("launcher-scene.png").toFile());
             LauncherKeyboard second=open();JTextField secondLabel=edt(()->text(second.owner,"Character label"));JTextField secondAccount=edt(()->text(second.owner,"Account name"));
             edt(()->{secondLabel.setText("\u00a0");secondAccount.setText("b");second.deactivate();button(second.owner,"Create character").doClick();return null;});
             waitFor(()->button(second.owner,"Create character").isEnabled(),"Backend validation did not re-enable form");

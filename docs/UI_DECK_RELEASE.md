@@ -1,0 +1,39 @@
+# UI and playtest release — 13 October 2026
+
+This release includes the playtest fixes, per-world XP/drop/run settings, Jagex-style launcher and controller UI, D-pad tab-bar focus, native skill artwork and levels, save sync, fullscreen and Deck pacing/profiling tooling. Client patches run through 0044; server patches through 0018.
+
+![Native item artwork in the controller inventory](images/jagex-inventory-1280x800.png)
+![Native skill artwork and levels](images/jagex-skills-1280x800.png)
+![Native client Skills capture](images/jagex-live-skills.png)
+
+Inventory and bank previews use actual sprites rendered from the compatible 634 cache; their data and selections are fixtures. Skill icons come from the client's existing resources. The live capture uses a disposable native world and scripted controller input. Individual cache sprites, character saves and authentication files remain private.
+
+## Validation
+
+- Client: 241 cases, zero failures/errors, one optional SDL skip.
+- Tooling: all 99 tests pass.
+- Patch reproduction: all 135 client and 50 server modified/patched files match the exported patch stacks.
+- Native artwork and tab-bar smoke: 32 item sprites captured, real Skills tab opened, focus/highlight/A/B guards verified; New/Continue preserves save fields, four backups verified, cancelled startup preserves the entire saved world.
+- Final playtest-two probe covers actual player-lit fire cooking and Blood Pact projection. The projection fix captures the world renderer state before interface model rendering overwrites it, so it applies across instances rather than special-casing Blood Pact. Untested instance layouts still need gameplay coverage.
+- The adventure probe's existing “Settings disappeared on second tick” failure is documented in [UI overhaul](JAGEX_UI_OVERHAUL.md).
+
+## Steam Deck deployment and performance
+
+The private `deck-ui-20261013-r22` snapshot passed all 10,492 manifest file checks. The existing character received a verified pre-deployment backup; all 88 copied profile files matched their source hashes. The old r10 installation remains available. The copied profile enables **Deck 60 FPS target**; original preferences are retained separately. This selects OpenGL/60 FPS pacing and disables animated scenery shadows. Character/world data is unchanged.
+
+The existing SoloScape Steam shortcut uses `/home/deck/SoloScape-test/launch.sh`; deployment switches that wrapper to r22. Select **Continue** in the launcher to test the existing character.
+
+A temporary Steam shortcut launched `smoke-profile.sh --desktop --deck60-gl-only --tab-bar` in Gaming Mode. It passed native tab navigation, New/Continue save-field preservation, four verified backups and entire-world preservation on startup cancellation. The temporary shortcut is removed after testing. The initial background service run did not present its window and is excluded from measurements.
+
+| 1280×800 OpenGL, 60 FPS cap | New | Continue |
+| --- | ---: | ---: |
+| Average FPS | 59.65 | 59.90 |
+| Median frame interval | 16.71 ms | 16.66 ms |
+| p95 frame interval | 18.67 ms | 18.05 ms |
+| p99 frame interval | 23.89 ms | 19.81 ms |
+
+The uncapped comparisons averaged 60.00 FPS under the compositor. Both samples confirm AMD hardware OpenGL, controller connected, canvas focused and actual 1280×800 native dimensions. Each stage lasts 25 seconds, with frame samples taken after its first ten seconds. Aggregate evidence: [New](performance/ui-r22-new.json) and [Continue](performance/ui-r22-continue.json).
+
+These are short stationary disposable-world checks with the native inventory shown and custom controller panels closed during timing. They measure overlay callback intervals, not independent scanout; they do not establish sustained 60 FPS during routes or quantify the open Skills panel. The first capped p99 exceeds 20 ms. Physical D-pad/Steam Input mapping remains a user playtest check. AWT Robot captures from Gaming Mode returned black, so the published UI screenshots use the verified host native captures and clearly labelled renderer fixtures.
+
+Previous sustained measurements, with their separate candidate and conditions, remain in [60 FPS report](DECK_60FPS_REPORT.md).

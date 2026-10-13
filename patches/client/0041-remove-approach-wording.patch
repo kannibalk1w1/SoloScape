@@ -1,0 +1,24 @@
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+@@ -39,7 +39,7 @@
+         }
+         else if(target!=null)
+         {
+-            lines.add("A: "+target.option+" "+target.name+(target.serverApproach?" · move into range":""));
++            lines.add("A: "+target.option+" "+target.name);
+             lines.add("LT: aim · LB/RB: target · X: "+(target.kind()==3?"loot pile":"actions")+" · B: cancel");
+         }
+         else
+diff --git a/client/src/net/runelite/client/input/controller/WorldControls.java b/client/src/net/runelite/client/input/controller/WorldControls.java
+--- a/client/src/net/runelite/client/input/controller/WorldControls.java
++++ b/client/src/net/runelite/client/input/controller/WorldControls.java
+@@ -131,7 +131,7 @@
+             // Act on the focus already displayed; never silently substitute a different target.
+             if (target != null && gateway.interact(target))
+             {
+-                feedback=target.serverApproach?"Action sent — server decides approach and range":"Action sent";
++                feedback="Action sent";
+                 feedbackUntil=now+1_500_000_000L;pauseWalking(x,y);
+             }
+             else { feedback=target==null?"No target — aim with LT and cycle with LB/RB":"Target changed or unavailable — aim again";feedbackUntil=now+2_000_000_000L;target=null;pauseWalking(x,y); }

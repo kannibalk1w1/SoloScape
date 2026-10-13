@@ -1,0 +1,523 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+index 7b05383..31eb31e 100644
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1063,7 +1063,7 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+     @Override public void setControllerEntryCancelEnabled(boolean enabled) { ControllerEntry.enableServerCancel(enabled); }
+     @Override public void cancelControllerEntry(net.runelite.client.input.controller.EntryState entry) { ControllerEntry.cancel(entry); }
+     @Override public boolean scrollControllerUi(net.runelite.client.input.controller.UiState.Widget widget, int direction) { return ControllerUi.scroll(widget, direction); }
+-    @Override public void closeControllerPanel() { if (ControllerUi.hasModalPanel()) ControllerUi.cancelWorld(); }
++    @Override public void closeControllerPanel() { ControllerUi.closePanel(); }
+     @Override public boolean invokeControllerUi(net.runelite.client.input.controller.UiState.Widget widget, net.runelite.client.input.controller.UiState.Action action) { return ControllerUi.invoke(widget, action); }
+     @Override public void cancelControllerSelection() { ControllerUi.cancelSelection(); }
+     @Override public void cancelControllerDialogue() { ControllerUi.cancelDialogue(); }
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+index ffdbbe9..256a919 100644
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -156,6 +156,7 @@ final class ControllerUi
+     private static Set<Integer> openGroups()
+     {
+         Set<Integer> groups = new HashSet<>();
++        if(r.anInt9721>=0)groups.add(r.anInt9721);
+         if (Class125.aClass356_4915 != null)
+             for (Class348_Sub41 entry = (Class348_Sub41) Class125.aClass356_4915.method3484(0); entry != null;
+                 entry = (Class348_Sub41) Class125.aClass356_4915.method3482(0)) groups.add(entry.anInt7050);
+@@ -225,7 +226,7 @@ final class ControllerUi
+         catch (RuntimeException unavailableDefinition) { return -1; }
+     }
+     private static boolean production(int id) { return id==300 || id==324 || id==438 || id==446 || id==675; }
+-    private static boolean extraModal(int id) { return production(id) || id==742 || id==743 || id==178 || id==275 || id==134 || id==499 || id==741; }
++    private static boolean extraModal(int id) { return production(id) || id==742 || id==743 || id==178 || id==275 || id==134 || id==499 || id==741 || id==277 || id==380 || id==755; }
+ 
+     static boolean entryReady() { return ready(); }
+     static boolean hasBank() { return openGroups().contains(762); }
+@@ -238,7 +239,7 @@ final class ControllerUi
+     private static boolean panelGroup(int group)
+     {
+         return group == 762 || group == 763 || group == 11 || group == 620 || group == 621 || group == 387 || group == 667 || group == 670 || group == 271
+-            || group == 192 || group == 193 || group == 430 || group==884 || group==320 || group==190 || group==261 || group==982 || extraModal(group);
++            || group == 192 || group == 193 || group == 430 || group==884 || group==320 || group==190 || group==261 || group==982 || group==182 || extraModal(group);
+     }
+ 
+     static boolean hasModalPanel()
+@@ -346,7 +347,7 @@ final class ControllerUi
+         boolean modal = id >= 0;
+         if (id < 0)
+         {
+-            int[] tabs = {387,271,192,193,430,884,320,190,261,982};
++            int[] tabs = {387,271,192,193,430,884,320,190,261,982,182};
+             for (int group : tabs)
+                 if (open.contains(group))
+                     for (Seen seen : visible.values())
+@@ -392,7 +393,7 @@ final class ControllerUi
+         Comparator<UiState.Widget> order = Comparator.comparingInt((UiState.Widget w) -> w.bounds.y).thenComparingInt(w -> w.bounds.x).thenComparingInt(w -> w.child);
+         items.sort(order); side.sort(order); controls.sort(order);
+         List<UiState.Pane> panes = new ArrayList<>();
+-        String name = id == 620 ? "Shop" : id == 11 ? "Deposit box" : id == 762 ? "Bank" : id == 387 || id == 667 ? "Equipment" : id == 271 ? "Prayer" : id==884?"Combat":id==320?"Skills":id==190 || id==178 || id==275?"Quests":id==261 || id==982 || id==742 || id==743?"Settings":id==134 || id==499 || id==741?"Skill guide":id==300?"Smithing":id==324?"Tanning":production(id)?"Crafting":"Spellbook";
++        String name = id==277 || id==380 ? "Quest complete" : id==755?"Map":id==182?"Log out":id == 620 ? "Shop" : id == 11 ? "Deposit box" : id == 762 ? "Bank" : id == 387 || id == 667 ? "Equipment" : id == 271 ? "Prayer" : id==884?"Combat":id==320?"Skills":id==190 || id==178 || id==275?"Quests":id==261 || id==982 || id==742 || id==743?"Settings":id==134 || id==499 || id==741?"Skill guide":id==300?"Smithing":id==324?"Tanning":production(id)?"Crafting":"Spellbook";
+         if(id==275){Class46 title=loadedWidget(275<<16|2);if(title!=null&&!clean(title.aString792).isEmpty())name=clean(title.aString792);}
+         panes.add(new UiState.Pane(!modal || id == 667 || extraModal(id) ? name : id == 620 ? "Stock" : id == 11 ? "Inventory" : "Bank", items.toArray(new UiState.Widget[0])));
+         if (id == 762 || id == 620 || id == 667) panes.add(new UiState.Pane("Inventory", side.toArray(new UiState.Widget[0])));
+@@ -568,7 +569,7 @@ final class ControllerUi
+                 widget = loadedWidget(widget.anInt834); continue;
+             }
+             int group = widget.anInt830 >>> 16;
+-            if (group == 548 || group == 746) return true;
++            if (group == 548 || group == 746 || group == r.anInt9721) return true;
+             Class46 parent = null;
+             if (Class125.aClass356_4915 != null)
+                 for (Class348_Sub41 entry = (Class348_Sub41) Class125.aClass356_4915.method3484(0); entry != null;
+@@ -633,6 +634,20 @@ final class ControllerUi
+         }
+     }
+ 
++    static void closePanel()
++    {
++        if(!ready())return;
++        if(openGroups().contains(755)){
++            Seen close=visible.get(key(755<<16|44,-1));
++            if(close!=null && fresh(close)){
++                UiState.Widget widget=describePanel(close);
++                for(UiState.Action action:widget.actions)if(action.type==18){invoke(widget,action);return;}
++            }
++            return;
++        }
++        if(hasModalPanel())cancelWorld();
++    }
++
+     static void cancelDialogue()
+     {
+         if (!ready() || !hasDialogue()) return;
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+index 16094d5..09a1ea1 100644
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -110,7 +110,12 @@ final class ControllerWorld
+         int approachCount=retainedReachable && retained.serverApproach?1:0;
+         for (ControllerTarget candidate : candidates)
+             if ((!candidate.serverApproach || approachCount<6) && reachable(candidate, paths))
+-            { reachable.add(candidate); if(candidate.serverApproach) approachCount++; }
++            {
++                // Automatic focus only needs the first valid target. Enumerating
++                // every path here repeats expensive native BFS even at rest.
++                if(direction==0)return candidate;
++                reachable.add(candidate); if(candidate.serverApproach) approachCount++;
++            }
+         if (reachable.isEmpty()) return null;
+         if (direction == 0 || retained == null) return reachable.get(direction < 0 ? reachable.size() - 1 : 0);
+         // Sort independently of current focus so repeated bumper presses traverse all candidates.
+diff --git a/client/src/net/runelite/client/input/controller/HomeTab.java b/client/src/net/runelite/client/input/controller/HomeTab.java
+index dc85785..ed64bff 100644
+--- a/client/src/net/runelite/client/input/controller/HomeTab.java
++++ b/client/src/net/runelite/client/input/controller/HomeTab.java
+@@ -10,7 +10,8 @@ public enum HomeTab
+     OBJECTIVES("Objectives", 98, 43), FRIENDS("Friends", 99, 44),
+     IGNORE("Ignore", 100, 45), CLAN("Clan", 101, 46),
+     SETTINGS("Settings", 102, 47), EMOTES("Emotes", 103, 48),
+-    MUSIC("Music", 104, 49), NOTES("Notes", 105, 50);
++    MUSIC("Music", 104, 49), NOTES("Notes", 105, 50),
++    MAP("Map",179,178), LOGOUT("Log out",181,172);
+ 
+     public final String label;
+     private static final HomeTab[] TABS = values();
+diff --git a/client/src/net/runelite/client/input/controller/MenuDirection.java b/client/src/net/runelite/client/input/controller/MenuDirection.java
+new file mode 100644
+index 0000000..b1c732e
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/MenuDirection.java
+@@ -0,0 +1,16 @@
++package net.runelite.client.input.controller;
++
++/** Menu direction shared by inventory, dialogue, panels and world action lists. */
++public final class MenuDirection {
++    private MenuDirection() {}
++    public static int mask(GamepadState input) {
++        int buttons=input.buttonsHeld & (15 << 11);
++        if(buttons!=0)return buttons;
++        float x=input.leftX,y=input.leftY;
++        if(!Float.isFinite(x)||!Float.isFinite(y)||Math.hypot(x,y)<.45)return 0;
++        return 1 << (Math.abs(y)>=Math.abs(x)?(y<0?11:12):(x<0?13:14));
++    }
++    public static boolean neutral(GamepadState input) {
++        return Math.hypot(input.leftX,input.leftY)<.25;
++    }
++}
+diff --git a/client/src/net/runelite/client/input/controller/PanelControls.java b/client/src/net/runelite/client/input/controller/PanelControls.java
+index ade4cb2..a035867 100644
+--- a/client/src/net/runelite/client/input/controller/PanelControls.java
++++ b/client/src/net/runelite/client/input/controller/PanelControls.java
+@@ -49,9 +49,9 @@ public final class PanelControls
+     {
+         if (state == null) return null;
+         if (closing) return "Closing " + state.name + "…";
+-        if (context != null) return "A: " + context.actions[contextIndex].label + " " + context.name + " · D-pad: quantity/action · B: back";
++        if (context != null) return "A: " + context.actions[contextIndex].label + " " + context.name + " · LS / D-pad: quantity/action · B: back";
+         String label = focus == null ? "No visible items" : focus.actions.length==0 ? focus.name : "A: " + primary(focus).label + " " + focus.name + (focus.itemId >= 0 ? " ×" + focus.quantity : "");
+-        return state.name + " / " + state.panes[pane].name + " · " + label + " · X: actions · LB/RB: pane · D-pad: move · RS: scroll · B: " + (state.modal ? "close" : "world");
++        return state.name + " / " + state.panes[pane].name + " · " + label + " · X: actions · LB/RB: pane · LS / D-pad: move · RS: scroll · B: " + (state.modal ? "close" : "world");
+     }
+     public boolean update(UiState.Panel snapshot, GamepadState input, long now)
+     {
+@@ -217,7 +217,7 @@ public final class PanelControls
+     }
+     private int direction(GamepadState input, long now)
+     {
+-        int mask = input.buttonsHeld & DIRECTIONS;
++        int mask = MenuDirection.mask(input);
+         if (Integer.bitCount(mask) != 1) { heldDirection = 0; repeatAt = 0; return 0; }
+         int value = Integer.numberOfTrailingZeros(mask);
+         if (value != heldDirection) { heldDirection = value; repeatAt = now + 350_000_000L; return value; }
+diff --git a/client/src/net/runelite/client/input/controller/UiControls.java b/client/src/net/runelite/client/input/controller/UiControls.java
+index e51084c..7f89138 100644
+--- a/client/src/net/runelite/client/input/controller/UiControls.java
++++ b/client/src/net/runelite/client/input/controller/UiControls.java
+@@ -77,13 +77,14 @@ public final class UiControls
+     {
+         reset();
+         if (index == HomeTab.INVENTORY.ordinal()) { focusInventory(now); return; }
+-        if (index == HomeTab.EQUIPMENT.ordinal() || index == HomeTab.PRAYER.ordinal() || index == HomeTab.SPELLBOOK.ordinal() || index == HomeTab.COMBAT.ordinal() || index == HomeTab.SKILLS.ordinal() || index == HomeTab.QUESTS.ordinal() || index == HomeTab.SETTINGS.ordinal())
++        if (index == HomeTab.EQUIPMENT.ordinal() || index == HomeTab.PRAYER.ordinal() || index == HomeTab.SPELLBOOK.ordinal() || index == HomeTab.COMBAT.ordinal() || index == HomeTab.SKILLS.ordinal() || index == HomeTab.QUESTS.ordinal() || index == HomeTab.SETTINGS.ordinal() || index == HomeTab.LOGOUT.ordinal())
+         { focusedTab = index; tabOpeningUntil = now+1_000_000_000L; }
+     }
+     private boolean matchesTab(UiState.Panel panel)
+     {
+         if (panel == null || focusedTab < 0) return false;
+-        return focusedTab == HomeTab.EQUIPMENT.ordinal() && panel.id == 387
++        return focusedTab == HomeTab.LOGOUT.ordinal() && panel.id == 182
++            || focusedTab == HomeTab.EQUIPMENT.ordinal() && panel.id == 387
+             || focusedTab == HomeTab.PRAYER.ordinal() && panel.id == 271
+             || focusedTab==HomeTab.COMBAT.ordinal() && panel.id==884
+             || focusedTab==HomeTab.SKILLS.ordinal() && panel.id==320
+@@ -133,7 +134,8 @@ public final class UiControls
+             }
+             return false;
+         }
+-        if (action.type==13)
++        if(inventory && action.type==13)afterInventoryAction(action,now);
++        else if (action.type==13)
+         { reset(); if ((gateway.selectionMask()&32)!=0 && gateway.openTargetInventory()) focusInventory(now); }
+         return true;
+     }
+@@ -143,12 +145,12 @@ public final class UiControls
+         if (panel.active()) return panel.prompt();
+         if (focusedTab >= 0) return "Opening " + HomeTab.values()[focusedTab].label + "…";
+         UiState.Widget widget = focus();
+-        if (inDialogue()) return (state.dialogueId==905 ? "Make "+(state.amount<0?"native amount":state.amount)+" · LB/RB: amount · " : "") + (widget == null ? "Dialogue: waiting · B: close" : "A: " + widget.name + " · D-pad: recipe · B: close");
++        if (inDialogue()) return (state.dialogueId==905 ? "Make "+(state.amount<0?"native amount":state.amount)+" · LB/RB: amount · " : "") + (widget == null ? "Dialogue: waiting · B: close" : "A: " + widget.name + " · LS / D-pad: recipe · B: close");
+         if (!inventory) return null;
+         if (context != null && contextIndex < context.actions.length)
+-            return "A: " + context.actions[contextIndex].label + " " + context.name + " · D-pad: choose · B: back";
++            return "A: " + context.actions[contextIndex].label + " " + context.name + " · LS / D-pad: choose · B: back";
+         if (widget == null) return "Opening inventory · B: back";
+-        if (widget.itemId < 0) return "Empty slot · D-pad: move · B: back";
++        if (widget.itemId < 0) return "Empty slot · LS / D-pad: move · B: back";
+         String action = widget.actions.length == 0 ? "No action" : widget.actions[0].label;
+         return "A: " + action + " " + widget.name + " · X: actions · B: back";
+     }
+@@ -223,7 +225,7 @@ public final class UiControls
+         if (wasPanel && !panel.active()) { armed = false; return true; }
+         if (!armed)
+         {
+-            if ((input.buttonsHeld & (A | B | X | inventoryButton | DIRECTIONS | (1<<9) | (1<<10))) == 0) armed = true;
++            if ((input.buttonsHeld & (A | B | X | inventoryButton | DIRECTIONS | (1<<9) | (1<<10))) == 0 && MenuDirection.neutral(input)) armed = true;
+             else return active();
+         }
+         if (inDialogue())
+@@ -249,7 +251,7 @@ public final class UiControls
+         if ((input.buttonsPressed & inventoryButton) != 0)
+         {
+             if (inventory) { leave(); return true; }
+-            if (state.hasInventory() || gateway.openInventory())
++            if (state.hasInventory() || ((gateway.selectionMask()&32)!=0?gateway.openTargetInventory():gateway.openInventory()))
+             {
+                 navigation.reset(); inventory = true; openingUntil = now + 1_000_000_000L; context = null;
+                 armed = false; heldDirection = 0;
+@@ -282,7 +284,7 @@ public final class UiControls
+             if (direction != 0) contextIndex = clamp(contextIndex + (direction == 11 || direction == 13 ? -1 : 1), context.actions.length);
+             if ((input.buttonsPressed & A) != 0)
+             {
+-                if (contextIndex < context.actions.length && gateway.invoke(context, context.actions[contextIndex])) context = null;
++                if (contextIndex < context.actions.length) { UiState.Action action=context.actions[contextIndex]; if(gateway.invoke(context,action)){context=null;afterInventoryAction(action,now);} }
+                 armed = false;
+             }
+             return true;
+@@ -298,11 +300,24 @@ public final class UiControls
+         }
+         else if ((input.buttonsPressed & A) != 0 && widget != null && widget.actions.length > 0)
+         {
+-            gateway.invoke(widget, widget.actions[0]); armed = false;
++            if(gateway.invoke(widget, widget.actions[0])) afterInventoryAction(widget.actions[0],now); armed = false;
+         }
+         return true;
+     }
+ 
++    private void afterInventoryAction(UiState.Action action,long now)
++    {
++        if(action.type==13){
++            int mask=gateway.selectionMask();
++            reset();
++            // Items can target both objects and inventory. Start in the world;
++            // Y reopens inventory without cancelling the native selected item.
++            if((mask&32)!=0 && (mask&7)==0 && gateway.openTargetInventory())focusInventory(now);
++        }else if(action.label.matches("(?i)(Eat|Drink|Bury)")){
++            reset();
++        }
++    }
++
+     private void leave()
+     {
+         navigation.homeBack();inventory = false; context = null; armed = false; gateway.cancelSelection();
+@@ -310,7 +325,7 @@ public final class UiControls
+     }
+     private int direction(GamepadState input, long now)
+     {
+-        int mask = input.buttonsHeld & DIRECTIONS;
++        int mask = MenuDirection.mask(input);
+         if (Integer.bitCount(mask) != 1) { heldDirection = 0; repeatAt = 0; return 0; }
+         int direction = Integer.numberOfTrailingZeros(mask);
+         if (direction != heldDirection)
+diff --git a/client/src/net/runelite/client/input/controller/WorldControls.java b/client/src/net/runelite/client/input/controller/WorldControls.java
+index 34bf596..c8887ff 100644
+--- a/client/src/net/runelite/client/input/controller/WorldControls.java
++++ b/client/src/net/runelite/client/input/controller/WorldControls.java
+@@ -37,7 +37,7 @@ public final class WorldControls
+     private volatile ControllerTarget[] menu = EMPTY;
+     private volatile int menuIndex;
+     private ControllerTarget menuSubject;
+-    private boolean menuArmed;
++    private boolean menuArmed, menuStickArmed;
+     private int heldDirection;
+     private long repeatAt, menuChecked;
+ 
+@@ -91,7 +91,7 @@ public final class WorldControls
+             ControllerTarget[] options = target == null ? EMPTY : gateway.actions(target);
+             if (options.length > 0)
+             {
+-                menuSubject = target; menu = options; menuIndex = 0; menuArmed = false;
++                menuSubject = target; menu = options; menuIndex = 0; menuArmed = false; menuStickArmed = false;
+                 heldDirection = 0; repeatAt = 0; menuChecked = now;
+             }
+             pauseWalking(x, y);
+@@ -164,7 +164,7 @@ public final class WorldControls
+ 
+     private void closeMenu()
+     {
+-        menu = EMPTY; menuSubject = null; menuIndex = 0; menuArmed = false;
++        menu = EMPTY; menuSubject = null; menuIndex = 0; menuArmed = false; menuStickArmed = false;
+         heldDirection = 0; repeatAt = menuChecked = 0;
+     }
+ 
+@@ -185,12 +185,13 @@ public final class WorldControls
+             if (!same) { closeMenu(); pauseWalking(x, y); armed = false; return; }
+             menu = fresh; menuChecked = now;
+         }
++        if(MenuDirection.neutral(state))menuStickArmed=true;
+         if (!menuArmed)
+         {
+             if ((state.buttonsHeld & (FACE | DIRECTIONS)) == 0) menuArmed = true;
+             else return;
+         }
+-        int mask = state.buttonsHeld & DIRECTIONS;
++        int mask = menuStickArmed ? MenuDirection.mask(state) : state.buttonsHeld & DIRECTIONS;
+         if (Integer.bitCount(mask) == 1)
+         {
+             int direction = Integer.numberOfTrailingZeros(mask);
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+index 70196d1..83862ac 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -23,7 +23,7 @@ public interface SoloScapeControllerConfig extends Config
+ 	@ConfigItem(keyName = "invertY", name = "Invert vertical camera", description = "Reverse the right-stick vertical direction.", position = 3)
+ 	default boolean invertY() { return false; }
+ 
+-	@ConfigItem(keyName = "debug", name = "Controller diagnostics", description = "Log stick values at most once a second.", position = 4)
++	@ConfigItem(keyName = "debug", name = "Controller diagnostics", description = "Log stick values at most once a second and show world tile coordinates.", position = 4)
+ 	default boolean debug() { return false; }
+     @ConfigItem(keyName = "showMovementTiles", name = "Show movement tiles", description = "Outline your tile and the controller's requested walking destination.", position = 5)
+     default boolean showMovementTiles() { return true; }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+index a4b396a..d9bc4a1 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+@@ -12,6 +12,7 @@ import net.runelite.client.ui.overlay.OverlayLayer;
+ /** Explicit focus feedback before A invokes an action. */
+ public final class SoloScapeControllerOverlay extends Overlay
+ {
++    @Inject private GameClient client;
+     private final SoloScapeControllerPlugin plugin;
+     @Inject
+     SoloScapeControllerOverlay(SoloScapeControllerPlugin plugin)
+@@ -32,7 +33,7 @@ public final class SoloScapeControllerOverlay extends Overlay
+         if(menu.length>0)
+         {
+             for(int i=0;i<menu.length;i++) lines.add((i==plugin.getWorld().getMenuIndex()?"> ":"  ")+menu[i].option+" "+menu[i].name);
+-            lines.add("D-pad: choose · A: confirm · B: back");
++            lines.add("LS / D-pad: choose · A: confirm · B: back");
+         }
+         else if(target!=null)
+         {
+@@ -45,6 +46,8 @@ public final class SoloScapeControllerOverlay extends Overlay
+             if(selection!=null) { lines.add(selection);lines.add("Stick: aim · LB/RB: target · B: cancel"); }
+         }
+         if(feedback!=null) lines.add(feedback);
++        if(plugin.config().debug() && client.hasLocalPlayer())
++            lines.add("Tile: "+(client.getBaseX()+client.getLocalPlayerSceneX())+","+(client.getBaseY()+client.getLocalPlayerSceneY())+","+client.getPlane());
+         if(lines.isEmpty()) return null;
+         Graphics2D g=(Graphics2D)graphics.create();
+         try
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index 5690de6..af9dddb 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -443,11 +443,11 @@ public class SoloScapeControllerPlugin extends Plugin
+             if(settingsOpen && ui.focusedPanel()==null && !ui.inDialogue() && !radial.active() && !quick.active())
+                 ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());
+             client.prepareControllerUi();
+-            if(config.customControllerSettings() && !config.setupComplete() && !settingsPrompted
++            if(config.customControllerSettings() && !config.setupComplete() && !settingsPrompted && !Boolean.parseBoolean(configManager.getConfiguration("soloscapecontroller","setupPrompted"))
+                 && config.interfaceControls() && !client.isControllerTargeting()){
+                 UiState nativeUi=client.getControllerUiState();
+                 if(nativeUi.dialogueId<0 && nativeUi.entry==null && (nativeUi.panel==null||!nativeUi.panel.modal)){
+-                    if(openHomeTab(HomeTab.SETTINGS.ordinal())){settingsPrompted=true;ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());}
++                    if(openHomeTab(HomeTab.SETTINGS.ordinal())){settingsPrompted=true;configManager.setConfiguration("soloscapecontroller","setupPrompted",true);ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());}
+                 }
+             }
+ 
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+index 7ca258e..eaff7a7 100644
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -305,6 +305,6 @@ public final class SoloScapeLauncher
+         final JsonObject data; final String id, label; final boolean saved, damaged, needsRecovery, recoverable, archiveable;
+         CharacterRow(JsonObject row) { data=row; id=row.get("id").getAsString(); label=row.get("label").getAsString(); saved=row.get("saved").getAsBoolean(); damaged=row.has("error")&&!row.get("error").isJsonNull();needsRecovery=row.has("recovery")&&!row.get("recovery").isJsonNull();recoverable=needsRecovery&&row.getAsJsonObject("recovery").get("recoverable").getAsBoolean();archiveable=needsRecovery&&row.getAsJsonObject("recovery").has("archiveable")&&row.getAsJsonObject("recovery").get("archiveable").getAsBoolean(); }
+         @Override public String toString() { return label + (needsRecovery ? " • Earlier session" : damaged ? " • Needs recovery" : saved ? " • Continue" : " • New"); }
+-        String description() { StringBuilder text=new StringBuilder(label+"\n\n"); for(String field:new String[]{"account","created","last_played","saved_at","location","storage_bytes","backup_count","retention","error"}) if(data.has(field)&&!data.get(field).isJsonNull()) text.append(field.replace('_',' ')).append(": ").append(data.get(field).isJsonPrimitive()?data.get(field).getAsString():data.get(field)).append("\n\n"); if(needsRecovery)text.append(data.getAsJsonObject("recovery").get("message").getAsString()).append("\n");return text.toString(); }
++        String description() { StringBuilder text=new StringBuilder(label+"\n\n"); for(String field:new String[]{"account","created","last_played","saved_at","location","storage_bytes","save_bytes","backup_bytes","cache_bytes","backup_count","retention","error"}) if(data.has(field)&&!data.get(field).isJsonNull()) text.append(field.replace('_',' ')).append(": ").append(data.get(field).isJsonPrimitive()?data.get(field).getAsString():data.get(field)).append("\n\n"); if(needsRecovery)text.append(data.getAsJsonObject("recovery").get("message").getAsString()).append("\n");return text.toString(); }
+     }
+ }
+diff --git a/client/test/ControllerUiTest.java b/client/test/ControllerUiTest.java
+index 7408013..d02d229 100644
+--- a/client/test/ControllerUiTest.java
++++ b/client/test/ControllerUiTest.java
+@@ -338,4 +338,19 @@ public class ControllerUiTest
+         value.aBoolean813=true;details=ControllerUi.snapshot(false).panel.panes[3];assertEquals("Stab defence:",details.widgets[0].name);
+     }
+ 
++
++    @Test public void questCompletionInterfacesAreModalAndBlockWorldMovement(){
++        for(int group:new int[]{277,380}){
++            Class348_Sub41 attached=new Class348_Sub41();attached.anInt7050=group;
++            Class125.aClass356_4915.method3483((byte)120,outer.anInt830+1,attached);
++            assertTrue(ControllerUi.hasModalPanel());assertNotNull(ControllerUi.snapshot().panel);
++            assertEquals(group,ControllerUi.snapshot().panel.id);assertTrue(ControllerUi.snapshot().panel.modal);
++            attached.method2715((byte)57);
++        }
++    }
++    @Test public void fullScreenMapIsRecognizedWithoutAnAttachedChildInterface(){
++        int old=r.anInt9721;
++        try{r.anInt9721=755;assertTrue(ControllerUi.hasModalPanel());assertEquals(755,ControllerUi.snapshot().panel.id);}
++        finally{r.anInt9721=old;}
++    }
+ }
+diff --git a/client/test/net/runelite/client/input/controller/TabRadialControlsTest.java b/client/test/net/runelite/client/input/controller/TabRadialControlsTest.java
+index 9c786c1..8863c7b 100644
+--- a/client/test/net/runelite/client/input/controller/TabRadialControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/TabRadialControlsTest.java
+@@ -8,7 +8,7 @@ public class TabRadialControlsTest
+     private static final int VIEW = 1 << 4;
+     private static final class Fake implements TabRadialControls.Gateway
+     {
+-        int mask = 65535, opens, last = -1;
++        int mask = (1<<HomeTab.values().length)-1, opens, last = -1;
+         boolean succeeds = true;
+         public int availableTabs() { return mask; }
+         public boolean openTab(int index) { opens++; last = index; return succeeds; }
+@@ -27,15 +27,15 @@ public class TabRadialControlsTest
+     {
+         Fake game = new Fake(); GamepadState state = new GamepadState();
+         TabRadialControls radial = open(game, state);
+-        for (int i = 0; i < 16; i++)
++        for (int i = 0; i < HomeTab.values().length; i++)
+         {
+-            state.leftX = (float) Math.sin(i * 2 * Math.PI / 16);
+-            state.leftY = (float) -Math.cos(i * 2 * Math.PI / 16);
++            state.leftX = (float) Math.sin(i * 2 * Math.PI / HomeTab.values().length);
++            state.leftY = (float) -Math.cos(i * 2 * Math.PI / HomeTab.values().length);
+             radial.update(state, 10 + i);
+             assertEquals(i, radial.selected());
+         }
+         buttons(radial, state, 1, 30);
+-        assertFalse(radial.active()); assertEquals(1, game.opens); assertEquals(15, game.last);
++        assertFalse(radial.active()); assertEquals(1, game.opens); assertEquals(HomeTab.values().length-1, game.last);
+         assertFalse(radial.update(state, 31)); assertEquals(1, game.opens);
+     }
+     @Test public void openingDoesNotInheritHeldWalkingOrActionInput()
+@@ -48,7 +48,7 @@ public class TabRadialControlsTest
+         assertEquals(0, radial.selected()); assertEquals(0, game.opens);
+         buttons(radial, state, 0, 4); assertEquals(0, radial.selected());
+         state.leftX = 0; radial.update(state, 5);
+-        state.leftX = 1; radial.update(state, 6); assertEquals(4, radial.selected());
++        state.leftX = 1; radial.update(state, 6); assertEquals((int)Math.round(HomeTab.values().length/4.0), radial.selected());
+     }
+     @Test public void cancelAndToggleConsumeTheirClosingFrameWithoutOpeningATab()
+     {
+@@ -68,7 +68,7 @@ public class TabRadialControlsTest
+         buttons(radial, state, 1, 4);
+         assertTrue(radial.active()); assertEquals(0, game.opens); assertNotNull(radial.message());
+         buttons(radial, state, 0, 5);
+-        state.leftX = -1; state.leftY = 0; radial.update(state, 6);
++        state.leftX = (float)Math.sin(HomeTab.SETTINGS.ordinal()*2*Math.PI/HomeTab.values().length); state.leftY = (float)-Math.cos(HomeTab.SETTINGS.ordinal()*2*Math.PI/HomeTab.values().length); radial.update(state, 6);
+         assertEquals(HomeTab.SETTINGS.ordinal(), radial.selected());
+         game.succeeds = false; buttons(radial, state, 1, 7);
+         assertTrue(radial.active()); assertEquals(1, game.opens);
+@@ -79,8 +79,8 @@ public class TabRadialControlsTest
+     {
+         Fake game = new Fake(); GamepadState state = new GamepadState();
+         TabRadialControls radial = open(game, state);
+-        buttons(radial, state, 1 << 9, 4); assertEquals(15, radial.selected());
+-        buttons(radial, state, 1 << 9, 5); assertEquals(15, radial.selected());
++        buttons(radial, state, 1 << 9, 4); assertEquals(HomeTab.values().length-1, radial.selected());
++        buttons(radial, state, 1 << 9, 5); assertEquals(HomeTab.values().length-1, radial.selected());
+         buttons(radial, state, 0, 6); buttons(radial, state, 1 << 10, 7);
+         assertEquals(0, radial.selected());
+     }
+diff --git a/client/test/net/runelite/client/input/controller/UiControlsTest.java b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+index b1ed642..ef4602f 100644
+--- a/client/test/net/runelite/client/input/controller/UiControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/UiControlsTest.java
+@@ -16,6 +16,8 @@ public class UiControlsTest
+         UiState state;
+         int opens, actions, cancels, closes, leaves, openedTab=-1;
+         boolean inventoryRequested;
++        int selection;
++        public int selectionMask(){return selection;}
+         PanelConfirmation confirmation;
+         UiState.Widget acted;
+         UiState.Action action;
+@@ -292,4 +294,25 @@ public class UiControlsTest
+         press(ui,input,2,2_200_000_000L); assertFalse(ui.active()); assertEquals(-1,ui.takeHomeBack());
+     }
+ 
++
++    @Test public void useItemReleasesInventoryForObjectTargeting(){
++        Fake game=new Fake();game.selection=4|32;
++        UiState.Widget source=game.state.inventory[0];
++        game.state.inventory[0]=new UiState.Widget(source.id,source.child,source.itemId,source.quantity,source.name,source.bounds,new UiState.Action[]{new UiState.Action("Use",13,0)});
++        GamepadState input=new GamepadState();UiControls ui=enter(game,input);
++        press(ui,input,1,30);assertEquals(13,game.action.type);assertFalse(ui.active());assertEquals(0,game.cancels);
++    }
++    @Test public void buryReturnsToWorldWithoutLeavingEmptyInventoryFocus(){
++        Fake game=new Fake();UiState.Widget source=game.state.inventory[0];
++        game.state.inventory[0]=new UiState.Widget(source.id,source.child,source.itemId,source.quantity,"Bones",source.bounds,new UiState.Action[]{new UiState.Action("Bury",18,1)});
++        GamepadState input=new GamepadState();UiControls ui=enter(game,input);
++        press(ui,input,1,30);assertEquals("Bury",game.action.label);assertFalse(ui.active());
++    }
++    @Test public void leftStickNavigatesDialogueAndDoesNotRepeatConfirm(){
++        Fake game=new Fake();UiState.Widget first=widget(0,100,"First"),second=widget(1,101,"Second");
++        game.state=new UiState(new UiState.Widget[0],new UiState.Widget[]{first,second},64);
++        GamepadState input=new GamepadState();UiControls ui=new UiControls(game);ui.update(input,1);
++        input.leftY=1;ui.update(input,10);assertEquals(second,ui.focus());
++        input.leftY=0;press(ui,input,1,20);assertEquals(second,game.acted);assertEquals(1,game.actions);
++    }
+ }
