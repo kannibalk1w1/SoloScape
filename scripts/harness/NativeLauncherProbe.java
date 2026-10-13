@@ -32,6 +32,15 @@ public final class NativeLauncherProbe
         root=Paths.get(args[0]);
         try{
             launcher=edt(()->{Constructor<?> ctor=SoloScapeLauncher.class.getDeclaredConstructor(Path.class);ctor.setAccessible(true);return ctor.newInstance(root);});
+            System.setProperty("soloscape.launcher.steamKeyboard","true");
+            waitFor(()->((JFrame)field(launcher,"frame")).isActive(),"Launcher not active for mapped navigation");
+            waitFor(()->!((JButton)field(launcher,"play")).isEnabled(),"Empty launcher did not disable Continue");
+            edt(()->{((JList<?>)field(launcher,"list")).requestFocusInWindow();return null;});Thread.sleep(150);
+            Robot robot=new Robot();robot.keyPress(java.awt.event.KeyEvent.VK_RIGHT);Thread.sleep(60);robot.keyRelease(java.awt.event.KeyEvent.VK_RIGHT);
+            waitFor(()->KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()==field(launcher,"create"),"Steam-mapped Right did not reach the first enabled button");
+            robot.keyPress(java.awt.event.KeyEvent.VK_ENTER);Thread.sleep(60);robot.keyRelease(java.awt.event.KeyEvent.VK_ENTER);
+            waitFor(()->field(launcher,"keyboard")!=null&&((LauncherKeyboard)field(launcher,"keyboard")).owner.isShowing(),"Steam-mapped A did not activate New Character");
+            edt(()->{((LauncherKeyboard)field(launcher,"keyboard")).owner.dispose();return null;});System.clearProperty("soloscape.launcher.steamKeyboard");
             LauncherKeyboard keyboard=open();JTextField label=edt(()->text(keyboard.owner,"Character label"));JTextField account=edt(()->text(keyboard.owner,"Account name"));
             edt(()->{require(label.getText().isEmpty(),"Label changed before entry probe");keyboard.deactivate();keyboard.activate(label);GamepadState held=new GamepadState();held.buttonsHeld=held.buttonsPressed=1;keyboard.update(held,System.nanoTime());require(label.getText().isEmpty(),"Opening held A typed a key");press(keyboard,1);require(label.getText().equals("a"),"Controller did not type label");press(keyboard,8);return null;});
             waitFor(()->field(keyboard,"field")==account,"Y did not move to account field");

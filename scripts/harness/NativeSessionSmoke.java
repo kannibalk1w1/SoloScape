@@ -30,6 +30,7 @@ public class NativeSessionSmoke {
           || Boolean.getBoolean("soloscape.fullscreen.probe")&&NativeFullscreenProbe.active()
           || Boolean.getBoolean("soloscape.playtest2.probe")&&NativePlaytestTwoProbe.active()
           || Boolean.getBoolean("soloscape.map.probe")&&NativeMapProbe.active()
+          || Boolean.getBoolean("soloscape.quit.probe")&&NativeQuitProbe.active()
           || Boolean.getBoolean("soloscape.artwork.probe")&&NativeArtworkProbe.active()
           || Boolean.getBoolean("soloscape.tabbar.probe")&&NativeTabBarProbe.active()
           || Boolean.getBoolean("soloscape.deck60.probe")&&NativeDeck60Probe.active()
@@ -40,6 +41,7 @@ public class NativeSessionSmoke {
         if(Boolean.getBoolean("soloscape.fullscreen.probe")&&!NativeFullscreenProbe.tick())return true;
         if(Boolean.getBoolean("soloscape.playtest2.probe")&&!NativePlaytestTwoProbe.tick(marker))return true;
         if(Boolean.getBoolean("soloscape.map.probe")&&!NativeMapProbe.tick())return true;
+        if(Boolean.getBoolean("soloscape.quit.probe")&&!NativeQuitProbe.tick(marker))return true;
         if(Boolean.getBoolean("soloscape.artwork.probe")&&!NativeArtworkProbe.tick(marker))return true;
         if(Boolean.getBoolean("soloscape.tabbar.probe")&&!NativeTabBarProbe.tick(marker))return true;
         if(Boolean.getBoolean("soloscape.performance.probe")&&!NativePerformanceProbe.tick(marker))return true;
