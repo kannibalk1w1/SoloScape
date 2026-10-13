@@ -70,6 +70,18 @@ New regressions cover:
 
 The health check is geometric, not a reviewed screenshot.
 
+## Batch 3 — Kayle/Caitlin kill choices (13 October 2026)
+
+Claude identified these choices as uncovered. `scripts/smoke-profile.sh --blood-pact-kill-cultists` now runs the same earned route but chooses **Yes. Now die!** for Kayle and **Time for you to die!** for Caitlin. The original `--blood-pact` route still spares both. The saved-state validator checks the selected fates rather than accepting either outcome.
+
+The kill route passed on an isolated native world without admin commands, supplied items, teleports or injected damage. It earned all three fights, opened/browsed/cancelled each loot pile, collected the weapons, rescued Ilona and claimed the reward. Save & Quit and Continue preserved all three killed states, the quest point, weapons, equipment and XP. Four backups verified; cancelling a subsequent startup preserved the entire saved world, and the original mutable paths were unchanged.
+
+Evidence: [native results and host resource observations](evidence/blood-pact-kill-native.json), and [actual native gameplay screenshot during the Reese fight](evidence/blood-pact-kill-gameplay.png). The screenshot uses a disposable AlphaTest character and shows both health bars clear of the corner action HUD, plus the movement tiles. The canvas was 892×529 on a private Xvfb display.
+
+The New session took 253.428 s and Continue took 22.627 s, including readiness and shutdown. Sampled peak RSS during New was 2,395.66 MiB for the client and 1,718.45 MiB for the server. These are host software-renderer observations, not Deck FPS or memory measurements; full private 0.5-second resource samples remain under `.runtime/alpha-tests/session-1791912830249121971/`. Tooling: 104 tests pass; both complete patch stacks match their source trees; shell and patch syntax checks pass. No production input behaviour changed.
+
+Still open: Caitlin's staff magic route, mixed spare/kill combinations, physical controls, Gaming Mode performance and suspend/resume. The owner confirmed that release-and-push after transitions should remain in place. Before any further Claude task, request the lowest suitable model/tool tier and confirm the active model; Druidic Ritual remains an approved next route. This preference was queued to Claude's inbox without submitting its existing terminal draft.
+
 ## Deck deployment status
 
 A matched private candidate was exported from main `cfad366` on 13 October 2026. It contains 10,547 manifest files, server 0022, client 0052 and the Blood Pact probe. The Deck did not answer ping or SSH, so nothing was staged or activated. The r28 installation, its stable wrapper and the real character save are untouched.
@@ -84,5 +96,5 @@ Before activation, follow the guarded r28 procedure:
 1. Druidic Ritual with real ingredient gathering and travel, and a bank/shop/crafting round trip, reusing the Blood Pact probe's stick travel and pad gateways.
 2. The 30-minute 1280×800 Gaming Mode route on battery and external power, once the Deck is reachable. Include combat and loot from this batch.
 3. Suspend/resume and controller reconnection across a saved session, with owner participation for physical acceptance.
-4. Blood Pact variants not yet covered: kill branches for Kayle and Caitlin, and magic combat with Caitlin's staff.
-5. Owner decision: should world input re-arm without a neutral stick after cutscenes and fades (see batch 2)?
+4. Blood Pact variants not yet covered: magic combat with Caitlin's staff and mixed spare/kill choices. The all-kill route passed in batch 3.
+5. Owner decision resolved: retain release-and-push after cutscenes and fades. World input still requires a neutral stick before re-arming (see batch 2).

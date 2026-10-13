@@ -1,0 +1,213 @@
+{
+  "summary": {
+    "new_session_seconds": 253.428,
+    "continue_session_seconds": 22.627,
+    "native_startup_cancel_preserved": true,
+    "original_mutable_paths_unchanged": true,
+    "display": "private-xvfb",
+    "note": "Native session totals and overlay-render intervals; not physical controller or Gaming Mode acceptance.",
+    "command": "scripts/smoke-profile.sh --blood-pact-kill-cultists",
+    "verified_backups": 4,
+    "canvas_pixels": [
+      892,
+      529
+    ],
+    "choices": {
+      "kayle": "killed",
+      "caitlin": "killed",
+      "reese": "killed"
+    },
+    "host_resources": {
+      "new": {
+        "sample_count": 478,
+        "roles": {
+          "server": {
+            "peak_rss_mib": 1718.45,
+            "sampled_cpu_seconds": 34.63
+          },
+          "client": {
+            "peak_rss_mib": 2395.66,
+            "sampled_cpu_seconds": 202.16
+          }
+        }
+      },
+      "continue": {
+        "sample_count": 43,
+        "roles": {
+          "server": {
+            "peak_rss_mib": 1313.8,
+            "sampled_cpu_seconds": 16.66
+          },
+          "client": {
+            "peak_rss_mib": 1395.62,
+            "sampled_cpu_seconds": 29.14
+          }
+        }
+      }
+    },
+    "performance_limit": "Host Xvfb/software-rendered session with 0.5-second owned-process samples. CPU is cumulative process time including startup. No Deck FPS, frame pacing, GPU, power or physical-controller acceptance."
+  },
+  "probe": {
+    "fixtures": "none: no admin commands, item grants, teleports or injected damage",
+    "cultist_choices": "kill Kayle and Caitlin",
+    "start_tile": "3221,3219,0",
+    "start_experience": {
+      "Attack": 0,
+      "Defence": 0,
+      "Strength": 0,
+      "Hitpoints": 1154,
+      "Ranged": 0,
+      "Prayer": 0,
+      "Magic": 0,
+      "Cooking": 0,
+      "Woodcutting": 0,
+      "Fletching": 0,
+      "Fishing": 0,
+      "Firemaking": 0,
+      "Crafting": 0,
+      "Smithing": 0,
+      "Mining": 0,
+      "Herblore": 0,
+      "Agility": 0,
+      "Thieving": 0,
+      "Slayer": 0,
+      "Farming": 0,
+      "Runecraft": 0,
+      "Hunter": 0,
+      "Construction": 0,
+      "Summoning": 0,
+      "Dungeoneering": 0
+    },
+    "start_inventory": "(inventory tab closed)",
+    "wielded": "Bronze sword",
+    "xenia_target_focus": "Xenia/Talk-to",
+    "blood_pact_intro_rows": 4,
+    "instance_region_base": "6448,32",
+    "instance_offset": "2624,-5440",
+    "stick_releases_while_travelling": 3,
+    "movement_tile_plane1_pixels": 1846,
+    "kayle_target": "Kayle/Attack serverApproach=true",
+    "attack_represses": 4,
+    "kayle_health_hud": "clear head=440,150 hud=5,20 274x61",
+    "hp_after_kayle": 8,
+    "kayle_talk_presses": 1,
+    "kayle_loot_pile_menu": [
+      "Kayle's sling/Take"
+    ],
+    "kayle_menu_index_before": 0,
+    "kayle_menu_index_after_down": 0,
+    "kayle_loot_menu_b_closed_without_taking": true,
+    "kayle_take_from_offset": "0,1",
+    "kayle_take_feedback": "Action sent",
+    "kayle_looted": "Kayle's sling",
+    "b_cancel_destination": "WorldPoint(x=6499, y=105, plane=1)",
+    "b_cancel_feedback": "Action cancelled",
+    "b_cancel_stopped_at": "6500,104",
+    "wielded_kayles_sling": true,
+    "caitlin_target": "Caitlin/Attack",
+    "caitlin_health_hud": "clear head=1,368 hud=5,20 274x61",
+    "hp_after_caitlin": 8,
+    "caitlin_talk_presses": 1,
+    "caitlin_loot_pile_menu": [
+      "Caitlin's staff/Take"
+    ],
+    "caitlin_menu_index_before": 0,
+    "caitlin_menu_index_after_down": 0,
+    "caitlin_loot_menu_b_closed_without_taking": true,
+    "caitlin_take_from_offset": "0,1",
+    "caitlin_take_feedback": "Action sent",
+    "caitlin_looted": "Caitlin's staff",
+    "wielded_bronze_sword": true,
+    "movement_tile_plane0_pixels": 2056,
+    "reese_target": "Reese/Attack",
+    "reese_health_hud": "clear head=437,322 hud=5,20 274x61",
+    "hp_after_reese": 8,
+    "reese_talk_presses": 1,
+    "reese_loot_pile_menu": [
+      "Reese's sword/Take"
+    ],
+    "reese_menu_index_before": 0,
+    "reese_menu_index_after_down": 0,
+    "reese_loot_menu_b_closed_without_taking": true,
+    "reese_take_from_offset": "0,0",
+    "reese_take_feedback": "Action sent",
+    "reese_looted": "Reese's sword",
+    "quest_complete_panel": "Total quest points: 1; 1 Quest Point; Kayle's sling, Caitlin's staff; and Reese's sword; 100 Attack, Strength,; Defence, Ranged and Magic; XP; Access to the Lumbridge; Catacombs dungeon; ",
+    "journal_complete": true,
+    "end_experience": {
+      "Attack": 116,
+      "Defence": 100,
+      "Strength": 100,
+      "Hitpoints": 1161,
+      "Ranged": 108,
+      "Prayer": 0,
+      "Magic": 100,
+      "Cooking": 0,
+      "Woodcutting": 0,
+      "Fletching": 0,
+      "Fishing": 0,
+      "Firemaking": 0,
+      "Crafting": 0,
+      "Smithing": 0,
+      "Mining": 0,
+      "Herblore": 0,
+      "Agility": 0,
+      "Thieving": 0,
+      "Slayer": 0,
+      "Farming": 0,
+      "Runecraft": 0,
+      "Hunter": 0,
+      "Construction": 0,
+      "Summoning": 0,
+      "Dungeoneering": 0
+    },
+    "end_inventory": "(inventory tab closed)",
+    "lowest_constitution_level": 8,
+    "end_tile": "3245,3198,0",
+    "timeline": [
+      "0.0s setup",
+      "1.6s wielded bronze sword",
+      "29.5s walked to Xenia",
+      "30.2s talked to Xenia",
+      "chose: What do you need help with?",
+      "chose: I'll help you.",
+      "quest intro: Yes",
+      "36.9s quest accepted",
+      "37.5s climbed down catacomb stairs",
+      "60.1s cutscene finished in instance",
+      "64.7s entered Kayle's room",
+      "68.7s Xenia wounded",
+      "76.1s approached Kayle",
+      "76.7s attacked Kayle",
+      "90.9s Kayle defeated",
+      "chose: Yes. Now die!",
+      "97.0s killed Kayle",
+      "101.2s looted Kayle's sling",
+      "104.6s B cancelled a walk",
+      "wield Kayle's sling",
+      "110.2s approached Caitlin",
+      "110.8s attacked Caitlin",
+      "120.4s Caitlin defeated",
+      "124.8s operated winch: gallery gates open",
+      "chose: Time for you to die!",
+      "149.2s killed Caitlin",
+      "153.4s looted Caitlin's staff",
+      "157.7s climbed down to Reese's level",
+      "wield Bronze sword",
+      "168.6s reached tomb door",
+      "169.2s opened tomb door",
+      "chose: My Name is AlphaTest. I'm an adventurer",
+      "175.7s attacked Reese",
+      "199.1s Reese defeated",
+      "chose: Time for you to die!",
+      "205.1s killed Reese",
+      "212.3s looted Reese's sword",
+      "213.5s untied Ilona",
+      "chose: Yes, rescue Ilona.",
+      "221.3s back on the surface",
+      "chose: I'm ready for my reward.",
+      "227.3s quest complete panel shown",
+      "journal shows QUEST COMPLETE"
+    ]
+  }
+}

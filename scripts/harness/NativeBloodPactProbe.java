@@ -25,6 +25,7 @@ import net.runelite.client.ui.overlay.*;
 public final class NativeBloodPactProbe {
  private static final int A=1,B=2,X=4,LB=1<<9,RB=1<<10,UP=1<<11,DOWN=1<<12;
  private static final int DONE=99;
+ private static final boolean KILL_CULTISTS=Boolean.getBoolean("soloscape.bloodpact.killCultists");
  private static int stage,phase,sub,heldBefore,attempts,cycles,represses;private static long stageAt,phaseAt,subAt,started,lastPress;
  private static SoloScapeControllerPlugin plugin;private static Method process;private static Field failed;
  private static GamepadState raw;private static WorldControls world;
@@ -239,6 +240,7 @@ public final class NativeBloodPactProbe {
    RuneLite.getInjector().getInstance(OverlayManager.class).add(observation);
    started=System.currentTimeMillis();probeMarker=marker;
    results.put("fixtures","none: no admin commands, item grants, teleports or injected damage");
+   results.put("cultist_choices",KILL_CULTISTS?"kill Kayle and Caitlin":"spare Kayle and Caitlin");
    results.put("start_tile",worldX()+","+worldY()+","+plane());results.put("start_experience",experience());
    results.put("start_inventory",inventory());
    next("setup");
@@ -325,7 +327,7 @@ public final class NativeBloodPactProbe {
    case 9:{int[] t=instance(3877,5537);if(find("Kayle","Talk-to")!=null||travel(t[0],t[1],1,"Kayle's approach")){results.put("movement_tile_plane1_pixels",observation.pixels(1));next("approached Kayle");}return;}
    case 10:{ControllerTarget p=press("Kayle","Attack",A);if(p!=null||find("Kayle","Talk-to")!=null){results.put("kayle_target",p==null?"defeated by retaliation":p.name+"/"+p.option+" serverApproach="+p.serverApproach);observation.watch("Kayle");next("attacked Kayle");}return;}
    case 11:if(fight("Kayle")){results.put("kayle_health_hud",observation.health());results.put("hp_after_kayle",hp());next("Kayle defeated");}return;
-   case 12:{preferred=new String[]{"give me your stuff"};if(talk("Kayle"))next("spared Kayle");return;}
+   case 12:{preferred=new String[]{KILL_CULTISTS?"Yes. Now die!":"give me your stuff"};if(talk("Kayle"))next(KILL_CULTISTS?"killed Kayle":"spared Kayle");return;}
    case 13:if(loot("Kayle's sling",3877,5543,"kayle"))next("looted Kayle's sling");return;
    case 14:if(cancelWalk(3868,5540))next("B cancelled a walk");return;
    case 15:{if(sub==0){neutral();if(wield("Kayle's sling"))sub(1);return;} // Xenia: ranged beats magic users
@@ -333,7 +335,7 @@ public final class NativeBloodPactProbe {
    case 16:{ControllerTarget p=press("Caitlin","Attack",A);if(p!=null||find("Caitlin","Talk-to")!=null){results.put("caitlin_target",p==null?"defeated by retaliation":p.name+"/"+p.option);observation.watch("Caitlin");next("attacked Caitlin");}return;}
    case 17:if(fight("Caitlin")){results.put("caitlin_health_hud",observation.health());results.put("hp_after_caitlin",hp());next("Caitlin defeated");}return;
    case 18:if(walkThenPress(3871,5535,2,"","Operate"))next("operated winch: gallery gates open");return;
-   case 19:{if(now-stageAt<1500)return;preferred=new String[]{"I'm not killing you"};if(talk("Caitlin"))next("spared Caitlin");return;}
+   case 19:{if(now-stageAt<1500)return;preferred=new String[]{KILL_CULTISTS?"Time for you to die!":"I'm not killing you"};if(talk("Caitlin"))next(KILL_CULTISTS?"killed Caitlin":"spared Caitlin");return;}
    case 20:if(loot("Caitlin's staff",3864,5538,"caitlin"))next("looted Caitlin's staff");return;
    case 21:if(now-stageAt>1500&&walkThenPress(3859,5533,2,"","Climb-down"))next("climbed down to Reese's level");return;
    case 22:{if(plane()!=0||!ControllerWorld.ready())return;if(sub==0){neutral();if(wield("Bronze sword"))sub(1);return;}observation.request(0);int[] t=instance(3866,5528);if(travel(t[0],t[1],1,"tomb door")){results.put("movement_tile_plane0_pixels",observation.pixels(0));next("reached tomb door");}return;}

@@ -13,3 +13,8 @@ The UI and individual quest/production gateways now have fixture coverage. The n
 A reproducible mouse-free Deck session completes a real quest and production/banking loop; it survives save/reload and suspend/resume with progress intact. Performance results report actual canvas/settings, frame-time tails, power conditions and any unresolved 60 FPS shortfall. Physical controller acceptance comes from the owner playtest, supported by independent native automation and trace evidence.
 
 The sprint started on 13 October 2026; completed batches and their limits are recorded in [sprint progress](DECK_SESSION_SPRINT.md). Acceptance has not passed.
+
+## Owner decisions — 13 October 2026
+
+- Keep release-and-push world input after transitions. The stick must return to neutral before movement re-arms; do not change this safeguard in the coverage sprint.
+- Before sending Claude further work, instruct it to use the lowest model/tool tier that can appropriately complete the task. Druidic Ritual remains an approved next route, but Opus 5.5 should not be the default. Start on a lower suitable tier, confirm the active model, and escalate only when a concrete difficulty warrants it. Do not claim that requesting a tier has actually switched the running model.
