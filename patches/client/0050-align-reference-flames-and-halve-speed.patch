@@ -1,0 +1,46 @@
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java b/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java
+--- a/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java
++++ b/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java
+@@ -12,7 +12,7 @@
+ {
+     private final BufferedImage scene;
+     private final BufferedImage[] flames;
+-    private final javax.swing.Timer animation=new javax.swing.Timer(33,e->advance());
++    private final javax.swing.Timer animation=new javax.swing.Timer(66,e->advance());
+     private boolean animationEnabled=true;
+     private Frame watchedFrame;
+     private final java.awt.event.WindowStateListener windowState=e->syncAnimation();
+@@ -35,11 +35,15 @@
+             if(sheet==null||sheet.getWidth()!=640||sheet.getHeight()!=480)throw new IOException("Expected the 640x480 eight-frame brazier sheet");
+             BufferedImage[] frames=new BufferedImage[8];
+             int[] columns={15,171,328,484};
++            // Atlas panels have different scene origins. Normalize against their static bowls,
++            // rather than against the changing flame silhouette.
++            int[] bowlX={58,59,58,52,59,57,56,68};
++            int[] bowlY={115,115,115,114,115,115,115,115};
+             for(int frame=0;frame<8;frame++)
+             {
+-                BufferedImage image=new BufferedImage(60,71,BufferedImage.TYPE_INT_ARGB);
+-                int x=columns[frame%4]+29,y=(frame<4?15:247)+45;
+-                for(int dy=0;dy<71;dy++)for(int dx=0;dx<60;dx++)
++                BufferedImage image=new BufferedImage(80,90,BufferedImage.TYPE_INT_ARGB);
++                int x=columns[frame%4]+bowlX[frame]-40,y=(frame<4?15:247)+bowlY[frame]-90;
++                for(int dy=0;dy<90;dy++)for(int dx=0;dx<80;dx++)
+                 {
+                     int pixel=sheet.getRGB(x+dx,y+dy),r=(pixel>>16)&255,g=(pixel>>8)&255,b=pixel&255;
+                     // Reject the grey stone backdrop; keep the reference fire's original RGB.
+@@ -60,11 +64,11 @@
+         {
+             if(mirrored){g.translate(width,0);g.scale(-1,1);}g.scale(xScale,yScale);
+             int frame=(int)((animationFrames/3+(mirrored?4:0))%8);
+-            // Reference bowl lip spans x 32..81 at y 114; local artwork lip spans x 2..98 at y 267.
++            // Normalized reference rim is at (40,90); original artwork rim spans x 0..98 at y 265.
+             // Preserve the reference flame-to-bowl ratio with uniform scaling, including at resize.
+-            double scale=96.0/49.0;
++            double scale=98.0/48.0;
+             java.awt.geom.AffineTransform transform=new java.awt.geom.AffineTransform();
+-            transform.translate(50+(29-56.5)*scale,267+(45-114)*scale);transform.scale(scale,scale);
++            transform.translate(49-40*scale,265-90*scale);transform.scale(scale,scale);
+             g.drawImage(flames[frame],transform,null);
+         }
+         finally{g.dispose();}

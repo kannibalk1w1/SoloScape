@@ -70,6 +70,11 @@ public final class NativeLauncherProbe
             require(visibleFrames>10,"Brazier animation did not advance while visible");
             edt(()->{((javax.swing.Timer)field(launcher,"refresh")).stop();scene.setAnimationEnabled(false);return null;});long pausedFrames=edt(()->(Long)field(scene,"animationFrames"));Thread.sleep(200);
             require(edt(()->(Long)field(scene,"animationFrames"))==pausedFrames,"Brazier animation ran during gameplay pause");
+            for(int pose=0;pose<8;pose++){
+                final int index=pose;
+                java.awt.image.BufferedImage preview=edt(()->{Field frames=scene.getClass().getDeclaredField("animationFrames");frames.setAccessible(true);frames.setLong(scene,index*3L);java.awt.image.BufferedImage image=new java.awt.image.BufferedImage(1280,800,java.awt.image.BufferedImage.TYPE_INT_RGB);java.awt.Graphics2D graphics=image.createGraphics();try{scene.paint(graphics);}finally{graphics.dispose();}return image;});
+                javax.imageio.ImageIO.write(preview,"png",root.resolve(String.format("launcher-pose-%02d.png",pose)).toFile());
+            }
             edt(()->{scene.setAnimationEnabled(true);((JFrame)field(launcher,"frame")).setVisible(false);return null;});long hiddenFrames=edt(()->(Long)field(scene,"animationFrames"));Thread.sleep(200);
             require(edt(()->(Long)field(scene,"animationFrames"))==hiddenFrames,"Brazier animation ran while hidden");
             edt(()->{((JFrame)field(launcher,"frame")).setVisible(true);return null;});Thread.sleep(200);
