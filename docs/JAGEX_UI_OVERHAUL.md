@@ -87,16 +87,16 @@ The three "Live client" images are real native captures from the disposable `--t
 ![New Character](images/jagex-launcher-new-character.png)
 ![World Settings](images/jagex-launcher-world-settings.png)
 
-To regenerate the fixtures, compile and run the harness against the built client jar:
+To regenerate the fixtures, first run `./scripts/smoke-profile.sh --artwork` to capture sprites from the locally supplied compatible cache, then compile and run the harness against the built client jar:
 
 ```bash
 javac -cp <void-client jar> -d <dir> scripts/harness/JagexUiPreview.java
-java -cp <void-client jar>:<dir> JagexUiPreview <output dir> docs/images/alpha-native-private-world.png <native-login.marker.artwork dir>
+java -Djava.awt.headless=true -cp <void-client jar>:<dir> JagexUiPreview <output dir> docs/images/alpha-native-private-world.png <native-login.marker.artwork dir>
 ```
 
 ## Validation
 
-- **Client regressions:** 241 cases, zero failures or errors, one existing optional SDL skip. The previous total was 230. New coverage: four theme cases (every palette colour initialised in both palettes, fonts, classic colour rules, helpers drawing only inside their bounds) and five tab-bar cases. The existing hit-map tests pass under the new font metrics.
+- **Client regressions:** 241 cases, zero failures or errors, one existing optional SDL skip. The previous total was 230. New coverage: two native artwork cases, four theme cases (every palette colour initialised in both palettes, fonts, classic colour rules, helpers drawing only inside their bounds) and five tab-bar cases. The existing hit-map tests pass under the new font metrics.
 - **Root tooling:** 99 passing cases. Python compilation and whitespace checks pass.
 - **Source reproduction:** the client stack (now through 0044) reproduces all 135 modified or patched files; the server stack reproduces all 50. The matched jars were rebuilt with `prepare-build.sh` and the build stamp refreshed.
 - **Launcher:** `smoke-launcher.py` passes against the built jar. It covers the real Swing launcher, backend, controller name entry, held-A guard, account filter, Steam keyboard ownership and World Settings saving 5×/3×. The probe now also captures the World Settings dialog.
@@ -117,7 +117,7 @@ java -cp <void-client jar>:<dir> JagexUiPreview <output dir> docs/images/alpha-n
 
 - The native, launcher and fixture checks above ran on owned virtual displays or software renderers. They are not physical Steam Deck or Gaming Mode acceptance. Text comfort at Deck viewing distance, especially at the 16 px base size, needs an on-device look; **Overlay size (%)** steps the type through 20, 24 and 32 px.
 - The RuneScape plain face draws zero with a slash ("Ø"-like). That is the font as RuneLite ships it.
-- Stone textures are filled each frame while a panel or wheel is open, and only then. The world HUD stays untextured. No Deck frame-time measurement was made for this candidate.
+- Stone textures are filled each frame while a panel or wheel is open, and only then. The world HUD stays untextured. Current Deck measurements and their limits are recorded in [UI Deck release](UI_DECK_RELEASE.md).
 - Native game interfaces (the 634 client's own panels, dialogue and chatbox) are not repainted. SoloScape surfaces now match their conventions instead.
 - Deployment and current on-device measurements are recorded in [UI Deck release](UI_DECK_RELEASE.md).
 - The tab-bar check scripted pad states through the plugin's input tick. A physical controller, Steam Input layouts that map the D-pad elsewhere, and Gaming Mode remain acceptance items. While the bar is focused, world movement pauses; the camera stays live.

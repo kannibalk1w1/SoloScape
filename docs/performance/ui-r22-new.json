@@ -1,0 +1,174 @@
+{
+  "initial_renderer": "oa",
+  "initial_pacing": false,
+  "initial_fps_target": 180,
+  "preset_previous_shadows": 2,
+  "requested_opengl": 1,
+  "deck_preset_status": "Deck 60 target \u00b7 OpenGL \u00b7 full resolution \u00b7 animated scenery shadows off",
+  "opengl_60_on": {
+    "samples": 907,
+    "median_ms": 16.709511,
+    "p95_ms": 18.665861,
+    "p99_ms": 23.886877,
+    "max_ms": 33.745735,
+    "average_fps": 59.64843392189033,
+    "renderer": "ha_Sub2",
+    "toolkit_preference": 1,
+    "native_object_shadow_setting": 1,
+    "pacing": true,
+    "fps_target": 60,
+    "canvas": "java.awt.Dimension[width=1280,height=800]",
+    "native_dimensions": "1280x800",
+    "controller_connected": true,
+    "canvas_focused": true,
+    "client_thread_cpu_ms": 10156.733112,
+    "gl_texture_bytes": 14077695,
+    "gl_vendor": "amd",
+    "gl_renderer": "amd custom gpu 0405 (radeonsi, vangogh, aco, drm 3.65, 6.18.50-valve2-1-neptune-618-gc7289a96b14d)",
+    "phase_timings": {
+      "enabled": true,
+      "frames": 908,
+      "logic_cycles": 760,
+      "logic": {
+        "calls": 973,
+        "truncated": false,
+        "ms_per_frame": 0.6938305914096917,
+        "median_call_ms": 0.703042,
+        "p99_call_ms": 1.316387,
+        "max_call_ms": 9.057257
+      },
+      "plugins": {
+        "calls": 973,
+        "truncated": false,
+        "ms_per_frame": 0.34650979955947137,
+        "median_call_ms": 0.317321,
+        "p99_call_ms": 1.166391,
+        "max_call_ms": 2.891926
+      },
+      "overlay_paint": {
+        "calls": 908,
+        "truncated": false,
+        "ms_per_frame": 2.161099460352423,
+        "median_call_ms": 2.085577,
+        "p99_call_ms": 3.14646,
+        "max_call_ms": 19.838151
+      },
+      "overlay_upload": {
+        "calls": 908,
+        "truncated": false,
+        "ms_per_frame": 1.3533962962555066,
+        "median_call_ms": 1.326176,
+        "p99_call_ms": 1.741776,
+        "max_call_ms": 3.202828
+      },
+      "frame_including_overlays": {
+        "calls": 908,
+        "truncated": false,
+        "ms_per_frame": 13.408045233480177,
+        "median_call_ms": 15.400705,
+        "p99_call_ms": 19.323514,
+        "max_call_ms": 29.058714
+      },
+      "event_queue": {
+        "calls": 973,
+        "truncated": false,
+        "ms_per_frame": 0.034718442731277534,
+        "median_call_ms": 0.03066,
+        "p99_call_ms": 0.052579,
+        "max_call_ms": 0.148746
+      },
+      "present": {
+        "calls": 908,
+        "truncated": false,
+        "ms_per_frame": 2.843292957048458,
+        "median_call_ms": 2.665482,
+        "p99_call_ms": 7.276793,
+        "max_call_ms": 7.637024
+      }
+    }
+  },
+  "opengl_uncapped_on": {
+    "samples": 900,
+    "median_ms": 16.722231,
+    "p95_ms": 17.707705,
+    "p99_ms": 18.752868,
+    "max_ms": 20.001397,
+    "average_fps": 60.00496987962763,
+    "renderer": "ha_Sub2",
+    "toolkit_preference": 1,
+    "native_object_shadow_setting": 1,
+    "pacing": true,
+    "fps_target": 0,
+    "canvas": "java.awt.Dimension[width=1280,height=800]",
+    "native_dimensions": "1280x800",
+    "controller_connected": true,
+    "canvas_focused": true,
+    "client_thread_cpu_ms": 8811.602753,
+    "gl_texture_bytes": 14165075,
+    "gl_vendor": "amd",
+    "gl_renderer": "amd custom gpu 0405 (radeonsi, vangogh, aco, drm 3.65, 6.18.50-valve2-1-neptune-618-gc7289a96b14d)",
+    "phase_timings": {
+      "enabled": true,
+      "frames": 901,
+      "logic_cycles": 750,
+      "logic": {
+        "calls": 900,
+        "truncated": false,
+        "ms_per_frame": 0.5269611931187569,
+        "median_call_ms": 0.524926,
+        "p99_call_ms": 1.048033,
+        "max_call_ms": 1.307036
+      },
+      "plugins": {
+        "calls": 900,
+        "truncated": false,
+        "ms_per_frame": 0.27525626859045504,
+        "median_call_ms": 0.279403,
+        "p99_call_ms": 0.959696,
+        "max_call_ms": 1.086312
+      },
+      "overlay_paint": {
+        "calls": 901,
+        "truncated": false,
+        "ms_per_frame": 1.928314874583796,
+        "median_call_ms": 1.908041,
+        "p99_call_ms": 2.663762,
+        "max_call_ms": 3.567738
+      },
+      "overlay_upload": {
+        "calls": 901,
+        "truncated": false,
+        "ms_per_frame": 1.384383038845727,
+        "median_call_ms": 1.358905,
+        "p99_call_ms": 1.763315,
+        "max_call_ms": 2.083226
+      },
+      "frame_including_overlays": {
+        "calls": 901,
+        "truncated": false,
+        "ms_per_frame": 14.731045215316314,
+        "median_call_ms": 14.709952,
+        "p99_call_ms": 15.296137,
+        "max_call_ms": 15.398136
+      },
+      "event_queue": {
+        "calls": 900,
+        "truncated": false,
+        "ms_per_frame": 0.03290597225305217,
+        "median_call_ms": 0.031989,
+        "p99_call_ms": 0.047409,
+        "max_call_ms": 0.116577
+      },
+      "present": {
+        "calls": 901,
+        "truncated": false,
+        "ms_per_frame": 5.639837778024417,
+        "median_call_ms": 5.703273,
+        "p99_call_ms": 6.879904,
+        "max_call_ms": 7.030569
+      }
+    }
+  },
+  "preset_restored": "Native graphics",
+  "preset_restored_shadows": 2
+}
