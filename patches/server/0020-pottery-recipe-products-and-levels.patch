@@ -1,0 +1,114 @@
+diff --git a/data/skill/crafting/pottery.tables.toml b/data/skill/crafting/pottery.tables.toml
+--- a/data/skill/crafting/pottery.tables.toml
++++ b/data/skill/crafting/pottery.tables.toml
+@@ -12,7 +12,7 @@
+ products = ["empty_pot"]
+ 
+ [.unfired_pie_dish]
+-products = ["bowl"]
++products = ["pie_dish"]
+ 
+ [.unfired_bowl]
+ products = ["bowl"]
+@@ -27,6 +27,7 @@
+ level_default = 1
+ 
+ [.pot_lid]
++level = 25
+ xp = 200
+ 
+ [.unfired_pot]
+@@ -51,6 +52,10 @@
+ [.empty_pot]
+ xp = 63
+ 
++[.pie_dish]
++level = 7
++xp = 100
++
+ [.bowl]
+ level = 8
+ xp = 150
+diff --git a/game/src/test/kotlin/content/skill/crafting/PotteryTest.kt b/game/src/test/kotlin/content/skill/crafting/PotteryTest.kt
+--- a/game/src/test/kotlin/content/skill/crafting/PotteryTest.kt
++++ b/game/src/test/kotlin/content/skill/crafting/PotteryTest.kt
+@@ -6,6 +6,8 @@
+ import objectOption
+ import org.junit.jupiter.api.Assertions.assertNotEquals
+ import org.junit.jupiter.api.Test
++import org.junit.jupiter.params.ParameterizedTest
++import org.junit.jupiter.params.provider.CsvSource
+ import world.gregs.voidps.engine.entity.character.player.skill.Skill
+ import world.gregs.voidps.engine.entity.obj.GameObjects
+ import world.gregs.voidps.engine.inv.add
+@@ -62,4 +64,70 @@
+         assertNotEquals(0.0, player.experience.get(Skill.Crafting))
+     }
+ 
++
++    @ParameterizedTest
++    @CsvSource(
++        "unfired_pot, 1, 1, 6.3",
++        "unfired_pie_dish, 2, 7, 15.0",
++        "unfired_bowl, 3, 8, 18.0",
++        "unfired_plant_pot, 4, 19, 20.0",
++        "unfired_pot_lid, 5, 25, 20.0",
++    )
++    fun `Shape each available recipe`(product: String, choice: Int, level: Int, xp: Double) {
++        val player = createPlayer(Tile(3086, 3410))
++        player.levels.set(Skill.Crafting, level)
++        player.inventory.add("soft_clay")
++        val wheel = GameObjects.find(Tile(3087, 3410), "potters_wheel")
++        player.itemOnObject(wheel, 0)
++        tick()
++        player.continueDialogue("dialogue_skill_creation", "choice$choice")
++        tick(3)
++        assertEquals(0, player.inventory.count("soft_clay"))
++        assertEquals(1, player.inventory.count(product))
++        assertEquals(xp, player.experience.get(Skill.Crafting))
++    }
++
++    @ParameterizedTest
++    @CsvSource(
++        "unfired_pot, empty_pot, 1, 6.3",
++        "unfired_pie_dish, pie_dish, 7, 10.0",
++        "unfired_bowl, bowl, 8, 15.0",
++        "unfired_plant_pot, plant_pot_empty, 19, 17.5",
++        "unfired_pot_lid, pot_lid, 25, 20.0",
++    )
++    fun `Fire each recipe with a finished pot earlier in inventory`(raw: String, product: String, level: Int, xp: Double) {
++        val player = createPlayer(Tile(3085, 3408))
++        player.levels.set(Skill.Crafting, level)
++        player.inventory.add("empty_pot")
++        player.inventory.add("soft_clay")
++        player.inventory.add(raw)
++        val before = player.inventory.count(product)
++        val oven = GameObjects.find(Tile(3084, 3407), "pottery_oven")
++        player.objectOption(oven, "Fire")
++        tick()
++        player.continueDialogue("dialogue_skill_creation", "choice1")
++        tick(3)
++        assertEquals(0, player.inventory.count(raw))
++        assertEquals(before + 1, player.inventory.count(product))
++        assertEquals(1, player.inventory.count("soft_clay"))
++        assertEquals(if (product == "empty_pot") 2 else 1, player.inventory.count("empty_pot"))
++        assertEquals(xp, player.experience.get(Skill.Crafting))
++    }
++
++    @ParameterizedTest
++    @CsvSource("unfired_pie_dish, pie_dish, 6", "unfired_pot_lid, pot_lid, 24")
++    fun `Firing respects the product level requirement`(raw: String, product: String, level: Int) {
++        val player = createPlayer(Tile(3085, 3408))
++        player.levels.set(Skill.Crafting, level)
++        player.inventory.add(raw)
++        val oven = GameObjects.find(Tile(3084, 3407), "pottery_oven")
++        player.objectOption(oven, "Fire")
++        tick()
++        player.continueDialogue("dialogue_skill_creation", "choice1")
++        tick(3)
++        assertEquals(1, player.inventory.count(raw))
++        assertEquals(0, player.inventory.count(product))
++        assertEquals(0.0, player.experience.get(Skill.Crafting))
++    }
++
+ }

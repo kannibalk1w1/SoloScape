@@ -17,3 +17,7 @@ Deployment checkpoint: real SteamOS 3.8.28 Deck Desktop diagnostics pass with pr
 Final automated checkpoint: r6 native New/Continue/save/cancel/settings/logout/relog passed with exact tile/save checks, zero unexpected clicks in logout steps and bounded resource samples. Actual two-JVM Deck recovery and launcher adapter/backend also passed. These are Desktop synthetic probes, not Gaming Mode or physical controls acceptance. [Full evidence](DECK_VALIDATION.md).
 
 Physical owner feedback then identified launcher keyboard input ownership; patch 0029 implements a Steam-preferred Deck mode, local navigation consumption and exclusive desktop/controller navigation. This implementation is checked separately; physical acceptance remains open. Apply the same policy to every in-game entry later, as recorded in [ROADMAP.md](ROADMAP.md#recorded-owner-feedback-exclusive-in-game-text-input).
+
+## Launcher charm follow-up
+
+- [ ] Animate the original RS2 brazier scene: visible looping flames, light flicker and embers. The current launcher background is static. Preserve the existing scene and keep animation inexpensive on Deck; pause rendering while hidden and verify controller navigation and frame pacing. Requested during the r24 playtest handoff on 13 October 2026.
