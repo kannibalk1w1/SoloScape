@@ -1,0 +1,225 @@
+diff --git a/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java b/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
+--- a/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
++++ b/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
+@@ -44,7 +44,8 @@
+   }
+   panes[3]=new UiState.Pane("Finish",new UiState.Widget[]{row(900,"Game settings","","Open the native game settings; all existing submenus remain available.","Open"),
+     row(901,setup?"Finish controller setup":"Return to Home","","Preferences persist as you change them. You can reopen this screen from Home > Settings.","Done"),
+-    row(902,"Open text keyboard","","Steam mode: chat or other native text input. Right-stick click also opens it when that button is unbound.","Open")});
++    row(902,"Open text keyboard","","Steam mode: chat or other native text input. Right-stick click also opens it when that button is unbound.","Open"),
++    row(903,"Save & Quit","","Save this world and return to the SoloScape launcher. Press A again to confirm; B cancels.","Save & Quit")});
+   return new UiState.Panel(ID,0,setup?"Controller setup":"Controller settings",panes,false);
+  }
+  private UiState.Widget row(int component,String name,String status,String detail,String...labels){
+@@ -57,7 +58,7 @@
+   UiState.Widget fresh=null;
+   for(UiState.Pane pane:snapshot(setup).panes)for(UiState.Widget row:pane.widgets)if(row.same(expected)&&row.status.equals(expected.status))fresh=row;
+   if(fresh==null)return -1;boolean permitted=false;for(UiState.Action a:fresh.actions)if(a.same(action))permitted=true;if(!permitted)return -1;
+-  int component=expected.id&65535;if(component==900)return 1;if(component==902)return 3;if(component==901){store.set("setupComplete","true");return 2;}
++  int component=expected.id&65535;if(component==903)return 4;if(component==900)return 1;if(component==902)return 3;if(component==901){store.set("setupComplete","true");return 2;}
+   int pane=component/100,index=component%100;if(pane>=OPTIONS.length||index>=OPTIONS[pane].length)return -1;
+   Option option=OPTIONS[pane][index];String old=value(option);int next=Arrays.asList(option.values).indexOf(old);
+   next=Math.floorMod((next<0?0:next)+(action.operation==1?-1:1),option.values.length);String replacement=option.values[next];
+diff --git a/client/src/net/runelite/client/input/controller/PanelConfirmation.java b/client/src/net/runelite/client/input/controller/PanelConfirmation.java
+--- a/client/src/net/runelite/client/input/controller/PanelConfirmation.java
++++ b/client/src/net/runelite/client/input/controller/PanelConfirmation.java
+@@ -9,7 +9,7 @@
+     public void clear() { widget=null;action=null;until=0; }
+     public boolean allow(UiState.Widget expected,UiState.Action requested,long now)
+     {
+-        boolean destructive=requested.label.equalsIgnoreCase("Drop") || requested.label.toLowerCase(java.util.Locale.ROOT).startsWith("destroy");
++        boolean destructive=requested.label.equalsIgnoreCase("Save & Quit") || requested.label.equalsIgnoreCase("Drop") || requested.label.toLowerCase(java.util.Locale.ROOT).startsWith("destroy");
+         if (!destructive) { clear();return true; }
+         if (now<until && expected.same(widget) && requested.same(action)) { clear();return true; }
+         widget=expected;action=requested;until=now+3_000_000_000L;return false;
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -143,6 +143,7 @@
+         if(widget!=null && widget.id>>>16==net.runelite.client.input.controller.ControllerSettingsModel.ID){
+             if(!settingsOpen)return false;
+             int result=settings.invoke(widget,action,!config.setupComplete());
++            if(result==4){if(!confirmation.allow(widget,action,System.nanoTime()))return false;javax.swing.SwingUtilities.invokeLater(()->net.runelite.client.RuneLite.getInjector().getInstance(net.runelite.client.ui.ClientUI.class).requestControllerQuit());return true;}
+             if(result==3){return openTextKeyboard();}
+             if(result==1){settingsOpen=false;nativeSettingsChild=true;client.openControllerTab(HomeTab.SETTINGS.ordinal());}
+             else if(result==2){settingsOpen=false;ui.reset();radial.returnTo(HomeTab.SETTINGS.ordinal(),System.nanoTime());}
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LauncherControllerInput.java b/client/src/net/runelite/client/soloscape/launcher/LauncherControllerInput.java
+new file mode 100644
+--- /dev/null
++++ b/client/src/net/runelite/client/soloscape/launcher/LauncherControllerInput.java
+@@ -0,0 +1,30 @@
++package net.runelite.client.soloscape.launcher;
++
++import java.awt.event.KeyEvent;
++import net.runelite.client.input.controller.GamepadState;
++
++/** Merge Steam navigation mappings with SDL before computing edges, so one press has one action. */
++final class LauncherControllerInput {
++ private int mapped;
++ void clear(){mapped=0;}
++ boolean key(KeyEvent event){
++  int bit;
++  switch(event.getKeyCode()){
++   case KeyEvent.VK_ENTER:case KeyEvent.VK_SPACE:bit=1;break;
++   case KeyEvent.VK_ESCAPE:bit=2;break;
++   case KeyEvent.VK_UP:bit=1<<11;break;case KeyEvent.VK_DOWN:bit=1<<12;break;
++   case KeyEvent.VK_LEFT:bit=1<<13;break;case KeyEvent.VK_RIGHT:bit=1<<14;break;
++   default:return event.getID()==KeyEvent.KEY_TYPED&&(event.getKeyChar()=='\n'||event.getKeyChar()==' ');
++  }
++  if(event.getID()==KeyEvent.KEY_PRESSED)mapped|=bit;
++  else if(event.getID()==KeyEvent.KEY_RELEASED)mapped&=~bit;
++  return true;
++ }
++ void merge(GamepadState raw,GamepadState out,boolean steamMappings){
++  out.connected=raw.connected||steamMappings;
++  out.leftX=raw.leftX;out.leftY=raw.leftY;out.rightX=raw.rightX;out.rightY=raw.rightY;
++  out.leftTrigger=raw.leftTrigger;out.rightTrigger=raw.rightTrigger;
++  int held=raw.buttonsHeld|(steamMappings?mapped:0);
++  out.buttonsPressed=held&~out.buttonsHeld;out.buttonsReleased=out.buttonsHeld&~held;out.buttonsHeld=held;
++ }
++}
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -292,7 +292,8 @@
+     }
+     private void startController()
+     {
+-        final SdlGamepad pad = new SdlGamepad(); final GamepadState state = new GamepadState();
++        final SdlGamepad pad = new SdlGamepad(); final GamepadState state = new GamepadState(), raw = new GamepadState();
++        final LauncherControllerInput navigation=new LauncherControllerInput();
+         try { pad.init(); } catch (LinkageError | RuntimeException ex) { status.setText("Controller unavailable; mouse and keyboard work. " + ex.getMessage()); return; }
+         final boolean[] armed = {false}; final long[] next = {0}, entryRevision={-1}; final Window[] priorWindow={null};
+         KeyEventDispatcher mappedKeys=event->{
+@@ -303,19 +304,18 @@
+                 keyboard.activate((JTextField)event.getComponent());return false;
+             }
+             boolean system=keyboard!=null&&keyboard.systemOwnsInput();
+-            if(!Boolean.getBoolean("soloscape.launcher.steamKeyboard")||!state.connected||nativeNavigation.isSelected()||!ours||system)return false;
+-            int key=event.getKeyCode();char ch=event.getKeyChar();
+-            boolean consume=key==KeyEvent.VK_LEFT||key==KeyEvent.VK_RIGHT||key==KeyEvent.VK_UP||key==KeyEvent.VK_DOWN||key==KeyEvent.VK_ENTER||key==KeyEvent.VK_SPACE||key==KeyEvent.VK_ESCAPE||ch=='\n'||ch==' ';
++            if(!Boolean.getBoolean("soloscape.launcher.steamKeyboard")||nativeNavigation.isSelected()||!ours||system)return false;
++            boolean consume=navigation.key(event);
+             if(consume)event.consume();return consume;
+         };
+         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mappedKeys);
+         javax.swing.Timer timer = new javax.swing.Timer(25, e -> {
+             if (closing) { ((javax.swing.Timer)e.getSource()).stop();KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(mappedKeys);pad.close();return; }
+-            pad.poll(state); Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+-            if (nativeNavigation.isSelected() || !state.connected || active == null || !(active == frame || active.getOwner() == frame)) { armed[0] = false; return; }
++            pad.poll(raw); navigation.merge(raw,state,Boolean.getBoolean("soloscape.launcher.steamKeyboard")); Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
++            if (nativeNavigation.isSelected() || !state.connected || active == null || !(active == frame || active.getOwner() == frame)) { navigation.clear();state.clear();armed[0] = false; return; }
+             if(active!=priorWindow[0]){priorWindow[0]=active;armed[0]=false;}
+             if(keyboard!=null&&entryRevision[0]!=keyboard.revision()){entryRevision[0]=keyboard.revision();armed[0]=false;}
+-            if(keyboard!=null&&active==keyboard.owner&&keyboard.active()){keyboard.update(state,System.nanoTime());armed[0]=false;return;}
++            if(keyboard!=null&&active==keyboard.owner&&keyboard.active()){navigation.clear();keyboard.update(state,System.nanoTime());armed[0]=false;return;}
+             if (!armed[0]) { armed[0] = state.buttonsHeld == 0 && Math.abs(state.leftX) < .3 && Math.abs(state.leftY) < .3; return; }
+             Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+             if(keyboard!=null&&active==keyboard.owner){
+@@ -326,8 +326,10 @@
+             long now = System.nanoTime();
+             if ((previous || forward) && now >= next[0] && focus != null)
+             {
+-                if (focus instanceof JList) { JList<?> choices = (JList<?>) focus; choices.setSelectedIndex(Math.max(0, Math.min(choices.getModel().getSize()-1, choices.getSelectedIndex()+(previous?-1:1)))); choices.ensureIndexIsVisible(choices.getSelectedIndex()); }
++                if(focus==list&&((state.buttonsHeld&(1<<14))!=0||state.leftX>.6)){focusMainControls();}
++                else if (focus instanceof JList) { JList<?> choices = (JList<?>) focus; choices.setSelectedIndex(Math.max(0, Math.min(choices.getModel().getSize()-1, choices.getSelectedIndex()+(previous?-1:1)))); choices.ensureIndexIsVisible(choices.getSelectedIndex()); }
+                 else if (focus instanceof JComboBox) { JComboBox<?> choices=(JComboBox<?>)focus; choices.setSelectedIndex(Math.max(0,Math.min(choices.getItemCount()-1,choices.getSelectedIndex()+(previous?-1:1)))); }
++                else if(active==frame&&focus instanceof JButton){moveMainButton((JButton)focus,state);}
+                 else if (previous) focus.transferFocusBackward(); else focus.transferFocus();
+                 next[0] = now + 180_000_000L;
+             }
+@@ -336,6 +338,24 @@
+             if ((state.buttonsPressed & (1<<9)) != 0 && focus != null) focus.transferFocusBackward();
+             if ((state.buttonsPressed & (1<<10)) != 0 && focus != null) focus.transferFocus();
+         }); timer.start();
++    }
++    private void focusMainControls()
++    {
++        for(JButton button:new JButton[]{play,create,backup,restore,stop,settings,diagnostics,retention,recover,worldSettings})
++            if(button.isEnabled()){button.requestFocusInWindow();return;}
++    }
++    /** Match the two visible button rows; disabled buttons are skipped. Up returns to characters. */
++    private void moveMainButton(JButton focus,GamepadState state)
++    {
++        JButton[] buttons={play,create,backup,restore,stop,settings,diagnostics,retention,recover,worldSettings};
++        int at=-1;for(int i=0;i<buttons.length;i++)if(buttons[i]==focus)at=i;
++        if(at<0){focus.transferFocus();return;}
++        boolean up=(state.buttonsHeld&(1<<11))!=0||state.leftY<-.6;
++        boolean down=(state.buttonsHeld&(1<<12))!=0||state.leftY>.6;
++        boolean left=(state.buttonsHeld&(1<<13))!=0||state.leftX<-.6;
++        if(up&&at<5||left&&at==0){list.requestFocusInWindow();return;}
++        int step=up?-5:down?5:left?-1:1;
++        for(int next=at+step;next>=0&&next<buttons.length;next+=step)if(buttons[next].isEnabled()){buttons[next].requestFocusInWindow();return;}
+     }
+     /** Stone buttons come from the installed theme; this keeps the launcher's existing construction sites. */
+     private static final class LauncherButton extends JButton {
+diff --git a/client/src/net/runelite/client/ui/ClientUI.java b/client/src/net/runelite/client/ui/ClientUI.java
+--- a/client/src/net/runelite/client/ui/ClientUI.java
++++ b/client/src/net/runelite/client/ui/ClientUI.java
+@@ -880,6 +880,16 @@
+ 		return false;
+ 	}
+ 
++	/** Confirmed controller Save & Quit uses the normal shutdown/save event, without another mouse dialog. */
++	public void requestControllerQuit()
++	{
++		if (!SwingUtilities.isEventDispatchThread()) { SwingUtilities.invokeLater(this::requestControllerQuit); return; }
++		if (controllerQuitRequested) return;
++		controllerQuitRequested = true;
++		shutdownClient();
++	}
++	private boolean controllerQuitRequested;
++
+ 	private void shutdownClient()
+ 	{
+ 		saveClientBoundsConfig();
+diff --git a/client/test/net/runelite/client/input/controller/ControllerQuitTest.java b/client/test/net/runelite/client/input/controller/ControllerQuitTest.java
+new file mode 100644
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/ControllerQuitTest.java
+@@ -0,0 +1,12 @@
++package net.runelite.client.input.controller;
++import org.junit.Test;
++import static org.junit.Assert.*;
++public class ControllerQuitTest {
++ @Test public void quitIsLocalRequiresSecondPressAndCancellationClearsIt(){
++  ControllerSettingsModel model=new ControllerSettingsModel(new ControllerSettingsModel.Store(){public String get(String key){return null;}public void set(String key,String value){fail("Quit must not change preferences");}});
++  UiState.Widget quit=model.snapshot(false).panes[3].widgets[3];UiState.Action action=quit.actions[0];
++  assertEquals("Save & Quit",quit.name);assertEquals(4,model.invoke(quit,action,false));
++  PanelConfirmation confirm=new PanelConfirmation();assertFalse(confirm.allow(quit,action,1));assertNotNull(confirm.prompt(quit,2));confirm.clear();assertFalse(confirm.allow(quit,action,3));assertTrue(confirm.allow(quit,action,4));
++  assertEquals(-1,model.invoke(quit,new UiState.Action("Save & Quit",18,0),false));
++ }
++}
+diff --git a/client/test/net/runelite/client/soloscape/launcher/LauncherControllerInputTest.java b/client/test/net/runelite/client/soloscape/launcher/LauncherControllerInputTest.java
+new file mode 100644
+--- /dev/null
++++ b/client/test/net/runelite/client/soloscape/launcher/LauncherControllerInputTest.java
+@@ -0,0 +1,28 @@
++package net.runelite.client.soloscape.launcher;
++import java.awt.event.KeyEvent;
++import javax.swing.JButton;
++import net.runelite.client.input.controller.GamepadState;
++import org.junit.Test;
++import static org.junit.Assert.*;
++public class LauncherControllerInputTest {
++ private KeyEvent event(int type,int key){return new KeyEvent(new JButton(),type,0,0,key,KeyEvent.CHAR_UNDEFINED);}
++ @Test public void steamMappedButtonsWorkWithNeutralOrDisconnectedSdl(){
++  LauncherControllerInput input=new LauncherControllerInput();GamepadState raw=new GamepadState(),out=new GamepadState();
++  input.merge(raw,out,true);assertTrue(out.connected);
++  assertTrue(input.key(event(KeyEvent.KEY_PRESSED,KeyEvent.VK_ENTER)));input.merge(raw,out,true);assertEquals(1,out.buttonsPressed);
++  input.merge(raw,out,true);assertEquals(0,out.buttonsPressed);
++  input.key(event(KeyEvent.KEY_RELEASED,KeyEvent.VK_ENTER));input.merge(raw,out,true);assertEquals(1,out.buttonsReleased);
++ }
++ @Test public void simultaneousSteamAndSdlInputProducesOneActionAndFocusClearReleases(){
++  LauncherControllerInput input=new LauncherControllerInput();GamepadState raw=new GamepadState(),out=new GamepadState();raw.connected=true;raw.buttonsHeld=1;
++  input.key(event(KeyEvent.KEY_PRESSED,KeyEvent.VK_ENTER));input.merge(raw,out,true);assertEquals(1,out.buttonsPressed);
++  input.key(event(KeyEvent.KEY_RELEASED,KeyEvent.VK_ENTER));input.merge(raw,out,true);assertEquals(0,out.buttonsPressed);assertEquals(0,out.buttonsReleased);
++  raw.buttonsHeld=0;input.merge(raw,out,true);assertEquals(1,out.buttonsReleased);
++  input.key(event(KeyEvent.KEY_PRESSED,KeyEvent.VK_RIGHT));input.clear();input.merge(raw,out,true);assertEquals(0,out.buttonsHeld);
++ }
++ @Test public void mappedKeysDoNotLeakWhenSteamEntryOwnsInput(){
++  LauncherControllerInput input=new LauncherControllerInput();GamepadState raw=new GamepadState(),out=new GamepadState();
++  assertFalse(input.key(event(KeyEvent.KEY_PRESSED,KeyEvent.VK_X)));
++  input.key(event(KeyEvent.KEY_PRESSED,KeyEvent.VK_ENTER));input.merge(raw,out,false);assertEquals(0,out.buttonsPressed);
++ }
++}
