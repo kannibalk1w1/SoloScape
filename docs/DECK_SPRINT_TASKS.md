@@ -20,4 +20,8 @@ Physical owner feedback then identified launcher keyboard input ownership; patch
 
 ## Launcher charm follow-up
 
-- [ ] Animate the original RS2 brazier scene: visible looping flames, light flicker and embers. The current launcher background is static. Preserve the existing scene and keep animation inexpensive on Deck; pause rendering while hidden and verify controller navigation and frame pacing. Requested during the r24 playtest handoff on 13 October 2026.
+- [x] Animate the original RS2 brazier scene: visible looping flames, light flicker and embers. Implemented in client patch 0048; native Swing animation/lifecycle checks pass. Preserve the existing scene and keep animation inexpensive on Deck; pause rendering while hidden and verify controller navigation and frame pacing. Requested during the r24 playtest handoff on 13 October 2026.
+
+## Save-format audit follow-up
+
+- [ ] Audit embedded double quotes/backslashes in native-writer string values. The current writer does not escape embedded quotes; this was observed while adding long-string reader regressions. The reader buffer growth fix covers the real long quest-event description and escaped-quote reading, without changing writer serialization in this pass.

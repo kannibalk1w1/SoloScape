@@ -17,7 +17,7 @@ Client patch: `0046-readable-quest-intros-and-rewards.patch`. Server patch: `001
 | --- | ---: | --- |
 | Blood Pact | 1 completion fixture | Real Xenia dialogue, readable quest introduction and native Yes; earlier instance projection test remains separate |
 | Imp Catcher | 1 completion fixture | Real Mizgog dialogue, completion/cutscene and readable reward interface using supplied beads |
-| Druidic Ritual | 1 completion fixture | Further graphical/controller route coverage remains |
+| Druidic Ritual | 1 completion fixture | [Native completion, journal and save/reload fixture](DRUIDIC_RITUAL_GRAPHICAL.md) |
 | Spinning | 1 | Native wheel Spin and wool-to-ball recipe |
 | Pottery | 3 | Soft clay → unfired pot → fired empty pot with the normal starter inventory |
 | Smelting | 19 | Copper/tin → bronze bar |

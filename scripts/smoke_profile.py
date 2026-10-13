@@ -14,6 +14,17 @@ import json
 from native_metrics import NativeMetrics
 from summarise_frame_trace import summarise as summarise_frames
 
+def verify_content_save(saved):
+    expected = {'imp_catcher': 'completed', 'blood_pact': 'started', 'druidic_ritual': 'completed'}
+    variables = saved.get('variables', {})
+    if any(variables.get(key) != value for key, value in expected.items()):
+        raise RuntimeError('Content quest progress was not preserved in the native save/reload.')
+    experience = saved.get('experience', [])
+    # Native saves use tenths of XP; Skill ordinal 15 is Herblore. Imp Catcher grants 1 QP; Druidic Ritual grants 4.
+    if len(experience) <= 15 or experience[15] != 2500 or variables.get('quest_points') != 5:
+        raise RuntimeError('Druidic Ritual XP/quest-point rewards were not preserved.')
+
+
 def _main():
     parser=argparse.ArgumentParser(description="Disposable native New/Continue/save and optional adventure UI probe.")
     parser.add_argument("--adventure",action="store_true",help="Probe real native adventure tabs, local settings and software overlay intervals.")
@@ -131,9 +142,7 @@ def _main():
                 Path(str(marker)+'.adventure.json').replace(testroot/('adventure-new.json' if iteration==0 else 'adventure-continue.json'))
             saved=profiles.validate_save((profile.state/'saves/alphatest.toml').read_bytes())
             if options.content_coverage:
-                expected_quests={'imp_catcher':'completed','blood_pact':'started'}
-                if any(saved.get('variables',{}).get(key)!=value for key,value in expected_quests.items()):
-                    raise RuntimeError('Content quest progress was not preserved in the native save/reload.')
+                verify_content_save(saved)
             if savebefore is not None:
                 if not all(savebefore[k]==saved[k] for k in ('accountName','experience','inventories','tile')):
                     raise RuntimeError('Native save/reload changed a tested field.')
