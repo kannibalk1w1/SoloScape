@@ -1,0 +1,8 @@
+{
+  "environment": "Private host Swing/Xvfb; no Deck performance acceptance",
+  "visible_timer_frames": 42,
+  "gameplay_pause_verified": true,
+  "hidden_pause_verified": true,
+  "resume_verified": true,
+  "host_scene_paint_mean_ms": 4.37445659
+}

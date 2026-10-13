@@ -164,3 +164,14 @@ The private exporter and launcher fixture copy both art files. No standalone sup
 
 ![Reference flames and heavier supporting text](images/launcher-reference-flames-bold-text.png)
 ![Sampled reference-frame animation](images/launcher-reference-flames.gif)
+
+## Stable reference alignment and slower playback
+
+The supplied atlas panels do not share the same scene origin: static-bowl registration gives horizontal offsets `0, +1, 0, -6, +1, -1, -2, +10` px, with frame 3 also one pixel higher. Using identical crop coordinates made the fire jump sideways. Client patch `0050-align-reference-flames-and-halve-speed.patch` normalizes each frame against its stationary bowl before extracting the flames. A larger 80×90 crop retains the tall flame tips. The normalized rim maps to the original backdrop's measured rim at `(49,265)`, spanning `x=0..98`.
+
+The animation timer changes from 33 to **66 ms**, retaining three ticks per source frame: each pose lasts approximately **198 ms**, twice its previous duration. This halves playback speed. The heavier RuneScape supporting text remains in place.
+
+The jar builds and all 138 client modified/patched files reproduce. The native launcher/backend checks pass frame loading, timer visibility, pause/resume/disposal, controller navigation, entry guards and world settings. Every pose was rendered through the actual Swing scene at 1280×800 with a controlled fixture clock and visually checked for bowl contact. The GIF below displays those eight poses for 200 ms each; it is a presentation fixture, not a physical controller or Deck FPS test. [Host evidence](evidence/launcher-aligned-flames.json).
+
+![Normalized bowl alignment](images/launcher-aligned-flames.png)
+![Eight aligned flame poses at half speed](images/launcher-aligned-slow-flames.gif)
