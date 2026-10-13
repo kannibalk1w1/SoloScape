@@ -102,13 +102,16 @@ public final class NativeAdventureProbe {
     display=null;selected=null;
     if(exitTile==null)exitTile=worldTile();
     oldNonce=nonce();require(oldNonce!=null&&SoloScapeConnection.verified(),"Initial capability nonce missing");
-    if(!(clickNative(548<<16|181)||clickNative(746<<16|172))){require(now-lastStep<15000,"Visible native Exit control unavailable/focus not settled");return false;}
+    if(!ControllerUi.openTab(HomeTab.LOGOUT.ordinal())){require(now-lastStep<15000,"Visible native Exit control unavailable/focus not settled");return false;}
     step++;lastStep=now;return false;
    }
    if(step==12){
     require(exitTile.equals(worldTile()),"Exit click moved player; mouse method="+(Boolean.getBoolean("soloscape.probe.awt.mouse")?"awt":"robot"));
     require(unexpectedMouseClicks==0,"Real desktop mouse input interfered with the probe");
-    if(!clickNative(182<<16|10)){require(now-lastStep<15000,"Visible native logout control unavailable");clickNative(548<<16|181);clickNative(746<<16|172);return false;}step++;lastStep=now;return false;
+    UiState.Widget logout=null;
+    if(state.panel!=null&&state.panel.id==182)for(UiState.Pane pane:state.panel.panes)for(UiState.Widget row:pane.widgets)if(row.id==(182<<16|10))logout=row;
+    if(logout==null||logout.actions.length==0||!ControllerUi.invoke(logout,logout.actions[0])){require(now-lastStep<15000,"Visible native logout control unavailable");return false;}
+    results.put("controller_logout_gateway",true);step++;lastStep=now;return false;
    }
    if(step==13){
     if(Class240.anInt4674==10&&Class132.aPlayer_1907!=null)require(exitTile.equals(worldTile()),"Logout click moved player");

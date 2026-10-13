@@ -1,0 +1,130 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/GameLoop.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/GameLoop.kt
+index b91419c..73e2b02 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/GameLoop.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/GameLoop.kt
+@@ -9,6 +9,7 @@ class GameLoop(
+     private val delay: Long = ENGINE_DELAY,
+ ) {
+     private val logger = InlineLogger()
++    private val timings = GameLoopTimings.create(stages)
+ 
+     fun start(scope: CoroutineScope) = scope.launch {
+         var start: Long
+@@ -17,7 +18,9 @@ class GameLoop(
+             while (isActive) {
+                 start = System.nanoTime()
+                 tick()
+-                took = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
++                val tickNanos = System.nanoTime() - start
++                timings?.tick(tickNanos)
++                took = TimeUnit.NANOSECONDS.toMillis(tickNanos)
+                 if (took > MILLI_WARNING_THRESHOLD) {
+                     logger.warn { "Tick $tick took ${took}ms" }
+                 } else if (took > MILLI_THRESHOLD) {
+@@ -30,6 +33,12 @@ class GameLoop(
+             if (e !is CancellationException) {
+                 logger.error(e) { "Error in game loop!" }
+             }
++        } finally {
++            try {
++                timings?.write()
++            } catch (e: Exception) {
++                logger.warn(e) { "Unable to write optional tick timings" }
++            }
+         }
+     }
+ 
+@@ -42,7 +51,9 @@ class GameLoop(
+     fun tick(stage: Runnable) {
+         val stageStart = System.nanoTime()
+         stage.run()
+-        val stageTook = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - stageStart)
++        val stageNanos = System.nanoTime() - stageStart
++        timings?.stage(stage, stageNanos)
++        val stageTook = TimeUnit.NANOSECONDS.toMillis(stageNanos)
+         if (stageTook > MILLI_WARNING_THRESHOLD) {
+             logger.warn { "${stage::class.simpleName} took ${stageTook}ms" }
+         } else if (stageTook > MILLI_THRESHOLD) {
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/GameLoopTimings.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/GameLoopTimings.kt
+new file mode 100644
+index 0000000..74a73f8
+--- /dev/null
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/GameLoopTimings.kt
+@@ -0,0 +1,41 @@
++package world.gregs.voidps.engine
++
++import java.nio.file.Files
++import java.nio.file.Path
++import java.util.IdentityHashMap
++
++/** Opt-in bounded observations; no allocations or file output in ordinary sessions. */
++internal class GameLoopTimings(private val output: Path, stages: List<Runnable>, capacity: Int = 8192) {
++    private class Samples(capacity: Int) {
++        val values = LongArray(capacity)
++        var count = 0L
++        var total = 0L
++        var maximum = 0L
++        fun add(nanos: Long) {
++            if (count < values.size) values[count.toInt()] = nanos
++            count++
++            total += nanos
++            maximum = maxOf(maximum, nanos)
++        }
++        fun row(name: String): String {
++            val sorted = values.copyOf(minOf(count, values.size.toLong()).toInt()).sortedArray()
++            val p99 = if (sorted.isEmpty()) 0L else sorted[(sorted.size - 1) * 99 / 100]
++            return "$name,$count,${if (count == 0L) 0.0 else total / 1e6 / count},${p99 / 1e6},${maximum / 1e6},${count > values.size}"
++        }
++    }
++    private val ticks = Samples(capacity)
++    private val stages = IdentityHashMap<Runnable, Samples>().apply {
++        for (stage in stages) put(stage, Samples(capacity))
++    }
++    fun tick(nanos: Long) = ticks.add(nanos)
++    fun stage(stage: Runnable, nanos: Long) { stages[stage]?.add(nanos) }
++    fun write() {
++        val rows = mutableListOf("phase,samples,mean_ms,p99_ms,max_ms,truncated", ticks.row("tick"))
++        for ((stage, samples) in stages) rows.add(samples.row(stage.javaClass.simpleName.replace(',', '_')))
++        Files.write(output, rows)
++    }
++    companion object {
++        fun create(stages: List<Runnable>): GameLoopTimings? = System.getProperty("soloscape.performance.timings.file")
++            ?.let { GameLoopTimings(Path.of(it), stages) }
++    }
++}
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/GameLoopTimingsTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/GameLoopTimingsTest.kt
+new file mode 100644
+index 0000000..6fd690f
+--- /dev/null
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/GameLoopTimingsTest.kt
+@@ -0,0 +1,30 @@
++package world.gregs.voidps.engine
++
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.io.TempDir
++import java.nio.file.Files
++import java.nio.file.Path
++import kotlin.test.assertEquals
++import kotlin.test.assertTrue
++
++internal class GameLoopTimingsTest {
++    @TempDir lateinit var directory: Path
++    @Test fun `bounded samples retain whole-run count total and maximum`() {
++        val stage = Runnable {}
++        val output = directory.resolve("timings.csv")
++        val timings = GameLoopTimings(output, listOf(stage), 2)
++        for (nanos in listOf(1_000_000L, 3_000_000L, 8_000_000L)) {
++            timings.tick(nanos)
++            timings.stage(stage, nanos)
++        }
++        timings.write()
++        val lines = Files.readAllLines(output)
++        assertEquals("tick,3,4.0,1.0,8.0,true", lines[1])
++        assertTrue(lines[2].endsWith(",3,4.0,1.0,8.0,true"))
++    }
++    @Test fun `empty run does not fabricate timing measurements`() {
++        val output = directory.resolve("empty.csv")
++        GameLoopTimings(output, emptyList()).write()
++        assertEquals("tick,0,0.0,0.0,0.0,false", Files.readAllLines(output)[1])
++    }
++}

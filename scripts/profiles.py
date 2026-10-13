@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 import fcntl
 import hashlib
 import json
+import math
 import os
 from pathlib import Path, PurePosixPath
 import re
@@ -110,6 +111,37 @@ def validate_save(data, expected_account=None):
     return save
 
 
+WORLD_DEFAULTS = {'xp': 1.0, 'drops': 1.0, 'infinite_run': False}
+
+
+def world_settings(value=None):
+    if value is None:
+        return dict(WORLD_DEFAULTS)
+    if not isinstance(value, dict) or set(value) - set(WORLD_DEFAULTS):
+        raise ValueError('Invalid world settings.')
+    result = dict(WORLD_DEFAULTS, **value)
+    for key in ('xp', 'drops'):
+        rate = result[key]
+        if type(rate) not in (int, float) or not math.isfinite(rate) or not 1 <= rate <= 100:
+            raise ValueError('XP and drop multipliers must be between 1 and 100.')
+        result[key] = float(rate)
+    if type(result['infinite_run']) is not bool:
+        raise ValueError('Infinite run must be enabled or disabled.')
+    return result
+
+
+def configure_world(uid, value):
+    settings = world_settings(value)
+    profile = load(uid)
+    with profile.lock():
+        if (profile.directory / 'session.json').exists():
+            raise RuntimeError('Save & Quit or recover the earlier session before changing world settings.')
+        changed = dict(profile.manifest, world=settings)
+        atomic_json(profile.directory / 'profile.json', changed)
+        profile.manifest = changed
+        return profile.metadata()
+
+
 class Profile:
     def __init__(self, directory):
         self.directory = Path(directory)
@@ -133,6 +165,7 @@ class Profile:
         identifier(self.manifest.get('generation'))
         if not ACCOUNT.fullmatch(self.manifest.get('account', '')):
             raise ValueError('Invalid profile account.')
+        world_settings(self.manifest.get('world'))
         if not self.state.is_dir() or self.state.is_symlink():
             raise ValueError('Profile state generation is missing or unsafe. Restore a verified backup.')
 
@@ -156,9 +189,13 @@ class Profile:
     def metadata(self):
         result = {k: self.manifest[k] for k in ('id', 'label', 'account', 'created', 'last_played')}
         save_path = self.state / 'saves' / (self.manifest['account'].lower() + '.toml')
+        result['world'] = world_settings(self.manifest.get('world'))
         result.update(saved=False, location=None, saved_at=None, error=None)
         result['storage_bytes'] = sum(p.stat().st_size for p in self.directory.rglob('*') if p.is_file() and not p.is_symlink())
         result['backup_count'] = len(list((self.directory / 'backups').glob('*.zip')))
+        result['backup_bytes'] = sum(p.stat().st_size for p in (self.directory / 'backups').glob('*.zip') if p.is_file() and not p.is_symlink())
+        result['save_bytes'] = sum(p.stat().st_size for root in (self.state / 'saves', self.state / 'errors') for p in root.rglob('*') if p.is_file() and not p.is_symlink())
+        result['cache_bytes'] = sum(p.stat().st_size for root in (self.directory / 'client-home/native-cache', self.state / 'temp') for p in root.rglob('*') if p.is_file() and not p.is_symlink())
         result['retention'] = 'Backups and previous generations are kept until explicitly removed.'
         if save_path.exists():
             try:
@@ -187,6 +224,9 @@ class Profile:
                     'world.start.creation': 'false', 'web.server.enabled': 'false', 'bots.count': '0',
                     'soloscape.profile.account': self.manifest['account'],
                     'SOLOSCAPE_AUTH_FILE': str(self.directory / 'login.json')})
+        settings = world_settings(self.manifest.get('world'))
+        env.update({'world.experienceRate': str(settings['xp']), 'world.itemDropRate': str(settings['drops']),
+                    'world.players.infiniteRunEnergy': str(settings['infinite_run']).lower()})
         # Exchange/report paths are relative to FileStorage's already isolated saves.
         return env
 
@@ -229,6 +269,7 @@ class Profile:
             contents[relative] = data
         manifest = {'format': FORMAT, 'profile': self.manifest['id'], 'account': self.manifest['account'],
                     'metadata': {k: self.manifest[k] for k in ('label', 'created', 'last_played', 'tutorial')},
+                    'world': world_settings(self.manifest.get('world')),
                     'created': now(), 'reason': reason, 'files': {name: {'sha256': hash_bytes(data), 'size': len(data)} for name, data in contents.items()}}
         if recovered_from_session is not None:
             manifest['recovered_from_session'] = identifier(recovered_from_session)
@@ -266,6 +307,7 @@ class Profile:
                 records = manifest.get('files')
                 if not isinstance(records, dict) or set(names) != {'backup.json'} | {'state/' + n for n in records}:
                     raise ValueError('Backup manifest and entries do not match.')
+                world_settings(manifest.get('world'))
                 result = {}
                 for relative, record in records.items():
                     if not isinstance(record, dict):
@@ -323,6 +365,7 @@ class Profile:
                 fsync_directory(target)
                 fsync_directory(target.parent)
                 changed = dict(self.manifest)
+                changed['world'] = world_settings(manifest.get('world'))
                 changed['generation'] = generation
                 changed['restored_at'] = now()
                 changed['restored_from'] = backup_name
@@ -354,11 +397,12 @@ class Profile:
                 raise
 
 
-def create(label, account, password=None, tutorial=False, _staging=False):
+def create(label, account, password=None, tutorial=False, _staging=False, world=None):
     if not isinstance(label, str) or not 1 <= len(label.strip()) <= 48:
         raise ValueError('Character label must be 1–48 characters.')
     if not isinstance(account, str) or not ACCOUNT.fullmatch(account) or not account.strip():
         raise ValueError('Account name must be 1–12 letters, numbers, spaces or underscores.')
+    settings = world_settings(world)
     private_directory(PROFILES)
     uid, generation = uuid.uuid4().hex, uuid.uuid4().hex
     directory = PROFILES / ('.import-' + uid) / uid if _staging else PROFILES / uid
@@ -369,7 +413,7 @@ def create(label, account, password=None, tutorial=False, _staging=False):
     for name in ('saves', 'logs', 'errors', 'temp'):
         private_directory(state / name)
     manifest = {'format': FORMAT, 'id': uid, 'label': label.strip(), 'account': account.strip(),
-                'created': now(), 'last_played': None, 'generation': generation, 'tutorial': bool(tutorial)}
+                'created': now(), 'last_played': None, 'generation': generation, 'tutorial': bool(tutorial), 'world': settings}
     atomic_json(directory / 'profile.json', manifest)
     atomic_json(directory / 'login.json', {'account': manifest['account'], 'password': password if password is not None else secrets.token_hex(8)})
     return Profile(directory)
@@ -442,6 +486,7 @@ def recovery_profile(uid, backup_name):
         profile.manifest = {'format': FORMAT, 'id': uid, 'account': account,
             'label': str(metadata.get('label', 'Recovered character'))[:48],
             'created': metadata.get('created', header.get('created', now())), 'last_played': None,
+            'world': world_settings(header.get('world')),
             'tutorial': bool(metadata.get('tutorial', False)), 'generation': uuid.uuid4().hex}
         profile.validate_backup(backup)
         return profile
@@ -473,7 +518,7 @@ def restore_profile(uid, backup_name):
     return profile.restore(backup_name)
 
 
-def import_world_copy(source, label, account, password=''):
+def import_world_copy(source, label, account, password='', world=None):
     """Import an already stopped world copy, retaining all accounts and exchange files.
 
     Refuses the upstream mutable world: the user must supply an independent copy.
@@ -518,7 +563,7 @@ def import_world_copy(source, label, account, password=''):
         contents[relative] = data
     if any((path.stat().st_size, path.stat().st_mtime_ns) != saved for path, saved in fingerprints.items()):
         raise ValueError('World copy changed during import; use a stopped, stable copy.')
-    profile = create(label, account, password=password, _staging=True)
+    profile = create(label, account, password=password, _staging=True, world=world)
     try:
         with profile.lock():
             for relative, data in contents.items():

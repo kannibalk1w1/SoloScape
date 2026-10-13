@@ -1,0 +1,612 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+index 31eb31e..7ca9d73 100644
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -84,6 +84,8 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+     private static int[] runeLiteOverlayPixels;
+     private static int runeLiteOverlayWidth;
+     private static int runeLiteOverlayHeight;
++    private static ha runeLiteOverlayRenderer;
++    private static Class105_Sub2 runeLiteOverlayTexture;
+     public static int anInt53;
+     public static boolean aBoolean54;
+     public static int anInt55;
+@@ -161,7 +163,9 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+         }
+         // The game cycle and the frame both run on this thread (DetachedRenderer is a pacer, not
+         // a second thread), so a cycle can never overlap a frame: it advances game state only.
++        groundItemSnapshot.invalidate();
+         method99((byte) 93);
++        groundItemSnapshot.invalidate();
+         if (i != -1) aBoolean27 = true;
+     }
+ 
+@@ -305,6 +309,7 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+             int height = Math.max(1, Class348_Sub42_Sub8_Sub2.anInt10432);
+             ensureRuneLiteOverlayBuffer(width, height);
+ 
++            long overlayPaintStarted = com.FrameTimings.start();
+             Graphics2D graphics = runeLiteOverlayImage.createGraphics();
+             try {
+                 graphics.setComposite(AlphaComposite.Clear);
+@@ -314,6 +319,7 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+                 RuneLite.getInjector().getInstance(Callbacks.class).draw(null, graphics, 0, 0);
+             } finally {
+                 graphics.dispose();
++                com.FrameTimings.end(com.FrameTimings.OVERLAY_PAINT, overlayPaintStarted);
+             }
+         } catch (Throwable failure) {
+             if (Loader.trace) failure.printStackTrace();
+@@ -327,15 +333,34 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+             // both run here: plugin callback thread affinity is preserved with no hand-off.
+             prepareRuneLiteOverlays();
+             if (!hasRuneLiteOverlayPixels()) return;
++            long overlayUploadStarted = com.FrameTimings.start();
+             int width = runeLiteOverlayWidth;
+             int height = runeLiteOverlayHeight;
+-            Class105 sprite = renderer.method3711(runeLiteOverlayPixels, 0, width, width, height, false);
++            Class105 sprite;
++            if(renderer instanceof ha_Sub2){
++                if(runeLiteOverlayRenderer!=renderer || runeLiteOverlayTexture==null
++                    || runeLiteOverlayTexture.method971()!=width || runeLiteOverlayTexture.method969()!=height){
++                    resetRuneLiteOverlayTexture();
++                    runeLiteOverlayTexture=(Class105_Sub2)renderer.method3711(runeLiteOverlayPixels,0,width,width,height,false);
++                    runeLiteOverlayRenderer=renderer;
++                }else runeLiteOverlayTexture.updateControllerOverlay(runeLiteOverlayPixels);
++                sprite=runeLiteOverlayTexture;
++            }else{
++                resetRuneLiteOverlayTexture();
++                sprite=renderer.method3711(runeLiteOverlayPixels,0,width,width,height,false);
++            }
+             sprite.method970(0, 0, width, height, 1, -1, 1);
++            com.FrameTimings.end(com.FrameTimings.OVERLAY_UPLOAD, overlayUploadStarted);
+         } catch (Throwable failure) {
+             if (Loader.trace) failure.printStackTrace();
+         }
+     }
+ 
++    static void resetRuneLiteOverlayTexture() {
++        if(runeLiteOverlayTexture!=null)runeLiteOverlayTexture.releaseControllerOverlay();
++        runeLiteOverlayTexture=null;runeLiteOverlayRenderer=null;
++    }
++
+     private static void ensureRuneLiteOverlayBuffer(int width, int height) {
+         if (runeLiteOverlayImage != null && runeLiteOverlayWidth == width && runeLiteOverlayHeight == height) {
+             return;
+@@ -534,30 +559,43 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+                     Class101_Sub2.anInt5744 = detached
+                         ? Class348_Sub8.aClass241_6660.pollCycles(0, Class73.aLong4783)
+                         : Class348_Sub8.aClass241_6660.method1861(0, Class73.aLong4783);
++                    long logicStarted = com.FrameTimings.start();
+                     for (int i = 0; Class101_Sub2.anInt5744 > i; i++)
+                         method84(-1);
++                    com.FrameTimings.end(com.FrameTimings.LOGIC, logicStarted);
++                    com.FrameTimings.cycles(Class101_Sub2.anInt5744);
+ 
+                     long frameNow = System.nanoTime();
+                     if (!detached || DetachedRenderer.frameDue(frameNow)) {
+                         if (detached) DetachedRenderer.frameDrawn(frameNow);
++                        long frameStarted = com.FrameTimings.start();
+                         method88(-119);
++                        com.FrameTimings.end(com.FrameTimings.FRAME, frameStarted);
+                     }
+                     // The RuneLite plugin loop is a client-tick callback: it has to fire at the game
+                     // cycle rate (50 Hz), not the frame rate. Firing it from the frame (once per
+                     // drawn frame) made every CLIENT_TICK-driven plugin animation run 3.6x too fast
+                     // once the pacer raised the frame rate. A pass with no due cycle has no client
+                     // tick to report, so it is skipped; the vanilla loop always runs a cycle.
++                    long pluginsStarted = com.FrameTimings.start();
+                     if (Class101_Sub2.anInt5744 > 0)
+                         fireRuneLiteClientLoop();
++                    com.FrameTimings.end(com.FrameTimings.PLUGINS, pluginsStarted);
++                    long eventsStarted = com.FrameTimings.start();
+                     Class369_Sub3_Sub1.method3578((byte) -42, Class305.aCanvas3869, (Class348_Sub23_Sub1.aClass297_8992));
++                    com.FrameTimings.end(com.FrameTimings.EVENT_QUEUE, eventsStarted);
+ 
+                     if (detached) {
+-                        long wait = DetachedRenderer.millisUntilNextFrame(frameNow);
+-                        long cycleWait = (Class348_Sub8.aClass241_6660.nanosToNextCycle() + 999999L) / 1000000L;
+-                        if (cycleWait < wait) wait = cycleWait;
+-                        // NB: -127, not -42: Class286_Sub5.method2161 evaluates 70 % ((i + 52) / 32)
+-                        // and any i whose (i + 52) / 32 is 0 divides by zero.
+-                        Class286_Sub5.method2161((byte) -127, wait < 1L ? 1L : wait);
++                        // Rendering and plugin work have already consumed part (or all)
++                        // of the frame budget. A pre-render timestamp adds that work
++                        // again as sleep and can halve the requested frame rate.
++                        long wait = DetachedRenderer.nanosUntilNextPass(System.nanoTime(),
++                            Class348_Sub8.aClass241_6660.nanosToNextCycle());
++                        if (wait > 0L) {
++                            java.util.concurrent.locks.LockSupport.parkNanos(wait);
++                            // Match the legacy sleep's consumed interrupt, avoiding repeated immediate returns.
++                            Thread.interrupted();
++                        }
+                     }
+                 }
+             } catch (Throwable throwable) {
+@@ -1064,6 +1102,8 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+     @Override public void cancelControllerEntry(net.runelite.client.input.controller.EntryState entry) { ControllerEntry.cancel(entry); }
+     @Override public boolean scrollControllerUi(net.runelite.client.input.controller.UiState.Widget widget, int direction) { return ControllerUi.scroll(widget, direction); }
+     @Override public void closeControllerPanel() { ControllerUi.closePanel(); }
++    @Override public boolean setControllerDeck60(boolean enabled) { return ControllerPerformance.set(enabled); }
++    @Override public String getControllerPerformanceStatus() { return ControllerPerformance.status(); }
+     @Override public boolean invokeControllerUi(net.runelite.client.input.controller.UiState.Widget widget, net.runelite.client.input.controller.UiState.Action action) { return ControllerUi.invoke(widget, action); }
+     @Override public void cancelControllerSelection() { ControllerUi.cancelSelection(); }
+     @Override public void cancelControllerDialogue() { ControllerUi.cancelDialogue(); }
+@@ -1148,8 +1188,14 @@ public abstract class Applet_Sub1 extends GameClient implements Runnable, FocusL
+         return Class348_Sub8.aHa6654 != null;
+     }
+ 
++    private final com.CycleListSnapshot<GroundItemInfo> groundItemSnapshot=new com.CycleListSnapshot<>();
++
+     @Override
+     public List<GroundItemInfo> getGroundItems() {
++        return groundItemSnapshot.get(this::readGroundItems);
++    }
++
++    private List<GroundItemInfo> readGroundItems() {
+         if (ChatMessage.aClass357ArrayArrayArray2029 == null || Exception_Sub1.aClass255_112 == null) {
+             return Collections.emptyList();
+         }
+diff --git a/client/src/Class105_Sub2.java b/client/src/Class105_Sub2.java
+index 6bd5707..3732318 100644
+--- a/client/src/Class105_Sub2.java
++++ b/client/src/Class105_Sub2.java
+@@ -110,6 +110,21 @@ final class Class105_Sub2 extends Class105 {
+         OpenGL.glPixelTransferf(3355, 0.0F);
+     }
+ 
++    private int[] controllerOverlayUpload;
++
++    /** Update one owned UI texture instead of allocating a GL texture every frame. */
++    final void updateControllerOverlay(int[] pixels) {
++        int width=method971(),height=method969();
++        if(controllerOverlayUpload==null || controllerOverlayUpload.length!=width*height)
++            controllerOverlayUpload=new int[width*height];
++        OverlayPixels.flipRows(pixels,width,height,controllerOverlayUpload);
++        aClass258_Sub3_Sub1_8434.method1964(false,height,0,controllerOverlayUpload,0,(byte)-73,width,0,width);
++    }
++    final void releaseControllerOverlay() {
++        aClass258_Sub3_Sub1_8434.method1952(-19948);
++        controllerOverlayUpload=null;
++    }
++
+     final void method984(int[] is) {
+         is[1] = anInt8446;
+         anInt8445++;
+diff --git a/client/src/Class187.java b/client/src/Class187.java
+index 740b636..de11216 100644
+--- a/client/src/Class187.java
++++ b/client/src/Class187.java
+@@ -37,6 +37,7 @@ final class Class187 {
+     }
+ 
+     static final void method1406(boolean bool) {
++        Applet_Sub1.resetRuneLiteOverlayTexture();
+         if (bool == true) {
+             Class3.method175((byte) -6);
+             anInt2505++;
+diff --git a/client/src/Class348_Sub6.java b/client/src/Class348_Sub6.java
+index 35b917d..3348ea7 100644
+--- a/client/src/Class348_Sub6.java
++++ b/client/src/Class348_Sub6.java
+@@ -36,6 +36,7 @@ final class Class348_Sub6 extends Node {
+             if (i != 20) anInt6633 = -118;
+             if (file != null) {
+                 try {
++                    com.NativeGraphicsLibrary.preload(file,string);
+                     System.load(file.getPath());
+                     Player.aHashtable10565.put(string, (aClass6640 != null ? aClass6640 : (aClass6640 = Class90.class)));
+                     return true;
+diff --git a/client/src/ControllerPerformance.java b/client/src/ControllerPerformance.java
+new file mode 100644
+index 0000000..0283070
+--- /dev/null
++++ b/client/src/ControllerPerformance.java
+@@ -0,0 +1,42 @@
++/** Reversible Deck graphics target; no server or simulation-rate changes. */
++final class ControllerPerformance {
++    private static boolean applied;
++    private static int previousToolkit,previousViewport,previousFps,previousShadows;
++    private static boolean previousPacing,previousShowFps;
++    private static String status="Native graphics";
++    static String status(){return status;}
++    static boolean set(boolean enabled){
++        if(enabled && (Class240.anInt4674!=10 || Class132.aPlayer_1907==null)){status="Waiting for local world";return false;}
++        if(enabled){
++            if(applied)return true;
++            previousToolkit=Class316.aClass348_Sub51_3959.aClass239_Sub25_7271.method1829(-32350);
++            previousViewport=Class316.aClass348_Sub51_3959.aClass239_Sub23_7231.method1818(-32350);
++            previousShadows=Class316.aClass348_Sub51_3959.aClass239_Sub7_7238.method1748(-32350);
++            previousFps=DetachedRenderer.getFpsTarget();previousPacing=DetachedRenderer.isActive();previousShowFps=Class298.aBoolean3811;
++            if(!(Class348_Sub8.aHa6654 instanceof ha_Sub2))Class258_Sub3_Sub1.method1971(-2,null,true,1);
++            if(!(Class348_Sub8.aHa6654 instanceof ha_Sub2)){
++                if(Class316.aClass348_Sub51_3959.aClass239_Sub25_7271.method1829(-32350)!=previousToolkit)
++                    Class258_Sub3_Sub1.method1971(-2,null,true,previousToolkit);
++                status="Deck 60 unavailable: OpenGL could not start";return false;
++            }
++            Class316.aClass348_Sub51_3959.method3429((byte)74,Class316.aClass348_Sub51_3959.aClass239_Sub23_7231,0);
++            // Native value 1 retains static scenery shadows without rebuilding
++            // their animated silhouettes every rendered frame. Preserve an existing 0.
++            int shadows=Class316.aClass348_Sub51_3959.aClass239_Sub7_7238.method1748(-32350);
++            Class316.aClass348_Sub51_3959.method3429((byte)74,Class316.aClass348_Sub51_3959.aClass239_Sub7_7238,Math.min(shadows,1));
++            DetachedRenderer.setFpsTarget(60);DetachedRenderer.requestActive(true);
++            Class298.aBoolean3811=true;
++            applied=true;status="Deck 60 target · OpenGL · full resolution · animated scenery shadows off";return true;
++        }
++        if(applied){
++            Class316.aClass348_Sub51_3959.method3429((byte)74,Class316.aClass348_Sub51_3959.aClass239_Sub23_7231,previousViewport);
++            if(Class316.aClass348_Sub51_3959.aClass239_Sub25_7271.method1829(-32350)!=previousToolkit)
++                Class258_Sub3_Sub1.method1971(-2,null,true,previousToolkit);
++            Class316.aClass348_Sub51_3959.method3429((byte)74,Class316.aClass348_Sub51_3959.aClass239_Sub7_7238,previousShadows);
++            DetachedRenderer.setFpsTarget(previousFps);DetachedRenderer.requestActive(previousPacing);
++            Class298.aBoolean3811=previousShowFps;
++            applied=false;
++        }
++        status="Native graphics";return true;
++    }
++}
+diff --git a/client/src/DetachedRenderer.java b/client/src/DetachedRenderer.java
+index 1d56ab3..69f051d 100644
+--- a/client/src/DetachedRenderer.java
++++ b/client/src/DetachedRenderer.java
+@@ -92,11 +92,18 @@ final class DetachedRenderer {
+ 
+     /** How long, in whole milliseconds, until the next frame is due; 0 when it is due already. */
+     static long millisUntilNextFrame(long now) {
+-        long wait = nextFrame - now;
+-        if (frameInterval <= 0L || wait <= 0L) {
+-            return 0L;
+-        }
+-        return (wait + 999999L) / 1000000L;
++        return (nanosUntilNextFrame(now) + 999999L) / 1000000L;
++    }
++
++    /** Preserve sub-millisecond deadlines rather than rounding every frame/cycle wait up. */
++    static long nanosUntilNextFrame(long now) {
++        return frameInterval <= 0L ? 0L : Math.max(0L, nextFrame - now);
++    }
++
++    static long nanosUntilNextPass(long now, long cycleWait) {
++        // Retain the old one-millisecond yield when uncapped; capped overdue work runs now.
++        long frameWait = frameInterval <= 0L ? 1_000_000L : nanosUntilNextFrame(now);
++        return Math.max(0L, Math.min(frameWait, cycleWait));
+     }
+ 
+     /** Applies a new frame target from the plugin config. */
+diff --git a/client/src/OverlayPixels.java b/client/src/OverlayPixels.java
+new file mode 100644
+index 0000000..ae5c7aa
+--- /dev/null
++++ b/client/src/OverlayPixels.java
+@@ -0,0 +1,9 @@
++/** Pixel layout conversion for the reusable native OpenGL overlay texture. */
++final class OverlayPixels {
++    private OverlayPixels() {}
++    static void flipRows(int[] source,int width,int height,int[] destination){
++        if(source==destination || width<=0 || height<=0 || (long)width*height>source.length || (long)width*height>destination.length)
++            throw new IllegalArgumentException("Invalid overlay buffers");
++        for(int row=0;row<height;row++)System.arraycopy(source,row*width,destination,(height-row-1)*width,width);
++    }
++}
+diff --git a/client/src/com/CycleListSnapshot.java b/client/src/com/CycleListSnapshot.java
+new file mode 100644
+index 0000000..5f96ea1
+--- /dev/null
++++ b/client/src/com/CycleListSnapshot.java
+@@ -0,0 +1,15 @@
++package com;
++
++import java.util.ArrayList;
++import java.util.List;
++import java.util.function.Supplier;
++
++/** Client-thread snapshot, invalidated around native logic updates. Callers own their list. */
++public final class CycleListSnapshot<T> {
++    private List<T> snapshot;
++    public void invalidate() { snapshot=null; }
++    public List<T> get(Supplier<List<T>> read) {
++        if(snapshot==null)snapshot=new ArrayList<>(read.get());
++        return new ArrayList<>(snapshot);
++    }
++}
+diff --git a/client/src/com/FrameTimings.java b/client/src/com/FrameTimings.java
+new file mode 100644
+index 0000000..5c454e1
+--- /dev/null
++++ b/client/src/com/FrameTimings.java
+@@ -0,0 +1,38 @@
++package com;
++
++import java.util.*;
++
++/** Opt-in, bounded client-thread timing. Disabled runs allocate no sample buffers. */
++public final class FrameTimings {
++    public static final boolean ENABLED=Boolean.getBoolean("soloscape.performance.timings");
++    public static final int LOGIC=0, PLUGINS=1, OVERLAY_PAINT=2, OVERLAY_UPLOAD=3, FRAME=4, EVENT_QUEUE=5, PRESENT=6;
++    private static final String[] NAMES={"logic","plugins","overlay_paint","overlay_upload","frame_including_overlays","event_queue","present"};
++    private static final int CAPACITY=120000;
++    private static final long[][] samples=ENABLED?new long[NAMES.length][CAPACITY]:null;
++    private static final long[] counts=ENABLED?new long[NAMES.length]:null, totals=ENABLED?new long[NAMES.length]:null;
++    private static long frames,cycles;
++    private FrameTimings() {}
++    public static long start(){return ENABLED?System.nanoTime():0;}
++    public static void cycles(int count){if(ENABLED)cycles+=count;}
++    public static void end(int phase,long started){
++        if(!ENABLED||started==0)return;
++        long elapsed=System.nanoTime()-started,count=counts[phase]++;
++        totals[phase]+=elapsed;
++        if(count<CAPACITY)samples[phase][(int)count]=elapsed;
++        if(phase==FRAME)frames++;
++    }
++    public static Map<String,Object> snapshotAndReset(){
++        Map<String,Object> result=new LinkedHashMap<>();
++        result.put("enabled",ENABLED);if(!ENABLED)return result;
++        result.put("frames",frames);result.put("logic_cycles",cycles);
++        for(int phase=0;phase<NAMES.length;phase++){
++            int size=(int)Math.min(counts[phase],CAPACITY);
++            long[] sorted=Arrays.copyOf(samples[phase],size);Arrays.sort(sorted);
++            Map<String,Object> value=new LinkedHashMap<>();value.put("calls",counts[phase]);value.put("truncated",counts[phase]>CAPACITY);
++            value.put("ms_per_frame",frames==0?0:totals[phase]/1e6/frames);
++            if(size>0){value.put("median_call_ms",sorted[size/2]/1e6);value.put("p99_call_ms",sorted[(size-1)*99/100]/1e6);value.put("max_call_ms",sorted[size-1]/1e6);}
++            result.put(NAMES[phase],value);counts[phase]=totals[phase]=0;
++        }
++        frames=cycles=0;return result;
++    }
++}
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+index f876fd6..b98c7a9 100644
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -366,6 +366,8 @@ public abstract class GameClient extends Applet {
+     public void cancelControllerEntry(net.runelite.client.input.controller.EntryState entry) {}
+     public boolean scrollControllerUi(net.runelite.client.input.controller.UiState.Widget widget, int direction) { return false; }
+     public void closeControllerPanel() {}
++    public boolean setControllerDeck60(boolean enabled) { return false; }
++    public String getControllerPerformanceStatus() { return "Native graphics"; }
+     public boolean invokeControllerUi(net.runelite.client.input.controller.UiState.Widget widget, net.runelite.client.input.controller.UiState.Action action) { return false; }
+     public void cancelControllerSelection() {}
+     public void cancelControllerDialogue() {}
+diff --git a/client/src/com/NativeGraphicsLibrary.java b/client/src/com/NativeGraphicsLibrary.java
+new file mode 100644
+index 0000000..fc44621
+--- /dev/null
++++ b/client/src/com/NativeGraphicsLibrary.java
+@@ -0,0 +1,22 @@
++package com;
++
++import com.sun.jna.Library;
++import com.sun.jna.NativeLibrary;
++import com.sun.jna.Platform;
++import java.io.File;
++import java.io.IOException;
++import java.util.Collections;
++
++/** The legacy GL bridge exports writable slots with OpenGL function names. */
++public final class NativeGraphicsLibrary {
++    private static NativeLibrary jaggl;
++    private NativeGraphicsLibrary() {}
++    public static synchronized void preload(File file,String name) throws IOException {
++        if(!Platform.isLinux() || !"jaggl".equals(name) || jaggl!=null)return;
++        // Resolve the bridge's own slots before global symbols from Steam/libGL.
++        // Otherwise its initialisation writes a function pointer into libGL's
++        // executable glGenBuffersARB symbol and faults before the first frame.
++        // Linux RTLD_NOW=2, RTLD_DEEPBIND=8. Keep the handle alive alongside JNI.
++        jaggl=NativeLibrary.getInstance(file.getCanonicalPath(),Collections.singletonMap(Library.OPTION_OPEN_FLAGS,2|8));
++    }
++}
+diff --git a/client/src/ha_Sub2.java b/client/src/ha_Sub2.java
+index 814ae5d..f809e2c 100644
+--- a/client/src/ha_Sub2.java
++++ b/client/src/ha_Sub2.java
+@@ -3512,11 +3512,13 @@ final class ha_Sub2 extends ha {
+     }
+ 
+     final void method3626(int i, int i_457_) throws Exception_Sub1 {
++        long presented=com.FrameTimings.start();
+         try {
+             anOpenGL7664.swapBuffers();
+         } catch (Exception exception) {
+             /* empty */
+         }
++        com.FrameTimings.end(com.FrameTimings.PRESENT,presented);
+         anInt7624++;
+     }
+ 
+diff --git a/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java b/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
+index 20872bc..bc71ae5 100644
+--- a/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
++++ b/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
+@@ -24,7 +24,7 @@ public final class ControllerSettingsModel {
+    toggle("directMovement","Direct movement"),toggle("serverFeatures","SoloScape server features"),toggle("invertY","Invert camera Y"),
+    new Option("glyphs","Button labels","Choose the labels displayed in controller hints.","XBOX","PLAYSTATION"),toggle("showGuide","Controller guide"),
+    new Option("keyboardMode","Text keyboard","Automatic prefers Steam on Deck. System entry pauses controller actions; Enter or the on-screen controls finish.","AUTO","STEAM","CONTROLLER"),
+-   new Option("classicTheme","Classic controller UI","A switches classic stone/brown/gold and modern presentation. Native actions are unchanged.","true","false"),new Option("serverEntryCancel","Matched-server text cancellation","Cancel releases a pending amount/name/text prompt only after a fresh SoloScape capability check. Disable for client-only cancellation.","true","false")},
++   new Option("classicTheme","Classic controller UI","A switches classic stone/brown/gold and modern presentation. Native actions are unchanged.","true","false"),new Option("serverEntryCancel","Matched-server text cancellation","Cancel releases a pending amount/name/text prompt only after a fresh SoloScape capability check. Disable for client-only cancellation.","true","false"),new Option("deck60","Deck 60 FPS target","OpenGL, full native resolution and a 60 FPS cap; animated scenery shadows off. No reduced draw distance or simulation speed changes. Turn off to restore this session's previous graphics settings.","false","true")},
+   {button("confirmButton","Confirm / interact","A"),button("cancelButton","Back / cancel","B"),button("actionsButton","Actions / assign","X"),
+    button("previousButton","Previous target / pane","LEFT_BUMPER"),button("nextButton","Next target / pane","RIGHT_BUMPER"),
+    button("inventoryButton","Inventory","Y"),button("homeButton","Home wheel","VIEW"),button("quickButton","Quick wheel","START")},
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+index 83862ac..c3a9642 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -102,4 +102,6 @@ public interface SoloScapeControllerConfig extends Config
+     @ConfigItem(keyName="serverEntryCancel",name="Matched-server text cancellation",description="Cancel a pending native amount/name/text action without closing its bank/shop, only after fresh entry-cancel capability negotiation. Off retains client-only close.",position=37)
+     default boolean serverEntryCancel(){return true;}
+ 
++    @ConfigItem(keyName="deck60",name="Deck 60 FPS target",description="Use OpenGL, full native resolution and 60 FPS pacing, with animated scenery shadows off. Toggle off to restore this session's previous graphics settings.",position=90)
++    default boolean deck60(){return false;}
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+index af9dddb..48af5b2 100644
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -94,6 +94,7 @@ public class SoloScapeControllerPlugin extends Plugin
+     private net.runelite.client.input.controller.SelectionReturn.Origin restoringSource;
+     private long restoringSourceUntil,settingsOpeningUntil;
+     private boolean settingsOpen,settingsPrompted,nativeSettingsChild;
++    private Boolean requestedDeck60;
+     private final net.runelite.client.input.controller.ControllerSettingsModel settings = new net.runelite.client.input.controller.ControllerSettingsModel(
+         new net.runelite.client.input.controller.ControllerSettingsModel.Store(){
+             public String get(String key){return configManager.getConfiguration("soloscapecontroller",key);}
+@@ -273,6 +274,8 @@ public class SoloScapeControllerPlugin extends Plugin
+ 	protected void shutDown()
+ 	{
+ 		active = false;
++        requestedDeck60=null;
++        clientThread.invoke(()->{client.setControllerDeck60(false);});
+ 		overlayManager.remove(overlay);
+ 		overlayManager.remove(movementOverlay);
+ 		overlayManager.remove(uiOverlay);
+@@ -389,6 +392,11 @@ public class SoloScapeControllerPlugin extends Plugin
+                 mappingArmed=false;cameraArmed=false;lastInputTick=tickNow;return;
+             }
+             client.updateControllerConnection();
++            if(client.hasLocalPlayer() && (requestedDeck60==null || requestedDeck60!=config.deck60())){
++                boolean enabled=config.deck60();
++                if(client.setControllerDeck60(enabled))requestedDeck60=enabled;
++                else if(enabled && client.getControllerPerformanceStatus().startsWith("Deck 60 unavailable")){requestedDeck60=true;panelFeedback=client.getControllerPerformanceStatus();panelFeedbackUntil=System.nanoTime()+5_000_000_000L;}
++            }
+             if(lastInputTick!=0 && tickNow-lastInputTick>750_000_000L)
+             {mappingArmed=false;cameraArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();confirmation.clear();}
+             lastInputTick=tickNow;
+diff --git a/client/test/CycleListSnapshotTest.java b/client/test/CycleListSnapshotTest.java
+new file mode 100644
+index 0000000..52155c5
+--- /dev/null
++++ b/client/test/CycleListSnapshotTest.java
+@@ -0,0 +1,22 @@
++import com.CycleListSnapshot;
++import java.util.*;
++import java.util.concurrent.atomic.AtomicInteger;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class CycleListSnapshotTest {
++    @Test public void multipleConsumersShareOneNativeReadButOwnTheirLists() {
++        CycleListSnapshot<String> cache=new CycleListSnapshot<>();AtomicInteger reads=new AtomicInteger();
++        java.util.function.Supplier<List<String>> source=()->{reads.incrementAndGet();return Arrays.asList("Bones");};
++        List<String> first=cache.get(source);first.clear();
++        assertEquals(Arrays.asList("Bones"),cache.get(source));assertEquals(1,reads.get());
++    }
++    @Test public void NextNativeCycleRefreshesQuantityDespawnAndRegionChanges() {
++        CycleListSnapshot<String> cache=new CycleListSnapshot<>();ArrayList<String> nativeItems=new ArrayList<>(Arrays.asList("Coins x1"));
++        assertEquals(Arrays.asList("Coins x1"),cache.get(()->nativeItems));
++        nativeItems.set(0,"Coins x2");cache.invalidate();
++        assertEquals(Arrays.asList("Coins x2"),cache.get(()->nativeItems));
++        nativeItems.clear();cache.invalidate();assertTrue(cache.get(()->nativeItems).isEmpty());
++        nativeItems.add("New region pot");cache.invalidate();assertEquals(nativeItems,cache.get(()->nativeItems));
++    }
++}
+diff --git a/client/test/DetachedRendererTest.java b/client/test/DetachedRendererTest.java
+new file mode 100644
+index 0000000..97eba05
+--- /dev/null
++++ b/client/test/DetachedRendererTest.java
+@@ -0,0 +1,36 @@
++import org.junit.After;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class DetachedRendererTest {
++    @After public void reset(){DetachedRenderer.setFpsTarget(180);DetachedRenderer.requestActive(false);}
++    @Test public void renderingTimeConsumesTheFrameBudget(){
++        DetachedRenderer.setFpsTarget(60);DetachedRenderer.requestActive(true);
++        long start=1_000_000_000L;DetachedRenderer.frameDrawn(start);
++        assertEquals(17,DetachedRenderer.millisUntilNextFrame(start));
++        assertEquals(9,DetachedRenderer.millisUntilNextFrame(start+8_000_000L));
++        assertEquals(0,DetachedRenderer.millisUntilNextFrame(start+20_000_000L));
++        assertTrue(DetachedRenderer.frameDue(start+20_000_000L));
++    }
++    @Test public void overrunsDiscardBacklogAndUncappedHasNoWait(){
++        DetachedRenderer.setFpsTarget(60);DetachedRenderer.requestActive(true);
++        long start=1_000_000_000L;DetachedRenderer.frameDrawn(start);
++        DetachedRenderer.frameDrawn(start+500_000_000L);
++        assertFalse(DetachedRenderer.frameDue(start+500_000_000L));
++        assertEquals(17,DetachedRenderer.millisUntilNextFrame(start+500_000_000L));
++        DetachedRenderer.setFpsTarget(0);assertEquals(0,DetachedRenderer.millisUntilNextFrame(start));assertTrue(DetachedRenderer.frameDue(start));
++    }
++    @Test public void fractionalDeadlineAndEarlierLogicCycleArePreserved(){
++        DetachedRenderer.setFpsTarget(60);DetachedRenderer.requestActive(true);
++        long start=1_000_000_000L;DetachedRenderer.frameDrawn(start);
++        assertEquals(666_666L,DetachedRenderer.nanosUntilNextPass(start+16_000_000L,20_000_000L));
++        assertEquals(120_000L,DetachedRenderer.nanosUntilNextPass(start+16_000_000L,120_000L));
++        assertEquals(0L,DetachedRenderer.nanosUntilNextPass(start+17_000_000L,20_000_000L));
++        assertEquals(0L,DetachedRenderer.nanosUntilNextPass(start,0L));
++    }
++    @Test public void uncappedRetainsYieldWithoutDelayingDueLogic(){
++        DetachedRenderer.setFpsTarget(0);DetachedRenderer.requestActive(true);
++        assertEquals(1_000_000L,DetachedRenderer.nanosUntilNextPass(1L,20_000_000L));
++        assertEquals(0L,DetachedRenderer.nanosUntilNextPass(1L,0L));
++    }
++}
+diff --git a/client/test/NativeGraphicsLibraryTest.java b/client/test/NativeGraphicsLibraryTest.java
+new file mode 100644
+index 0000000..8d1f494
+--- /dev/null
++++ b/client/test/NativeGraphicsLibraryTest.java
+@@ -0,0 +1,45 @@
++import com.NativeGraphicsLibrary;
++import com.sun.jna.NativeLibrary;
++import com.sun.jna.Pointer;
++import com.sun.jna.Platform;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.*;
++import java.io.*;
++import java.util.*;
++import org.junit.Test;
++import org.junit.Assume;
++import static org.junit.Assert.*;
++
++public class NativeGraphicsLibraryTest {
++    @Test public void protectsLegacyDataSlotsAgainstPreloadedGlFunctions() throws Exception {
++        Assume.assumeTrue(Platform.isLinux());
++        try { Assume.assumeTrue(new ProcessBuilder("cc","--version").redirectErrorStream(true).start().waitFor()==0); }
++        catch(IOException unavailable) { Assume.assumeNoException(unavailable); }
++        Path root=Files.createTempDirectory("soloscape-gl-symbols-");
++        try {
++            Path provider=root.resolve("provider.c"),bridge=root.resolve("bridge.c");
++            Files.write(provider,Arrays.asList("void glGenBuffersARB(void) {}"),StandardCharsets.UTF_8);
++            Files.write(bridge,Arrays.asList("void *glGenBuffersARB;", "void **slot_address(void) { return &glGenBuffersARB; }", "void initialise_slot(void) { glGenBuffersARB=(void*)0x1234; }"),StandardCharsets.UTF_8);
++            for(String name:Arrays.asList("provider","bridge"))assertEquals(0,new ProcessBuilder("cc","-shared","-fPIC","-o",root.resolve(name+".so").toString(),root.resolve(name+".c").toString()).inheritIO().start().waitFor());
++            String cp=String.join(File.pathSeparator,location(NativeGraphicsLibraryTest.class),location(NativeGraphicsLibrary.class),location(NativeLibrary.class));
++            for(String mode:Arrays.asList("ordinary","protected")) {
++                ProcessBuilder run=new ProcessBuilder(System.getProperty("java.home")+"/bin/java","-cp",cp,"NativeGraphicsLibraryTest",root.resolve("bridge.so").toString(),mode);
++                run.environment().put("LD_PRELOAD",root.resolve("provider.so").toString());run.redirectErrorStream(true);
++                Process child=run.start();ByteArrayOutputStream bytes=new ByteArrayOutputStream();byte[] buffer=new byte[4096];int count;
++                while((count=child.getInputStream().read(buffer))!=-1)bytes.write(buffer,0,count);
++                String output=new String(bytes.toByteArray(),StandardCharsets.UTF_8);
++                assertEquals(output,0,child.waitFor());assertTrue(output,output.contains(mode.equals("ordinary")?"preempted":"private slot updated"));
++            }
++        } finally {try(java.util.stream.Stream<Path> files=Files.walk(root)){files.sorted(Comparator.reverseOrder()).forEach(p->{try{Files.delete(p);}catch(IOException ignored){}});}}
++    }
++    private static String location(Class<?> type)throws Exception{return Paths.get(type.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();}
++    public static void main(String[] args)throws Exception {
++        File file=new File(args[0]);if(args[1].equals("protected"))NativeGraphicsLibrary.preload(file,"jaggl");
++        NativeLibrary bridge=NativeLibrary.getInstance(file.getAbsolutePath());
++        Pointer slot=(Pointer)bridge.getFunction("slot_address").invoke(Pointer.class,new Object[0]);
++        if(!slot.equals(bridge.getGlobalVariableAddress("glGenBuffersARB"))){System.out.println("preempted");return;}
++        bridge.getFunction("initialise_slot").invokeVoid(new Object[0]);
++        if(Pointer.nativeValue(slot.getPointer(0))!=0x1234)throw new AssertionError("Wrong private GL pointer");
++        System.out.println("private slot updated");
++    }
++}
+diff --git a/client/test/OverlayPixelsTest.java b/client/test/OverlayPixelsTest.java
+new file mode 100644
+index 0000000..439c0f6
+--- /dev/null
++++ b/client/test/OverlayPixelsTest.java
+@@ -0,0 +1,14 @@
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class OverlayPixelsTest {
++    @Test public void updateLayoutKeepsColoursAlphaAndVerticalOrientation(){
++        int[] source={0x00aabbcc,0x40112233,0xffabcdef,0x80010203,0xff123456,0x00000000};
++        int[] upload=new int[6];OverlayPixels.flipRows(source,3,2,upload);
++        assertArrayEquals(new int[]{0x80010203,0xff123456,0,0x00aabbcc,0x40112233,0xffabcdef},upload);
++        int[] restored=new int[6];OverlayPixels.flipRows(upload,3,2,restored);assertArrayEquals(source,restored);
++        java.util.Arrays.fill(source,0);OverlayPixels.flipRows(source,3,2,upload);assertArrayEquals(new int[6],upload);
++    }
++    @Test(expected=IllegalArgumentException.class) public void wrongSizedUpdateCannotReadPastBuffer(){OverlayPixels.flipRows(new int[5],3,2,new int[6]);}
++    @Test(expected=IllegalArgumentException.class) public void inPlaceUpdateCannotCorruptOppositeRows(){int[] pixels=new int[6];OverlayPixels.flipRows(pixels,3,2,pixels);}
++}

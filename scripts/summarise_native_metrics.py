@@ -12,6 +12,7 @@ def summarise(observation):
     combined = 0
     sensors = {}
     batteries = set()
+    external_power = {}
     samples = observation['samples']
     for sample in samples:
         combined = max(combined, sum(child['rss_kib'] for child in sample['children']))
@@ -28,6 +29,8 @@ def summarise(observation):
                     seconds, measured = cpu.get(role, (0.0, 0.0))
                     cpu[role] = (seconds + delta / child['clock_ticks_per_second'], measured + duration)
             previous[identity] = (elapsed, child['cpu_ticks'])
+        for supply in sample.get('external_power', []):
+            external_power.setdefault(supply['supply'], set()).add(supply['online'])
         for battery in sample.get('battery', []):
             batteries.add(battery['status'])
         for sensor in sample.get('temperatures_millicelsius', []):
@@ -39,6 +42,7 @@ def summarise(observation):
             'peak_combined_rss_mib': round(combined / 1024, 2),
             'mean_cpu_percent_one_core_100': {key: round(seconds / duration * 100, 2) for key, (seconds, duration) in cpu.items() if duration > 0},
             'host_peak_temperature_celsius': {key: round(value / 1000, 2) for key, value in sensors.items()},
+            'external_power_states': {key: sorted(values) for key, values in external_power.items()},
             'battery_statuses': sorted(batteries), 'phases': observation.get('phases', []),
             'scope': 'Whole observed session including startup/login/UI/save; CPU samples stay within each PID/start identity. Host-wide temperature. No battery-life, GPU or Gaming Mode budget.'}
 

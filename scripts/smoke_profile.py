@@ -12,6 +12,7 @@ from unittest.mock import patch
 import signal
 import json
 from native_metrics import NativeMetrics
+from summarise_frame_trace import summarise as summarise_frames
 
 def _main():
     parser=argparse.ArgumentParser(description="Disposable native New/Continue/save and optional adventure UI probe.")
@@ -21,7 +22,21 @@ def _main():
     parser.add_argument("--desktop",action="store_true",help="Use the explicitly authorized current X11/XWayland display; never stop that display.")
     parser.add_argument("--sidebar",action="store_true",help="Stress native RuneLite sidebar resizing, Configuration and keyboard toggles; check fresh controller startup.")
     parser.add_argument("--sidebar-baseline",action="store_true",help="Reproduce sidebar resizing against an older build without active hotkeys or controller defaults.")
+    parser.add_argument("--performance",action="store_true",help="Compare controller overhead and reduced scene rendering in a disposable stationary scene.")
+    parser.add_argument("--fullscreen-gl-only",action="store_true",help="Check fullscreen from focused OpenGL gameplay rather than the initial software window.")
+    parser.add_argument("--fullscreen",action="store_true",help="Exercise the registered F11 fullscreen key with real software and OpenGL renderers and restore window bounds.")
+    parser.add_argument("--playtest-two",action="store_true",help="Check player-lit fire cooking and Blood Pact instance projection in a disposable admin fixture.")
+    parser.add_argument("--map",action="store_true",help="Open and close the real world map through native controller gateways.")
+    parser.add_argument("--artwork",action="store_true",help="Capture actual native cache item sprites for UI previews in a disposable world.")
+    parser.add_argument("--tab-bar",action="store_true",help="Drive D-pad tab-bar focus through the plugin input tick: order, highlight, A ownership, opening and B to world.")
+    parser.add_argument("--deck60",action="store_true",help="Full-resolution alternating pacing/controller/OpenGL comparisons in disposable worlds.")
+    parser.add_argument("--deck60-gl-only",action="store_true",help="Skip software stages and compare OpenGL pacing at full resolution.")
+    parser.add_argument("--deck-route-seconds",type=int,default=0,help="Repeat the real-map full-resolution route for 60–3600 seconds, then verify a no-action reload.")
     options=parser.parse_args()
+    if options.fullscreen_gl_only:options.fullscreen=True
+    if options.deck60_gl_only:options.deck60=True
+    if options.deck_route_seconds and not 60<=options.deck_route_seconds<=3600:parser.error('Route duration must be 60–3600 seconds.')
+    if options.deck_route_seconds and (options.deck60 or options.adventure or options.journey or options.text or options.map or options.tab_bar or options.fullscreen):parser.error('Run the sustained route separately from other probes.')
     if options.sidebar_baseline:options.sidebar=True
     if options.text or options.journey:options.adventure=True
     signal.signal(signal.SIGTERM, local_dev.interrupted)
@@ -44,7 +59,7 @@ def _main():
     harness.mkdir(parents=True,exist_ok=True)
     clientjar=local_dev.jar(local_dev.CLIENT/'client','void-client-*.jar')
     javac=Path(os.environ['CLIENT_JAVA']).with_name('javac')
-    subprocess.run([str(javac),'-cp',str(clientjar),'-d',str(harness),str(root/'scripts/harness/NativeSessionSmoke.java'),str(root/'scripts/harness/NativeAdventureProbe.java'),str(root/'scripts/harness/NativeTextProbe.java'),str(root/'scripts/harness/NativePlayableLoopProbe.java'),str(root/'scripts/harness/NativeSidebarProbe.java')],check=True)
+    subprocess.run([str(javac),'-cp',str(clientjar),'-d',str(harness),str(root/'scripts/harness/NativeSessionSmoke.java'),str(root/'scripts/harness/NativeAdventureProbe.java'),str(root/'scripts/harness/NativeTextProbe.java'),str(root/'scripts/harness/NativePlayableLoopProbe.java'),str(root/'scripts/harness/NativeSidebarProbe.java'),str(root/'scripts/harness/NativePerformanceProbe.java'),str(root/'scripts/harness/NativeMapProbe.java'),str(root/'scripts/harness/NativeTabBarProbe.java'),str(root/'scripts/harness/NativeArtworkProbe.java'),str(root/'scripts/harness/NativePlaytestTwoProbe.java'),str(root/'scripts/harness/NativeFullscreenProbe.java'),str(root/'scripts/harness/NativeDeck60Probe.java'),str(root/'scripts/harness/NativeDeckRouteProbe.java')],check=True)
     x=None
     if options.desktop:
         if not os.environ.get('DISPLAY'):
@@ -67,9 +82,13 @@ def _main():
             if '-jar' in argv and any('void-client-' in arg for arg in argv):
                 i=argv.index('-jar');jar=argv[i+1]
                 label='Existing authorized X11/XWayland desktop; native overlay-render intervals, real Gateway/synthetic UI input and AWT events through native canvas mouse handlers. No physical controller or Gaming Mode acceptance.' if options.desktop else 'Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.'
-                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.probe.awt.mouse=true'] if options.desktop else [])+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+(['-Dsoloscape.text.probe.fast=true'] if options.text else [])+(['-Dsoloscape.playable.probe=true'] if options.journey else [])+(['-Dsoloscape.sidebar.probe=true'] if options.sidebar else [])+(['-Dsoloscape.sidebar.baseline=true'] if options.sidebar_baseline else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
+                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.probe.awt.mouse=true'] if options.desktop else [])+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+(['-Dsoloscape.text.probe.fast=true'] if options.text else [])+(['-Dsoloscape.playable.probe=true'] if options.journey else [])+(['-Dsoloscape.deck60.route=true','-Dsoloscape.deck60.route.seconds='+str(options.deck_route_seconds if iteration==0 else 0),'-Dsoloscape.performance.timings=true'] if options.deck_route_seconds else [])+(['-Dsoloscape.deck60.startStage=5'] if options.deck60_gl_only else [])+(['-Dsoloscape.deck60.probe=true','-Dsoloscape.performance.timings=true'] if options.deck60 else [])+(['-Dsoloscape.fullscreen.glOnly=true'] if options.fullscreen_gl_only else [])+(['-Dsoloscape.fullscreen.probe=true']+([] if options.desktop else ['-Dsoloscape.fullscreen.softwareOnly=true']) if options.fullscreen else [])+(['-Dsoloscape.playtest2.probe=true'] if options.playtest_two and iteration==0 else [])+(['-Dsoloscape.map.probe=true'] if options.map else [])+(['-Dsoloscape.artwork.probe=true'] if options.artwork and iteration==0 else [])+(['-Dsoloscape.tabbar.probe=true'] if options.tab_bar and iteration==0 else [])+(['-Dsoloscape.performance.probe=true'] if options.performance else [])+(['-Dsoloscape.sidebar.probe=true'] if options.sidebar else [])+(['-Dsoloscape.sidebar.baseline=true'] if options.sidebar_baseline else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
+            if (options.deck60 or options.deck_route_seconds) and any("void-server-" in arg for arg in argv):
+                argv=argv[:1]+["-Dsoloscape.performance.timings.file="+str(testroot/("server-new.csv" if iteration==0 else "server-continue.csv"))]+argv[1:]
             if options.journey and any("void-server-" in arg for arg in argv):
                 kwargs["env"]=dict(kwargs.get("env") or os.environ,SOLOSCAPE_NATIVE_PROBE="1")
+            if options.playtest_two and any("void-server-" in arg for arg in argv):
+                kwargs["env"]=dict(kwargs.get("env") or os.environ,**{'development.admin.name':'AlphaTest'})
             process=original(argv,**kwargs)
             if any('void-server-' in arg for arg in argv):metrics.add(process,'server')
             elif any('void-client-' in arg for arg in argv):metrics.add(process,'client')
@@ -92,6 +111,19 @@ def _main():
             elapsed.append(round(time.monotonic()-session_started,3))
             if code or not marker.exists() or not profile.metadata()['saved']:
                 raise RuntimeError('Native smoke failed; inspect this disposable profile’s logs.')
+            if options.deck_route_seconds:
+                for suffix in ('json','csv'):
+                    Path(str(marker)+'.route.'+suffix).replace(testroot/('route-new.'+suffix if iteration==0 else 'route-continue.'+suffix))
+                import csv
+                name='route-new' if iteration==0 else 'route-continue'
+                with (testroot/(name+'.csv')).open(newline='') as source:
+                    frame_summary=summarise_frames(csv.DictReader(source))
+                (testroot/(name+'-frames.json')).write_text(json.dumps(frame_summary,indent=2)+'\n')
+            if options.deck60:
+                for suffix in ('json','csv'):
+                    Path(str(marker)+'.deck60.'+suffix).replace(testroot/('deck60-new.'+suffix if iteration==0 else 'deck60-continue.'+suffix))
+            if options.tab_bar and iteration==0 and not Path(str(marker)+'.tab-bar.json').is_file():
+                raise RuntimeError('Tab-bar probe did not record a result.')
             if options.adventure:
                 adventure.append(json.loads(Path(str(marker)+'.adventure.json').read_text()))
                 Path(str(marker)+'.adventure.json').replace(testroot/('adventure-new.json' if iteration==0 else 'adventure-continue.json'))
@@ -137,7 +169,8 @@ def _main():
         print('New/Continue complete-session seconds (includes client readiness and save):',elapsed)
         (testroot/'native-smoke-summary.json').write_text(json.dumps({'new_session_seconds':elapsed[0],'continue_session_seconds':elapsed[1],
             'native_startup_cancel_preserved':True,'original_mutable_paths_unchanged':before==fingerprint(),
-            'adventure':adventure,'text_focused':options.text,'playable_journey':options.journey,'sidebar_probe':options.sidebar,'sidebar_baseline':options.sidebar_baseline,'display':'existing-desktop' if options.desktop else 'private-xvfb',
+            'session_environment':{key:os.environ.get(key) for key in ('XDG_SESSION_DESKTOP','XDG_CURRENT_DESKTOP','DISPLAY','SteamAppId','SteamGameId')},
+            'adventure':adventure,'text_focused':options.text,'playable_journey':options.journey,'playtest_two':options.playtest_two,'fullscreen_probe':options.fullscreen,'fullscreen_renderers':'OpenGL only' if options.fullscreen_gl_only else 'software and OpenGL' if options.fullscreen and options.desktop else 'software only' if options.fullscreen else None,'sidebar_probe':options.sidebar,'sidebar_baseline':options.sidebar_baseline,'display':'existing-desktop' if options.desktop else 'private-xvfb',
             'precondition':'Desktop probes require hands off, awake display; real input/focus may interfere.' if options.desktop else 'Owned private display.',
             'screenshots':'Private evidence only; desktop overlays may appear or Wayland capture may be unavailable. Review before publishing.',
             'note':'Native session totals and overlay-render intervals; not physical controller or Gaming Mode acceptance.'},indent=2)+'\n')
@@ -152,7 +185,10 @@ def _main():
 
 def main():
     with local_dev.build_lock(shared=True):
-        _main()
+        from deck_awake import keep_awake
+        with keep_awake() as inhibition:
+            print('Temporary display inhibition:', json.dumps(inhibition), flush=True)
+            _main()
 
 
 if __name__ == "__main__":

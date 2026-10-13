@@ -4,6 +4,8 @@ The profile lock remains held through save hooks and the verified post-stop back
 Cancellation never kills a save in progress. Existing game processes are not touched.
 """
 import os
+from contextlib import nullcontext
+from deck_awake import keep_awake
 from pathlib import Path
 import re
 import subprocess
@@ -23,7 +25,8 @@ def owned_environment(profile, port):
 
 def run(profile, cancelled, notify, port=43594, client_enabled=True, checked=True):
     with local_dev.build_lock(shared=True) as build_guard:
-        return _run(profile, cancelled, notify, port, client_enabled, checked, build_guard)
+        with keep_awake() if client_enabled else nullcontext():
+            return _run(profile, cancelled, notify, port, client_enabled, checked, build_guard)
 
 
 def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=True, build_guard=None):

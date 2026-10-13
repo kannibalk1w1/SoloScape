@@ -129,25 +129,36 @@ final class NativePlayableLoopProbe {
         int[][] flags=map.anIntArrayArray4438;int size=flags.length;
         int sx=(player.x>>9)-map.anInt4453,sy=(player.y>>9)-map.anInt4441;
         int gx=worldX-za_Sub2.regionTileX-map.anInt4453,gy=worldY-Class90.regionTileY-map.anInt4441;
-        if(gx<0||gy<0||gx>=size||gy>=flags[gx].length)return null;
+        boolean route=Boolean.getBoolean("soloscape.deck60.route");
+        // Collision arrays include a six-tile border which is not a loaded scene.
+        int localGoalX=worldX-za_Sub2.regionTileX,localGoalY=worldY-Class90.regionTileY;
+        boolean outside=localGoalX<0||localGoalY<0||localGoalX>=Class367_Sub4.anInt7319||localGoalY>=Class348_Sub40_Sub3.anInt9109;
+        boolean approximate=route&&outside;
+        if(!route&&outside)return null;
         int[][] parentX=new int[size][size],parentY=new int[size][size];boolean[][] seen=new boolean[size][size];
         ArrayDeque<int[]> todo=new ArrayDeque<>();todo.add(new int[]{sx,sy});seen[sx][sy]=true;
+        int bestX=sx,bestY=sy,bestDistance=(sx-gx)*(sx-gx)+(sy-gy)*(sy-gy);
         while(!todo.isEmpty()){
-            int[] tile=todo.removeFirst();if(tile[0]==gx&&tile[1]==gy){
-                ArrayDeque<int[]> path=new ArrayDeque<>();int px=gx,py=gy;
-                while(px!=sx||py!=sy){path.addFirst(new int[]{px,py});int parent=parentX[px][py];py=parentY[px][py];px=parent;}
-                int dx=path.peekFirst()[0]-sx,dy=path.peekFirst()[1]-sy,count=0;px=sx;py=sy;
-                for(int[] point:path){if(count==3||point[0]-px!=dx||point[1]-py!=dy)break;count++;px=point[0];py=point[1];}
-                return new int[]{dx,dy,count};
-            }
+            int[] tile=todo.removeFirst();int distance=(tile[0]-gx)*(tile[0]-gx)+(tile[1]-gy)*(tile[1]-gy);
+            if(distance<bestDistance){bestX=tile[0];bestY=tile[1];bestDistance=distance;}
+            if(tile[0]==gx&&tile[1]==gy)break;
             for(int dx=-1;dx<=1;dx++)for(int dy=-1;dy<=1;dy++){
                 int nx=tile[0]+dx,ny=tile[1]+dy;
                 if(dx==0&&dy==0||nx<0||ny<0||nx>=size||ny>=flags[nx].length||seen[nx][ny]
-                    ||Math.abs(nx-sx)>32||Math.abs(ny-sy)>32||!WorldInput.canStep(flags,tile[0],tile[1],dx,dy))continue;
+                    ||Math.abs(nx-sx)>(route?104:32)||Math.abs(ny-sy)>(route?104:32)||!WorldInput.canStep(flags,tile[0],tile[1],dx,dy))continue;
                 seen[nx][ny]=true;parentX[nx][ny]=tile[0];parentY[nx][ny]=tile[1];todo.addLast(new int[]{nx,ny});
             }
-        }return null;
+        }
+        // A distant route waypoint may be outside this scene. Approach the nearest reachable
+        // tile using native collision masks, letting normal movement reload the next scene.
+        if(bestX==sx&&bestY==sy||!approximate&&bestDistance!=0)return null;
+        ArrayDeque<int[]> path=new ArrayDeque<>();int px=bestX,py=bestY;
+        while(px!=sx||py!=sy){path.addFirst(new int[]{px,py});int parent=parentX[px][py];py=parentY[px][py];px=parent;}
+        int dx=path.peekFirst()[0]-sx,dy=path.peekFirst()[1]-sy,count=0;px=sx;py=sy;
+        for(int[] point:path){if(count==3||point[0]-px!=dx||point[1]-py!=dy)break;count++;px=point[0];py=point[1];}
+        return new int[]{dx,dy,count};
     }
+
     @SuppressWarnings("unchecked") private static boolean interact(String name,String option,int x,int y)throws Exception{
         Method method=ControllerWorld.class.getDeclaredMethod("candidates",boolean.class);method.setAccessible(true);
         List<ControllerTarget> targets=(List<ControllerTarget>)method.invoke(null,true);

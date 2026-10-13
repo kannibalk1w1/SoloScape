@@ -18,11 +18,21 @@ explicit **SoloScape server features** opt-in (off by default). Ordinary destina
 walking, UI operations and fallback B use existing native packets. A disabled
 extension never sends 85/86; B falls back to ordinary Walk at the path head.
 
-This setting is an interim compatibility gate, not a negotiated guarantee. A user
-who enables it against an unpatched server can still break that session. Before
-private co-op, add server-advertised version/capabilities and reject unsupported
-extensions automatically. Avoid casually reserving a varc: native scripts also
-use that namespace, so its cache/script usage needs auditing first.
+A fresh session now negotiates capabilities through an ordinary native command:
+`soloscape_capabilities <nonce>`. The server replies through one unsplit native game
+message, `SOLOSCAPE|1|<nonce>|direct,cancel,entry-cancel,fire-use`. The client requires
+an exact nonce/version match within ten seconds; logout/reset clears permissions.
+The reply bypasses chat font line wrapping because it is a protocol token, not a
+player-facing line. Earlier `direct,cancel` and `direct,cancel,entry-cancel` replies
+remain supported by the current client.
+
+`entry-cancel` supports the existing typed entry cancellation extension.
+`fire-use` permits the controller to expose ordinary object option 1 (**Use**) for
+the six player-lit fire definitions. The matched server supplies that validated
+option and uses the existing cooking recipe flow. This adds no new packet opcode.
+A server without `fire-use` does not receive a fabricated direct fire option;
+native item-on-object cooking remains available. Use matched client/server builds
+when upgrading the extended capability set.
 
 The local launcher separately checks a build stamp containing base pins, patch
 hashes and both jar hashes. It refuses stale `--no-build` launches. Source builds

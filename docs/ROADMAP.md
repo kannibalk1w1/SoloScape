@@ -5,6 +5,10 @@ This is a proposal to review, reorder and use as the working backlog. Later task
 are not automatic authorization to build them. No dates or effort estimates are
 promised before the relevant subsystem has been inspected.
 
+## Next sprint priority — Deck 60 FPS
+
+The owner has set sustained 60 FPS as the Deck target (12 October 2026). Prioritise [the Deck 60 FPS sprint](DECK_60FPS_SPRINT.md): verify frame pacing and actual renderer/settings, establish a full-screen Gaming Mode route and frame-time budget, profile controller/rendering costs, implement measured fixes, then validate sustained performance and current playtest controls on hardware. M4 remains pending until these checks pass. Automatic save sync and broader content expansion follow this milestone.
+
 ## Product direction
 
 A local RuneScape RPG with 2010–2011 mechanics, native console controls, a dependable
@@ -349,3 +353,5 @@ The delivered r9 client declared Ctrl+F11/Ctrl+F12 bindings but commented out
 their listeners. The sidebar-crash follow-up restores these keyboard toggles,
 returns game focus after closing and enables SoloScape Controller by default
 with fresh settings. A direct remappable controller sidebar action remains open.
+
+Playtest 2 (13 October 2026): [local candidate and evidence](PLAYTEST_2.md) implements occupied-slot custom inventory navigation, reversed horizontal camera input, corner action prompts, full-pile loot menus, per-world XP/drop/run controls, native player-lit fire Use and corrected scene projection in Blood Pact instances. Physical Deck acceptance and promotion remain separate.

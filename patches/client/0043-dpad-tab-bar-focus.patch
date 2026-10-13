@@ -1,0 +1,536 @@
+diff --git a/client/src/Applet_Sub1.java b/client/src/Applet_Sub1.java
+--- a/client/src/Applet_Sub1.java
++++ b/client/src/Applet_Sub1.java
+@@ -1088,6 +1088,7 @@
+     @Override public boolean openControllerInventory() { return ControllerUi.openInventory(); }
+     @Override public int getControllerAvailableTabs() { return ControllerUi.availableTabs(); }
+     @Override public boolean openControllerTab(int index) { return ControllerUi.openTab(index); }
++    @Override public java.awt.Rectangle[] getControllerTabBounds() { return ControllerUi.tabBounds(); }
+     @Override public void setControllerServerFeatures(boolean enabled) { ControllerDirectMovement.enableServerFeatures(enabled && SoloScapeConnection.verified()); }
+     @Override public boolean controllerServerVerified() { return SoloScapeConnection.verified(); }
+     @Override public String controllerServerStatus() { return SoloScapeConnection.status(); }
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -525,6 +525,20 @@
+         return mask;
+     }
+ 
++    /** Rendered bounds of each fresh native tab button by HomeTab ordinal; null where not drawn. */
++    static Rectangle[] tabBounds()
++    {
++        HomeTab[] tabs = HomeTab.values();
++        Rectangle[] bounds = new Rectangle[tabs.length];
++        if (!ready() || hasDialogue() || hasModalPanel() || ControllerEntry.active()) return bounds;
++        for (Seen seen : visible.values())
++        {
++            if (!HomeTab.isTab(seen.widget.anInt830) || !fresh(seen) || seen.bounds == null) continue;
++            for (int i = 0; i < tabs.length; i++) if (tabs[i].matches(seen.widget.anInt830)) bounds[i] = new Rectangle(seen.bounds);
++        }
++        return bounds;
++    }
++
+     static boolean openTab(int index)
+     {
+         HomeTab[] tabs = HomeTab.values();
+diff --git a/client/src/com/GameClient.java b/client/src/com/GameClient.java
+--- a/client/src/com/GameClient.java
++++ b/client/src/com/GameClient.java
+@@ -352,6 +352,7 @@
+     public boolean openControllerInventory() { return false; }
+     public int getControllerAvailableTabs() { return 0; }
+     public boolean openControllerTab(int index) { return false; }
++    public java.awt.Rectangle[] getControllerTabBounds() { return new java.awt.Rectangle[0]; }
+     public void setControllerServerFeatures(boolean enabled) {}
+     public boolean controllerServerVerified() { return false; }
+     public String controllerServerStatus() { return "Server features unavailable"; }
+diff --git a/client/src/net/runelite/client/input/controller/TabBarControls.java b/client/src/net/runelite/client/input/controller/TabBarControls.java
+new file mode 100644
+--- /dev/null
++++ b/client/src/net/runelite/client/input/controller/TabBarControls.java
+@@ -0,0 +1,128 @@
++package net.runelite.client.input.controller;
++
++import java.awt.Rectangle;
++
++/**
++ * D-pad left/right focus for the native bottom-right tab bar. From idle world input the first
++ * left/right press highlights a slot; further presses move the highlight in native visual order
++ * without opening anything. A fresh A press (never one held through a direction press) opens the
++ * highlighted tab; B leaves the bar. While focused the bar owns A, so A cannot act on the world.
++ */
++public final class TabBarControls
++{
++    public interface Gateway
++    {
++        int availableTabs();
++        /** Rendered bounds per {@link HomeTab} ordinal; null for slots not currently drawn. */
++        Rectangle[] tabBounds();
++        boolean openTab(int index);
++    }
++    private static final int A = 1, B = 2, UP = 1 << 11, DOWN = 1 << 12, LEFT = 1 << 13, RIGHT = 1 << 14;
++    private static final int DIRECTIONS = UP | DOWN | LEFT | RIGHT;
++    /** The revision-634 bar: top row left to right, then the bottom row. Used when bounds are missing. */
++    private static final HomeTab[] NATIVE_ORDER = {
++        HomeTab.COMBAT, HomeTab.TASKS, HomeTab.SKILLS, HomeTab.QUESTS, HomeTab.INVENTORY, HomeTab.EQUIPMENT, HomeTab.PRAYER, HomeTab.SPELLBOOK,
++        HomeTab.OBJECTIVES, HomeTab.FRIENDS, HomeTab.IGNORE, HomeTab.CLAN, HomeTab.SETTINGS, HomeTab.EMOTES, HomeTab.MUSIC, HomeTab.NOTES};
++    private final Gateway gateway;
++    private boolean active, confirmArmed;
++    private int selected = -1, opened = -1;
++    private int[] order = new int[0];
++    private volatile Rectangle highlight;
++    private long refreshAt;
++    private String message;
++
++    public TabBarControls(Gateway gateway) { this.gateway = gateway; }
++    public boolean active() { return active; }
++    /** The highlighted {@link HomeTab} ordinal, or -1. */
++    public int selected() { return active ? selected : -1; }
++    /** Bounds of the highlighted slot as last rendered, for the overlay; null when unknown or inactive. */
++    public Rectangle highlight() { return active ? highlight : null; }
++    public String message() { return message; }
++    /** The tab opened by the last confirm, consumed once so the caller can focus its controller UI. */
++    public int takeOpened() { int tab = opened; opened = -1; return tab; }
++    public void reset() { active = confirmArmed = false; selected = opened = -1; order = new int[0]; highlight = null; refreshAt = 0; message = null; }
++
++    /**
++     * @param idle true only when world input owns the controller: no UI focus, world menu, item
++     *             selection, radial or keyboard. Entry is refused otherwise; an active bar exits.
++     * @return true when the bar consumed this tick's input.
++     */
++    public boolean update(GamepadState input, long now, boolean idle)
++    {
++        int pressed = input.buttonsPressed, horizontal = pressed & (LEFT | RIGHT);
++        boolean single = horizontal == LEFT || horizontal == RIGHT;
++        if (!active)
++        {
++            // Only an unambiguous fresh left/right press from idle world input enters the bar.
++            if (!idle || !single || (input.buttonsHeld & (UP | DOWN)) != 0) return false;
++            if (!refresh(now)) return false;
++            int start = indexOf(HomeTab.INVENTORY.ordinal());
++            if (start < 0) start = horizontal == RIGHT ? 0 : order.length - 1;
++            selected = order[start]; active = true; message = null; opened = -1;
++            confirmArmed = false; // A held with the entering press must be released first.
++            highlight = bounds(selected);
++            return true;
++        }
++        if (!idle) { reset(); return false; }
++        if (now >= refreshAt && !refresh(now)) { reset(); return false; }
++        if ((pressed & B) != 0) { reset(); return true; }
++        if ((input.buttonsHeld & A) == 0) confirmArmed = true;
++        if (single)
++        {
++            int at = indexOf(selected);
++            at = at < 0 ? 0 : Math.floorMod(at + (horizontal == RIGHT ? 1 : -1), order.length);
++            selected = order[at]; highlight = bounds(selected); message = null;
++            // A pressed or still held together with a direction never confirms the new slot.
++            if ((input.buttonsHeld & A) != 0) confirmArmed = false;
++            return true;
++        }
++        if ((pressed & DIRECTIONS) == 0 && (pressed & A) != 0 && confirmArmed)
++        {
++            confirmArmed = false;
++            if (gateway.openTab(selected)) { int tab = selected; reset(); opened = tab; }
++            else message = "Tab unavailable here";
++        }
++        return true;
++    }
++
++    private boolean refresh(long now)
++    {
++        refreshAt = now + 100_000_000L;
++        int available = gateway.availableTabs();
++        Rectangle[] bounds = gateway.tabBounds();
++        int count = 0;
++        int[] candidates = new int[NATIVE_ORDER.length];
++        boolean measured = true;
++        for (HomeTab tab : NATIVE_ORDER)
++        {
++            int index = tab.ordinal();
++            if ((available & (1 << index)) == 0) continue;
++            candidates[count++] = index;
++            if (bounds == null || index >= bounds.length || bounds[index] == null) measured = false;
++        }
++        int[] next = java.util.Arrays.copyOf(candidates, count);
++        if (measured && count > 1)
++        {
++            // Native visual order: rows top to bottom (slots within half a slot height share a row), then left to right.
++            Integer[] boxed = new Integer[count];
++            for (int i = 0; i < count; i++) boxed[i] = next[i];
++            java.util.Arrays.sort(boxed, (a, b) -> {
++                Rectangle p = bounds[a], q = bounds[b];
++                int row = Math.max(1, Math.min(p.height, q.height) / 2);
++                if (Math.abs(p.getCenterY() - q.getCenterY()) >= row) return Double.compare(p.getCenterY(), q.getCenterY());
++                return Double.compare(p.getCenterX(), q.getCenterX());
++            });
++            for (int i = 0; i < count; i++) next[i] = boxed[i];
++        }
++        order = next;
++        if (active && count > 0 && indexOf(selected) < 0) selected = order[0];
++        if (active) highlight = bounds(selected, bounds);
++        return count > 0;
++    }
++    private int indexOf(int tab) { for (int i = 0; i < order.length; i++) if (order[i] == tab) return i; return -1; }
++    private Rectangle bounds(int tab) { return bounds(tab, gateway.tabBounds()); }
++    private static Rectangle bounds(int tab, Rectangle[] all)
++    { return all == null || tab < 0 || tab >= all.length || all[tab] == null ? null : new Rectangle(all[tab]); }
++    /** Visible order for tests and diagnostics. */
++    public int[] order() { return order.clone(); }
++}
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerOverlay.java
+@@ -30,8 +30,23 @@
+         GameClient.ControllerTarget target=plugin.getTarget();
+         GameClient.ControllerTarget[] menu=plugin.getWorld().getMenu();
+         String feedback=plugin.getWorld().feedback(System.nanoTime());
++        net.runelite.client.input.controller.TabBarControls bar=plugin.getTabBar();
++        if(bar.active())
++        {
++            // Tab-bar focus owns A, so the HUD names the slot instead of a world target.
++            String name=bar.selected()<0?"":net.runelite.client.input.controller.HomeTab.values()[bar.selected()].label;
++            menu=new GameClient.ControllerTarget[0];target=null;feedback=bar.message();
++            if(ControllerTheme.classic())
++            {
++                java.util.List<String> notes=new java.util.ArrayList<>(java.util.Collections.singletonList("D-pad left / right: choose tab · B: back to world"));
++                if(feedback!=null)notes.add(feedback);
++                return paintClassic(graphics,plugin.config().overlayScale()/100.0,plugin.canvasWidth(),plugin.hint("A: Open"),name,0,menu,0,notes,feedback,plugin::hint);
++            }
++            lines.add("A: Open "+name);lines.add("D-pad left / right: choose tab · B: back to world");
++        }
+         if(ControllerTheme.classic())return classic(graphics,target,menu,feedback);
+-        if(menu.length>0)
++        if(bar.active()){}
++        else if(menu.length>0)
+         {
+             int selected=plugin.getWorld().getMenuIndex(), start=Math.max(0,Math.min(selected-3,menu.length-7));
+             lines.add(menu[0].kind()==3?"Loot pile · "+(selected+1)+" / "+menu.length:"Actions");
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -47,6 +47,7 @@
+     @Inject private ConfigManager configManager;
+     @Inject private SoloScapePanelOverlay panelOverlay;
+     @Inject private SoloScapeTextEntryOverlay textEntryOverlay;
++    @Inject private SoloScapeTabBarOverlay tabBarOverlay;
+     @Inject private net.runelite.client.input.KeyManager keyManager;
+     private volatile boolean localTextEntry,steamTextMode,textAvailable;
+     private volatile long lastControllerButton;
+@@ -86,7 +87,7 @@
+     });}
+     private boolean openTextKeyboard(){
+         if(!steamTextMode||!textAvailable){panelFeedback="Choose Steam / physical keyboard in Text keyboard preferences first.";panelFeedbackUntil=System.nanoTime()+5000000000L;return false;}
+-        keyboardFeedback=null;systemEntry.beginManual(true,true);mappingArmed=false;cameraArmed=false;resetWorld();ui.pauseForText();radial.reset();quick.reset();return true;
++        keyboardFeedback=null;systemEntry.beginManual(true,true);mappingArmed=false;cameraArmed=false;resetWorld();ui.pauseForText();radial.reset();quick.reset();tabBar.reset();return true;
+     }
+     @Inject private net.runelite.client.input.MouseManager mouseManager;
+     private final net.runelite.client.input.controller.PanelConfirmation confirmation=new net.runelite.client.input.controller.PanelConfirmation();
+@@ -205,6 +206,14 @@
+             return opened;
+         }
+     });
++    private final net.runelite.client.input.controller.TabBarControls tabBar=new net.runelite.client.input.controller.TabBarControls(new net.runelite.client.input.controller.TabBarControls.Gateway(){
++        public int availableTabs(){return client.getControllerAvailableTabs();}
++        public java.awt.Rectangle[] tabBounds(){return client.getControllerTabBounds();}
++        public boolean openTab(int index){nativeSettingsChild=false;return openHomeTab(index);}
++    });
++    /** A tab opened from the D-pad bar: B leaves its focus straight to the world, never to the Home wheel. */
++    private boolean barOrigin;
++    net.runelite.client.input.controller.TabBarControls getTabBar(){return tabBar;}
+     private final UiControls ui = new UiControls(new UiControls.Gateway()
+     {
+         public UiState snapshot() { return presented(client.getControllerUiState()); }
+@@ -268,6 +277,7 @@
+         overlayManager.add(targetOverlay);
+         overlayManager.add(tabRadialOverlay);
+         overlayManager.add(quickRadialOverlay);
++        overlayManager.add(tabBarOverlay);
+ 		clientThread.invoke(() -> { reset(); failed = false; client.setControllerUiEnabled(true); active = true; });
+ 	}
+ 
+@@ -285,6 +295,7 @@
+         overlayManager.remove(targetOverlay);
+         overlayManager.remove(tabRadialOverlay);
+         overlayManager.remove(quickRadialOverlay);
++        overlayManager.remove(tabBarOverlay);
+ 		clientThread.invoke(this::reset);
+ 	}
+ 
+@@ -309,7 +320,7 @@
+ 		resetWorld();
+ 		state.clear();rawState.clear();mappingArmed=false;cameraArmed=false;actionMap=null;
+ 		ui.reset();ui.clearHistory();
+-        radial.reset(); quick.reset();
++        radial.reset(); quick.reset();tabBar.reset();
+         systemEntry.reset();localTextEntry=steamTextMode=textAvailable=false;keyboardFeedback=null;
+         radialFocusTab = -1;selectionReturn.clear();restoringSource=null;settingsOpen=settingsPrompted=nativeSettingsChild=false;confirmation.clear();panelFeedback=null;panelFeedbackUntil=0;
+ 		client.setControllerServerFeatures(false);client.setControllerEntryCancelEnabled(false);
+@@ -372,6 +383,12 @@
+         if (!active || failed) return;
+         long started = config.debug() ? System.nanoTime() : 0;
+         if (!pollController()) return;
++        processInput(started);
++    }
++
++    /** One controller tick from the freshly polled raw state; separated so native probes can script {@link #rawState}. */
++    private void processInput(long started)
++    {
+         try
+         {
+             ControllerTheme.classic(config.classicTheme());
+@@ -389,7 +406,7 @@
+             if(systemOwns||ownedBefore){
+                 client.setControllerCameraInput(0,0);resetWorld();
+                 if(textAvailable&&rawState.connected)ui.pauseForText();else{ui.reset();ui.clearHistory();}
+-                radial.reset();quick.reset();confirmation.clear();
++                radial.reset();quick.reset();tabBar.reset();confirmation.clear();
+                 mappingArmed=false;cameraArmed=false;lastInputTick=tickNow;return;
+             }
+             client.updateControllerConnection();
+@@ -399,7 +416,7 @@
+                 else if(enabled && client.getControllerPerformanceStatus().startsWith("Deck 60 unavailable")){requestedDeck60=true;panelFeedback=client.getControllerPerformanceStatus();panelFeedbackUntil=System.nanoTime()+5_000_000_000L;}
+             }
+             if(lastInputTick!=0 && tickNow-lastInputTick>750_000_000L)
+-            {mappingArmed=false;cameraArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();confirmation.clear();}
++            {mappingArmed=false;cameraArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();tabBar.reset();confirmation.clear();}
+             lastInputTick=tickNow;
+             applyPreset();
+             net.runelite.client.input.controller.ActionMap nextMap=new net.runelite.client.input.controller.ActionMap(
+@@ -407,7 +424,7 @@
+                 config.previousButton().mask,config.nextButton().mask,config.inventoryButton().mask,
+                 config.homeButton().mask,config.quickButton().mask);
+             boolean changed=!nextMap.same(actionMap);
+-            if(changed){actionMap=nextMap;mappingArmed=false;cameraArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();confirmation.clear();if(settingsOpen)ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());}
++            if(changed){actionMap=nextMap;mappingArmed=false;cameraArmed=false;resetWorld();ui.reset();radial.reset();quick.reset();tabBar.reset();confirmation.clear();if(settingsOpen)ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());}
+             bindingWarning=actionMap.valid()?null:"Controller bindings overlap. Choose distinct buttons or reset plugin settings.";
+             if(!actionMap.valid()){client.setControllerCameraInput(0,0);return;}
+             if(!mappingArmed)
+@@ -424,11 +441,11 @@
+             if (!state.connected || canvas == null || !canvas.isFocusOwner() || !client.hasLocalPlayer())
+             {
+                 client.setControllerCameraInput(0, 0);cameraArmed=false;
+-                resetWorld(); ui.reset(); radial.reset(); quick.reset();selectionReturn.clear();restoringSource=null; radialFocusTab = -1;mappingArmed=false;cameraArmed=false;
++                resetWorld(); ui.reset(); radial.reset(); quick.reset();tabBar.reset();selectionReturn.clear();restoringSource=null; radialFocusTab = -1;mappingArmed=false;cameraArmed=false;
+                 return;
+             }
+             if(nativeEntry!=null){
+-                client.setControllerCameraInput(0,0);resetWorld();radial.reset();quick.reset();confirmation.clear();cameraArmed=false;
++                client.setControllerCameraInput(0,0);resetWorld();radial.reset();quick.reset();tabBar.reset();confirmation.clear();cameraArmed=false;
+                 if(config.interfaceControls()){ui.update(state,System.nanoTime());localTextEntry=ui.entry().active();}else ui.reset();
+                 return;
+             }
+@@ -449,8 +466,9 @@
+                     }
+                 }
+             }
+-            if(settingsOpen && ui.focusedPanel()==null && !ui.inDialogue() && !radial.active() && !quick.active())
+-                ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());
++            if(settingsOpen && ui.focusedPanel()==null && !ui.inDialogue() && !radial.active() && !quick.active()){
++                if(barOrigin)ui.focusTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());else ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());
++            }
+             client.prepareControllerUi();
+             if(config.customControllerSettings() && !config.setupComplete() && !settingsPrompted && !Boolean.parseBoolean(configManager.getConfiguration("soloscapecontroller","setupPrompted"))
+                 && config.interfaceControls() && !client.isControllerTargeting()){
+@@ -474,6 +492,7 @@
+                 UiState.Action action=focused==null || focused.actions.length==0?null:focused.actions[Math.min(ui.context()!=null?ui.contextIndex():0,focused.actions.length-1)];
+                 if (quick.update(state,now,focused,action))
+                 {
++                    tabBar.reset();
+                     client.setControllerCameraInput(0,0);cameraArmed=false;resetWorld();
+                     // Keep the captured focus while assigning, discard it on exit.
+                     if (!quick.active())
+@@ -487,6 +506,7 @@
+             if (!config.tabRadial() || conflict) radial.reset();
+             if (!conflict && config.tabRadial() && radial.update(state, now))
+             {
++                tabBar.reset();barOrigin=false;
+                 client.setControllerCameraInput(0, 0);cameraArmed=false;
+                 resetWorld(); ui.reset();
+                 if (radialFocusTab >= 0)
+@@ -501,6 +521,18 @@
+             float pitch = state.rightY * scale * (config.invertY() ? 1 : -1);
+             if(Math.hypot(state.rightX,state.rightY)<=config.deadzone()/100f)cameraArmed=true;
+             client.setControllerCameraInput(cameraArmed?yaw * config.yawSpeed():0,cameraArmed?pitch * config.pitchSpeed():0);
++            if(!ui.active())barOrigin=false;
++            // The D-pad tab bar only takes over idle world input; any other UI owner keeps the D-pad.
++            boolean worldIdle=config.interfaceControls()&&!ui.active()&&!radial.active()&&!quick.active()&&world.getMenu().length==0
++                &&client.getControllerSelectionHint()==null&&(state.buttonsPressed&8)==0;
++            if(tabBar.update(state,now,worldIdle))
++            {
++                // The bar owns A and B while focused; world actions and targets are cleared, the camera stays live.
++                resetWorld();
++                int opened=tabBar.takeOpened();
++                if(opened>=0&&(config.interfaceControls()||opened==HomeTab.INVENTORY.ordinal())){barOrigin=true;ui.focusTab(opened,now);}
++                return;
++            }
+             if (ui.update(state, now))
+             {
+                 if(restoringSource!=null&&now>=restoringSourceUntil)restoringSource=null;
+@@ -523,7 +555,7 @@
+             // Reset intent and rearm, but keep the device/provider alive.
+             try { client.setControllerCameraInput(0, 0); resetWorld(); }
+             catch (RuntimeException cleanup) { ex.addSuppressed(cleanup); }
+-            finally { ui.reset(); radial.reset(); quick.reset(); radialFocusTab = -1; }
++            finally { ui.reset(); radial.reset(); quick.reset();tabBar.reset(); radialFocusTab = -1; }
+             long now = System.nanoTime();
+             if (lastAdapterFailure == 0 || now - lastAdapterFailure >= 5_000_000_000L)
+             {
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeQuickRadialOverlay.java
+@@ -34,7 +34,7 @@
+                 "Left stick: move / aim · Right stick: camera / menu scroll · LT: aim · Full tilt: direct-mode run",
+                 "A: interact · X: actions · LB/RB: targets / panes · B: back / cancel",
+                 "View: home tabs · Start: quick actions · Y: inventory",
+-                "D-pad: UI focus / scroll · Production LB/RB: amount · A: make recipe",
++                "D-pad left / right: tab bar · D-pad: UI focus / scroll · Production LB/RB: amount · A: make recipe",
+                 "Quick slots: focus food, potion, prayer, spell or special; open quick wheel; X: assign · Y: clear",
+                 "All slots start empty · Potion bindings use the lowest available dose · Plugin Reset restores controls"};
+             int max=Math.max(100,client.getCanvas().getWidth()-32),w=0,lineHeight=g.getFontMetrics().getHeight()+5;
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabBarOverlay.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabBarOverlay.java
+new file mode 100644
+--- /dev/null
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeTabBarOverlay.java
+@@ -0,0 +1,50 @@
++package net.runelite.client.plugins.soloscapecontroller;
++
++import com.GameClient;
++import java.awt.*;
++import javax.inject.Inject;
++import net.runelite.client.input.controller.HomeTab;
++import net.runelite.client.input.controller.TabBarControls;
++import net.runelite.client.ui.overlay.*;
++
++/** Highlights the native tab slot that D-pad focus has selected, with a classic tooltip naming it. */
++public final class SoloScapeTabBarOverlay extends Overlay
++{
++    private final SoloScapeControllerPlugin plugin;
++    private final GameClient client;
++    @Inject SoloScapeTabBarOverlay(SoloScapeControllerPlugin plugin,GameClient client)
++    {
++        super(plugin);this.plugin=plugin;this.client=client;
++        setPosition(OverlayPosition.DYNAMIC);setLayer(OverlayLayer.ABOVE_WIDGETS);setPriority(OverlayPriority.HIGH);
++    }
++    @Override public Dimension render(Graphics2D graphics)
++    {
++        TabBarControls bar=plugin.getTabBar();
++        if(!plugin.isActive()||!bar.active()||client.getCanvas()==null)return null;
++        int tab=bar.selected();
++        paint(graphics,bar.highlight(),tab<0?"":HomeTab.values()[tab].label,client.getCanvas().getWidth(),client.getCanvas().getHeight(),plugin.config().overlayScale()/100.0);
++        return null;
++    }
++    /** Static so renderer fixtures can draw it; {@code slot} is the native widget's rendered bounds. */
++    public static void paint(Graphics2D graphics,Rectangle slot,String label,int canvasWidth,int canvasHeight,double scale)
++    {
++        if(slot==null)return;
++        Graphics2D g=(Graphics2D)graphics.create();
++        try
++        {
++            g.setColor(new Color(255,255,0,45));g.fill(slot);
++            g.setStroke(new BasicStroke(3));g.setColor(Color.BLACK);g.drawRect(slot.x-1,slot.y-1,slot.width+1,slot.height+1);
++            g.setStroke(new BasicStroke(1));g.setColor(ControllerTheme.FOCUS);g.drawRect(slot.x-1,slot.y-1,slot.width+1,slot.height+1);
++            if(label.isEmpty())return;
++            g.setFont(ControllerTheme.body(scale));FontMetrics metrics=g.getFontMetrics();
++            int width=metrics.stringWidth(label)+10,height=metrics.getHeight()+4;
++            // Above the slot like a native hover tooltip, kept on the canvas.
++            int x=Math.max(2,Math.min(slot.x+(slot.width-width)/2,canvasWidth-width-2));
++            int y=slot.y-height-4<2?Math.min(canvasHeight-height-2,slot.y+slot.height+4):slot.y-height-4;
++            ControllerTheme.label(g,x,y,width,height);
++            if(ControllerTheme.classic())g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
++            g.setColor(ControllerTheme.TOOLTIP_TEXT);g.drawString(label,x+5,y+2+metrics.getAscent());
++        }
++        finally{g.dispose();}
++    }
++}
+diff --git a/client/test/net/runelite/client/input/controller/TabBarControlsTest.java b/client/test/net/runelite/client/input/controller/TabBarControlsTest.java
+new file mode 100644
+--- /dev/null
++++ b/client/test/net/runelite/client/input/controller/TabBarControlsTest.java
+@@ -0,0 +1,87 @@
++package net.runelite.client.input.controller;
++
++import java.awt.Rectangle;
++import java.util.ArrayList;
++import java.util.List;
++import org.junit.Test;
++import static org.junit.Assert.*;
++
++public class TabBarControlsTest {
++    private static final int A=1,B=2,UP=1<<11,LEFT=1<<13,RIGHT=1<<14;
++    private static final class Fake implements TabBarControls.Gateway {
++        int available=~0;Rectangle[] bounds=bar();final List<Integer> opened=new ArrayList<>();boolean accept=true;
++        public int availableTabs(){return available;}
++        public Rectangle[] tabBounds(){return bounds;}
++        public boolean openTab(int index){opened.add(index);return accept;}
++    }
++    /** The resized 634 bar: two rows of eight; the map orb and logout sit elsewhere on screen. */
++    private static Rectangle[] bar() {
++        Rectangle[] bounds=new Rectangle[HomeTab.values().length];
++        HomeTab[] top={HomeTab.COMBAT,HomeTab.TASKS,HomeTab.SKILLS,HomeTab.QUESTS,HomeTab.INVENTORY,HomeTab.EQUIPMENT,HomeTab.PRAYER,HomeTab.SPELLBOOK};
++        HomeTab[] bottom={HomeTab.OBJECTIVES,HomeTab.FRIENDS,HomeTab.IGNORE,HomeTab.CLAN,HomeTab.SETTINGS,HomeTab.EMOTES,HomeTab.MUSIC,HomeTab.NOTES};
++        for(int i=0;i<8;i++){bounds[top[i].ordinal()]=new Rectangle(1000+i*30,700,30,36);bounds[bottom[i].ordinal()]=new Rectangle(1000+i*30,738,30,36);}
++        bounds[HomeTab.MAP.ordinal()]=new Rectangle(1200,40,40,40);bounds[HomeTab.LOGOUT.ordinal()]=new Rectangle(1240,0,20,20);
++        return bounds;
++    }
++    private static GamepadState input(int held,int pressed){GamepadState s=new GamepadState();s.buttonsHeld=held;s.buttonsPressed=pressed;return s;}
++    private static boolean tick(TabBarControls bar,int held,int pressed,boolean idle){return bar.update(input(held,pressed),System.nanoTime(),idle);}
++
++    @Test public void onlyAFreshLeftRightPressFromIdleWorldInputEnters() {
++        Fake fake=new Fake();TabBarControls bar=new TabBarControls(fake);
++        assertFalse(tick(bar,RIGHT,RIGHT,false));assertFalse(bar.active());
++        assertFalse(tick(bar,UP,UP,true));assertFalse(bar.active());
++        assertFalse(tick(bar,LEFT|RIGHT,LEFT|RIGHT,true));assertFalse(bar.active());
++        assertFalse(tick(bar,RIGHT,0,true));assertFalse("a held direction is not a fresh press",bar.active());
++        fake.available=0;assertFalse(tick(bar,RIGHT,RIGHT,true));assertFalse("hidden bar (dialogue/modal) refuses entry",bar.active());
++        fake.available=~0;assertTrue(tick(bar,RIGHT,RIGHT,true));
++        assertTrue(bar.active());assertEquals(HomeTab.INVENTORY.ordinal(),bar.selected());
++        assertEquals(new Rectangle(1120,700,30,36),bar.highlight());
++        assertTrue("entering never opens a tab",fake.opened.isEmpty());
++    }
++    @Test public void cyclesInNativeVisualOrderSkippingUnavailableAndOffBarSlots() {
++        Fake fake=new Fake();fake.available=~(1<<HomeTab.EQUIPMENT.ordinal());TabBarControls bar=new TabBarControls(fake);
++        tick(bar,RIGHT,RIGHT,true);tick(bar,0,0,true);
++        int[] order=bar.order();
++        assertEquals(15,order.length);
++        assertEquals(HomeTab.COMBAT.ordinal(),order[0]);assertEquals(HomeTab.SPELLBOOK.ordinal(),order[6]);
++        assertEquals(HomeTab.OBJECTIVES.ordinal(),order[7]);assertEquals(HomeTab.NOTES.ordinal(),order[14]);
++        for(int tab:order){assertNotEquals(HomeTab.MAP.ordinal(),tab);assertNotEquals(HomeTab.LOGOUT.ordinal(),tab);}
++        tick(bar,RIGHT,RIGHT,true);assertEquals("unavailable equipment skipped",HomeTab.PRAYER.ordinal(),bar.selected());
++        tick(bar,0,0,true);tick(bar,LEFT,LEFT,true);tick(bar,0,0,true);tick(bar,LEFT,LEFT,true);
++        assertEquals(HomeTab.QUESTS.ordinal(),bar.selected());
++        for(int i=0;i<4;i++){tick(bar,0,0,true);tick(bar,LEFT,LEFT,true);}
++        assertEquals("wraps from the first slot to the last",HomeTab.NOTES.ordinal(),bar.selected());
++        assertTrue(fake.opened.isEmpty());
++    }
++    @Test public void heldOrSimultaneousAIsIgnoredAndOnlyAFreshConfirmOpens() {
++        Fake fake=new Fake();TabBarControls bar=new TabBarControls(fake);
++        assertTrue(tick(bar,RIGHT|A,RIGHT|A,true));
++        assertTrue(tick(bar,A,0,true));
++        assertTrue(fake.opened.isEmpty());
++        tick(bar,A|RIGHT,RIGHT,true);assertEquals(HomeTab.EQUIPMENT.ordinal(),bar.selected());
++        tick(bar,A,A,true);assertTrue("A held through cycling never confirms",fake.opened.isEmpty());
++        tick(bar,0,0,true);
++        tick(bar,A|LEFT,A|LEFT,true);assertTrue("A with a direction never confirms",fake.opened.isEmpty());
++        tick(bar,0,0,true);
++        assertTrue(tick(bar,A,A,true));
++        assertEquals(java.util.Collections.singletonList(HomeTab.INVENTORY.ordinal()),fake.opened);
++        assertFalse(bar.active());assertEquals(HomeTab.INVENTORY.ordinal(),bar.takeOpened());assertEquals(-1,bar.takeOpened());
++    }
++    @Test public void bExitsAndForeignFocusOrHiddenBarReleasesWithoutConsuming() {
++        Fake fake=new Fake();TabBarControls bar=new TabBarControls(fake);
++        tick(bar,RIGHT,RIGHT,true);
++        assertTrue("B belongs to the bar, not a world cancel",tick(bar,B,B,true));assertFalse(bar.active());
++        assertFalse("held B after leaving is not re-consumed",tick(bar,B,0,true));
++        tick(bar,LEFT,LEFT,true);assertTrue(bar.active());
++        assertFalse("another UI owner takes over the same tick",tick(bar,8,8,false));assertFalse(bar.active());
++        tick(bar,LEFT,LEFT,true);fake.available=0;
++        assertFalse(bar.update(input(0,0),System.nanoTime()+200_000_000L,true));assertFalse(bar.active());
++    }
++    @Test public void refusedOpenKeepsFocusWithFeedbackAndFallbackOrderWithoutBounds() {
++        Fake fake=new Fake();fake.accept=false;fake.bounds=new Rectangle[0];TabBarControls bar=new TabBarControls(fake);
++        tick(bar,LEFT,LEFT,true);tick(bar,0,0,true);
++        assertEquals(HomeTab.COMBAT.ordinal(),bar.order()[0]);assertNull(bar.highlight());
++        tick(bar,A,A,true);
++        assertTrue(bar.active());assertEquals("Tab unavailable here",bar.message());assertEquals(-1,bar.takeOpened());
++    }
++}
