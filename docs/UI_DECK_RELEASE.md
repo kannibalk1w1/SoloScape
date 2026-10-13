@@ -55,3 +55,13 @@ All **10,527** private payload files match the manifest. The ended r24 session r
 The stable Steam shortcut selects r25. Launch through Steam succeeded; its launcher and backend were observed running from the new build, with the transferred profile ready for Continue. Deck 60 FPS settings are retained. The deployment did not overwrite a live game or save.
 
 [Animated preview, screenshot and host paint measurements](JAGEX_UI_OVERHAUL.md#animated-launcher-braziers) accompany the pass. Host paint measurements and earlier r22 game-frame measurements have separate conditions; r25 has no new sustained Deck FPS acceptance or physical-pad playthrough claim.
+
+## Reference-flame revisions r26 and r27
+
+[PR #11](https://github.com/kannibalk1w1/SoloScape/pull/11) replaces procedural fire with the privately supplied eight-frame login sheet and uses the heavier RuneScape bold face for supporting text. Its r26 deployment verified 10,532 payload files and all 100 transferred profile files, preserving the character save. Wider character-frame insets expose both braziers.
+
+Owner feedback then identified atlas-frame misalignment and excessive speed. [PR #12](https://github.com/kannibalk1w1/SoloScape/pull/12) normalizes the frames against their stationary bowl origins, maps them to the measured original backdrop rim, and doubles each pose's duration to approximately 198 ms. All eight poses were rendered and visually checked; [captures and host evidence](JAGEX_UI_OVERHAUL.md#stable-reference-alignment-and-slower-playback) are included. The original supplied sheet remains unchanged and private.
+
+The active Deck build is now `deck-aligned-20261013-r27`, from commit `5d629baeba50394642d71385b3020d775395a64e`. All **10,536** payload files verified. A pre-deployment backup verified, all **101** copied profile files match, and the character save is unchanged. Existing launcher port settings are preserved when present. No live world was interrupted: the idle launcher/backend were closed under build/profile guards before promotion. Older builds and stable wrappers remain available.
+
+The stable Steam shortcut was restarted into r27; its actual launcher/backend were observed running with the saved profile ready. The bold supporting text is retained. Host paint checks and rendered pose previews do not establish physical-controller acceptance or sustained Deck FPS.
