@@ -1,0 +1,129 @@
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -219,6 +219,16 @@
+         result.sort(Comparator.comparingInt(w->w.id));
+         return result.toArray(new UiState.Widget[0]);
+     }
++    /** Current native recipe varcs; preserve the actual widget item field used by native dispatch. */
++    private static String productionRecipeName(int component)
++    {
++        int index=component-14;if(index<0||index>=10)return "";
++        int itemVar=index<6?755+index:1139+index-6,nameVar=index<6?132+index:280+index-6;
++        if(Isaac.anIntArray1303==null||itemVar>=Isaac.anIntArray1303.length||Isaac.anIntArray1303[itemVar]<0
++            ||Class258_Sub2.aStringArray8532==null||nameVar>=Class258_Sub2.aStringArray8532.length)return "";
++        String name=Class258_Sub2.aStringArray8532[nameVar];return name==null?"":clean(name.replace("<br>"," "));
++    }
++
+     private static int productionAmount(int dialogueId)
+     {
+         if (dialogueId!=905 || Class318_Sub1_Sub3_Sub3.aClass170_10209==null || Class229.aClass194_2981==null) return -1;
+@@ -376,15 +386,19 @@
+                 && (id != 620 || (w.anInt830 & 65535) == 25 || (w.anInt830 & 65535) == 26)) items.add(widget);
+             else controls.add(widget);
+         }
+-        if(id==275 || id==499 || id==741) {
++        if(id==178 || id==277 || id==380 || id==275 || id==499 || id==741) {
+             Class46[][] loaded=Class348_Sub40_Sub33.aClass46ArrayArray9427;
+             if(loaded!=null && id<loaded.length && loaded[id]!=null) {
+                 for(Class46 text:loaded[id]) {
+                     if(text==null || text.anInt774!=4 || !isVisible(text))continue;
+                     int component=text.anInt830&65535;
+                     if(id==275 && (component<16 || component>315))continue;
++                    if(id==178 && component!=52&&component!=55&&component!=59&&component!=62&&component!=66)continue;
++                    if(id==277 && component!=7&&(component<10||component>17))continue;
+                     String value=ControllerPanelDetails.plain(text.aString792);
+                     if(value.isEmpty())continue;
++                    if(id==178){String label=component==52?"Start":component==55?"Requirements":component==59?"Items":component==62?"Combat":"Rewards";value=label+": "+value;}
++                    if(id==277&&component==7)value="Total quest points: "+value;
+                     controls.add(new UiState.Widget(text.anInt830,text.anInt704,-1,0,value,
+                         new Rectangle(0,component*32,400,28),new UiState.Action[0],value,ControllerPanelDetails.status(text.aString792,-1)));
+                 }
+@@ -394,7 +408,7 @@
+         items.sort(order); side.sort(order); controls.sort(order);
+         List<UiState.Pane> panes = new ArrayList<>();
+         String name = id==277 || id==380 ? "Quest complete" : id==755?"Map":id==182?"Log out":id == 620 ? "Shop" : id == 11 ? "Deposit box" : id == 762 ? "Bank" : id == 387 || id == 667 ? "Equipment" : id == 271 ? "Prayer" : id==884?"Combat":id==320?"Skills":id==190 || id==178 || id==275?"Quests":id==261 || id==982 || id==742 || id==743?"Settings":id==134 || id==499 || id==741?"Skill guide":id==300?"Smithing":id==324?"Tanning":production(id)?"Crafting":"Spellbook";
+-        if(id==275){Class46 title=loadedWidget(275<<16|2);if(title!=null&&!clean(title.aString792).isEmpty())name=clean(title.aString792);}
++        if(id==275 || id==178 || id==277){Class46 title=loadedWidget(id<<16|(id==275?2:id==178?14:4));if(title!=null&&!clean(title.aString792).isEmpty())name=clean(title.aString792);}
+         panes.add(new UiState.Pane(!modal || id == 667 || extraModal(id) ? name : id == 620 ? "Stock" : id == 11 ? "Inventory" : "Bank", items.toArray(new UiState.Widget[0])));
+         if (id == 762 || id == 620 || id == 667) panes.add(new UiState.Pane("Inventory", side.toArray(new UiState.Widget[0])));
+         if (modal && !extraModal(id)) panes.add(new UiState.Pane("Controls / tabs", controls.toArray(new UiState.Widget[0])));
+@@ -415,7 +429,7 @@
+             if(!details.isEmpty())panes.add(new UiState.Pane("Bonuses",details.toArray(new UiState.Widget[0])));
+         }
+         return new UiState.Panel(id, renderFrame, name, panes.toArray(new UiState.Pane[0]),modal,
+-            id==275 || id==499 || id==741 ? controls.toArray(new UiState.Widget[0]):new UiState.Widget[0]);
++            id==178 || id==277 || id==380 || id==275 || id==499 || id==741 ? controls.toArray(new UiState.Widget[0]):new UiState.Widget[0]);
+     }
+ 
+     static boolean scroll(UiState.Widget expected, int direction)
+@@ -446,6 +460,7 @@
+     {
+         Class46 w = seen.widget;
+         String name = clean(dialogue ? w.aString792 : w.aString752);
++        if(dialogue && w.anInt830>>>16==905){String recipe=productionRecipeName(w.anInt830&65535);if(!recipe.isEmpty())name=recipe;}
+         if (!dialogue && w.anInt812 >= 0 && Exception_Sub1.aClass255_112 != null)
+         {
+             ObjType item = Exception_Sub1.aClass255_112.getItemDefinitions(-115, w.anInt812);
+diff --git a/client/src/net/runelite/client/input/controller/PanelPresentation.java b/client/src/net/runelite/client/input/controller/PanelPresentation.java
+--- a/client/src/net/runelite/client/input/controller/PanelPresentation.java
++++ b/client/src/net/runelite/client/input/controller/PanelPresentation.java
+@@ -15,7 +15,7 @@
+         scale = Math.max(.5, Math.min(requestedScale, Math.min((width-24.0)/720, (height-24.0)/460)));
+         bounds = new Rectangle((width-(int)(720*scale))/2, (height-(int)(460*scale))/2, (int)(720*scale), (int)(460*scale));
+         content = new Rectangle(bounds.x+(int)(16*scale), bounds.y+(int)(58*scale), (int)(500*scale), (int)(336*scale));
+-        columns = group==ControllerSettingsModel.ID || group==190 || group==275 || group==499 || group==741 || group==884 ? 1 : group==320 ? 3 : 4;
++        columns = group==ControllerSettingsModel.ID || group==190 || group==178 || group==277 || group==380 || group==275 || group==499 || group==741 || group==884 ? 1 : group==320 ? 3 : 4;
+         rows = 7; pageSize = columns*rows;
+     }
+     public UiState present(UiState nativeState, UiState.Widget selected, boolean inventory, boolean equipment, boolean bank, boolean shop)
+@@ -43,7 +43,7 @@
+     {return supported(id,equipment,bank,shop,false,false,false,false,false);}
+     public static boolean supported(int id, boolean equipment, boolean bank, boolean shop,boolean quests,boolean skills,boolean combat,boolean prayer,boolean spells)
+     { return id==ControllerSettingsModel.ID || equipment&&(id==387||id==667) || bank&&(id==762||id==11) || shop&&id==620
+-        || quests&&(id==190||id==275||id==178) || skills&&(id==320||id==134||id==499||id==741)
++        || quests&&(id==190||id==275||id==178||id==277||id==380) || skills&&(id==320||id==134||id==499||id==741)
+         ||combat&&id==884 || prayer&&id==271 || spells&&(id==192||id==193||id==430); }
+     public int page(UiState.Widget[] widgets, UiState.Widget selected)
+     {
+diff --git a/client/test/ControllerUiTest.java b/client/test/ControllerUiTest.java
+--- a/client/test/ControllerUiTest.java
++++ b/client/test/ControllerUiTest.java
+@@ -141,6 +141,37 @@
+         assertEquals(0, ControllerUi.availableTabs());
+     }
+ 
++    @Test public void productionChoicesUseCurrentNativeRecipeNamesWithoutChangingDispatchItemIdentity() {
++        int[] oldItems=Isaac.anIntArray1303;String[] oldNames=Class258_Sub2.aStringArray8532;
++        try {
++            Isaac.anIntArray1303=new int[1143];java.util.Arrays.fill(Isaac.anIntArray1303,-1);Class258_Sub2.aStringArray8532=new String[284];
++            Isaac.anIntArray1303[755]=1759;Class258_Sub2.aStringArray8532[132]="Ball of wool<br>(Wool)";
++            panelSlot(905,14,-1,-1,"Make 1");UiState.Widget recipe=ControllerUi.snapshot(false).dialogue[0];
++            assertEquals("Ball of wool (Wool)",recipe.name);assertEquals(-1,recipe.itemId);assertEquals("Make 1",recipe.actions[0].label);
++            Class258_Sub2.aStringArray8532[132]="Bow string (Flax)";assertFalse(ControllerUi.invoke(recipe,recipe.actions[0]));
++            Isaac.anIntArray1303[755]=-1;assertEquals("Continue",ControllerUi.snapshot(false).dialogue[0].name);
++        } finally {Isaac.anIntArray1303=oldItems;Class258_Sub2.aStringArray8532=oldNames;}
++    }
++
++    @Test public void questIntroExposesVisibleRequirementsAndPreservesNativeStartActions() {
++        Class46 requirement=panelSlot(178,55,-1,-1);requirement.anInt774=4;requirement.aString792="<col=ff0000>None<br>Bring food";
++        Class46 yes=panelSlot(178,73,-1,-1,"Yes");
++        Class46 decorative=panelSlot(178,30,-1,-1);decorative.anInt774=4;decorative.aString792="Hidden toggle label";
++        UiState.Panel intro=ControllerUi.snapshot(false).panel;
++        assertEquals(178,intro.id);assertTrue(intro.modal);assertEquals(1,intro.details.length);
++        assertEquals("Requirements: None\nBring food",intro.details[0].name);assertEquals(0,intro.details[0].actions.length);
++        assertTrue(java.util.Arrays.stream(intro.panes[0].widgets).anyMatch(w->w.id==yes.anInt830&&w.actions[0].label.equals("Yes")));
++        requirement.aBoolean813=true;assertEquals(0,ControllerUi.snapshot(false).panel.details.length);
++    }
++    @Test public void questRewardsExposeActualTextWithoutTurningItIntoActions() {
++        Class46 reward=panelSlot(277,10,-1,-1);reward.anInt774=4;reward.aString792="875 Magic XP";
++        Class46 points=panelSlot(277,7,-1,-1);points.anInt774=4;points.aString792="1 Quest Point";
++        UiState.Panel complete=ControllerUi.snapshot(false).panel;assertEquals(2,complete.details.length);
++        for(UiState.Widget row:complete.details)assertEquals(0,row.actions.length);
++        assertTrue(net.runelite.client.input.controller.PanelPresentation.supported(277,false,false,false,true,false,false,false,false));
++        assertFalse(net.runelite.client.input.controller.PanelPresentation.supported(277,false,false,false,false,false,false,false,false));
++    }
++
+     @Test public void questJournalIncludesReadonlyObjectivesWithoutFabricatingActions() {
+         Class46 line=panelSlot(275,16,-1,-1);
+         line.anInt774=4;line.aString792="<str>Bring the milk<br>Return to the cook";

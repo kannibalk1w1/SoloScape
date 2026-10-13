@@ -1,0 +1,62 @@
+{
+  "environment": "Isolated native server; supplied inputs, teleport/combat fixtures in existing quest tests; no graphical or earned-route acceptance.",
+  "suites": [
+    {
+      "suite": "content.quest.free.blood_pact.BloodPactTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.quest.free.imp_catcher.ImpCatcherTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.quest.member.druidic_ritual.DruidicRitualTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.crafting.SpinningWheelTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.crafting.PotteryTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.smithing.SmithingTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.smithing.SmeltingTest",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.fletching.FletchingTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "exit_code": 0
+}

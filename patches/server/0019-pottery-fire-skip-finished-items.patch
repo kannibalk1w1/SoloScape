@@ -1,0 +1,37 @@
+diff --git a/game/src/main/kotlin/content/skill/crafting/Pottery.kt b/game/src/main/kotlin/content/skill/crafting/Pottery.kt
+--- a/game/src/main/kotlin/content/skill/crafting/Pottery.kt
++++ b/game/src/main/kotlin/content/skill/crafting/Pottery.kt
+@@ -32,7 +32,7 @@
+         }
+ 
+         objectOperate("Fire", "pottery_oven*", arrive = false) { (target) ->
+-            val item = inventory.items.firstOrNull { Rows.getOrNull("pottery.${it.id}") != null && it.id != "soft_clay" } ?: return@objectOperate
++            val item = inventory.items.firstOrNull { it.id != "soft_clay" && Tables.itemListOrNull("firing.${it.id}.products") != null } ?: return@objectOperate
+             make(target, "cook_range", item)
+         }
+     }
+diff --git a/game/src/test/kotlin/content/skill/crafting/PotteryTest.kt b/game/src/test/kotlin/content/skill/crafting/PotteryTest.kt
+--- a/game/src/test/kotlin/content/skill/crafting/PotteryTest.kt
++++ b/game/src/test/kotlin/content/skill/crafting/PotteryTest.kt
+@@ -45,4 +45,21 @@
+         assertEquals(1, player.inventory.count("empty_pot"))
+         assertNotEquals(0.0, player.experience.get(Skill.Crafting))
+     }
++    @Test
++    fun `Fire skips finished pots and raw clay before an unfired pot`() {
++        val player = createPlayer(Tile(3085, 3408))
++        player.inventory.add("empty_pot")
++        player.inventory.add("soft_clay")
++        player.inventory.add("unfired_pot")
++        val oven = GameObjects.find(Tile(3084, 3407), "pottery_oven")
++        player.objectOption(oven, "Fire")
++        tick()
++        player.continueDialogue("dialogue_skill_creation", "choice1")
++        tick(3)
++        assertEquals(2, player.inventory.count("empty_pot"))
++        assertEquals(1, player.inventory.count("soft_clay"))
++        assertEquals(0, player.inventory.count("unfired_pot"))
++        assertNotEquals(0.0, player.experience.get(Skill.Crafting))
++    }
++
+ }

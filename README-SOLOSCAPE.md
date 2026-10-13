@@ -92,3 +92,5 @@ Playtest 2 candidate (13 October 2026): [changes, server approach and validation
 Jagex-style UI candidate (13 October 2026): [overhaul, previews and validation](docs/JAGEX_UI_OVERHAUL.md). The launcher and every SoloScape controller surface now use the RuneScape bitmap fonts, stone frames, classic menu colours and the "Choose Option" menu (client patch 0042). D-pad left/right focuses the native tab bar from world input; a fresh A opens the highlighted tab and B returns to the world (client patch 0043). Classic controller UI off restores the modern palette. Native item artwork and all 25 skill icons/levels are included (client patch 0044). [Deck release, screenshots and performance](docs/UI_DECK_RELEASE.md).
 
 Launcher input follow-up: [Steam-mapped navigation and controller Save & Quit](docs/LAUNCHER_INPUT_AND_QUIT.md) (client patch 0045). Exit through Home > Settings > Finish > Save & Quit, then press A again to confirm.
+
+Broader content coverage: [early quest and production matrix](docs/CONTENT_COVERAGE.md), with repeatable isolated server and native-client probes, readable quest requirements/rewards, and a mixed-inventory pottery fix.
