@@ -10,7 +10,7 @@ public class NativeSessionSmoke {
   String marker=args[0]; Loader.main(new String[]{"--address","127.0.0.1","--port",args[1]});
   new Thread(()->{
    long started=System.currentTimeMillis();
-   long deadline=started+(Boolean.getBoolean("soloscape.deck60.route")?(Integer.getInteger("soloscape.deck60.route.seconds",1800)*1000L+900000):Boolean.getBoolean("soloscape.content.probe")?420000:Boolean.getBoolean("soloscape.deck60.probe")?420000:Boolean.getBoolean("soloscape.playable.probe")?420000:150000);
+   long deadline=started+(Boolean.getBoolean("soloscape.deck60.route")?(Integer.getInteger("soloscape.deck60.route.seconds",1800)*1000L+900000):Boolean.getBoolean("soloscape.content.probe")?420000:Boolean.getBoolean("soloscape.bloodpact.probe")?900000:Boolean.getBoolean("soloscape.deck60.probe")?420000:Boolean.getBoolean("soloscape.playable.probe")?420000:150000);
    while(System.currentTimeMillis()<deadline) {
     try {
      Thread.sleep(500);
@@ -19,7 +19,7 @@ public class NativeSessionSmoke {
       ControllerUi.enable(true);
       SoloScapeConnection.update();
       net.runelite.client.input.controller.UiState ui=ControllerUi.snapshot();
-      if((!Boolean.getBoolean("soloscape.content.probe")||!NativeContentCoverageProbe.active())&&ui.dialogue.length>0 && ui.dialogue[0].actions.length>0 && !(Boolean.getBoolean("soloscape.deck60.route")&&NativeDeckRouteProbe.active()))
+      if((!Boolean.getBoolean("soloscape.content.probe")||!NativeContentCoverageProbe.active())&&(!Boolean.getBoolean("soloscape.bloodpact.probe")||!NativeBloodPactProbe.active())&&ui.dialogue.length>0 && ui.dialogue[0].actions.length>0 && !(Boolean.getBoolean("soloscape.deck60.route")&&NativeDeckRouteProbe.active()))
           ControllerUi.invoke(ui.dialogue[0],ui.dialogue[0].actions[0]); // ordinary fresh Continue, not a fabricated packet
       try {
        Files.write(Paths.get(marker+".status"),("state="+Class240.anInt4674+" camera="+Class348_Sub40_Sub21.anInt9282+" player="+(Class132.aPlayer_1907!=null)+" ready="+ControllerWorld.ready()+" tabs="+ControllerUi.availableTabs()+" dialogue="+ControllerUi.hasDialogue()+" dialogueId="+ControllerUi.snapshot().dialogueId+" modal="+ControllerUi.hasModalPanel()+" entry="+ControllerEntry.active()+" menu="+Class305.aBoolean3870+" loading="+Class36.anInt489+" dirty="+Canvas_Sub1.mapRegionDirty+" capabilities="+SoloScapeConnection.status()).getBytes("UTF-8"));
@@ -31,6 +31,7 @@ public class NativeSessionSmoke {
           || Boolean.getBoolean("soloscape.playtest2.probe")&&NativePlaytestTwoProbe.active()
           || Boolean.getBoolean("soloscape.map.probe")&&NativeMapProbe.active()
           || Boolean.getBoolean("soloscape.content.probe")&&NativeContentCoverageProbe.active()
+          || Boolean.getBoolean("soloscape.bloodpact.probe")&&NativeBloodPactProbe.active()
           || Boolean.getBoolean("soloscape.quit.probe")&&NativeQuitProbe.active()
           || Boolean.getBoolean("soloscape.artwork.probe")&&NativeArtworkProbe.active()
           || Boolean.getBoolean("soloscape.tabbar.probe")&&NativeTabBarProbe.active()
@@ -43,6 +44,7 @@ public class NativeSessionSmoke {
         if(Boolean.getBoolean("soloscape.playtest2.probe")&&!NativePlaytestTwoProbe.tick(marker))return true;
         if(Boolean.getBoolean("soloscape.map.probe")&&!NativeMapProbe.tick())return true;
         if(Boolean.getBoolean("soloscape.content.probe")&&!NativeContentCoverageProbe.tick(marker))return true;
+        if(Boolean.getBoolean("soloscape.bloodpact.probe")&&!NativeBloodPactProbe.tick(marker))return true;
         if(Boolean.getBoolean("soloscape.quit.probe")&&!NativeQuitProbe.tick(marker))return true;
         if(Boolean.getBoolean("soloscape.artwork.probe")&&!NativeArtworkProbe.tick(marker))return true;
         if(Boolean.getBoolean("soloscape.tabbar.probe")&&!NativeTabBarProbe.tick(marker))return true;

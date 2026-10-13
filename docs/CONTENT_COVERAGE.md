@@ -15,7 +15,7 @@ Client patch: `0046-readable-quest-intros-and-rewards.patch`. Server patch: `001
 
 | Content | Native server cases | Graphical client coverage |
 | --- | ---: | --- |
-| Blood Pact | 1 completion fixture | Real Xenia dialogue, readable quest introduction and native Yes; earlier instance projection test remains separate |
+| Blood Pact | 1 completion fixture | Real Xenia dialogue, readable quest introduction and native Yes. **Earned controller-only completion** from a fresh character with real travel, combat, loot and save/Continue: [sprint batch 2](DECK_SESSION_SPRINT.md#batch-2-earned-blood-pact-through-controller-input-client-patch-0052---blood-pact-probe) |
 | Imp Catcher | 1 completion fixture | Real Mizgog dialogue, completion/cutscene and readable reward interface using supplied beads |
 | Druidic Ritual | 1 completion fixture | [Native completion, journal and save/reload fixture](DRUIDIC_RITUAL_GRAPHICAL.md) |
 | Spinning | 1 | Native wheel Spin and wool-to-ball recipe |

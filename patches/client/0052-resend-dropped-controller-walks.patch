@@ -1,0 +1,69 @@
+diff --git a/client/src/ControllerWorld.java b/client/src/ControllerWorld.java
+--- a/client/src/ControllerWorld.java
++++ b/client/src/ControllerWorld.java
+@@ -10,7 +10,7 @@
+ final class ControllerWorld
+ {
+     private static final int[] pathX = new int[128], pathY = new int[128];
+-    private static long lastWalk = Long.MIN_VALUE;
++    private static long lastWalk = Long.MIN_VALUE, lastPosition, lastProgress;
+     private static net.runelite.api.coords.WorldPoint walkMarker;
+     private static final int[] NPC_ACTIONS = {25, 20, 44, 46, 60};
+     private static final int[] GROUND_ACTIONS = {21, 10, 47, 22, 5};
+@@ -70,12 +70,15 @@
+         int destX = WorldInput.x(tile) + map.anInt4453, destY = WorldInput.y(tile) + map.anInt4441;
+         if (destX == x && destY == y) return false;
+         long world = WorldInput.pack(destX + za_Sub2.regionTileX, destY + Class90.regionTileY);
+-        if (world == lastWalk && Class248.anInt3203 == destX && Class97.anInt1548 == destY) return false;
++        long position = WorldInput.pack(x + za_Sub2.regionTileX, y + Class90.regionTileY), now = System.nanoTime();
++        if (position != lastPosition) { lastPosition = position; lastProgress = now; }
++        if (!WorldInput.sendWalk(world == lastWalk && Class248.anInt3203 == destX && Class97.anInt1548 == destY,
++            now - lastProgress)) return false;
+         // Check an exact destination through native pathfinding before invoking ordinary Walk here.
+         if (!reachable(destX, destY, 1, 1, -4, 0, 0)) return false;
+         dispatch(new ControllerTarget("", "Walk here", 19, 0, destX, destY,
+             player.plane, za_Sub2.regionTileX, Class90.regionTileY));
+-        lastWalk = world;
++        lastWalk = world; lastProgress = now;
+         walkMarker = new net.runelite.api.coords.WorldPoint(destX + za_Sub2.regionTileX, destY + Class90.regionTileY, player.plane);
+         return true;
+     }
+diff --git a/client/src/net/runelite/client/input/controller/WorldInput.java b/client/src/net/runelite/client/input/controller/WorldInput.java
+--- a/client/src/net/runelite/client/input/controller/WorldInput.java
++++ b/client/src/net/runelite/client/input/controller/WorldInput.java
+@@ -76,6 +76,18 @@
+         return targetScore(dx, dy, facingX, facingY, retained,radius);
+     }
+ 
++    /** Two server ticks: long enough for an accepted walk to move the player at least one tile. */
++    public static final long WALK_RETRY_NANOS = 1_200_000_000L;
++
++    /**
++     * A repeated walk to the current destination is normally redundant. The server silently drops walks
++     * while a script holds the player (cutscene fades, stuns), so resend once the player has stalled.
++     */
++    public static boolean sendWalk(boolean sameDestination, long nanosWithoutProgress)
++    {
++        return !sameDestination || nanosWithoutProgress >= WALK_RETRY_NANOS;
++    }
++
+     public static long pack(int x, int y) { return ((long) x << 32) | (y & 0xffffffffL); }
+     public static int x(long tile) { return (int) (tile >> 32); }
+     public static int y(long tile) { return (int) tile; }
+diff --git a/client/test/net/runelite/client/input/controller/WorldInputTest.java b/client/test/net/runelite/client/input/controller/WorldInputTest.java
+--- a/client/test/net/runelite/client/input/controller/WorldInputTest.java
++++ b/client/test/net/runelite/client/input/controller/WorldInputTest.java
+@@ -16,6 +16,13 @@
+         assertEquals(1, WorldInput.worldY(1, 0, 4096), 1e-6);
+     }
+ 
++    @Test public void droppedOrStalledWalksAreResentAfterTwoServerTicks()
++    {
++        assertTrue("a new destination is always sent", WorldInput.sendWalk(false, 0));
++        assertFalse("a walk still making progress is not repeated", WorldInput.sendWalk(true, WorldInput.WALK_RETRY_NANOS - 1));
++        assertTrue("a walk the server dropped is resent", WorldInput.sendWalk(true, WorldInput.WALK_RETRY_NANOS));
++    }
++
+     @Test public void projectionStopsAtWallsAndSceneEdges()
+     {
+         int[][] map = new int[12][12];
