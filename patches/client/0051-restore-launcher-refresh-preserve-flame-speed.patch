@@ -1,0 +1,21 @@
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java b/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java
+--- a/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java
++++ b/client/src/net/runelite/client/soloscape/launcher/LauncherScene.java
+@@ -12,7 +12,7 @@
+ {
+     private final BufferedImage scene;
+     private final BufferedImage[] flames;
+-    private final javax.swing.Timer animation=new javax.swing.Timer(66,e->advance());
++    private final javax.swing.Timer animation=new javax.swing.Timer(33,e->advance());
+     private boolean animationEnabled=true;
+     private Frame watchedFrame;
+     private final java.awt.event.WindowStateListener windowState=e->syncAnimation();
+@@ -63,7 +63,7 @@
+         try
+         {
+             if(mirrored){g.translate(width,0);g.scale(-1,1);}g.scale(xScale,yScale);
+-            int frame=(int)((animationFrames/3+(mirrored?4:0))%8);
++            int frame=(int)((animationFrames/6+(mirrored?4:0))%8);
+             // Normalized reference rim is at (40,90); original artwork rim spans x 0..98 at y 265.
+             // Preserve the reference flame-to-bowl ratio with uniform scaling, including at resize.
+             double scale=98.0/48.0;

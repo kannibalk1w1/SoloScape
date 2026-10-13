@@ -35,7 +35,8 @@ public final class NativeLauncherProbe
             System.setProperty("soloscape.launcher.steamKeyboard","true");
             waitFor(()->((JFrame)field(launcher,"frame")).isActive(),"Launcher not active for mapped navigation");
             waitFor(()->!((JButton)field(launcher,"play")).isEnabled(),"Empty launcher did not disable Continue");
-            edt(()->{((JList<?>)field(launcher,"list")).requestFocusInWindow();return null;});Thread.sleep(150);
+            edt(()->{((JList<?>)field(launcher,"list")).requestFocusInWindow();return null;});
+            waitFor(()->KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()==field(launcher,"list"),"Character list did not acquire focus before mapped navigation");
             Robot robot=new Robot();robot.keyPress(java.awt.event.KeyEvent.VK_RIGHT);Thread.sleep(60);robot.keyRelease(java.awt.event.KeyEvent.VK_RIGHT);
             waitFor(()->KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()==field(launcher,"create"),"Steam-mapped Right did not reach the first enabled button");
             robot.keyPress(java.awt.event.KeyEvent.VK_ENTER);Thread.sleep(60);robot.keyRelease(java.awt.event.KeyEvent.VK_ENTER);
@@ -64,22 +65,24 @@ public final class NativeLauncherProbe
             javax.imageio.ImageIO.write(new Robot().createScreenCapture(launcherScreen),"png",root.resolve("launcher-scene.png").toFile());
             LauncherScene scene=edt(()->(LauncherScene)((JFrame)field(launcher,"frame")).getContentPane());
             require(edt(()->((java.awt.image.BufferedImage[])field(scene,"flames")).length)==8,"Reference flame frames not loaded");
+            long animationStarted=System.nanoTime();
             long startedFrames=edt(()->(Long)field(scene,"animationFrames"));
             for(int i=0;i<12;i++){Thread.sleep(100);javax.imageio.ImageIO.write(robot.createScreenCapture(launcherScreen),"png",root.resolve(String.format("launcher-animation-%02d.png",i)).toFile());}
             long visibleFrames=edt(()->(Long)field(scene,"animationFrames"))-startedFrames;
+            double animationSeconds=(System.nanoTime()-animationStarted)/1000000000.0;
             require(visibleFrames>10,"Brazier animation did not advance while visible");
             edt(()->{((javax.swing.Timer)field(launcher,"refresh")).stop();scene.setAnimationEnabled(false);return null;});long pausedFrames=edt(()->(Long)field(scene,"animationFrames"));Thread.sleep(200);
             require(edt(()->(Long)field(scene,"animationFrames"))==pausedFrames,"Brazier animation ran during gameplay pause");
             for(int pose=0;pose<8;pose++){
                 final int index=pose;
-                java.awt.image.BufferedImage preview=edt(()->{Field frames=scene.getClass().getDeclaredField("animationFrames");frames.setAccessible(true);frames.setLong(scene,index*3L);java.awt.image.BufferedImage image=new java.awt.image.BufferedImage(1280,800,java.awt.image.BufferedImage.TYPE_INT_RGB);java.awt.Graphics2D graphics=image.createGraphics();try{scene.paint(graphics);}finally{graphics.dispose();}return image;});
+                java.awt.image.BufferedImage preview=edt(()->{Field frames=scene.getClass().getDeclaredField("animationFrames");frames.setAccessible(true);frames.setLong(scene,index*6L);java.awt.image.BufferedImage image=new java.awt.image.BufferedImage(1280,800,java.awt.image.BufferedImage.TYPE_INT_RGB);java.awt.Graphics2D graphics=image.createGraphics();try{scene.paint(graphics);}finally{graphics.dispose();}return image;});
                 javax.imageio.ImageIO.write(preview,"png",root.resolve(String.format("launcher-pose-%02d.png",pose)).toFile());
             }
             edt(()->{scene.setAnimationEnabled(true);((JFrame)field(launcher,"frame")).setVisible(false);return null;});long hiddenFrames=edt(()->(Long)field(scene,"animationFrames"));Thread.sleep(200);
             require(edt(()->(Long)field(scene,"animationFrames"))==hiddenFrames,"Brazier animation ran while hidden");
             edt(()->{((JFrame)field(launcher,"frame")).setVisible(true);return null;});Thread.sleep(200);
             require(edt(()->(Long)field(scene,"animationFrames"))>hiddenFrames,"Brazier animation did not resume");
-            java.util.Map<String,Object> animation=new java.util.LinkedHashMap<>();animation.put("environment","Private host Swing/Xvfb; no Deck performance acceptance");animation.put("visible_timer_frames",visibleFrames);animation.put("gameplay_pause_verified",true);animation.put("hidden_pause_verified",true);animation.put("resume_verified",true);
+            java.util.Map<String,Object> animation=new java.util.LinkedHashMap<>();animation.put("environment","Private host Swing/Xvfb; no Deck performance acceptance");animation.put("visible_timer_frames",visibleFrames);animation.put("observed_timer_hz",visibleFrames/animationSeconds);animation.put("gameplay_pause_verified",true);animation.put("hidden_pause_verified",true);animation.put("resume_verified",true);
             long paintNanos=edt(()->{java.awt.image.BufferedImage image=new java.awt.image.BufferedImage(1280,800,java.awt.image.BufferedImage.TYPE_INT_ARGB);java.awt.Graphics2D graphics=image.createGraphics();long start=System.nanoTime();try{for(int i=0;i<100;i++)scene.paint(graphics);}finally{graphics.dispose();}return System.nanoTime()-start;});animation.put("host_scene_paint_mean_ms",paintNanos/100000000.0);
             edt(()->{((javax.swing.Timer)field(launcher,"refresh")).start();return null;});
             Files.write(root.resolve("launcher-animation.json"),new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(animation).getBytes("UTF-8"));
