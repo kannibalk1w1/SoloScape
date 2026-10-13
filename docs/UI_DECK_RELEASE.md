@@ -45,3 +45,13 @@ The merged content batch from [PR #6](https://github.com/kannibalk1w1/SoloScape/
 All **95** copied profile files match their source hashes, and the character save is unchanged. The stable Steam shortcut now selects r24, and its launcher and backend were observed running after launch through Steam. Older builds and the previous wrapper remain available. Continue uses the transferred character and retains the Deck 60 FPS preference.
 
 This build includes launcher mapped-controller navigation, controller **Save & Quit**, readable quest introductions/rewards and recipe names, and the pot-firing selection fix. See [coverage and native screenshots](CONTENT_COVERAGE.md). The performance measurements above were made on r22; r24 has no new sustained-FPS measurement. Physical controller navigation and gameplay remain playtest acceptance.
+
+## Animated launcher and save-reader build r25
+
+The owner Deck now uses `deck-charm-20261013-r25`, the exact merged [PR #9](https://github.com/kannibalk1w1/SoloScape/pull/9) build from commit `5e024750ea6ce682214cbcd8d4a45106e476f29b`. It includes the 22 px launcher supporting text, animated braziers, all five pottery recipe fixes/coverage, and the long-event save-reader fix found through [Druidic Ritual's graphical coverage](DRUIDIC_RITUAL_GRAPHICAL.md).
+
+All **10,527** private payload files match the manifest. The ended r24 session received a verified recovery snapshot, followed by a verified pre-deployment backup. All **99** copied profile files match, and the character save is unchanged. Recovery does not establish clean closure of the earlier session. The old build and previous stable wrapper remain available.
+
+The stable Steam shortcut selects r25. Launch through Steam succeeded; its launcher and backend were observed running from the new build, with the transferred profile ready for Continue. Deck 60 FPS settings are retained. The deployment did not overwrite a live game or save.
+
+[Animated preview, screenshot and host paint measurements](JAGEX_UI_OVERHAUL.md#animated-launcher-braziers) accompany the pass. Host paint measurements and earlier r22 game-frame measurements have separate conditions; r25 has no new sustained Deck FPS acceptance or physical-pad playthrough claim.
