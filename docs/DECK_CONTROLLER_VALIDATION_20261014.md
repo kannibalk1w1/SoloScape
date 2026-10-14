@@ -90,3 +90,6 @@ All rows have 19 columns, with no malformed rows or negative counter deltas. Ful
 ![Actual Deck software-rendered map during the diagnostic transition](evidence/deck-controller-20261014/r32-map.png)
 
 The temporary diagnostic shortcut was removed after its sessions ended. The stable player build remains r30. All 124 tooling tests passed with the original full r29 trace supplied; Claude's bounded source/analysis tasks completed on Sonnet.
+
+
+The final owner check found another ended, unverified session started at 11:05:56 UTC, before this resumed diagnostic work. Its recorded server/client processes were not alive and its current save validated. Recovery archived the ended record without signalling any process, then took a fresh backup. The current owner save stayed byte-for-byte identical through that recovery; it was not replaced with the older r29 transfer copy. This verifies preservation and current save validity, not clean shutdown of that earlier session. All diagnostic sessions were closed, and the normal r30 launcher was returned to the Deck.
