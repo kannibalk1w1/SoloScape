@@ -25,7 +25,7 @@ Select a small set of flows covering the changed interface families: inventory/i
 
 Compile Java 8 harnesses with explicit `-encoding UTF-8`. Steam can launch with a C locale, so host compilation does not establish Steam-launch compatibility. Keep matching source/patch/jar stamps and existing build/profile locks; never rebuild jars that a running world may still load.
 
-The reusable `scripts/deck-controller-validation.sh` supports `quick`, `cook`, `shop` and `route`. It creates isolated disposable worlds through the existing smoke runner. Use it as a separate Steam shortcut; preserve the normal player shortcut and owner profile. `SOLOSCAPE_VALIDATION_ROOT` selects the private installed build, and the route defaults to 1,800 seconds.
+The reusable `scripts/deck-controller-validation.sh` supports `quick`, `cook`, `shop`, `route` and `launcher`. Gameplay modes create isolated disposable worlds through the existing smoke runner; the launcher mode uses its isolated launcher fixture. Use it as a separate Steam shortcut; preserve the normal player shortcut and owner profile. `SOLOSCAPE_VALIDATION_ROOT` selects the private installed build, and the route defaults to 1,800 seconds.
 
 ## Evidence and completion
 
