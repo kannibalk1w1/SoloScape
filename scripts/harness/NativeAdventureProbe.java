@@ -83,7 +83,7 @@ public final class NativeAdventureProbe {
    }
    if(step==10){
     ui.update(new GamepadState(),System.nanoTime());require(checkedSettings&&settingsOpen.getBoolean(plugin),"Local settings failed across ticks");
-    require(ui.focusedPanel()!=null&&ui.focusedPanel().id==ControllerSettingsModel.ID,"Settings disappeared on second tick");
+    require(ui.focusedPanel()!=null&&ui.focusedPanel().id==ControllerSettingsModel.ID,"Settings disappeared on second tick: settingsOpen="+settingsOpen.getBoolean(plugin)+" focusedPanel="+(ui.focusedPanel()==null?"none":String.valueOf(ui.focusedPanel().id))+" native="+(ControllerUi.snapshot(false).panel==null?"none":ControllerUi.snapshot(false).panel.id+"/modal="+ControllerUi.snapshot(false).panel.modal)+" uiActive="+ui.active()+" canvasFocus="+RuneLite.getInjector().getInstance(com.GameClient.class).getCanvas().isFocusOwner()+" padConnected="+((GamepadState)rawOf(plugin)).connected);
     display=ui.state();selected=ui.focus();capture(marker+".live-settings.png");results.put("settings_gateway_two_tick_adoption",true);
     ConfigManager config=RuneLite.getInjector().getInstance(ConfigManager.class);SoloScapeControllerConfig preferences=config.getConfig(SoloScapeControllerConfig.class);
     Field modelField=SoloScapeControllerPlugin.class.getDeclaredField("settings");modelField.setAccessible(true);ControllerSettingsModel model=(ControllerSettingsModel)modelField.get(plugin);
@@ -219,4 +219,5 @@ public final class NativeAdventureProbe {
    return null;
   }
  }
+  private static Object rawOf(SoloScapeControllerPlugin p)throws Exception{Field f=SoloScapeControllerPlugin.class.getDeclaredField("rawState");f.setAccessible(true);return f.get(p);}
 }

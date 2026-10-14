@@ -88,16 +88,24 @@ def verify_xp_save(saved, rate):
         raise RuntimeError(f'Woodcutting XP {experience[8] if len(experience) > 8 else None} (tenths) is not the {expected} expected at rate {rate}.')
 
 
-def verify_shop_save(saved):
-    """Coins from the sale and the bought item must survive Save & Quit and Continue; the sold dagger must be gone."""
+def verify_shop_save(saved, bought=None):
+    """The sale's coins and the purchased item must survive Save & Quit and Continue; the sold dagger must be gone.
+
+    A strict purchase acceptance names the bought item (display name). It must not be an item the starter kit
+    already holds, and a probe that could not buy (`buy_blocked`) is never a pass.
+    """
     items = {}
     for stack in saved.get('inventories', {}).get('inventory', []):
         if stack:
             items[stack.get('id')] = items.get(stack.get('id'), 0) + stack.get('amount', 1)
     if items.get('coins', 0) <= 0:
-        raise RuntimeError(f'No coins from the shop sale after reload: {items}')
+        raise RuntimeError(f'No coins left after the shop round trip: {items}')
     if 'bronze_dagger' in items:
         raise RuntimeError('The sold bronze dagger is still in the saved inventory.')
+    if bought is not None:
+        item = bought.strip().lower().replace(' ', '_')
+        if items.get(item, 0) < 1:
+            raise RuntimeError(f'The purchased {bought} is missing from the saved inventory: {items}')
 
 
 def _main():
@@ -237,7 +245,10 @@ def _main():
             if options.content_coverage:
                 verify_content_save(saved)
             if options.shop_trade:
-                verify_shop_save(saved)
+                shop_result=json.loads((Path(str(marker)+'.bloodpact.json') if iteration==0 else testroot/'shop.json').read_text())
+                if 'buy_blocked' in shop_result or not shop_result.get('bought'):
+                    raise RuntimeError(f"Shop purchase was not completed: {shop_result.get('buy_blocked', 'no purchase recorded')}")
+                verify_shop_save(saved, shop_result['bought'])
                 if iteration==0:
                     Path(str(marker)+'.bloodpact.json').replace(testroot/'shop.json')
             elif options.world_xp_check:

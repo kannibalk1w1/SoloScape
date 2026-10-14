@@ -101,6 +101,11 @@ class OvernightRouteSaveTests(unittest.TestCase):
             with self.subTest(items=items), self.assertRaises(RuntimeError):
                 smoke_profile.verify_shop_save({'inventories': {'inventory': items}})
 
+    def test_strict_shop_save_needs_the_purchased_item(self):
+        smoke_profile.verify_shop_save({'inventories': {'inventory': [{'id': 'coins', 'amount': 2}, {'id': 'cake_tin'}]}}, 'Cake tin')
+        with self.assertRaises(RuntimeError):
+            smoke_profile.verify_shop_save({'inventories': {'inventory': [{'id': 'coins', 'amount': 2}]}}, 'Cake tin')
+
     def test_druidic_save(self):
         xp = [0] * 15 + [2500] + [0] * 9
         smoke_profile.verify_druidic_save({'variables': {'druidic_ritual': 'completed', 'quest_points': 4}, 'experience': xp})
