@@ -13,9 +13,10 @@ case ${1:-quick} in
   quick) task_probe_args=(--desktop --deck60-gl-only --tab-bar) ;;
   cook) task_probe_args=(--desktop --gather-cook) ;;
   shop) task_probe_args=(--desktop --shop-trade) ;;
+  settings) task_probe_args=(--desktop --settings) ;;
   route) task_probe_args=(--desktop --deck-route-seconds "${SOLOSCAPE_BENCHMARK_SECONDS:-1800}") ;;
   launcher) task_probe_script=smoke-launcher.py; task_probe_args=(--desktop) ;;
-  *) echo 'Choose quick, cook, shop, route or launcher.' >&2; exit 2 ;;
+  *) echo 'Choose quick, cook, shop, settings, route or launcher.' >&2; exit 2 ;;
 esac
 cd "$task_root"
 task_run_directory="$task_root/.runtime/deck-controller-validation/$(date -u +%Y%m%dT%H%M%SZ)-${1:-quick}"
