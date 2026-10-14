@@ -12,6 +12,12 @@ def analyse(rows, stall_ms=300, window=5, floor_ms=100):
         raise ValueError('Empty frame trace')
     loading = [i for i, r in enumerate(rows) if r[2] == '11']
     stalls = [i for i, r in enumerate(rows) if r[1] >= stall_ms]
+    offsets = {}
+    for i in stalls:
+        if loading:
+            nearest = min(loading, key=lambda j: abs(i - j))
+            if abs(i - nearest) <= window:
+                offsets[i - nearest] = offsets.get(i - nearest, 0) + 1
     per_step = {}
     for i in stalls:
         per_step.setdefault(rows[i][0], []).append(round(rows[i][1], 1))
@@ -19,6 +25,7 @@ def analyse(rows, stall_ms=300, window=5, floor_ms=100):
     return {'frames': len(rows), 'stall_threshold_ms': stall_ms, 'stalls': len(stalls),
             'loading_state_frames': len(loading),
             'stalls_near_loading_state': sum(any(abs(i - j) <= window for j in loading) for i in stalls),
+            'stall_offset_from_loading_frame': dict(sorted(offsets.items())),
             'stall_steps': per_step,
             'excess_ms_from_stalls_over_floor': sum(r[1] - 1000 / 60 for r in rows if r[1] >= floor_ms),
             'frames_over_20_ms_below_floor': sum(20 < x < floor_ms for x in (r[1] for r in rows)),
