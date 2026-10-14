@@ -149,7 +149,7 @@ def _main():
     if options.fullscreen_gl_only:options.fullscreen=True
     if options.deck60_gl_only:options.deck60=True
     if options.deck_route_seconds and not 60<=options.deck_route_seconds<=3600:parser.error('Route duration must be 60–3600 seconds.')
-    if options.deck_route_seconds and (options.deck60 or options.adventure or options.journey or options.text or options.map or options.tab_bar or options.fullscreen):parser.error('Run the sustained route separately from other probes.')
+    if options.deck_route_seconds and (options.deck60 or options.adventure or options.journey or options.text or options.settings or options.map or options.tab_bar or options.fullscreen):parser.error('Run the sustained route separately from other probes.')
     if options.sidebar_baseline:options.sidebar=True
     if options.text or options.journey or options.settings:options.adventure=True
     signal.signal(signal.SIGTERM, local_dev.interrupted)

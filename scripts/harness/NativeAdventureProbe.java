@@ -117,7 +117,7 @@ public final class NativeAdventureProbe {
     Field radialField=SoloScapeControllerPlugin.class.getDeclaredField("radial");radialField.setAccessible(true);TabRadialControls radial=(TabRadialControls)radialField.get(plugin);
     require(!settingsOpen.getBoolean(plugin),"B did not close local settings");
     require(radial.active()&&radial.selected()==HomeTab.SETTINGS.ordinal(),"B lost Home ancestry: radial active="+radial.active()+" selected="+radial.selected());
-    results.put("settings_back_to_home",true);padOff();Field polling=SoloScapeControllerPlugin.class.getDeclaredField("failed");polling.setAccessible(true);require(!polling.getBoolean(plugin),"SDL polling was not restored");results.put("sdl_polling_restored",true);display=null;selected=null;
+    results.put("settings_back_to_home",true);padOff();Field polling=SoloScapeControllerPlugin.class.getDeclaredField("failed");polling.setAccessible(true);require(polling.getBoolean(plugin)==previousPollingFailure,"SDL polling state was not restored");results.put("sdl_polling_restored",true);display=null;selected=null;
     step=Boolean.getBoolean("soloscape.settings.probe")?11:15;lastStep=now;return false;
    }
    if(step==15){if(!NativeTextProbe.tick(plugin,results)){lastStep=now;return false;}step=Boolean.getBoolean("soloscape.playable.probe")?16:11;lastStep=now;return false;}
@@ -168,7 +168,7 @@ public final class NativeAdventureProbe {
  // pad, kept as is). The Settings steps therefore pause only SDL polling (the plugin's `failed` flag, as the other pad
  // probes do) and drive the plugin's real processInput from a ClientTick listener with a connected, neutral raw state.
  private static Field failedField;private static Method processMethod;private static GamepadState rawPad;
- private static volatile int padHeld;private static volatile int padTicks;private static int padBefore;private static boolean padRegistered;
+ private static volatile int padHeld;private static volatile int padTicks;private static int padBefore;private static boolean padRegistered;private static boolean previousPollingFailure,pollingStateCaptured;
  private static final PadTick PAD=new PadTick();
  public static final class PadTick{
   @net.runelite.client.eventbus.Subscribe(priority=-1000) public void onClientTick(net.runelite.api.events.ClientTick event){
@@ -185,7 +185,7 @@ public final class NativeAdventureProbe {
   failedField=SoloScapeControllerPlugin.class.getDeclaredField("failed");failedField.setAccessible(true);
   processMethod=SoloScapeControllerPlugin.class.getDeclaredMethod("processInput",long.class);processMethod.setAccessible(true);
   Field raw=SoloScapeControllerPlugin.class.getDeclaredField("rawState");raw.setAccessible(true);rawPad=(GamepadState)raw.get(plugin);
-  padHeld=padBefore=0;failedField.setBoolean(plugin,true);
+  padHeld=padBefore=0;previousPollingFailure=failedField.getBoolean(plugin);pollingStateCaptured=true;failedField.setBoolean(plugin,true);
   if(!padRegistered){RuneLite.getInjector().getInstance(net.runelite.client.eventbus.EventBus.class).register(PAD);padRegistered=true;}
   results.put("settings_probe_pad","virtual connected-neutral rawState; SDL polling paused for the Settings steps only");
  }
@@ -193,8 +193,8 @@ public final class NativeAdventureProbe {
  private static void padOff(){
   try{
    if(padRegistered){RuneLite.getInjector().getInstance(net.runelite.client.eventbus.EventBus.class).unregister(PAD);padRegistered=false;}
-   if(failedField!=null&&plugin!=null)failedField.setBoolean(plugin,false);
-   failedField=null;
+   if(failedField!=null&&plugin!=null&&pollingStateCaptured)failedField.setBoolean(plugin,previousPollingFailure);
+   failedField=null;pollingStateCaptured=false;
    if(rawPad!=null){padHeld=0;rawPad.clear();}
   }catch(Exception ignored){}
  }
