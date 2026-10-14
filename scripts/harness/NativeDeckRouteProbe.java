@@ -1,5 +1,8 @@
 import java.awt.*;
 import java.lang.reflect.Method;
+import java.lang.reflect.Field;
+import java.lang.management.ManagementFactory;
+import java.lang.management.GarbageCollectorMXBean;
 import java.nio.file.*;
 import java.util.*;
 import com.GameClient;
@@ -18,6 +21,7 @@ public final class NativeDeckRouteProbe extends Overlay {
  private final ArrayList<String> trace=new ArrayList<>();
  private final Map<String,Object> report=new LinkedHashMap<>();
  private final ArrayList<Map<String,Object>> rendererTransitions=new ArrayList<>();private String previousRenderer;
+ private Field phaseTotalsField,logicCyclesField;private long[] previousPhaseTotals;private long previousLogicCycles,previousGcMs;private final java.util.List<GarbageCollectorMXBean> gcBeans=ManagementFactory.getGarbageCollectorMXBeans();
  private long started,previous,stepSince,lastWalk,lastProgress;private int step,loops;private boolean sent,combatDone,finished;private int combatStage,combatXpBefore,combatXpGain;private volatile boolean resized;
  /** Software-renderer host run: the same real-map route without OpenGL/Deck 60 (Xvfb cannot start the OpenGL toolkit). */
  private static final boolean SOFTWARE=Boolean.getBoolean("soloscape.deck60.route.software");
@@ -47,7 +51,7 @@ public final class NativeDeckRouteProbe extends Overlay {
     if(!ui.isFullscreen())throw new IllegalStateException("Fullscreen did not open");
     probe.resized=true;
    }catch(Exception ex){throw new IllegalStateException(ex);}});
-   probe.trace.add("elapsed_ns,step,interval_ms,client_state");probe.stepSince=System.nanoTime();return false;
+   probe.trace.add("elapsed_ns,step,interval_ms,client_state,tile_x,tile_y,plane,scene_base_x,scene_base_y,renderer,logic_cycles_delta,logic_ms_delta,plugins_ms_delta,overlay_paint_ms_delta,overlay_upload_ms_delta,frame_ms_delta,event_queue_ms_delta,present_ms_delta,gc_ms_delta");probe.stepSince=System.nanoTime();return false;
   }
   return probe.finished||probe.update(marker);
  }
@@ -58,7 +62,7 @@ public final class NativeDeckRouteProbe extends Overlay {
    if(client.getCanvas().getWidth()!=1280||client.getCanvas().getHeight()!=800)throw new IllegalStateException("Route canvas is not 1280x800: "+client.getCanvas().getSize());
    if(Class321.anInt4017!=1280||Class348_Sub42_Sub8_Sub2.anInt10432!=800)throw new IllegalStateException("Native renderer dimensions differ from 1280x800");
    if(!SOFTWARE&&!(Class348_Sub8.aHa6654 instanceof ha_Sub2))throw new IllegalStateException("OpenGL was not adopted");
-   Class.forName("com.FrameTimings").getMethod("snapshotAndReset").invoke(null);started=stepSince=now;report.put("started_monotonic_ns",started);report.put("native_dimensions",Class321.anInt4017+"x"+Class348_Sub42_Sub8_Sub2.anInt10432);report.put("preset_status",client.getControllerPerformanceStatus());report.put("fps_target",DetachedRenderer.getFpsTarget());report.put("pacing",DetachedRenderer.isActive());report.put("start_tile",Arrays.toString(tile()));report.put("renderer",Class348_Sub8.aHa6654.getClass().getName());report.put("canvas",client.getCanvas().getSize().toString());return false;
+   Class.forName("com.FrameTimings").getMethod("snapshotAndReset").invoke(null);preparePhaseTrace();started=stepSince=now;report.put("phase_trace_method","Cumulative completed phase/cycle deltas between overlay callbacks; not same-frame durations. Frame/present completion crosses callback boundaries; phases overlap, do not sum them. GC collection-time deltas are coarse JVM counters, not event timestamps. Added diagnostic sampling/allocation can affect timing.");report.put("started_monotonic_ns",started);report.put("native_dimensions",Class321.anInt4017+"x"+Class348_Sub42_Sub8_Sub2.anInt10432);report.put("preset_status",client.getControllerPerformanceStatus());report.put("fps_target",DetachedRenderer.getFpsTarget());report.put("pacing",DetachedRenderer.isActive());report.put("start_tile",Arrays.toString(tile()));report.put("renderer",Class348_Sub8.aHa6654.getClass().getName());report.put("canvas",client.getCanvas().getSize().toString());return false;
   }
   if(seconds==0&&now-started>=10_000_000_000L)return finish(marker,now);
   if(seconds==0)return false;
@@ -171,5 +175,16 @@ public final class NativeDeckRouteProbe extends Overlay {
  }
  private void back(){if(controllerUi==null){ControllerUi.closePanel();return;}GamepadState neutral=new GamepadState();controllerUi.update(neutral,System.nanoTime());GamepadState back=new GamepadState();back.buttonsPressed=back.buttonsHeld=2;controllerUi.update(back,System.nanoTime());}
  private boolean closePanel(int id){UiState.Panel p=ControllerUi.snapshot().panel;if(p==null||p.id!=id)return ControllerWorld.ready();ControllerUi.closePanel();return false;}
- @Override public Dimension render(Graphics2D g){long now=System.nanoTime();if(started!=0&&!finished&&intervals.size()<500000){String currentRenderer=renderer();if(!Objects.equals(currentRenderer,previousRenderer)&&rendererTransitions.size()<64){Map<String,Object> transition=new LinkedHashMap<>();transition.put("elapsed_ns",now-started);transition.put("renderer",currentRenderer);transition.put("step",STEPS[step]);rendererTransitions.add(transition);previousRenderer=currentRenderer;}if(previous!=0){double delta=(now-previous)/1e6;intervals.add(delta);trace.add((now-started)+","+STEPS[step]+","+delta+","+Class240.anInt4674);}previous=now;}return null;}
+ private long gcMilliseconds(){long total=0;for(GarbageCollectorMXBean bean:gcBeans){long value=bean.getCollectionTime();if(value>=0)total+=value;}return total;}
+ private void preparePhaseTrace()throws Exception{
+  Class<?> timings=Class.forName("com.FrameTimings");if(!timings.getField("ENABLED").getBoolean(null))throw new IllegalStateException("Route phase tracing requires performance timings");
+  phaseTotalsField=timings.getDeclaredField("totals");phaseTotalsField.setAccessible(true);logicCyclesField=timings.getDeclaredField("cycles");logicCyclesField.setAccessible(true);previousPhaseTotals=((long[])phaseTotalsField.get(null)).clone();previousLogicCycles=logicCyclesField.getLong(null);previousGcMs=gcMilliseconds();
+ }
+ private String phaseTrace(){
+  try{
+   long[] totals=(long[])phaseTotalsField.get(null);long cycles=logicCyclesField.getLong(null),gc=gcMilliseconds();int[] position=tile();StringBuilder out=new StringBuilder();out.append(',').append(position[0]).append(',').append(position[1]).append(',').append(position[2]).append(',').append(za_Sub2.regionTileX).append(',').append(Class90.regionTileY).append(',').append(renderer()).append(',').append(cycles-previousLogicCycles);
+   for(int i=0;i<totals.length;i++){out.append(',').append((totals[i]-previousPhaseTotals[i])/1e6);previousPhaseTotals[i]=totals[i];}out.append(',').append(gc-previousGcMs);previousLogicCycles=cycles;previousGcMs=gc;return out.toString();
+  }catch(Exception error){throw new IllegalStateException("Route phase trace unavailable",error);}
+ }
+ @Override public Dimension render(Graphics2D g){long now=System.nanoTime();if(started!=0&&!finished&&intervals.size()<500000){String currentRenderer=renderer();if(!Objects.equals(currentRenderer,previousRenderer)&&rendererTransitions.size()<64){Map<String,Object> transition=new LinkedHashMap<>();transition.put("elapsed_ns",now-started);transition.put("renderer",currentRenderer);transition.put("step",STEPS[step]);rendererTransitions.add(transition);previousRenderer=currentRenderer;}if(previous!=0){double delta=(now-previous)/1e6;intervals.add(delta);trace.add((now-started)+","+STEPS[step]+","+delta+","+Class240.anInt4674+phaseTrace());}else phaseTrace();previous=now;}return null;}
 }

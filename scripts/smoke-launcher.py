@@ -28,7 +28,7 @@ def main():
     classes=root/'classes';classes.mkdir()
     jar=local_dev.jar(local_dev.CLIENT/'client','void-client-*.jar')
     with local_dev.build_lock(shared=True) as guard:
-        subprocess.run([str(javac),'-cp',str(jar),'-d',str(classes),str(local_dev.ROOT/'scripts/harness/NativeLauncherProbe.java')],check=True)
+        subprocess.run([str(javac),'-encoding','UTF-8','-cp',str(jar),'-d',str(classes),str(local_dev.ROOT/'scripts/harness/NativeLauncherProbe.java')],check=True)
         display=None
         if options.desktop:
             if not os.environ.get('DISPLAY'):raise RuntimeError('--desktop requires an explicit authorized DISPLAY.')

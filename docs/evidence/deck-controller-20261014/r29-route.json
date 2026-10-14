@@ -1,0 +1,110 @@
+{
+  "build": "deck-lessons-20261014-r29",
+  "source_commit": "dae017a299e1a4593d99a2ed142b595c5356f95f",
+  "environment": "Actual Steam Deck Gaming Mode, Steam-launched temporary shortcut, AMD OpenGL, 1280x800, external power connected.",
+  "input": "Scripted native movement/camera and UI gateways in a disposable world. This is hardware runtime evidence, not a human physical-button acceptance test.",
+  "route": {
+    "seconds": 2168.597342014,
+    "loops": 5,
+    "samples": 128025,
+    "average_fps": 59.036386200368156,
+    "p95_ms": 19.53088,
+    "p99_ms": 22.353962,
+    "max_ms": 1344.304075,
+    "renderer_after_route": "ha_Sub2",
+    "canvas_focused": true,
+    "native_dimensions": "1280x800",
+    "fps_target": 60,
+    "pacing": true,
+    "start_tile": "[3221, 3219, 0]",
+    "finish_tile": "[3221, 3219, 0]",
+    "combat_xp_gained": 2
+  },
+  "frames": {
+    "method": "Native overlay frame intervals, including loading and UI. Rolling windows span at least five seconds; no hardware presentation attribution.",
+    "seconds": 2168.577859178,
+    "frames": 128025,
+    "average_fps": 59.036386200368156,
+    "p95_ms": 19.53088,
+    "p99_ms": 22.353962,
+    "max_ms": 1344.304075,
+    "frames_over_20_ms": 5070,
+    "client_state_frame_counts": {
+      "10": 127996,
+      "11": 29
+    },
+    "minimum_rolling_5s_fps": 15.756855272195292,
+    "rolling_windows_below_58": 7344,
+    "duration_30_minutes_met": true,
+    "full_trace_p99_20ms_met": false,
+    "full_trace_rolling_58fps_met": false
+  },
+  "resources": {
+    "sample_count": 4251,
+    "truncated": false,
+    "worker_alive": false,
+    "peak_rss_mib_by_role": {
+      "server": 1662.09,
+      "client": 1310.12
+    },
+    "peak_combined_rss_mib": 2972.21,
+    "mean_cpu_percent_one_core_100": {
+      "server": 12.15,
+      "client": 112.02
+    },
+    "host_peak_temperature_celsius": {
+      "nvme/temp1_input": 42.85,
+      "nvme/temp2_input": 57.85,
+      "amdgpu/temp1_input": 56.0,
+      "steamdeck_hwmon/temp1_input": 29.0,
+      "acpitz/temp1_input": 59.0
+    },
+    "external_power_states": {
+      "ACAD": [
+        1
+      ]
+    },
+    "battery_statuses": [
+      "Not charging"
+    ],
+    "phases": [
+      {
+        "stage": "backup",
+        "elapsed_seconds": 0.296
+      },
+      {
+        "stage": "starting",
+        "elapsed_seconds": 0.308
+      },
+      {
+        "stage": "connecting",
+        "elapsed_seconds": 8.556
+      },
+      {
+        "stage": "playing",
+        "elapsed_seconds": 8.562
+      },
+      {
+        "stage": "saving",
+        "elapsed_seconds": 2209.113
+      },
+      {
+        "stage": "backup",
+        "elapsed_seconds": 2209.328
+      },
+      {
+        "stage": "stopped",
+        "elapsed_seconds": 2209.344
+      }
+    ],
+    "scope": "Whole observed session including startup/login/UI/save; CPU samples stay within each PID/start identity. Host-wide temperature. No battery-life, GPU or Gaming Mode budget."
+  },
+  "lifecycle": {
+    "new_session_seconds": 2209.463,
+    "continue_session_seconds": 47.748,
+    "native_startup_cancel_preserved": true,
+    "original_mutable_paths_unchanged": true
+  },
+  "presentation": "Separate 30-minute passive XWayland recording has 106274 completion events across five GL window lifetimes; see r29-present.json. It excludes software-map frames and physical panel scanout.",
+  "limits": "Loading/transition stalls are retained. Average FPS near 60 does not mean every frame meets the sustained 60 FPS target. Only external-power conditions were measured."
+}

@@ -27,7 +27,7 @@ public final class NativeAdventureProbe {
   try {
    if(failure!=null)throw new IllegalStateException(failure);
    long now=System.currentTimeMillis();Files.write(Paths.get(marker+".adventure.status"),("step="+step+" text="+NativeTextProbe.currentStage()+" journey="+NativePlayableLoopProbe.progress()+" panel="+(ControllerUi.snapshot().panel==null?-1:ControllerUi.snapshot().panel.id)).getBytes("UTF-8"));
-   if(Class132.aPlayer_1907!=null){String tile=((Class132.aPlayer_1907.x>>9)+za_Sub2.regionTileX)+","+((Class132.aPlayer_1907.y>>9)+Class90.regionTileY)+","+Class132.aPlayer_1907.plane;if(!tile.equals(lastTile)){results.put("tile_change_"+now,"step="+step+" tile="+tile);lastTile=tile;}}
+   if(Class132.aPlayer_1907!=null){String tile=((Class132.aPlayer_1907.x>>9)+za_Sub2.regionTileX)+","+((Class132.aPlayer_1907.y>>9)+Class90.regionTileY)+","+Class132.aPlayer_1907.plane;if(!tile.equals(lastTile)){results.put("tile_change_"+now,"step="+step+" tile="+tile);if(Boolean.getBoolean("soloscape.settings.probe"))recordInput(now);lastTile=tile;}}
    if(started==0){
     started=lastStep=now;frames=new FrameProbe();RuneLite.getInjector().getInstance(OverlayManager.class).add(frames);
     results.put("environment",System.getProperty("soloscape.probe.environment","Private native software probe; no physical controller acceptance."));
@@ -168,6 +168,14 @@ public final class NativeAdventureProbe {
  // pad, kept as is). The Settings steps therefore pause only SDL polling (the plugin's `failed` flag, as the other pad
  // probes do) and drive the plugin's real processInput from a ClientTick listener with a connected, neutral raw state.
  private static Field failedField;private static Method processMethod;private static GamepadState rawPad;
+ private static void recordInput(long now)throws Exception{
+  SoloScapeControllerPlugin owner=plugin;
+  if(owner==null)for(net.runelite.client.plugins.Plugin candidate:RuneLite.getInjector().getInstance(net.runelite.client.plugins.PluginManager.class).getPlugins())if(candidate instanceof SoloScapeControllerPlugin)owner=(SoloScapeControllerPlugin)candidate;
+  if(owner==null)return;
+  Field raw=SoloScapeControllerPlugin.class.getDeclaredField("rawState");raw.setAccessible(true);GamepadState input=(GamepadState)raw.get(owner);
+  Map<String,Object> observation=new LinkedHashMap<>();observation.put("connected",input.connected);observation.put("leftX",input.leftX);observation.put("leftY",input.leftY);observation.put("buttonsHeld",input.buttonsHeld);observation.put("buttonsPressed",input.buttonsPressed);observation.put("buttonsReleased",input.buttonsReleased);observation.put("virtualPadActive",padRegistered);observation.put("step",step);
+  results.put("input_at_tile_change_"+now,observation);
+ }
  private static volatile int padHeld;private static volatile int padTicks;private static int padBefore;private static boolean padRegistered;private static boolean previousPollingFailure,pollingStateCaptured;
  private static final PadTick PAD=new PadTick();
  public static final class PadTick{

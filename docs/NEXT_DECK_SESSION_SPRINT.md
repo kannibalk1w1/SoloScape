@@ -18,3 +18,7 @@ The sprint started on 13 October 2026; completed batches and their limits are re
 
 - Keep release-and-push world input after transitions. The stick must return to neutral before movement re-arms; do not change this safeguard in the coverage sprint.
 - Before sending Claude further work, instruct it to use the lowest model/tool tier that can appropriately complete the task. Druidic Ritual remains an approved next route, but Opus 5.5 should not be the default. Start on a lower suitable tier, confirm the active model, and escalate only when a concrete difficulty warrants it. Do not claim that requesting a tier has actually switched the running model.
+
+## Updated scope — 14 October 2026
+
+The owner clarified that future work should learn from representative flows and apply shared fixes, rather than run every quest. Follow [shared controller acceptance](CONTROLLER_INTERACTION_ACCEPTANCE.md). Prioritize production cancellation, shop actions/data extraction, panel lifetime/input handoff and actual Deck lifecycle/performance. The overnight quest results remain useful evidence; unresolved quest routes are examples for diagnosis, not a mandate for exhaustive playthroughs.

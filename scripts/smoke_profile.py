@@ -174,7 +174,7 @@ def _main():
     harness.mkdir(parents=True,exist_ok=True)
     clientjar=local_dev.jar(local_dev.CLIENT/'client','void-client-*.jar')
     javac=Path(os.environ['CLIENT_JAVA']).with_name('javac')
-    subprocess.run([str(javac),'-cp',str(clientjar),'-d',str(harness),str(root/'scripts/harness/NativeSessionSmoke.java'),str(root/'scripts/harness/NativeAdventureProbe.java'),str(root/'scripts/harness/NativeTextProbe.java'),str(root/'scripts/harness/NativePlayableLoopProbe.java'),str(root/'scripts/harness/NativeSidebarProbe.java'),str(root/'scripts/harness/NativePerformanceProbe.java'),str(root/'scripts/harness/NativeMapProbe.java'),str(root/'scripts/harness/NativeTabBarProbe.java'),str(root/'scripts/harness/NativeArtworkProbe.java'),str(root/'scripts/harness/NativeQuitProbe.java'),str(root/'scripts/harness/NativeContentCoverageProbe.java'),str(root/'scripts/harness/NativeBloodPactProbe.java'),str(root/'scripts/harness/NativePlaytestTwoProbe.java'),str(root/'scripts/harness/NativeFullscreenProbe.java'),str(root/'scripts/harness/NativeDeck60Probe.java'),str(root/'scripts/harness/NativeDeckRouteProbe.java')],check=True)
+    subprocess.run([str(javac),'-encoding','UTF-8','-cp',str(clientjar),'-d',str(harness),str(root/'scripts/harness/NativeSessionSmoke.java'),str(root/'scripts/harness/NativeAdventureProbe.java'),str(root/'scripts/harness/NativeTextProbe.java'),str(root/'scripts/harness/NativePlayableLoopProbe.java'),str(root/'scripts/harness/NativeSidebarProbe.java'),str(root/'scripts/harness/NativePerformanceProbe.java'),str(root/'scripts/harness/NativeMapProbe.java'),str(root/'scripts/harness/NativeTabBarProbe.java'),str(root/'scripts/harness/NativeArtworkProbe.java'),str(root/'scripts/harness/NativeQuitProbe.java'),str(root/'scripts/harness/NativeContentCoverageProbe.java'),str(root/'scripts/harness/NativeBloodPactProbe.java'),str(root/'scripts/harness/NativePlaytestTwoProbe.java'),str(root/'scripts/harness/NativeFullscreenProbe.java'),str(root/'scripts/harness/NativeDeck60Probe.java'),str(root/'scripts/harness/NativeDeckRouteProbe.java')],check=True)
     x=None
     if options.desktop:
         if not os.environ.get('DISPLAY'):
@@ -270,7 +270,8 @@ def _main():
                     Path(str(marker)+'.bloodpact.json').replace(testroot/'blood-pact.json')
             if savebefore is not None:
                 if not all(savebefore[k]==saved[k] for k in ('accountName','experience','inventories','tile')):
-                    raise RuntimeError('Native save/reload changed a tested field.')
+                    changed=[k for k in ('accountName','experience','inventories','tile') if savebefore[k]!=saved[k]]
+                    raise RuntimeError(f"Native save/reload changed tested fields: {', '.join(changed)}; tile before={savebefore['tile']} after={saved['tile']}")
             savebefore=saved
         saveafter=profiles.validate_save((profile.state/'saves/alphatest.toml').read_bytes())
         print('Native save/reload fields preserved:',all(savebefore[k]==saveafter[k] for k in ('accountName','experience','inventories','tile')))

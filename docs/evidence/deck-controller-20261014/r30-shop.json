@@ -1,0 +1,38 @@
+{
+  "build": "deck-lessons-20261014-r30",
+  "source_commit": "fd18da7702da34f4bcb10f9e98a91b271687b648",
+  "client_patch": "0053",
+  "server_patch": "0022",
+  "environment": "Steam-launched on Steam Deck Gaming Mode, DISPLAY :1, 1280x800; actual native shop with scripted Gateway input, no physical button acceptance",
+  "fixtures": "none: no admin commands, item grants or teleports",
+  "shop": {
+    "shop_trade_target": "Shopkeeper/Trade",
+    "coins_before_sell": 0,
+    "coins_after_sell": 4,
+    "dagger_left": 0,
+    "buy_action": "Jug[Info,Buy 1,Buy 5,Buy 10,Buy 50,Buy 500,Examine,]",
+    "bought": "Jug",
+    "coins_after_buy": 3,
+    "coins_at_end": 3,
+    "start_inventory_full": "Bronze hatchet; Tinderbox; Small fishing net; Shrimps; Bucket; Empty pot; Bread; Bronze pickaxe; Bronze dagger; Bronze sword; Wooden shield; Shortbow; Bronze arrow x25; Air rune x25; Mind rune x15; Water rune x6; Earth rune x4; Body rune x2; ",
+    "end_inventory": "Bronze hatchet; Tinderbox; Small fishing net; Shrimps; Bucket; Empty pot; Bread; Bronze pickaxe; Coins x3; Bronze sword; Wooden shield; Shortbow; Bronze arrow x25; Air rune x25; Mind rune x15; Water rune x6; Earth rune x4; Body rune x2; Jug; ",
+    "end_tile": "3213,3240,0",
+    "timeline": [
+      "0.0s setup",
+      "0.1s setup done",
+      "27.3s reached the shop",
+      "shop panel Stock:Tinderbox[Info,Take 1,Take 5,Take 10,Take 50,Examine,] Hammer[Info,Take 1,Take 5,Take 10,Take 50,Examine,] Bronze dagger[Info,Take 1,Take 5,Take 10,Take 50,Examine,] Empty pot[Info,Buy 1,Buy 5,Buy 10,Buy 50,Buy 500,Examine,] Jug[Info,Buy 1,Buy 5,Buy 10,Buy 50,Buy 500,Examine,] Shears[Info,Buy 1,Buy 5,Buy 10,Buy 50,Buy 500,Examine,] Bucket[Info,Buy 1,Buy 5,Buy 10,Buy 50,Buy 500,Examine,] Bowl[Info,Buy 1,Buy 5,Buy 10,Buy 50,Buy 500,Examine,] Cake tin[Info,Buy 1,Buy 5,Buy 10,Buy 50,Buy 500,Examine,] Tinderbox[Info,Buy 1,Buy 5,Buy 10,Buy 50,Buy 500,Examine,] Chisel[Info,Buy 1,Buy 5,Buy 10,Buy 50,Buy 500,Examine,] Hammer[Info,Buy 1,Buy 5,Buy 10,Buy 50,Buy 500,Examine,] Newcomer map[Info,Buy 1,Buy 5,Buy 10,Buy 50,Buy 500,Examine,] Security book[Info,Buy 1,Buy 5,Buy 10,Buy 50,Buy 500,Examine,] Inventory:Bronze hatchet[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Tinderbox[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Small fishing net[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Shrimps[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Bucket[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Empty pot[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Bread[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Bronze pickaxe[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Bronze dagger[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Bronze sword[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Wooden shield[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Shortbow[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Bronze arrow[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Air rune[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Mind rune[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Water rune[Value,Sell 1,Sell 5,Sell 10,Sell 50,Examine,] Controls / tabs:",
+      "shop details ",
+      "after Sell 1: Stock:Tinderboxx1 Hammerx1 Bronze daggerx1 Empty potx30 Jugx10 Shearsx10 Bucketx30 Bowlx10 Cake tinx10 Tinderboxx10 Chiselx10 Hammerx10 Newcomer mapx10 Security bookx10 Bronze daggerx1 Inventory:Coinsx4 Controls / tabs: inventory coins 0 dagger 0",
+      "45.9s shop closed",
+      "shop round trip complete"
+    ]
+  },
+  "lifecycle": {
+    "new_session_seconds": 77.161,
+    "continue_session_seconds": 27.389,
+    "native_startup_cancel_preserved": true,
+    "original_mutable_paths_unchanged": true
+  },
+  "purchased_item_persistence": "Strict save verification passed after New and Continue; jug present and coins=3"
+}

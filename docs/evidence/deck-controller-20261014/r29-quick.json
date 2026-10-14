@@ -1,0 +1,80 @@
+{
+  "build": "deck-lessons-20261014-r29",
+  "source_commit": "dae017a299e1a4593d99a2ed142b595c5356f95f",
+  "environment": "Steam-launched on Steam Deck Gaming Mode (gamescope), DISPLAY :1, ACAD online=1",
+  "input": "Tab navigation uses synthetic plugin input; physical controller reported connected during timing. No human button acceptance claim.",
+  "method": "Two 25-second graphics stages per New/Continue; samples begin after first ten seconds. Native overlay callback intervals, not physical panel scanout.",
+  "lifecycle": {
+    "new_session_seconds": 86.477,
+    "continue_session_seconds": 80.374,
+    "native_startup_cancel_preserved": true,
+    "original_mutable_paths_unchanged": true
+  },
+  "graphics": {
+    "new": {
+      "opengl_60_on": {
+        "samples": 912,
+        "average_fps": 59.98568861835586,
+        "median_ms": 16.625829,
+        "p95_ms": 18.028006,
+        "p99_ms": 18.838227,
+        "max_ms": 28.517045,
+        "controller_connected": true,
+        "canvas_focused": true,
+        "native_dimensions": "1280x800",
+        "gl_vendor": "amd",
+        "gl_renderer": "amd custom gpu 0405 (radeonsi, vangogh, aco, drm 3.65, 6.18.50-valve2-1-neptune-618-gc7289a96b14d)"
+      },
+      "opengl_uncapped_on": {
+        "samples": 899,
+        "average_fps": 59.916812686271875,
+        "median_ms": 16.678296,
+        "p95_ms": 17.921278,
+        "p99_ms": 19.304235,
+        "max_ms": 34.043151,
+        "controller_connected": true,
+        "canvas_focused": true,
+        "native_dimensions": "1280x800",
+        "gl_vendor": "amd",
+        "gl_renderer": "amd custom gpu 0405 (radeonsi, vangogh, aco, drm 3.65, 6.18.50-valve2-1-neptune-618-gc7289a96b14d)"
+      }
+    },
+    "continue": {
+      "opengl_60_on": {
+        "samples": 914,
+        "average_fps": 60.00811584555524,
+        "median_ms": 16.67733,
+        "p95_ms": 17.925522,
+        "p99_ms": 18.912228,
+        "max_ms": 20.764792,
+        "controller_connected": true,
+        "canvas_focused": true,
+        "native_dimensions": "1280x800",
+        "gl_vendor": "amd",
+        "gl_renderer": "amd custom gpu 0405 (radeonsi, vangogh, aco, drm 3.65, 6.18.50-valve2-1-neptune-618-gc7289a96b14d)"
+      },
+      "opengl_uncapped_on": {
+        "samples": 899,
+        "average_fps": 59.90654199751528,
+        "median_ms": 16.700708,
+        "p95_ms": 17.952909,
+        "p99_ms": 18.779622,
+        "max_ms": 38.986376,
+        "controller_connected": true,
+        "canvas_focused": true,
+        "native_dimensions": "1280x800",
+        "gl_vendor": "amd",
+        "gl_renderer": "amd custom gpu 0405 (radeonsi, vangogh, aco, drm 3.65, 6.18.50-valve2-1-neptune-618-gc7289a96b14d)"
+      }
+    }
+  },
+  "deployment": {
+    "payload_entries_verified": 10580,
+    "profile_files_verified": 106,
+    "fresh_backup_verified": true,
+    "character_save_unchanged": true,
+    "legacy_backslashes": 0,
+    "rollback_available": true
+  },
+  "compiler_environment": "Installed baseline probe used a validation-only -Dfile.encoding=UTF-8 override for Steam C locale. Coordinator fix makes javac -encoding UTF-8 explicit."
+}

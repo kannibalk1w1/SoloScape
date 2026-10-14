@@ -1,0 +1,323 @@
+{
+  "build": "deck-lessons-20261014-r32-diagnostic",
+  "source_commit": "d1f154cd587e55a94410ef666c3ccae0992d5de4",
+  "production_jars": "identical client0053/server0022 to r30; harness-only instrumentation",
+  "environment": "Steam Deck Gaming Mode; native callback trace at approximately 30 FPS; power changed from battery to AC during run. Not comparable to r29 powered 60 FPS benchmark. Synthetic native actions, no physical button acceptance.",
+  "route": {
+    "seconds": 448.289031184,
+    "loops": 1,
+    "samples": 13199,
+    "average_fps": 29.4445385735599,
+    "p95_ms": 38.36248,
+    "p99_ms": 43.011578,
+    "max_ms": 1783.247533,
+    "renderer_transitions": [
+      {
+        "elapsed_ns": 17065746,
+        "renderer": "ha_Sub2",
+        "step": "origin"
+      },
+      {
+        "elapsed_ns": 444249741461,
+        "renderer": "ha_Sub1",
+        "step": "map"
+      },
+      {
+        "elapsed_ns": 448256553962,
+        "renderer": "ha_Sub2",
+        "step": "close_map"
+      }
+    ],
+    "canvas_focused": true,
+    "native_dimensions": "1280x800",
+    "fps_target": 60
+  },
+  "lifecycle": {
+    "new_session_seconds": 489.853,
+    "continue_session_seconds": 48.87,
+    "native_startup_cancel_preserved": true,
+    "original_mutable_paths_unchanged": true
+  },
+  "analysis": {
+    "frames": 13199,
+    "stall_threshold_ms": 300,
+    "stalls": 8,
+    "loading_state_frames": 1,
+    "stalls_near_loading_state": 1,
+    "stall_offset_from_loading_frame": {
+      "1": 1
+    },
+    "stall_steps": {
+      "farm_road": [
+        1174.7
+      ],
+      "mill_road": [
+        797.0
+      ],
+      "road_return": [
+        931.0
+      ],
+      "courtyard_return": [
+        971.7
+      ],
+      "map": [
+        1426.8,
+        1030.7,
+        396.3
+      ],
+      "close_map": [
+        1783.2
+      ]
+    },
+    "excess_ms_from_stalls_over_floor": 8633.557226333332,
+    "frames_over_20_ms_below_floor": 13098,
+    "p99_ms_excluding_stalls_over_floor": 42.575296,
+    "schema_optional_columns_present": [
+      "tile_x",
+      "tile_y",
+      "plane",
+      "scene_base_x",
+      "scene_base_y",
+      "renderer",
+      "logic_cycles_delta",
+      "logic_ms_delta",
+      "plugins_ms_delta",
+      "overlay_paint_ms_delta",
+      "overlay_upload_ms_delta",
+      "frame_ms_delta",
+      "event_queue_ms_delta",
+      "present_ms_delta",
+      "gc_ms_delta"
+    ],
+    "interval_bands": {
+      "steady_jitter_20_to_100ms": {
+        "frames": 13098,
+        "excess_ms_over_16_7": 219619.5,
+        "p50_ms": 33.380876,
+        "p99_ms": 42.593765,
+        "max_ms": 95.422018
+      },
+      "stalls_at_or_above_threshold": {
+        "frames": 8,
+        "excess_ms_over_16_7": 8377.9,
+        "p50_ms": 971.653581,
+        "p99_ms": 1426.766256,
+        "max_ms": 1783.247533
+      },
+      "between_floor_and_threshold": {
+        "frames": 2,
+        "excess_ms_over_16_7": 255.7,
+        "p50_ms": 108.316481,
+        "p99_ms": 108.316481,
+        "max_ms": 180.680573
+      }
+    },
+    "worst_stalls": [
+      {
+        "frame_index": 13197,
+        "step": "close_map",
+        "interval_ms": 1783.2,
+        "client_state": "10",
+        "loading_state_offset": null,
+        "elapsed_ns": "448256553962",
+        "tile_x": 3221,
+        "tile_y": 3219,
+        "plane": 0,
+        "scene_base_x": 3168,
+        "scene_base_y": 3184,
+        "renderer": "ha_Sub2",
+        "logic_cycles_delta": 0,
+        "logic_ms_delta": 1405.065038,
+        "plugins_ms_delta": 0.384514,
+        "overlay_paint_ms_delta": 1.762337,
+        "overlay_upload_ms_delta": 8.619453,
+        "frame_ms_delta": 34.84484,
+        "event_queue_ms_delta": 0.043818,
+        "present_ms_delta": 0.0,
+        "gc_ms_delta": 209.0
+      },
+      {
+        "frame_index": 13173,
+        "step": "map",
+        "interval_ms": 1426.8,
+        "client_state": "10",
+        "loading_state_offset": null,
+        "elapsed_ns": "444249741461",
+        "tile_x": 3221,
+        "tile_y": 3219,
+        "plane": 0,
+        "scene_base_x": 3168,
+        "scene_base_y": 3184,
+        "renderer": "ha_Sub1",
+        "logic_cycles_delta": 0,
+        "logic_ms_delta": 1277.488745,
+        "plugins_ms_delta": 0.213301,
+        "overlay_paint_ms_delta": 1.625854,
+        "overlay_upload_ms_delta": 1.320828,
+        "frame_ms_delta": 32.358395,
+        "event_queue_ms_delta": 0.03868,
+        "present_ms_delta": 22.744192,
+        "gc_ms_delta": 190.0
+      },
+      {
+        "frame_index": 5226,
+        "step": "farm_road",
+        "interval_ms": 1174.7,
+        "client_state": "10",
+        "loading_state_offset": null,
+        "elapsed_ns": "175470685447",
+        "tile_x": 3215,
+        "tile_y": 3254,
+        "plane": 0,
+        "scene_base_x": 3160,
+        "scene_base_y": 3208,
+        "renderer": "ha_Sub2",
+        "logic_cycles_delta": 0,
+        "logic_ms_delta": 1040.551411,
+        "plugins_ms_delta": 0.223253,
+        "overlay_paint_ms_delta": 3.428377,
+        "overlay_upload_ms_delta": 1.63653,
+        "frame_ms_delta": 32.196263,
+        "event_queue_ms_delta": 0.032699,
+        "present_ms_delta": 44.244219,
+        "gc_ms_delta": 150.0
+      },
+      {
+        "frame_index": 13174,
+        "step": "map",
+        "interval_ms": 1030.7,
+        "client_state": "10",
+        "loading_state_offset": null,
+        "elapsed_ns": "445280412493",
+        "tile_x": 3221,
+        "tile_y": 3219,
+        "plane": 0,
+        "scene_base_x": 3168,
+        "scene_base_y": 3184,
+        "renderer": "ha_Sub1",
+        "logic_cycles_delta": 2,
+        "logic_ms_delta": 2.689962,
+        "plugins_ms_delta": 0.00091,
+        "overlay_paint_ms_delta": 3.887443,
+        "overlay_upload_ms_delta": 53.283439,
+        "frame_ms_delta": 180.278001,
+        "event_queue_ms_delta": 0.031521,
+        "present_ms_delta": 0.0,
+        "gc_ms_delta": 0.0
+      },
+      {
+        "frame_index": 11452,
+        "step": "courtyard_return",
+        "interval_ms": 971.7,
+        "client_state": "10",
+        "loading_state_offset": null,
+        "elapsed_ns": "385528541809",
+        "tile_x": 3222,
+        "tile_y": 3240,
+        "plane": 0,
+        "scene_base_x": 3168,
+        "scene_base_y": 3184,
+        "renderer": "ha_Sub2",
+        "logic_cycles_delta": 0,
+        "logic_ms_delta": 820.971741,
+        "plugins_ms_delta": 0.287615,
+        "overlay_paint_ms_delta": 2.418047,
+        "overlay_upload_ms_delta": 1.147859,
+        "frame_ms_delta": 31.643253,
+        "event_queue_ms_delta": 0.031651,
+        "present_ms_delta": 46.366269,
+        "gc_ms_delta": 82.0
+      },
+      {
+        "frame_index": 10237,
+        "step": "road_return",
+        "interval_ms": 931.0,
+        "client_state": "10",
+        "loading_state_offset": 1,
+        "elapsed_ns": "344136843296",
+        "tile_x": 3207,
+        "tile_y": 3278,
+        "plane": 0,
+        "scene_base_x": 3160,
+        "scene_base_y": 3224,
+        "renderer": "ha_Sub2",
+        "logic_cycles_delta": 0,
+        "logic_ms_delta": 819.538996,
+        "plugins_ms_delta": 1.086226,
+        "overlay_paint_ms_delta": 1.712593,
+        "overlay_upload_ms_delta": 0.0,
+        "frame_ms_delta": 66.357187,
+        "event_queue_ms_delta": 0.033722,
+        "present_ms_delta": 30.801577,
+        "gc_ms_delta": 122.0
+      },
+      {
+        "frame_index": 7176,
+        "step": "mill_road",
+        "interval_ms": 797.0,
+        "client_state": "10",
+        "loading_state_offset": null,
+        "elapsed_ns": "241192294202",
+        "tile_x": 3176,
+        "tile_y": 3283,
+        "plane": 0,
+        "scene_base_x": 3120,
+        "scene_base_y": 3232,
+        "renderer": "ha_Sub2",
+        "logic_cycles_delta": 0,
+        "logic_ms_delta": 708.869415,
+        "plugins_ms_delta": 0.268137,
+        "overlay_paint_ms_delta": 1.725584,
+        "overlay_upload_ms_delta": 1.248075,
+        "frame_ms_delta": 31.679846,
+        "event_queue_ms_delta": 0.035337,
+        "present_ms_delta": 49.831283,
+        "gc_ms_delta": 93.0
+      },
+      {
+        "frame_index": 13183,
+        "step": "map",
+        "interval_ms": 396.3,
+        "client_state": "10",
+        "loading_state_offset": null,
+        "elapsed_ns": "445987952151",
+        "tile_x": 3221,
+        "tile_y": 3219,
+        "plane": 0,
+        "scene_base_x": 3168,
+        "scene_base_y": 3184,
+        "renderer": "ha_Sub1",
+        "logic_cycles_delta": 2,
+        "logic_ms_delta": 0.352584,
+        "plugins_ms_delta": 0.001049,
+        "overlay_paint_ms_delta": 1.139737,
+        "overlay_upload_ms_delta": 5.731476,
+        "frame_ms_delta": 36.405826,
+        "event_queue_ms_delta": 0.043548,
+        "present_ms_delta": 0.0,
+        "gc_ms_delta": 103.0
+      }
+    ],
+    "phase_note": "Phase and GC values are completed cumulative-counter deltas between overlay callbacks, not same-frame durations. Phases overlap and FRAME/PRESENT completion can cross a callback boundary, so they must not be summed into a causal total; GC is coarse collection time with no per-event timestamp or cause.",
+    "fps_reference": 30.0,
+    "interval_band_note": "20-100 ms is a fixed absolute band; at a 30 FPS reference it includes ordinary pacing and must not be called jitter.",
+    "stall_excess_ms_over_reference": 8244.560172333333
+  },
+  "schema_validation": {
+    "columns": 19,
+    "malformed_rows": 0,
+    "rows_with_negative_counter_deltas": 0
+  },
+  "resources": {
+    "samples": 942,
+    "external_power_online_sample_counts": {
+      "0": 364,
+      "1": 578
+    },
+    "peak_rss_mib": {
+      "client": 1060.765625,
+      "server": 1527.12109375
+    }
+  },
+  "conclusion": "Four walking stalls coincide with scene-base changes and 709-1041 ms completed logic deltas; GC deltas 82-150 ms contribute but do not dominate. Map transitions include 1277/1405 ms logic deltas and a 985 ms frame-including-overlays delta completed at the next callback. Timing phases overlap and cross callbacks; do not add them or infer a precise GC event/cause."
+}
