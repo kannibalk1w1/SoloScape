@@ -506,15 +506,13 @@ public final class NativeBloodPactProbe {
   if(!results.containsKey("production_menu")){List<String> labels=new ArrayList<>();for(UiState.Widget row:state.dialogue)labels.add((row.id&65535)+":"+row.name+" / "+(row.actions.length>0?row.actions[0].label:"-"));for(UiState.Widget row:state.amounts)labels.add("amount "+(row.id&65535)+":"+row.name+" / "+(row.actions.length>0?row.actions[0].label:"-"));timeline.add("production menu "+labels+" amount="+state.amount);results.put("production_menu","seen");}
   if(COOK&&!results.containsKey("b_cancel_production_menu")){ // a player backs out of the menu: nothing may be cooked
    if(menuSeenAt==0)menuSeenAt=now;held=0;if(now-menuSeenAt<700)return true; // UI input re-arms only from a neutral frame
-   cancelRaw=count("Raw chicken");if(cancelRaw<0)return true;results.put("b_cancel_production_menu","pressed B with "+cancelRaw+" raw chicken");held=B;bAt=now;bPresses=1;timeline.add("B pressed in the cooking menu");return true;}
+   cancelRaw=count("Raw chicken");if(cancelRaw<0)return true;results.put("b_cancel_production_menu","pressed B with "+cancelRaw+" raw chicken");held=B;pulse=1;bAt=now;bPresses=1;timeline.add("B pressed in the cooking menu");return true;}
   if(COOK&&bAt>0&&!bClosed){
-   if(now-bAt>1500&&bPresses==1){held=B;bPresses=2;results.put("b_cancel_second_press_needed",true);timeline.add("first B did not close the menu; pressing B again");return true;}
-   if(now-bAt>3200&&bPresses==2){bPresses=3;ControllerUi.cancelWorld();results.put("b_cancel_gateway_fallback",true);timeline.add("pad B twice did not close the menu; closing through the native gateway (same Walk here action)");return true;}
-   if(bPresses==3&&now-bAt<7000){held=0;return true;}
+   if(now-bAt>1500&&bPresses==1){held=B;pulse=1;bPresses=2;results.put("b_cancel_second_press_needed",true);timeline.add("first B did not close the menu; pressing B again");return true;}
    held=0;String why="?";
    try{Field uiField=SoloScapeControllerPlugin.class.getDeclaredField("ui");uiField.setAccessible(true);UiControls ui=(UiControls)uiField.get(plugin);
     why=" uiActive="+ui.active()+" inDialogue="+ui.inDialogue()+" hasDialogue="+ControllerUi.hasDialogue()+" dialogueId="+ControllerUi.snapshot(true).dialogueId+" ready="+ControllerWorld.ready()+" plugin="+fields(plugin,"mappingArmed","settingsOpen","restoringSource","lastInputTick")+" raw="+raw.buttonsPressed+"/"+raw.buttonsHeld;}catch(Exception ex){why=ex.toString();}
-   require(now-bAt<7000,"B did not close the cooking menu after "+bPresses+" press(es); feedback="+world.feedback(System.nanoTime())+why);return true;} // give B time to close it; never click Cook meanwhile
+   require(now-bAt<4500,"B did not close the cooking menu after "+bPresses+" press(es); feedback="+world.feedback(System.nanoTime())+why);return true;} // give B time to close it; never click Cook meanwhile
   if(state.amount!=1)for(UiState.Widget w:state.amounts)if((w.id&65535)==5&&w.actions.length>0){ControllerUi.invoke(w,w.actions[0]);return true;}
   for(UiState.Widget w:state.dialogue)if((w.id&65535)==14&&w.actions.length>0){ControllerUi.invoke(w,w.actions[0]);return true;}
   return true;
@@ -558,6 +556,7 @@ public final class NativeBloodPactProbe {
  }
 
  // ---- shop: native panel 620 ----
+ private static int pulse;
  private static int shopSub,coinsBefore=-1;private static long shopAt;
  private static String describe(UiState.Widget w){StringBuilder o=new StringBuilder(w.name+"[");for(UiState.Action a:w.actions)o.append(a.label).append(',');return o.append(']').toString();}
  private static UiState.Widget shopWidget(UiState state,String name,String actionPrefix){
@@ -572,31 +571,31 @@ private static boolean shopPanel(long now)throws Exception{
   if(shopSub==0){
    StringBuilder o=new StringBuilder();int n=0;for(UiState.Pane pane:state.panel.panes){o.append(pane.name).append(':');for(UiState.Widget w:pane.widgets){if(w!=null&&n++<30)o.append(describe(w)).append(' ');}}
    timeline.add("shop panel "+o);StringBuilder det=new StringBuilder();for(UiState.Widget w:state.panel.details)if(w!=null&&det.length()<500)det.append(describe(w)).append(' ');timeline.add("shop details "+det);
-   coinsBefore=heldIn(state,"Coins");results.put("coins_before_sell",coinsBefore);
+   coinsBefore=heldSide(state,"Coins");results.put("coins_before_sell",coinsBefore);
    UiState.Widget item=shopWidget(state,"Bronze dagger","Sell");require(item!=null,"No Sell action for the Bronze dagger: "+o);
-   results.put("sell_action",describe(item));ControllerUi.invoke(item,shopAction(item,"Sell 1"));shopSub=1;return true;}
+   results.put("sell_action",describe(item));if(!ControllerUi.invoke(item,shopAction(item,"Sell 1"))){results.merge("sell_rejected",1,(a,b)->(Integer)a+(Integer)b);require(now-stageAt<45_000,"The fresh Sell 1 action was never accepted");shopAt=0;return true;}shopSub=1;return true;}
   if(shopSub==1){
-   int coins=heldAny(state,"Coins");
+   int coins=heldSide(state,"Coins");
    if(!loggedAfterSell&&now-shopAt<5000){loggedAfterSell=true;StringBuilder o=new StringBuilder();for(UiState.Pane pane:state.panel.panes){o.append(pane.name).append(':');for(UiState.Widget w:pane.widgets)if(w!=null&&(w.name.contains("Coins")||w.name.contains("dagger")||pane.name.startsWith("Stock")))o.append(w.name).append('x').append(w.quantity).append(' ');}timeline.add("after Sell 1: "+o+" inventory coins "+heldIn(state,"Coins")+" dagger "+heldIn(state,"Bronze dagger"));}
    if(coins<=coinsBefore){require(now-stageAt<45_000,"Selling the dagger gave no coins: "+coins);return true;}
-   results.put("coins_after_sell",coins);results.put("dagger_left",heldAny(state,"Bronze dagger"));
-   UiState.Widget stock=null;String[] wanted={"Bucket","Tinderbox","Pot","Jug","Bronze axe","Knife","Hammer"};
-   for(String name:wanted){for(UiState.Pane pane:state.panel.panes)if(pane.name.startsWith("Stock"))for(UiState.Widget w:pane.widgets)if(w!=null&&w.name.equalsIgnoreCase(name)&&shopAction(w,"Buy 1")!=null&&stock==null)stock=w;if(stock!=null)break;}
+   results.put("coins_after_sell",coins);results.put("dagger_left",heldSide(state,"Bronze dagger"));
+   UiState.Widget stock=null;String[] wanted={"Jug","Shears","Bowl","Cake tin","Chisel"};
+   for(String name:wanted){for(UiState.Pane pane:state.panel.panes)if(!pane.name.equals("Inventory"))for(UiState.Widget w:pane.widgets)if(w!=null&&w.name.equalsIgnoreCase(name)&&shopAction(w,"Buy 1")!=null&&stock==null)stock=w;if(stock!=null)break;}
    if(stock==null){
     if(sellDoneAt==0)sellDoneAt=now;
-    if(now-sellDoneAt<20_000)return true;
     int stockWidgets=0;for(UiState.Pane pane:state.panel.panes)if(pane.name.startsWith("Stock"))stockWidgets=pane.widgets.length;
-    results.put("buy_blocked","the native shop panel exposed "+stockWidgets+" stock widgets 20 s after the sale, so nothing could be bought; the server's general store has 11+ stock entries");timeline.add("shop stock not exposed to the controller panel; closing after the sale");
-    ControllerUi.cancelWorld();shopSub=3;shopAt=now+1500;return true;}
-   results.put("buy_action",describe(stock));bought=stock.name;boughtBefore=heldIn(state,bought);ControllerUi.invoke(stock,shopAction(stock,"Buy 1"));shopSub=2;return true;}
+    require(now-sellDoneAt<20_000,"The shop panel exposed "+stockWidgets+" stock entries with an affordable Buy 1 action 20 s after the sale; a purchase is required");return true;}
+   screenshot(".shop.png");results.put("buy_action",describe(stock));bought=stock.name;boughtBefore=heldSide(state,bought);ControllerUi.invoke(stock,shopAction(stock,"Buy 1"));shopSub=2;return true;}
   if(shopSub==2){
-   int have=heldIn(state,bought),coins=heldIn(state,"Coins");
+   int have=heldSide(state,bought),coins=heldSide(state,"Coins");
    if(have<=boughtBefore){require(now-stageAt<90_000,"Buying "+bought+" did not add it");return true;}
    results.put("bought",bought);results.put("coins_after_buy",coins);require(coins<(Integer)results.get("coins_after_sell"),"Buying did not cost coins");
    ControllerUi.cancelWorld();shopSub=3;shopAt=now+1500;return true;}
   return true;
  }
   private static int heldIn(UiState state,String name){int n=0;for(UiState.Widget w:state.inventory)if(w!=null&&w.itemId>=0&&w.name.equalsIgnoreCase(name))n+=Math.max(1,w.quantity);return n;}
+ /** Items in the open shop's side inventory (the inventory tab is not drawn while a shop is open). */
+ private static int heldSide(UiState state,String name){int n=0;for(UiState.Pane pane:state.panel.panes)if(pane.name.equals("Inventory"))for(UiState.Widget w:pane.widgets)if(w!=null&&w.itemId>=0&&w.name.equalsIgnoreCase(name))n+=Math.max(1,w.quantity);return n;}
  private static int heldAny(UiState state,String name){int n=heldIn(state,name);int m=0;for(UiState.Pane pane:state.panel.panes)for(UiState.Widget w:pane.widgets)if(w!=null&&w.itemId>=0&&w.name.equalsIgnoreCase(name))m+=Math.max(1,w.quantity);return Math.max(n,m);}
  private static long sellDoneAt;private static boolean loggedAfterSell;
  private static String bought="";private static int boughtBefore;
@@ -765,7 +764,7 @@ private static boolean shopPanel(long now)throws Exception{
   if(hp()>0)minHp=Math.min(minHp,hp());
   if(!DRUIDIC&&stage>=6&&stage<30&&!instanced()&&plane()==0&&Math.abs(worldX()-3221)<3&&Math.abs(worldY()-3219)<3)throw new IllegalStateException("Player died and respawned");
   // Modal UI first: dialogue makes the world deliberately not ready.
-  if((DRUIDIC||COOK)&&production()){neutral();return;}
+  if((DRUIDIC||COOK)&&production()){if(pulse>0)pulse--;else neutral();return;} // a pad press made by production() is sent for exactly one input tick
   if(SHOP&&shopPanel(now)){neutral();return;}
   if(panels()||dialogue()){lastNotReady=now;if(phase!=0)phase(0);neutral();return;}
   if(hp()>0&&hp()<=4&&now-lastPress>2400&&(!DRUIDIC||stage>=14||hp()<=2)){

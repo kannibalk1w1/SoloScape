@@ -1,0 +1,139 @@
+diff --git a/client/src/ControllerUi.java b/client/src/ControllerUi.java
+--- a/client/src/ControllerUi.java
++++ b/client/src/ControllerUi.java
+@@ -264,9 +264,11 @@
+         String detail="",status="";
+         String name = clean(w.aString752);
+         if (name.isEmpty()) name = clean(w.aString792);
+-        if (w.anInt812 >= 0 && Exception_Sub1.aClass255_112 != null)
++        Class46 stock = stockItem(seen);
++        Class46 shown = stock != null ? stock : w;
++        if (shown.anInt812 >= 0 && Exception_Sub1.aClass255_112 != null)
+         {
+-            ObjType item = Exception_Sub1.aClass255_112.getItemDefinitions(-115, w.anInt812);
++            ObjType item = Exception_Sub1.aClass255_112.getItemDefinitions(-115, shown.anInt812);
+             if (item != null) name = clean(item.name);
+         }
+         UiState.Action[] options = actions(w, true);
+@@ -344,10 +346,27 @@
+         }
+         if (group==916) name=(w.anInt830&65535)==5?"Make 1":(w.anInt830&65535)==6?"Make 5":(w.anInt830&65535)==7?"Make 10":"Make All";
+         if (name.isEmpty()) name = options.length > 0 ? options[0].label : "Item";
+-        return new UiState.Widget(w.anInt830, w.anInt704, w.anInt812, w.anInt781,
++        return new UiState.Widget(w.anInt830, w.anInt704, shown.anInt812, shown.anInt781,
+             name, new Rectangle(seen.bounds), options,detail,status);
+     }
+ 
++    /**
++     * Shop stock is a clickable box with no item of its own (it owns Info/Buy/Examine) and a separate
++     * item graphic drawn inside it. Returns that graphic so the box is named and counted as the stocked item.
++     */
++    private static Class46 stockItem(Seen box)
++    {
++        Class46 w = box.widget;
++        if (w.anInt830 >>> 16 != 620 || w.anInt704 < 0 || w.anInt812 >= 0 || box.bounds == null) return null;
++        for (Seen seen : visible.values())
++        {
++            Class46 item = seen.widget;
++            if (item.anInt830 != w.anInt830 || item.anInt812 < 0 || seen.bounds == null || !fresh(seen) || seen.frame != box.frame) continue;
++            if (box.bounds.contains(seen.bounds.getCenterX(), seen.bounds.getCenterY())) return item;
++        }
++        return null;
++    }
++
+     private static UiState.Panel panel(Set<Integer> open)
+     {
+         if (!panelsEnabled) return null;
+@@ -372,7 +391,7 @@
+             if (group != id && !(id == 762 && group == 763) && !(id == 620 && group == 621) && !(id == 667 && group == 670)) continue;
+             if (!open.contains(group) || !fresh(seen) || seen.frame != renderFrame) continue;
+             // Dynamic empty slots can expose inherited operations; never invoke them.
+-            if (w.anInt704 >= 0 && w.anInt812 < 0 && id != 271 && id!=190) continue;
++            if (w.anInt704 >= 0 && w.anInt812 < 0 && id != 271 && id!=190 && stockItem(seen) == null) continue;
+             if (id==300)
+             {
+                 boolean sibling=false;
+@@ -382,7 +401,7 @@
+             UiState.Widget widget = describePanel(seen);
+             if (widget.actions.length == 0) continue;
+             if (group == 763 || group == 621 || group == 670) side.add(widget);
+-            else if ((w.anInt812 >= 0 || !modal || extraModal(id)) && (id != 762 || (w.anInt830 & 65535) == 93)
++            else if ((w.anInt812 >= 0 || widget.itemId >= 0 || !modal || extraModal(id)) && (id != 762 || (w.anInt830 & 65535) == 93)
+                 && (id != 620 || (w.anInt830 & 65535) == 25 || (w.anInt830 & 65535) == 26)) items.add(widget);
+             else controls.add(widget);
+         }
+diff --git a/client/test/ControllerUiTest.java b/client/test/ControllerUiTest.java
+--- a/client/test/ControllerUiTest.java
++++ b/client/test/ControllerUiTest.java
+@@ -263,6 +263,71 @@
+         }
+         finally {Class348_Sub40_Sub13.aClass262_9201=queue;Class348_Sub23_Sub2.aClass77_9029=cipher;Class348_Sub42_Sub14.anInt9630=bytes;}
+     }
++    /** Shop stock as the pinned client builds it: an item-less click box (Info/Buy/Examine) with the item graphic drawn inside it. */
++    private Class46[] shopStock(int component, int boxChild, int imageChild, int itemId, int quantity, int imageX, String... labels)
++    {
++        if (Class348_Sub40_Sub33.aClass46ArrayArray9427[620] == null)
++        {
++            Class348_Sub40_Sub33.aClass46ArrayArray9427[620] = new Class46[300];
++            Class348_Sub41 attached = new Class348_Sub41(); attached.anInt7050 = 620;
++            Class125.aClass356_4915.method3483((byte) 120, outer.anInt830, attached);
++        }
++        Class46 root = Class348_Sub40_Sub33.aClass46ArrayArray9427[620][component];
++        if (root == null)
++        {
++            root = new Class46(); root.anInt830 = 620 << 16 | component; root.aClass46Array798 = new Class46[80];
++            Class348_Sub40_Sub33.aClass46ArrayArray9427[620][component] = root;
++        }
++        Class46 box = new Class46(); box.anInt830 = root.anInt830; box.anInt704 = boxChild; box.anInt812 = -1;
++        box.aStringArray833 = labels; box.aClass348_Sub44_748 = new Class348_Sub44(2046, -1);
++        Class46 image = new Class46(); image.anInt830 = root.anInt830; image.anInt704 = imageChild; image.anInt812 = itemId; image.anInt781 = quantity;
++        root.aClass46Array798[boxChild] = box; root.aClass46Array798[imageChild] = image;
++        ControllerUi.record(box, 179 + 52 * (boxChild / 6), 148, 48, 52);
++        ControllerUi.record(image, imageX, 152, 36, 32);
++        return new Class46[] {box, image};
++    }
++
++    @Test public void shopStockBoxesAreOfferedAsTheStockedItemWithTheirNativeBuyActions()
++    {
++        Class46[] bucket = shopStock(25, 6, 8, 1925, 30, 237, "Info", "Buy 1", "Buy 5", "Buy 10", "Buy 50", "Buy 500", null, null, null, "Examine");
++        shopStock(25, 12, 14, 590, 10, 289, "Info", "Buy 1", "Buy 5", "Buy 10", "Buy 50", "Buy 500", null, null, null, "Examine");
++        UiState.Panel panel = ControllerUi.snapshot(false).panel;
++        assertEquals(620, panel.id); assertEquals("Stock", panel.panes[0].name);
++        assertEquals(2, panel.panes[0].widgets.length);
++        UiState.Widget stock = panel.panes[0].widgets[0];
++        assertEquals(1925, stock.itemId); assertEquals(30, stock.quantity); assertEquals(620 << 16 | 25, stock.id); assertEquals(6, stock.child);
++        assertEquals("Info", stock.actions[0].label); assertEquals("Buy 1", stock.actions[1].label); assertEquals(18, stock.actions[1].type);
++        assertEquals(2, stock.actions[1].operation);
++        assertEquals(590, panel.panes[0].widgets[1].itemId);
++        // The graphic itself carries no operations and never becomes a second entry.
++        assertEquals(0, ControllerUi.actions(bucket[1], false).length);
++    }
++
++    @Test public void shopStockBoxWithoutAContainedItemOrWithAnItemElsewhereIsStillAnInertEmptySlot()
++    {
++        shopStock(25, 6, 8, 1925, 30, 700, "Info", "Buy 1"); // graphic drawn outside the box
++        shopStock(25, 12, 14, -1, 0, 289, "Info", "Buy 1");   // empty stock slot
++        assertEquals(0, ControllerUi.snapshot(false).panel.panes[0].widgets.length);
++    }
++
++    @Test public void shopStockPurchaseSendsTheNativeClickPacketForTheStockBox()
++    {
++        Class262 queue=Class348_Sub40_Sub13.aClass262_9201;Isaac cipher=Class348_Sub23_Sub2.aClass77_9029;int bytes=Class348_Sub42_Sub14.anInt9630;
++        try
++        {
++            shopStock(25, 12, 14, 1925, 30, 289, "Info", "Buy 1", "Buy 5");
++            Class348_Sub40_Sub13.aClass262_9201=new Class262();Class348_Sub23_Sub2.aClass77_9029=new Isaac(new int[4]);
++            UiState.Widget stock=ControllerUi.snapshot(false).panel.panes[0].widgets[0];
++            assertTrue(ControllerUi.invoke(stock,stock.actions[1]));
++            Class348_Sub47 packet=(Class348_Sub47)Class348_Sub40_Sub13.aClass262_9201.aClass348_3334.next;
++            byte[] data=packet.aClass348_Sub49_Sub2_7116.data;
++            assertEquals(620<<16|25,((data[1]&255)<<24)|((data[2]&255)<<16)|((data[3]&255)<<8)|(data[4]&255));
++            // Same bytes a native click on the box sends: the box owns no item (the server derives it from slot/6), slot = box child.
++            assertEquals(0xffff,((data[5]&255)<<8)|(data[6]&255));
++            assertEquals(12,((data[7]&255)<<8)|(data[8]&255));
++        }
++        finally {Class348_Sub40_Sub13.aClass262_9201=queue;Class348_Sub23_Sub2.aClass77_9029=cipher;Class348_Sub42_Sub14.anInt9630=bytes;}
++    }
+     @Test public void jewelleryQuantityButtonsUseThePairedNativeItemName()
+     {
+         Class46 model=panelSlot(675,19,-1,100);model.aString752="Gold ring";
