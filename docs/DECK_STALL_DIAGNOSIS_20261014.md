@@ -76,3 +76,8 @@ Reuse the route as-is: `scripts/smoke_profile.py --desktop --deck-route-seconds 
 Baseline r29 (128,025 frames): 5,021 jitter frames (28.8 s excess over 16.7 ms, p99 40.5 ms), 9 frames of 100–300 ms, and 40 stalls ≥ 300 ms (26.5 s excess, max 1,344 ms).
 
 Limitations: phase and GC values are completed cumulative-counter deltas between overlay callbacks, not same-frame durations. Phases overlap and FRAME/PRESENT completion can cross a callback boundary, so the analyser reports them individually and never as a causal total. GC is coarse collection time with no event timestamp or cause. Attribution to a loading state is by frame proximity only. Tests: `cd scripts && python3 -m unittest test_deck_stall_clusters` (12 tests; 11 run without the private trace, 12 with `SOLOSCAPE_R29_ROUTE_CSV`).
+
+
+## Coordinator measurement completed
+
+A harness-only sampler of the existing cumulative phase/cycle counters avoided a production patch. The single r32 loop and its source, power/pacing, measurements, callback-boundary limits and actual map screenshot are in [the resumed Deck report](DECK_CONTROLLER_VALIDATION_20261014.md#resumed-diagnostics-after-host-restart). Walking stalls are dominated by completed logic deltas, with GC contributing 82–150 ms alongside 709–1,041 ms logic; the full region rebuild still needs sub-step attribution. Map rendering also contributes a large frame counter ending one callback later. This mixed-power ~30 FPS diagnostic does not test the proposed 50 Hz/60 Hz beat.
