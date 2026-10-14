@@ -42,7 +42,9 @@ def _band(values, floor_ms=FRAME_MS):
             'p50_ms': _percentile(values, 50), 'p99_ms': _percentile(values, 99), 'max_ms': max(values, default=None)}
 
 
-def analyse(rows, stall_ms=300, window=5, floor_ms=100):
+def analyse(rows, stall_ms=300, window=5, floor_ms=100, fps_reference=60):
+    if fps_reference <= 0:
+        raise ValueError("FPS reference must be positive")
     rows = list(rows)
     if not rows:
         raise ValueError('Empty frame trace')
@@ -90,6 +92,9 @@ def analyse(rows, stall_ms=300, window=5, floor_ms=100):
               'worst_stalls': worst}
     if any(f in present for f in PHASE_FIELDS):
         result['phase_note'] = PHASE_NOTE
+    result['fps_reference'] = fps_reference
+    result['interval_band_note'] = '20-100 ms is a fixed absolute band; at a 30 FPS reference it includes ordinary pacing and must not be called jitter.'
+    result['stall_excess_ms_over_reference'] = sum(rows[i][1] - 1000 / fps_reference for i in stalls)
     return result
 
 
@@ -97,6 +102,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('trace', type=Path)
     parser.add_argument('--stall-ms', type=float, default=300)
+    parser.add_argument('--fps-reference', type=float, default=60, help='Actual observed callback pacing reference, not the client target.')
     args = parser.parse_args()
     with args.trace.open(newline='') as source:
-        print(json.dumps(analyse(csv.DictReader(source), args.stall_ms), indent=2))
+        print(json.dumps(analyse(csv.DictReader(source), args.stall_ms, fps_reference=args.fps_reference), indent=2))

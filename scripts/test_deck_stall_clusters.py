@@ -39,6 +39,12 @@ class StallClusterTests(unittest.TestCase):
         self.assertEqual(sum(len(v) for k, v in result['stall_steps'].items() if k != 'map' and k != 'close_map'), 20)
         self.assertAlmostEqual(result['p99_ms_excluding_stalls_over_floor'], 22.28, places=1)
 
+    def test_30fps_reference_does_not_count_normal_pacing_as_stall_cost(self):
+        result = analyse(trace([1000 / 30] * 20 + [900]), fps_reference=30)
+        self.assertEqual(result['stalls'], 1)
+        self.assertEqual(result['fps_reference'], 30)
+        self.assertAlmostEqual(result['stall_excess_ms_over_reference'], 900 - 1000 / 30)
+
     def test_empty_trace_fails(self):
         with self.assertRaises(ValueError):
             analyse([])
