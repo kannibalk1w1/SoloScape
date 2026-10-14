@@ -55,6 +55,17 @@ def verify_blood_pact_save(saved, *, kill_cultists=False, kayle=None, caitlin=No
             raise RuntimeError(f'Magic XP {experience[6]} shows no casting beyond the quest reward.')
 
 
+def verify_druidic_save(saved):
+    """Earned Druidic Ritual must survive Save & Quit and Continue."""
+    variables = saved.get('variables', {})
+    if variables.get('druidic_ritual') != 'completed' or variables.get('quest_points') != 4:
+        raise RuntimeError(f"Druidic Ritual progress was not preserved: {variables.get('druidic_ritual')}, QP {variables.get('quest_points')}")
+    experience = saved.get('experience', [])
+    # Tenths of XP; Herblore (ordinal 15) is rewarded 250 XP and nothing else grants it.
+    if len(experience) <= 15 or experience[15] != 2500:
+        raise RuntimeError('Druidic Ritual Herblore reward was not preserved.')
+
+
 def _main():
     parser=argparse.ArgumentParser(description="Disposable native New/Continue/save and optional adventure UI probe.")
     parser.add_argument("--adventure",action="store_true",help="Probe real native adventure tabs, local settings and software overlay intervals.")
@@ -70,6 +81,8 @@ def _main():
     parser.add_argument("--map",action="store_true",help="Open and close the real world map through native controller gateways.")
     parser.add_argument("--content-coverage",action="store_true",help="Native quest intro/reward and production fixtures with supplied materials; no actual-route claim.")
     parser.add_argument("--blood-pact",action="store_true",help="Play The Blood Pact from a fresh character with controller input only: real travel, earned combat, loot and B cancellation; no admin fixtures.")
+    parser.add_argument("--druidic-ritual",action="store_true",help="Earn Druidic Ritual from a fresh character: hunt the four meats, walk to Taverley by stick, perform the ritual; no admin fixtures.")
+    parser.add_argument("--druidic-dev-stage",type=int,default=0,help="Debug only: start the Druidic probe at a later stage using admin teleports/items. Results are labelled as a fixture, never earned acceptance.")
     parser.add_argument("--blood-pact-magic",action="store_true",help="Earned Blood Pact where Reese is beaten with Caitlin's staff and an autocast spell using tutor runes; implies --blood-pact.")
     parser.add_argument("--blood-pact-kayle",choices=("spare","kill"),help="Override Kayle's fate in the earned Blood Pact route; implies --blood-pact.")
     parser.add_argument("--blood-pact-caitlin",choices=("spare","kill"),help="Override Caitlin's fate in the earned Blood Pact route; implies --blood-pact.")
@@ -82,6 +95,7 @@ def _main():
     parser.add_argument("--deck60-gl-only",action="store_true",help="Skip software stages and compare OpenGL pacing at full resolution.")
     parser.add_argument("--deck-route-seconds",type=int,default=0,help="Repeat the real-map full-resolution route for 60–3600 seconds, then verify a no-action reload.")
     options=parser.parse_args()
+    if options.druidic_ritual:options.blood_pact=True
     if options.blood_pact_kill_cultists or options.blood_pact_magic or options.blood_pact_kayle or options.blood_pact_caitlin or options.blood_pact_reese=="spare":options.blood_pact=True
     if options.fullscreen_gl_only:options.fullscreen=True
     if options.deck60_gl_only:options.deck60=True
@@ -132,12 +146,12 @@ def _main():
             if '-jar' in argv and any('void-client-' in arg for arg in argv):
                 i=argv.index('-jar');jar=argv[i+1]
                 label='Existing authorized X11/XWayland desktop; native overlay-render intervals, real Gateway/synthetic UI input and AWT events through native canvas mouse handlers. No physical controller or Gaming Mode acceptance.' if options.desktop else 'Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.'
-                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.probe.awt.mouse=true'] if options.desktop else [])+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+(['-Dsoloscape.text.probe.fast=true'] if options.text else [])+(['-Dsoloscape.playable.probe=true'] if options.journey else [])+(['-Dsoloscape.deck60.route=true','-Dsoloscape.deck60.route.seconds='+str(options.deck_route_seconds if iteration==0 else 0),'-Dsoloscape.performance.timings=true'] if options.deck_route_seconds else [])+(['-Dsoloscape.deck60.startStage=5'] if options.deck60_gl_only else [])+(['-Dsoloscape.deck60.probe=true','-Dsoloscape.performance.timings=true'] if options.deck60 else [])+(['-Dsoloscape.fullscreen.glOnly=true'] if options.fullscreen_gl_only else [])+(['-Dsoloscape.fullscreen.probe=true']+([] if options.desktop else ['-Dsoloscape.fullscreen.softwareOnly=true']) if options.fullscreen else [])+(['-Dsoloscape.playtest2.probe=true'] if options.playtest_two and iteration==0 else [])+(['-Dsoloscape.map.probe=true'] if options.map else [])+(['-Dsoloscape.content.probe=true'] if options.content_coverage and iteration==0 else [])+(['-Dsoloscape.bloodpact.probe=true'] + (['-Dsoloscape.bloodpact.killCultists=true'] if options.blood_pact_kill_cultists else []) + (['-Dsoloscape.bloodpact.magic=true'] if options.blood_pact_magic else []) + (['-Dsoloscape.bloodpact.kayle='+options.blood_pact_kayle] if options.blood_pact_kayle else []) + (['-Dsoloscape.bloodpact.caitlin='+options.blood_pact_caitlin] if options.blood_pact_caitlin else []) + (['-Dsoloscape.bloodpact.reese='+options.blood_pact_reese] if options.blood_pact_reese=="spare" else []) if options.blood_pact and iteration==0 else [])+(['-Dsoloscape.quit.probe=true'] if options.save_quit and iteration==0 else [])+(['-Dsoloscape.artwork.probe=true'] if options.artwork and iteration==0 else [])+(['-Dsoloscape.tabbar.probe=true'] if options.tab_bar and iteration==0 else [])+(['-Dsoloscape.performance.probe=true'] if options.performance else [])+(['-Dsoloscape.sidebar.probe=true'] if options.sidebar else [])+(['-Dsoloscape.sidebar.baseline=true'] if options.sidebar_baseline else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
+                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.probe.awt.mouse=true'] if options.desktop else [])+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+(['-Dsoloscape.text.probe.fast=true'] if options.text else [])+(['-Dsoloscape.playable.probe=true'] if options.journey else [])+(['-Dsoloscape.deck60.route=true','-Dsoloscape.deck60.route.seconds='+str(options.deck_route_seconds if iteration==0 else 0),'-Dsoloscape.performance.timings=true'] if options.deck_route_seconds else [])+(['-Dsoloscape.deck60.startStage=5'] if options.deck60_gl_only else [])+(['-Dsoloscape.deck60.probe=true','-Dsoloscape.performance.timings=true'] if options.deck60 else [])+(['-Dsoloscape.fullscreen.glOnly=true'] if options.fullscreen_gl_only else [])+(['-Dsoloscape.fullscreen.probe=true']+([] if options.desktop else ['-Dsoloscape.fullscreen.softwareOnly=true']) if options.fullscreen else [])+(['-Dsoloscape.playtest2.probe=true'] if options.playtest_two and iteration==0 else [])+(['-Dsoloscape.map.probe=true'] if options.map else [])+(['-Dsoloscape.content.probe=true'] if options.content_coverage and iteration==0 else [])+(['-Dsoloscape.bloodpact.probe=true'] + (['-Dsoloscape.bloodpact.route=druidic','-Dsoloscape.probe.seconds=7200']+(['-Dsoloscape.druidic.devStage='+str(options.druidic_dev_stage)] if options.druidic_dev_stage else []) if options.druidic_ritual else []) + (['-Dsoloscape.bloodpact.killCultists=true'] if options.blood_pact_kill_cultists else []) + (['-Dsoloscape.bloodpact.magic=true'] if options.blood_pact_magic else []) + (['-Dsoloscape.bloodpact.kayle='+options.blood_pact_kayle] if options.blood_pact_kayle else []) + (['-Dsoloscape.bloodpact.caitlin='+options.blood_pact_caitlin] if options.blood_pact_caitlin else []) + (['-Dsoloscape.bloodpact.reese='+options.blood_pact_reese] if options.blood_pact_reese=="spare" else []) if options.blood_pact and iteration==0 else [])+(['-Dsoloscape.quit.probe=true'] if options.save_quit and iteration==0 else [])+(['-Dsoloscape.artwork.probe=true'] if options.artwork and iteration==0 else [])+(['-Dsoloscape.tabbar.probe=true'] if options.tab_bar and iteration==0 else [])+(['-Dsoloscape.performance.probe=true'] if options.performance else [])+(['-Dsoloscape.sidebar.probe=true'] if options.sidebar else [])+(['-Dsoloscape.sidebar.baseline=true'] if options.sidebar_baseline else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
             if (options.deck60 or options.deck_route_seconds) and any("void-server-" in arg for arg in argv):
                 argv=argv[:1]+["-Dsoloscape.performance.timings.file="+str(testroot/("server-new.csv" if iteration==0 else "server-continue.csv"))]+argv[1:]
             if options.journey and any("void-server-" in arg for arg in argv):
                 kwargs["env"]=dict(kwargs.get("env") or os.environ,SOLOSCAPE_NATIVE_PROBE="1")
-            if (options.playtest_two or options.content_coverage) and any("void-server-" in arg for arg in argv):
+            if (options.playtest_two or options.content_coverage or options.druidic_dev_stage) and any("void-server-" in arg for arg in argv):
                 kwargs["env"]=dict(kwargs.get("env") or os.environ,**{'development.admin.name':'AlphaTest'})
             process=original(argv,**kwargs)
             if any('void-server-' in arg for arg in argv):metrics.add(process,'server')
@@ -180,7 +194,11 @@ def _main():
             saved=profiles.validate_save((profile.state/'saves/alphatest.toml').read_bytes())
             if options.content_coverage:
                 verify_content_save(saved)
-            if options.blood_pact:
+            if options.druidic_ritual:
+                verify_druidic_save(saved)
+                if iteration==0:
+                    Path(str(marker)+'.bloodpact.json').replace(testroot/'druidic.json')
+            elif options.blood_pact:
                 verify_blood_pact_save(saved, kill_cultists=options.blood_pact_kill_cultists, kayle=options.blood_pact_kayle, caitlin=options.blood_pact_caitlin, magic=options.blood_pact_magic)
                 if iteration==0:
                     Path(str(marker)+'.bloodpact.json').replace(testroot/'blood-pact.json')

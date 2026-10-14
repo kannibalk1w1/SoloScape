@@ -115,3 +115,19 @@ Run by Claude Sonnet 5.5 from [the overnight queue](OVERNIGHT_PLAYTEST_QUEUE_202
 **Mixed fates.** The saved validators now check each cultist separately, and the Reese pre-fight choice takes the mixed-only line "I'm the one who defeated your lackeys". Each route verified native saved fates, sling/staff/sword drops with B-cancelled loot piles, reward panel and Continue.
 
 Evidence and per-run resource peaks: `docs/evidence/overnight/`. Peak sampled RSS on the magic New run was 2,533 MiB client and 1,779 MiB server (host software renderer). Routes took 245–263 s for New and about 22.6 s for Continue.
+
+## Overnight batch B — Druidic Ritual earned route, partial (14 October 2026)
+
+`scripts/smoke-profile.sh --druidic-ritual` reuses the Blood Pact probe's pad, travel, targeting and dialogue helpers (`-Dsoloscape.bloodpact.route=druidic`). A fresh character, no admin commands, supplied items or teleports, walked and fought through:
+
+| Step | Result |
+| --- | --- |
+| Lumbridge cow field (gate opened through the native Open action), raw beef | earned |
+| Trees by the cow field, logs | earned |
+| Seven raw chickens, player-lit fire, cooking through native item-use, second fire from a second log | earned (fires burn about 35 s) |
+| Giant rats east of Varrock, raw rat meat | earned (about 15 minutes with rests) |
+| Black bear, raw bear meat | **not achieved**: the character cannot out-fight it |
+| Varrock → Barbarian Village → Falador west gate by stick | worked in a labelled fixture run (`--druidic-dev-stage 15`) |
+| Taverley, Sanfew, the dungeon cauldron | not reached |
+
+New probe machinery that later routes can reuse: a long-distance stick walker (waypoint choice on the client's own collision map with a visited-block penalty and road waypoints), gate/door opening toward the goal, melee reachability that ignores fenced animals, pile pick-up through the X menu (the pile's focus can name another item), tree chopping, fire lighting on a bare tile, relighting, and cooking. Observations: inventory space is tight (17 starter items), a selected item freezes world movement, fires cannot be lit on tiles with items, and `ControllerWorld` Attack on a fenced animal only reports "I can't reach that." Evidence: [partial run](evidence/overnight/druidic-earned-partial-native.json).

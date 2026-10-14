@@ -10,7 +10,7 @@ public class NativeSessionSmoke {
   String marker=args[0]; Loader.main(new String[]{"--address","127.0.0.1","--port",args[1]});
   new Thread(()->{
    long started=System.currentTimeMillis();
-   long deadline=started+(Boolean.getBoolean("soloscape.deck60.route")?(Integer.getInteger("soloscape.deck60.route.seconds",1800)*1000L+900000):Boolean.getBoolean("soloscape.content.probe")?420000:Boolean.getBoolean("soloscape.bloodpact.probe")?900000:Boolean.getBoolean("soloscape.deck60.probe")?420000:Boolean.getBoolean("soloscape.playable.probe")?420000:150000);
+   long deadline=started+(Boolean.getBoolean("soloscape.deck60.route")?(Integer.getInteger("soloscape.deck60.route.seconds",1800)*1000L+900000):Boolean.getBoolean("soloscape.content.probe")?420000:Boolean.getBoolean("soloscape.bloodpact.probe")?Integer.getInteger("soloscape.probe.seconds",900)*1000L:Boolean.getBoolean("soloscape.deck60.probe")?420000:Boolean.getBoolean("soloscape.playable.probe")?420000:150000);
    while(System.currentTimeMillis()<deadline) {
     try {
      Thread.sleep(500);
