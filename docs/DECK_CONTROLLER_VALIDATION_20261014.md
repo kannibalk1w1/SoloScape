@@ -6,7 +6,7 @@ The owner clarified the objective: learn from representative interactions and ap
 
 The reviewed overnight work is merged as `dae017a` (PR #21). Its private matched baseline is installed as `deck-lessons-20261014-r29`. All **10,580** manifest entries verified before activation. The idle owner profile received a fresh verified backup; all **106** copied profile files matched their source hashes. The character save had zero raw backslashes, so the server 0022 escape-reader compatibility check passed. Launcher settings were copied unchanged and r28 plus the previous stable wrapper remain available for rollback.
 
-The normal Steam shortcut points at r29. All tests used disposable AlphaTest worlds through a separate temporary Steam shortcut. After the endurance run, the real character save still matched r28 byte-for-byte and no disposable session remained active.
+The endurance measurements below use r29 (client patch 0052); the final candidate is r30 (client patch 0053), described below. All tests used disposable AlphaTest worlds through a separate temporary Steam shortcut. After the endurance run, the real character save still matched r28 byte-for-byte and no disposable session remained active. A later ended owner session changed that save; the final deployment preserves the latest valid save rather than restoring r28.
 
 ## Steam-launch portability lesson
 
@@ -51,6 +51,22 @@ This is the real 1280×800 Deck display with the disposable AlphaTest character.
 
 ## Shared UI follow-up
 
-The parallel worker is checking the native action/container contracts rather than modifying quest content. The shop's side inventory must be observed while the shop is open, and dispatch rejection must not silently advance a probe. The cooking probe also cleared its planned B state before passing input to the plugin; corrected input and strict cancellation acceptance distinguish that test defect from a product failure. Final strict flow and settings results will be added after the worker's reviewed completion.
+The parallel worker is checking the native action/container contracts rather than modifying quest content. The shop's side inventory must be observed while the shop is open, and dispatch rejection must not silently advance a probe. The cooking probe also cleared its planned B state before passing input to the plugin; corrected input and strict cancellation acceptance distinguish that test defect from a product failure. The bounded Sonnet pass confirmed a production defect: stock click boxes and item graphics were separate, so the generic controller adapter discarded populated stock as empty slots. Patch 0053 joins the current graphic metadata to its native click box, preserving action identity. Strict native shop acceptance now requires an actual purchase and persistence after Continue. Cooking cancellation now passes on the first B, with raw food unchanged; there was no cooking product defect.
+
+The focused Settings follow-up makes the harness own its virtual input through real plugin ticks and restores the previous SDL polling state. New/Continue and full adventure probes passed on the private host. No production Settings change was needed. See [Settings evidence and limits](SETTINGS_HARNESS_OWNERSHIP_20261014.md).
+
+The Steam-launched launcher fixture also passed controller name entry, focus, held-A protection, account filtering, private creation and inline backend rejection on the Deck. It used scripted controller input, not human button acceptance.
+
+## Final candidate
+
+The immutable r30 snapshot is sourced from `fd18da7` and all **10,597** manifest entries verified. Its game jars contain client 0053/server 0022. Deployment found an ended, unverified owner session: no recorded game process was live, and recovery checks allowed its record to be archived without signalling a process. The newest character save validated and received a fresh backup. All **110** copied profile files matched their source hashes, the latest character save and launcher settings copied unchanged, and r29 remains available for rollback. This validates the copy and current save format, not clean closure of the earlier session.
+
+Post-fix Steam Gaming Mode checks are separate from the r29 endurance baseline. The strict shop route passed: sell dagger → 4 coins, buy jug → 3 coins, jug and coins persist after Continue; New/Continue took 77.161/27.389 s, and startup cancellation preserved the world. [Shop evidence](evidence/deck-controller-20261014/r30-shop.json).
+
+![Actual r30 Deck view approaching the shop](evidence/deck-controller-20261014/r30-shop-approach.png)
+
+Settings adoption, reversible preferences, B to Home, restored SDL polling, logout and same-client relog passed in both sessions. The overall smoke run is **partial**: strict saved-field equality caught a one-tile difference, from (3221,3219) after New to (3222,3219) after Continue. Account, experience and inventories matched. The cause remains unresolved, the comparison stays strict, and startup cancellation was not reached in this Settings run. [Settings evidence](evidence/deck-controller-20261014/r30-settings.json). Do not infer save corruption from this observation.
+
+At the restart checkpoint, the latest owner save still matched its r29 transfer source byte-for-byte, and no owner or disposable session record remained active. PR #23 is merged. PRs #24 and #22 remain open pending the required code-owner review; CI passes and no administrator bypass is authorized. The user requested a pause for a host restart. Resume with the bounded Settings tile-change investigation, then frame-time stalls rather than more quest runs.
 
 Battery-only comparisons, physical button acceptance and suspend/resume remain separate checks. No exhaustive quest campaign is required for this validation.

@@ -25,7 +25,7 @@ Select a small set of flows covering the changed interface families: inventory/i
 
 Compile Java 8 harnesses with explicit `-encoding UTF-8`. Steam can launch with a C locale, so host compilation does not establish Steam-launch compatibility. Keep matching source/patch/jar stamps and existing build/profile locks; never rebuild jars that a running world may still load.
 
-The reusable `scripts/deck-controller-validation.sh` supports `quick`, `cook`, `shop`, `route` and `launcher`. Gameplay modes create isolated disposable worlds through the existing smoke runner; the launcher mode uses its isolated launcher fixture. Use it as a separate Steam shortcut; preserve the normal player shortcut and owner profile. `SOLOSCAPE_VALIDATION_ROOT` selects the private installed build, and the route defaults to 1,800 seconds.
+The reusable `scripts/deck-controller-validation.sh` supports `quick`, `cook`, `shop`, `settings`, `route` and `launcher`. Gameplay modes create isolated disposable worlds through the existing smoke runner; the launcher mode uses its isolated launcher fixture. Use it as a separate Steam shortcut; preserve the normal player shortcut and owner profile. `SOLOSCAPE_VALIDATION_ROOT` selects the private installed build, and the route defaults to 1,800 seconds.
 
 ## Evidence and completion
 
@@ -37,4 +37,4 @@ Use disposable-world screenshots, review them before committing, and keep saves/
 
 The first Gaming Mode validation failed at Java compilation because Steam's locale selected ASCII. Explicit UTF-8 fixes the shared harness path; all 18 native harness sources compiled under `LC_ALL=C` afterward. The short r29 Deck check then passed tab navigation, New/Continue and whole-world startup cancellation, with hardware OpenGL near 60 FPS. These short samples remain distinct from the sustained route.
 
-The overnight shop and cooking results also exposed probe weaknesses: ignored dispatch results, observing the wrong inventory pane, sale-only save validation and a cancellation fallback. The bounded follow-up investigates these shared contracts before attributing the failures to game content. Final representative fixes and evidence belong in the corresponding panel/deployment reports.
+The overnight shop and cooking results also exposed probe weaknesses: ignored dispatch results, observing the wrong inventory pane, sale-only save validation and a cancellation fallback. The bounded follow-up confirmed and fixed the generic shop stock-box adapter in client patch 0053. Cooking B and Settings second-tick failures were harness defects: preserve input until dispatch, and own simulated input across real plugin ticks while restoring prior polling state. These lessons apply to future panel tasks; see the representative Deck and Settings reports.

@@ -1,0 +1,54 @@
+{
+  "build": "deck-lessons-20261014-r30",
+  "source_commit": "fd18da7702da34f4bcb10f9e98a91b271687b648",
+  "environment": "Steam-launched on Steam Deck Gaming Mode, synthetic scoped controller input; no physical button acceptance",
+  "sessions": {
+    "new": {
+      "settings_only": true,
+      "settings_gateway_two_tick_adoption": true,
+      "settings_config_round_trip": true,
+      "keyboard_classic_settings_round_trip": true,
+      "settings_plugin_ticks_before_back": 79,
+      "settings_back_to_home": true,
+      "sdl_polling_restored": true,
+      "controller_logout_gateway": true,
+      "same_client_relogin": true,
+      "fresh_capabilities_after_relogin": true,
+      "unexpected_desktop_mouse_clicks": 0,
+      "probe_seconds": 20.552
+    },
+    "continue": {
+      "settings_only": true,
+      "settings_gateway_two_tick_adoption": true,
+      "settings_config_round_trip": true,
+      "keyboard_classic_settings_round_trip": true,
+      "settings_plugin_ticks_before_back": 85,
+      "settings_back_to_home": true,
+      "sdl_polling_restored": true,
+      "controller_logout_gateway": true,
+      "same_client_relogin": true,
+      "fresh_capabilities_after_relogin": true,
+      "unexpected_desktop_mouse_clicks": 0,
+      "probe_seconds": 20.545
+    }
+  },
+  "overall": "partial: Settings and relog contracts passed in both sessions; strict cross-session save equality failed",
+  "failure": {
+    "changed_tested_field": "tile",
+    "new_saved_tile": {
+      "x": 3221,
+      "y": 3219
+    },
+    "continue_saved_tile": {
+      "x": 3222,
+      "y": 3219
+    },
+    "other_tested_fields_equal": [
+      "accountName",
+      "experience",
+      "inventories"
+    ],
+    "cause": "unresolved; do not classify as save corruption or weaken equality check",
+    "startup_cancellation_check": "not reached after strict failure"
+  }
+}
