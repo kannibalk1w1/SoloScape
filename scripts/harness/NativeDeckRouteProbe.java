@@ -19,6 +19,8 @@ public final class NativeDeckRouteProbe extends Overlay {
  private final Map<String,Object> report=new LinkedHashMap<>();
  private final ArrayList<Map<String,Object>> rendererTransitions=new ArrayList<>();private String previousRenderer;
  private long started,previous,stepSince,lastWalk,lastProgress;private int step,loops;private boolean sent,combatDone,finished;private int combatStage,combatXpBefore,combatXpGain;private volatile boolean resized;
+ /** Software-renderer host run: the same real-map route without OpenGL/Deck 60 (Xvfb cannot start the OpenGL toolkit). */
+ private static final boolean SOFTWARE=Boolean.getBoolean("soloscape.deck60.route.software");
  private final int seconds=Integer.getInteger("soloscape.deck60.route.seconds",1800);
  private net.runelite.client.input.controller.UiControls controllerUi;
  private static final String[] STEPS={"origin","courtyard","castle_door","open_door","castle_inside","stairs","up1","up2","bank_approach","bank","close_bank","stairs2","down1","down0","castle_inside","door_inside","courtyard","shop_approach","shop","close_shop","road","farm_road","farm","mill_road","mill","mill_dialogue","close_dialogue","farm_return","combat","cancel_combat","road_return","courtyard_return","origin_return","inventory","close_inventory","map","close_map"};
@@ -36,7 +38,7 @@ public final class NativeDeckRouteProbe extends Overlay {
    config.setConfiguration("runelite","lockWindowSize",false);config.setConfiguration("runelite","containInScreen2",net.runelite.client.ui.ContainableFrame.Mode.NEVER);
    Class316.aClass348_Sub51_3959.method3429((byte)74,Class316.aClass348_Sub51_3959.aClass239_Sub23_7231,0);
    probe.report.put("initial_preset_status",client.getControllerPerformanceStatus());ControllerUi.cancelSelection();config.setConfiguration("soloscapecontroller","deck60",true);
-   if(!client.setControllerDeck60(true))throw new IllegalStateException(client.getControllerPerformanceStatus());
+   if(!SOFTWARE&&!client.setControllerDeck60(true))throw new IllegalStateException(client.getControllerPerformanceStatus());
    if(Boolean.getBoolean("soloscape.deck60.route.staticShadows")){Class316.aClass348_Sub51_3959.method3429((byte)74,Class316.aClass348_Sub51_3959.aClass239_Sub7_7238,1);System.out.println("Diagnostic graphics: static object shadows; animated object shadows disabled");}
    probe.report.put("native_object_shadow_setting",Class316.aClass348_Sub51_3959.aClass239_Sub7_7238.method1748(-32350));
    javax.swing.SwingUtilities.invokeLater(()->{try{
@@ -55,7 +57,7 @@ public final class NativeDeckRouteProbe extends Overlay {
    if(!resized||!ControllerWorld.ready()||now-stepSince<10_000_000_000L)return false;
    if(client.getCanvas().getWidth()!=1280||client.getCanvas().getHeight()!=800)throw new IllegalStateException("Route canvas is not 1280x800: "+client.getCanvas().getSize());
    if(Class321.anInt4017!=1280||Class348_Sub42_Sub8_Sub2.anInt10432!=800)throw new IllegalStateException("Native renderer dimensions differ from 1280x800");
-   if(!(Class348_Sub8.aHa6654 instanceof ha_Sub2))throw new IllegalStateException("OpenGL was not adopted");
+   if(!SOFTWARE&&!(Class348_Sub8.aHa6654 instanceof ha_Sub2))throw new IllegalStateException("OpenGL was not adopted");
    Class.forName("com.FrameTimings").getMethod("snapshotAndReset").invoke(null);started=stepSince=now;report.put("started_monotonic_ns",started);report.put("native_dimensions",Class321.anInt4017+"x"+Class348_Sub42_Sub8_Sub2.anInt10432);report.put("preset_status",client.getControllerPerformanceStatus());report.put("fps_target",DetachedRenderer.getFpsTarget());report.put("pacing",DetachedRenderer.isActive());report.put("start_tile",Arrays.toString(tile()));report.put("renderer",Class348_Sub8.aHa6654.getClass().getName());report.put("canvas",client.getCanvas().getSize().toString());return false;
   }
   if(seconds==0&&now-started>=10_000_000_000L)return finish(marker,now);
@@ -112,7 +114,7 @@ public final class NativeDeckRouteProbe extends Overlay {
    case 33:if(!sent){sent=client.openControllerInventory();if(sent&&controllerUi!=null)controllerUi.focusInventory(now);}complete=sent&&now-stepSince>2_000_000_000L;break;
    case 34:back();complete=controllerUi==null||!controllerUi.active();break;
    case 35:if(!sent)sent=client.openControllerTab(HomeTab.MAP.ordinal());complete=client.getControllerUiState().panel!=null&&client.getControllerUiState().panel.id==755;if(complete)lastProgress=0;break;
-   case 36:back();complete=ControllerWorld.ready();if(complete&&!(Class348_Sub8.aHa6654 instanceof ha_Sub2))throw new IllegalStateException("OpenGL did not restore after map close");break;
+   case 36:back();complete=ControllerWorld.ready();if(complete&&!SOFTWARE&&!(Class348_Sub8.aHa6654 instanceof ha_Sub2))throw new IllegalStateException("OpenGL did not restore after map close");break;
   }
   if(complete){
    System.out.println("Deck route "+STEPS[step]+" complete at "+Arrays.toString(tile()));step++;stepSince=now;sent=false;

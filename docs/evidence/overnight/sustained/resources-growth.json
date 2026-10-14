@@ -1,0 +1,17 @@
+{
+ "run": "--deck-route-seconds 1800 --deck-route-software; private Xvfb 1280x800, software renderer, synthetic input, Lumbridge castle route (bank, shop, dialogue, stairs, combat); NOT Deck evidence",
+ "duration_seconds": 2133.656,
+ "samples": 4022,
+ "client": {
+  "peak_mib": 5338.6,
+  "first_5min_mean_mib": 3635.5,
+  "last_5min_mean_mib": 3008.1,
+  "growth_mib": -627.3
+ },
+ "server": {
+  "peak_mib": 1685.9,
+  "first_5min_mean_mib": 1609.1,
+  "last_5min_mean_mib": 1642.9,
+  "growth_mib": 33.8
+ }
+}

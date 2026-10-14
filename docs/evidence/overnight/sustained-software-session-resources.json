@@ -1,0 +1,19 @@
+{
+ "source": "earned Druidic Ritual probe on private Xvfb, software renderer, ~54 minutes, ended by the probe stage timeout at the bear fight and shut down normally (not the Deck 60 route)",
+ "duration_seconds": 3251.496,
+ "samples": 6139,
+ "client": {
+  "peak_mib": 1572.0,
+  "mean_first_third_mib": 1216.2,
+  "mean_middle_third_mib": 1227.7,
+  "mean_last_third_mib": 1239.7,
+  "final_mib": 1247.3
+ },
+ "server": {
+  "peak_mib": 1755.6,
+  "mean_first_third_mib": 1710.0,
+  "mean_middle_third_mib": 1754.5,
+  "mean_last_third_mib": 1753.8,
+  "final_mib": 1755.5
+ }
+}
