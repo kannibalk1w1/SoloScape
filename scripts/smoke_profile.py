@@ -270,7 +270,8 @@ def _main():
                     Path(str(marker)+'.bloodpact.json').replace(testroot/'blood-pact.json')
             if savebefore is not None:
                 if not all(savebefore[k]==saved[k] for k in ('accountName','experience','inventories','tile')):
-                    raise RuntimeError('Native save/reload changed a tested field.')
+                    changed=[k for k in ('accountName','experience','inventories','tile') if savebefore[k]!=saved[k]]
+                    raise RuntimeError(f"Native save/reload changed tested fields: {', '.join(changed)}; tile before={savebefore['tile']} after={saved['tile']}")
             savebefore=saved
         saveafter=profiles.validate_save((profile.state/'saves/alphatest.toml').read_bytes())
         print('Native save/reload fields preserved:',all(savebefore[k]==saveafter[k] for k in ('accountName','experience','inventories','tile')))
