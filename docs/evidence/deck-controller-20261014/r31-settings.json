@@ -1,0 +1,225 @@
+{
+  "build": "deck-lessons-20261014-r31-diagnostic",
+  "source_commit": "dd6f79d",
+  "production_game_jars": "same client0053/server0022 as r30; only harness diagnostics added",
+  "environment": "Steam-launched Steam Deck Gaming Mode, actual game with scripted scoped controller input; no human button acceptance",
+  "runs": [
+    {
+      "run": "first",
+      "outcome": "passed including strict saved-field equality",
+      "lifecycle": {
+        "new_session_seconds": 51.598,
+        "continue_session_seconds": 47.593,
+        "native_startup_cancel_preserved": true,
+        "original_mutable_paths_unchanged": true
+      },
+      "sessions": {
+        "new": {
+          "tile_change_1791976558773": "step=0 tile=3221,3219,0",
+          "input_at_tile_change_1791976558773": {
+            "connected": true,
+            "leftX": 0.0,
+            "leftY": 0.0,
+            "buttonsHeld": 0,
+            "buttonsPressed": 0,
+            "buttonsReleased": 0,
+            "virtualPadActive": false,
+            "step": 0
+          },
+          "settings_only": true,
+          "settings_probe_pad": "virtual connected-neutral rawState; SDL polling paused for the Settings steps only",
+          "settings_gateway_two_tick_adoption": true,
+          "settings_config_round_trip": true,
+          "keyboard_classic_settings_round_trip": true,
+          "settings_plugin_ticks_before_back": 80,
+          "settings_back_to_home": true,
+          "sdl_polling_restored": true,
+          "controller_logout_gateway": true,
+          "tile_change_1791976571956": "step=13 tile=8,8,0",
+          "input_at_tile_change_1791976571956": {
+            "connected": true,
+            "leftX": 0.0,
+            "leftY": 0.0,
+            "buttonsHeld": 0,
+            "buttonsPressed": 0,
+            "buttonsReleased": 0,
+            "virtualPadActive": false,
+            "step": 13
+          },
+          "tile_change_1791976578716": "step=14 tile=3221,3219,0",
+          "input_at_tile_change_1791976578716": {
+            "connected": true,
+            "leftX": 0.0,
+            "leftY": 0.0,
+            "buttonsHeld": 0,
+            "buttonsPressed": 0,
+            "buttonsReleased": 0,
+            "virtualPadActive": false,
+            "step": 14
+          },
+          "same_client_relogin": true,
+          "fresh_capabilities_after_relogin": true,
+          "unexpected_desktop_mouse_clicks": 0,
+          "probe_seconds": 20.995
+        },
+        "continue": {
+          "tile_change_1791976606858": "step=0 tile=3221,3219,0",
+          "input_at_tile_change_1791976606858": {
+            "connected": true,
+            "leftX": 0.0,
+            "leftY": 0.0,
+            "buttonsHeld": 0,
+            "buttonsPressed": 0,
+            "buttonsReleased": 0,
+            "virtualPadActive": false,
+            "step": 0
+          },
+          "settings_only": true,
+          "settings_probe_pad": "virtual connected-neutral rawState; SDL polling paused for the Settings steps only",
+          "settings_gateway_two_tick_adoption": true,
+          "settings_config_round_trip": true,
+          "keyboard_classic_settings_round_trip": true,
+          "settings_plugin_ticks_before_back": 86,
+          "settings_back_to_home": true,
+          "sdl_polling_restored": true,
+          "controller_logout_gateway": true,
+          "tile_change_1791976620131": "step=13 tile=8,8,0",
+          "input_at_tile_change_1791976620131": {
+            "connected": true,
+            "leftX": 0.0,
+            "leftY": 0.0,
+            "buttonsHeld": 0,
+            "buttonsPressed": 0,
+            "buttonsReleased": 0,
+            "virtualPadActive": false,
+            "step": 13
+          },
+          "tile_change_1791976626326": "step=14 tile=3221,3219,0",
+          "input_at_tile_change_1791976626326": {
+            "connected": true,
+            "leftX": 0.0,
+            "leftY": 0.0,
+            "buttonsHeld": 0,
+            "buttonsPressed": 0,
+            "buttonsReleased": 0,
+            "virtualPadActive": false,
+            "step": 14
+          },
+          "same_client_relogin": true,
+          "fresh_capabilities_after_relogin": true,
+          "unexpected_desktop_mouse_clicks": 0,
+          "probe_seconds": 20.607
+        }
+      }
+    },
+    {
+      "run": "second",
+      "outcome": "passed including strict saved-field equality",
+      "lifecycle": {
+        "new_session_seconds": 50.249,
+        "continue_session_seconds": 47.717,
+        "native_startup_cancel_preserved": true,
+        "original_mutable_paths_unchanged": true
+      },
+      "sessions": {
+        "new": {
+          "tile_change_1791976684171": "step=0 tile=3221,3219,0",
+          "input_at_tile_change_1791976684171": {
+            "connected": true,
+            "leftX": 0.0,
+            "leftY": 0.0,
+            "buttonsHeld": 0,
+            "buttonsPressed": 0,
+            "buttonsReleased": 0,
+            "virtualPadActive": false,
+            "step": 0
+          },
+          "settings_only": true,
+          "settings_probe_pad": "virtual connected-neutral rawState; SDL polling paused for the Settings steps only",
+          "settings_gateway_two_tick_adoption": true,
+          "settings_config_round_trip": true,
+          "keyboard_classic_settings_round_trip": true,
+          "settings_plugin_ticks_before_back": 76,
+          "settings_back_to_home": true,
+          "sdl_polling_restored": true,
+          "controller_logout_gateway": true,
+          "tile_change_1791976697407": "step=13 tile=8,8,0",
+          "input_at_tile_change_1791976697407": {
+            "connected": true,
+            "leftX": 0.0,
+            "leftY": 0.0,
+            "buttonsHeld": 0,
+            "buttonsPressed": 0,
+            "buttonsReleased": 0,
+            "virtualPadActive": false,
+            "step": 13
+          },
+          "tile_change_1791976703583": "step=14 tile=3221,3219,0",
+          "input_at_tile_change_1791976703583": {
+            "connected": true,
+            "leftX": 0.0,
+            "leftY": 0.0,
+            "buttonsHeld": 0,
+            "buttonsPressed": 0,
+            "buttonsReleased": 0,
+            "virtualPadActive": false,
+            "step": 14
+          },
+          "same_client_relogin": true,
+          "fresh_capabilities_after_relogin": true,
+          "unexpected_desktop_mouse_clicks": 0,
+          "probe_seconds": 20.065
+        },
+        "continue": {
+          "tile_change_1791976731747": "step=0 tile=3221,3219,0",
+          "input_at_tile_change_1791976731747": {
+            "connected": true,
+            "leftX": 0.0,
+            "leftY": 0.0,
+            "buttonsHeld": 0,
+            "buttonsPressed": 0,
+            "buttonsReleased": 0,
+            "virtualPadActive": false,
+            "step": 0
+          },
+          "settings_only": true,
+          "settings_probe_pad": "virtual connected-neutral rawState; SDL polling paused for the Settings steps only",
+          "settings_gateway_two_tick_adoption": true,
+          "settings_config_round_trip": true,
+          "keyboard_classic_settings_round_trip": true,
+          "settings_plugin_ticks_before_back": 81,
+          "settings_back_to_home": true,
+          "sdl_polling_restored": true,
+          "controller_logout_gateway": true,
+          "tile_change_1791976744958": "step=13 tile=8,8,0",
+          "input_at_tile_change_1791976744958": {
+            "connected": true,
+            "leftX": 0.0,
+            "leftY": 0.0,
+            "buttonsHeld": 0,
+            "buttonsPressed": 0,
+            "buttonsReleased": 0,
+            "virtualPadActive": false,
+            "step": 13
+          },
+          "tile_change_1791976751109": "step=14 tile=3221,3219,0",
+          "input_at_tile_change_1791976751109": {
+            "connected": true,
+            "leftX": 0.0,
+            "leftY": 0.0,
+            "buttonsHeld": 0,
+            "buttonsPressed": 0,
+            "buttonsReleased": 0,
+            "virtualPadActive": false,
+            "step": 14
+          },
+          "same_client_relogin": true,
+          "fresh_capabilities_after_relogin": true,
+          "unexpected_desktop_mouse_clicks": 0,
+          "probe_seconds": 20.553
+        }
+      }
+    }
+  ],
+  "conclusion": "Earlier r30 one-tile mismatch not reproduced in two fresh disposable worlds. Recorded tile/input snapshots show neutral axes and buttons; snapshots do not rule out input between observations. Original mismatch remains unexplained; strict equality is unchanged."
+}

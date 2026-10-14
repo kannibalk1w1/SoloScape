@@ -70,3 +70,12 @@ Settings adoption, reversible preferences, B to Home, restored SDL polling, logo
 At the restart checkpoint, the latest owner save still matched its r29 transfer source byte-for-byte, and no owner or disposable session record remained active. PR #23 is merged. PRs #24 and #22 remain open pending the required code-owner review; CI passes and no administrator bypass is authorized. The user requested a pause for a host restart. Resume with the bounded Settings tile-change investigation, then frame-time stalls rather than more quest runs.
 
 Battery-only comparisons, physical button acceptance and suspend/resume remain separate checks. No exhaustive quest campaign is required for this validation.
+
+
+## Resumed diagnostics after host restart
+
+Added Settings tile/input snapshots and precise strict-save mismatch field names, without changing game jars or weakening equality. Two fresh Steam-launched r31 diagnostic runs passed all Settings contracts, exact saved-field equality and whole-world startup cancellation. New/Continue totals were 51.598/47.593 s and 50.249/47.717 s. Tile stayed (3221,3219) across the observed world-ready and relog samples; recorded axes/buttons were neutral. These samples do not exclude input between observations. The earlier r30 one-tile difference remains unexplained rather than being reclassified as fixed. [Diagnostic Settings evidence](evidence/deck-controller-20261014/r31-settings.json).
+
+Claude Sonnet analysed the existing full r29 traces and prepared loading code in bounded tasks. Worst stalls cluster at synchronous region rebuilds and OpenGL/software map transitions; GC is a possible component requiring measurement, while steady frame-time jitter remains a separate hypothesis. See [stall diagnosis](DECK_STALL_DIAGNOSIS_20261014.md).
+
+The coordinator added route-only columns for completed timing-counter deltas, tile/scene base, renderer and coarse cumulative GC time. They sample between overlay callbacks, with phase overlap and callback-boundary offsets explicitly recorded. Sampling allocations can affect the run; it is diagnostic evidence, not a replacement benchmark. The r32 diagnostic snapshot verified 10,603 manifest entries and retains r30 game jars. One existing route loop is underway with a 60-second minimum, which completes the current loop. The stable player shortcut stays on r30 and these diagnostic snapshots contain no owner save.
