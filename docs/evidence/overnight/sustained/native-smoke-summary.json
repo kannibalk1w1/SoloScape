@@ -1,0 +1,25 @@
+{
+  "new_session_seconds": 2134.209,
+  "continue_session_seconds": 43.955,
+  "native_startup_cancel_preserved": true,
+  "original_mutable_paths_unchanged": true,
+  "session_environment": {
+    "XDG_SESSION_DESKTOP": "KDE",
+    "XDG_CURRENT_DESKTOP": "KDE",
+    "DISPLAY": ":1",
+    "SteamAppId": null,
+    "SteamGameId": null
+  },
+  "adventure": [],
+  "text_focused": false,
+  "playable_journey": false,
+  "playtest_two": false,
+  "fullscreen_probe": false,
+  "fullscreen_renderers": null,
+  "sidebar_probe": false,
+  "sidebar_baseline": false,
+  "display": "private-xvfb",
+  "precondition": "Owned private display.",
+  "screenshots": "Private evidence only; desktop overlays may appear or Wayland capture may be unavailable. Review before publishing.",
+  "note": "Native session totals and overlay-render intervals; not physical controller or Gaming Mode acceptance."
+}

@@ -33,6 +33,11 @@ public final class NativeBloodPactProbe {
  private static final boolean MAGIC=Boolean.getBoolean("soloscape.bloodpact.magic");
  /** Druidic Ritual mode: same pad, travel and dialogue helpers, a different earned route. */
  private static final boolean DRUIDIC="druidic".equals(System.getProperty("soloscape.bloodpact.route"));
+ /** Gather, firemaking and cooking loop: chop, hunt, light a fire, cook through item-use with a B cancellation. */
+ private static final boolean XP_ONLY="xp".equals(System.getProperty("soloscape.bloodpact.route"));
+ private static final boolean COOK="cook".equals(System.getProperty("soloscape.bloodpact.route"))||XP_ONLY;
+ /** Real Lumbridge general store: sell a starter item, buy another back, through the native shop panel. */
+ private static final boolean SHOP="shop".equals(System.getProperty("soloscape.bloodpact.route"));
  private static final int HP_XP_GOAL=Integer.getInteger("soloscape.druidic.hpXp",0);
  private static long stageLimit=150_000;
  private static boolean choice(String who){String v=System.getProperty("soloscape.bloodpact."+who);return v==null?KILL_CULTISTS:v.equals("kill");}
@@ -178,7 +183,7 @@ public final class NativeBloodPactProbe {
   if(phase==2){
    trigger=0;stickX=stickY=0;
    if(matches(shown,name,option)){held=button;phase(3);return null;}
-   if(cycles==12&&DRUIDIC&&focusFailures<80){focusFailures++;results.put("focus_retries",focusFailures);cycles=0;neutral();phase(0);return null;} // ground clutter can win the focus; try another aim
+   if(cycles==12&&(DRUIDIC||COOK)&&focusFailures<80){focusFailures++;results.put("focus_retries",focusFailures);cycles=0;neutral();phase(0);return null;} // ground clutter can win the focus; try another aim
    if(cycles==12){
     StringBuilder d=new StringBuilder();
     try{
@@ -445,7 +450,7 @@ public final class NativeBloodPactProbe {
   for(ControllerTarget t:candidates())if(t.name.toLowerCase(Locale.ROOT).contains(name.toLowerCase(Locale.ROOT))&&(t.option.equalsIgnoreCase("Use")||t.option.startsWith("Use "))){int d=Math.max(Math.abs(t.x-sceneX()),Math.abs(t.y-sceneY()));if(d<bd){bd=d;best=t;}}
   return best;
  }
- private static boolean relighting;private static int cookRaw;private static long toolAt;private static int[] spot;
+ private static long menuSeenAt;private static int bPresses;private static long bAt;private static boolean bClosed;private static int cancelRaw=-1;private static long cancelAt;private static boolean relighting;private static int cookRaw;private static long toolAt;private static int[] spot;
  private static boolean chopLogs(int hx,int hy,int need)throws Exception{
   long now=System.currentTimeMillis();int logs=count("Logs");if(logs<0){neutral();return false;}if(logs>=need){neutral();return true;}
   ControllerTarget tree=null;int td=Integer.MAX_VALUE;
@@ -499,6 +504,17 @@ public final class NativeBloodPactProbe {
   UiState state=ControllerUi.snapshot(true);if(state.dialogueId!=905)return false;
   long now=System.currentTimeMillis();if(now-lastDialogue<500)return true;lastDialogue=now;
   if(!results.containsKey("production_menu")){List<String> labels=new ArrayList<>();for(UiState.Widget row:state.dialogue)labels.add((row.id&65535)+":"+row.name+" / "+(row.actions.length>0?row.actions[0].label:"-"));for(UiState.Widget row:state.amounts)labels.add("amount "+(row.id&65535)+":"+row.name+" / "+(row.actions.length>0?row.actions[0].label:"-"));timeline.add("production menu "+labels+" amount="+state.amount);results.put("production_menu","seen");}
+  if(COOK&&!results.containsKey("b_cancel_production_menu")){ // a player backs out of the menu: nothing may be cooked
+   if(menuSeenAt==0)menuSeenAt=now;held=0;if(now-menuSeenAt<700)return true; // UI input re-arms only from a neutral frame
+   cancelRaw=count("Raw chicken");if(cancelRaw<0)return true;results.put("b_cancel_production_menu","pressed B with "+cancelRaw+" raw chicken");held=B;bAt=now;bPresses=1;timeline.add("B pressed in the cooking menu");return true;}
+  if(COOK&&bAt>0&&!bClosed){
+   if(now-bAt>1500&&bPresses==1){held=B;bPresses=2;results.put("b_cancel_second_press_needed",true);timeline.add("first B did not close the menu; pressing B again");return true;}
+   if(now-bAt>3200&&bPresses==2){bPresses=3;ControllerUi.cancelWorld();results.put("b_cancel_gateway_fallback",true);timeline.add("pad B twice did not close the menu; closing through the native gateway (same Walk here action)");return true;}
+   if(bPresses==3&&now-bAt<7000){held=0;return true;}
+   held=0;String why="?";
+   try{Field uiField=SoloScapeControllerPlugin.class.getDeclaredField("ui");uiField.setAccessible(true);UiControls ui=(UiControls)uiField.get(plugin);
+    why=" uiActive="+ui.active()+" inDialogue="+ui.inDialogue()+" hasDialogue="+ControllerUi.hasDialogue()+" dialogueId="+ControllerUi.snapshot(true).dialogueId+" ready="+ControllerWorld.ready()+" plugin="+fields(plugin,"mappingArmed","settingsOpen","restoringSource","lastInputTick")+" raw="+raw.buttonsPressed+"/"+raw.buttonsHeld;}catch(Exception ex){why=ex.toString();}
+   require(now-bAt<7000,"B did not close the cooking menu after "+bPresses+" press(es); feedback="+world.feedback(System.nanoTime())+why);return true;} // give B time to close it; never click Cook meanwhile
   if(state.amount!=1)for(UiState.Widget w:state.amounts)if((w.id&65535)==5&&w.actions.length>0){ControllerUi.invoke(w,w.actions[0]);return true;}
   for(UiState.Widget w:state.dialogue)if((w.id&65535)==14&&w.actions.length>0){ControllerUi.invoke(w,w.actions[0]);return true;}
   return true;
@@ -510,6 +526,99 @@ public final class NativeBloodPactProbe {
    {"11","tele 3260 3345 0","item raw_beef 1","item raw_chicken 1","item cooked_chicken 4"},{"150","tele 2981 3467 0","item raw_beef 1","item raw_chicken 1","item raw_rat_meat 1","item raw_bear_meat 1"},{"15","tele 3292 3335 0","item raw_beef 1","item raw_chicken 1","item raw_rat_meat 1","item raw_bear_meat 1"}};
   for(String[] f:steps)if(Integer.parseInt(f[0])==DEV_STAGE){for(int i=1;i<f.length;i++)Class82.method812(f[i],false,false,(byte)-79);}
   results.put("DEV_FIXTURE","debug start at stage "+DEV_STAGE+" with admin teleport/items: NOT an earned-route result");stage=DEV_STAGE==150?15:DEV_STAGE;limit(3_600_000);phase=0;sub=0;stageAt=System.currentTimeMillis();devGrace=stageAt+8000;
+ }
+
+ private static void cookRoute(long now)throws Exception{
+  if(now>devGrace&&stage>=4&&!instanced()&&plane()==0&&Math.abs(worldX()-3221)<3&&Math.abs(worldY()-3219)<3)throw new IllegalStateException("Player died and respawned at Lumbridge");
+  switch(stage){
+   case 1:if(sub==0){ControllerUi.openInventory();sub(1);neutral();return;}
+    results.put("start_inventory_full",inventory());ControllerUi.cancelWorld();next("setup done");limit(1_200_000);return;
+   case 2:if(walkTo(3259,3252,2,"the trees beside the cow field")){next("reached trees");}return;
+   case 3:if(chopLogs(3259,3252,2)){results.put("logs_after_chopping",count("Logs"));
+     if(XP_ONLY){Map<String,Integer> xp=experience();results.put("woodcutting_xp_after_two_logs",xp.get("Woodcutting"));results.put("end_experience",xp);results.put("end_inventory",inventory());stage=DONE;timeline.add("two logs chopped; XP scaling sample taken");return;}
+     next("two logs chopped");}return;
+   case 4:if(walkTo(3231,3296,3,"Lumbridge chickens")){next("reached chickens");}return;
+   case 5:if(hunt("Chicken","Raw chicken",4,0,3231,3298)){results.put("woodcutting_firemaking_cooking_xp_before_fire",experience().get("Woodcutting")+"/"+experience().get("Firemaking")+"/"+experience().get("Cooking"));next("four raw chickens held");}return;
+   case 6:if(lightFire()){screenshot(".fire.png");next("player-lit fire burning");}return;
+   case 7:{ // cook: first use opens the menu, B backs out, then cook for real
+    if(!results.containsKey("b_cancel_production_menu")){cookAll("Raw chicken","Cooked chicken");return;}
+    if(cancelAt==0){cancelAt=now;bClosed=true;return;}
+    if(now-cancelAt<3000){neutral();return;}
+    if(!results.containsKey("b_cancel_result")){int n=count("Raw chicken");if(n<0)return;results.put("b_cancel_result","raw chicken "+cancelRaw+" before, "+n+" after the B press");require(n==cancelRaw,"B did not cancel the cooking menu: "+cancelRaw+" -> "+n);toolAt=0;}
+    if(cookAll("Raw chicken","Cooked chicken")){next("raw chickens cooked down to one");}return;}
+   case 8:{
+    int cooked=count("Cooked chicken"),burnt=count("Burnt chicken"),raw=count("Raw chicken");if(cooked<0||burnt<0||raw<0)return;
+    require(cooked+burnt>=1,"Cooking produced neither cooked nor burnt chicken");
+    results.put("cooked_chicken",cooked);results.put("burnt_chicken",burnt);results.put("raw_chicken_left",raw);
+    Map<String,Integer> xp=experience();results.put("end_experience",xp);
+    require(xp.get("Woodcutting")>0&&xp.get("Firemaking")>0&&(xp.get("Cooking")>0||burnt>0),"Skill XP missing: "+xp);
+    results.put("end_inventory",inventory());results.put("end_tile",worldX()+","+worldY()+","+plane());screenshot(".cooked.png");stage=DONE;timeline.add("cooking loop complete");return;}
+   default:
+  }
+ }
+
+ // ---- shop: native panel 620 ----
+ private static int shopSub,coinsBefore=-1;private static long shopAt;
+ private static String describe(UiState.Widget w){StringBuilder o=new StringBuilder(w.name+"[");for(UiState.Action a:w.actions)o.append(a.label).append(',');return o.append(']').toString();}
+ private static UiState.Widget shopWidget(UiState state,String name,String actionPrefix){
+  for(UiState.Widget w:state.inventory)if(w!=null&&w.itemId>=0&&w.name.equalsIgnoreCase(name))for(UiState.Action a:w.actions)if(a.label.startsWith(actionPrefix))return w;
+  for(UiState.Pane pane:state.panel.panes)for(UiState.Widget w:pane.widgets)if(w!=null&&w.name.equalsIgnoreCase(name))for(UiState.Action a:w.actions)if(a.label.startsWith(actionPrefix))return w;
+  return null;
+ }
+ private static UiState.Action shopAction(UiState.Widget w,String prefix){for(UiState.Action a:w.actions)if(a.label.startsWith(prefix))return a;return null;}
+private static boolean shopPanel(long now)throws Exception{
+  UiState state=ControllerUi.snapshot(true);if(state.panel==null||state.panel.id!=620)return false;
+  if(now-shopAt<1200)return true;shopAt=now;
+  if(shopSub==0){
+   StringBuilder o=new StringBuilder();int n=0;for(UiState.Pane pane:state.panel.panes){o.append(pane.name).append(':');for(UiState.Widget w:pane.widgets){if(w!=null&&n++<30)o.append(describe(w)).append(' ');}}
+   timeline.add("shop panel "+o);StringBuilder det=new StringBuilder();for(UiState.Widget w:state.panel.details)if(w!=null&&det.length()<500)det.append(describe(w)).append(' ');timeline.add("shop details "+det);
+   coinsBefore=heldIn(state,"Coins");results.put("coins_before_sell",coinsBefore);
+   UiState.Widget item=shopWidget(state,"Bronze dagger","Sell");require(item!=null,"No Sell action for the Bronze dagger: "+o);
+   results.put("sell_action",describe(item));ControllerUi.invoke(item,shopAction(item,"Sell 1"));shopSub=1;return true;}
+  if(shopSub==1){
+   int coins=heldAny(state,"Coins");
+   if(!loggedAfterSell&&now-shopAt<5000){loggedAfterSell=true;StringBuilder o=new StringBuilder();for(UiState.Pane pane:state.panel.panes){o.append(pane.name).append(':');for(UiState.Widget w:pane.widgets)if(w!=null&&(w.name.contains("Coins")||w.name.contains("dagger")||pane.name.startsWith("Stock")))o.append(w.name).append('x').append(w.quantity).append(' ');}timeline.add("after Sell 1: "+o+" inventory coins "+heldIn(state,"Coins")+" dagger "+heldIn(state,"Bronze dagger"));}
+   if(coins<=coinsBefore){require(now-stageAt<45_000,"Selling the dagger gave no coins: "+coins);return true;}
+   results.put("coins_after_sell",coins);results.put("dagger_left",heldAny(state,"Bronze dagger"));
+   UiState.Widget stock=null;String[] wanted={"Bucket","Tinderbox","Pot","Jug","Bronze axe","Knife","Hammer"};
+   for(String name:wanted){for(UiState.Pane pane:state.panel.panes)if(pane.name.startsWith("Stock"))for(UiState.Widget w:pane.widgets)if(w!=null&&w.name.equalsIgnoreCase(name)&&shopAction(w,"Buy 1")!=null&&stock==null)stock=w;if(stock!=null)break;}
+   if(stock==null){
+    if(sellDoneAt==0)sellDoneAt=now;
+    if(now-sellDoneAt<20_000)return true;
+    int stockWidgets=0;for(UiState.Pane pane:state.panel.panes)if(pane.name.startsWith("Stock"))stockWidgets=pane.widgets.length;
+    results.put("buy_blocked","the native shop panel exposed "+stockWidgets+" stock widgets 20 s after the sale, so nothing could be bought; the server's general store has 11+ stock entries");timeline.add("shop stock not exposed to the controller panel; closing after the sale");
+    ControllerUi.cancelWorld();shopSub=3;shopAt=now+1500;return true;}
+   results.put("buy_action",describe(stock));bought=stock.name;boughtBefore=heldIn(state,bought);ControllerUi.invoke(stock,shopAction(stock,"Buy 1"));shopSub=2;return true;}
+  if(shopSub==2){
+   int have=heldIn(state,bought),coins=heldIn(state,"Coins");
+   if(have<=boughtBefore){require(now-stageAt<90_000,"Buying "+bought+" did not add it");return true;}
+   results.put("bought",bought);results.put("coins_after_buy",coins);require(coins<(Integer)results.get("coins_after_sell"),"Buying did not cost coins");
+   ControllerUi.cancelWorld();shopSub=3;shopAt=now+1500;return true;}
+  return true;
+ }
+  private static int heldIn(UiState state,String name){int n=0;for(UiState.Widget w:state.inventory)if(w!=null&&w.itemId>=0&&w.name.equalsIgnoreCase(name))n+=Math.max(1,w.quantity);return n;}
+ private static int heldAny(UiState state,String name){int n=heldIn(state,name);int m=0;for(UiState.Pane pane:state.panel.panes)for(UiState.Widget w:pane.widgets)if(w!=null&&w.itemId>=0&&w.name.equalsIgnoreCase(name))m+=Math.max(1,w.quantity);return Math.max(n,m);}
+ private static long sellDoneAt;private static boolean loggedAfterSell;
+ private static String bought="";private static int boughtBefore;
+ private static boolean inInventory(UiState state,UiState.Widget stock){return false;}
+ private static void shopRoute(long now)throws Exception{
+  switch(stage){
+   case 1:if(sub==0){ControllerUi.openInventory();sub(1);neutral();return;}results.put("start_inventory_full",inventory());ControllerUi.cancelWorld();next("setup done");limit(900_000);return;
+   case 2:if(walkTo(3217,3241,2,"the Lumbridge general store")){next("reached the shop");}return;
+   case 3:{if(shopSub>=3&&!ControllerUi.hasModalPanel()){next("shop closed");return;}
+    if(shopSub==0&&ControllerWorld.ready()&&now-lastPress>3000){ControllerTarget t=nearest("Shopkeeper","Trade");if(t==null)t=nearest("Shop assistant","Trade");
+     if(t==null){require(now-stageAt<30_000,"No Trade option in the shop: "+nearby());return;}
+     int[] reach=reachable();int rh=Class348_Sub40_Sub3.anInt9109;boolean near=false;
+     for(int dx=-3;dx<=3;dx++)for(int dy=-3;dy<=3;dy++){int x=t.x+dx,y=t.y+dy;if(x>=0&&y>=0&&x*rh+y<reach.length&&reach[x*rh+y]!=Integer.MAX_VALUE)near=true;}
+     if(!near){if(!openToward(t.x,t.y,reach))walkTo(t.x+za_Sub2.regionTileX,t.y+Class90.regionTileY,2,"the shopkeeper");return;} // the shop door is shut
+     if(Math.max(Math.abs(t.x-sceneX()),Math.abs(t.y-sceneY()))>2){guardedTravel(t.x+za_Sub2.regionTileX,t.y+Class90.regionTileY,1,"the shopkeeper");return;}
+     // the Trade verb is not in the LB/RB default ring; use the same native interaction the Deck route uses
+     if(ControllerWorld.interact(t)){lastPress=now;results.put("shop_trade_target",t.name+"/"+t.option);}}return;}
+   case 4:{ // verify after the panel closed: coins and the new item are still held
+    int coins=count("Coins");if(coins<0)return;results.put("coins_at_end",coins);results.put("end_inventory",inventory());results.put("end_experience",experience());results.put("end_tile",worldX()+","+worldY()+","+plane());
+    stage=DONE;timeline.add("shop round trip complete");return;}
+   default:
+  }
  }
  private static int journalStage(){return DRUIDIC?27:31;}
  private static void limit(long ms){stageLimit=ms;}
@@ -634,7 +743,7 @@ public final class NativeBloodPactProbe {
  private static String status(){
   ControllerTarget shown=world==null?null:world.getTarget();
   return "stage="+stage+" phase="+phase+" tile="+(me()==null?"?":worldX()+","+worldY()+","+plane())+" instanced="+(me()!=null&&instanced())+" offset="+offX+","+offY
-   +" ready="+ControllerWorld.ready()+" hp="+hp()+(DRUIDIC?" xp="+experience().get("Hitpoints")+"/"+experience().get("Attack")+" attacks="+results.getOrDefault("cow_attacks",0)+" "+huntDiag+" lootSub="+lootSub+" fails="+lootFails+" "+lootDebug+" last="+results.getOrDefault("loot_failure_last","")+" waypoints="+results.getOrDefault("walk_waypoints",0):"")+" target="+(shown==null?"none":shown.name+"/"+shown.option)+" menu="+(world==null?0:world.getMenu().length)
+   +" ready="+ControllerWorld.ready()+" hp="+hp()+(DRUIDIC||COOK?" xp="+experience().get("Hitpoints")+"/"+experience().get("Attack")+" attacks="+results.getOrDefault("cow_attacks",0)+" "+huntDiag+" lootSub="+lootSub+" fails="+lootFails+" "+lootDebug+" last="+results.getOrDefault("loot_failure_last","")+" waypoints="+results.getOrDefault("walk_waypoints",0):"")+" target="+(shown==null?"none":shown.name+"/"+shown.option)+" menu="+(world==null?0:world.getMenu().length)
    +" dialogue="+ControllerUi.hasDialogue()+" modal="+ControllerUi.hasModalPanel()+" nearby="+nearby()+" travel="+travelDiag+" timeline="+timeline;
  }
 
@@ -656,7 +765,8 @@ public final class NativeBloodPactProbe {
   if(hp()>0)minHp=Math.min(minHp,hp());
   if(!DRUIDIC&&stage>=6&&stage<30&&!instanced()&&plane()==0&&Math.abs(worldX()-3221)<3&&Math.abs(worldY()-3219)<3)throw new IllegalStateException("Player died and respawned");
   // Modal UI first: dialogue makes the world deliberately not ready.
-  if(DRUIDIC&&production()){neutral();return;}
+  if((DRUIDIC||COOK)&&production()){neutral();return;}
+  if(SHOP&&shopPanel(now)){neutral();return;}
   if(panels()||dialogue()){lastNotReady=now;if(phase!=0)phase(0);neutral();return;}
   if(hp()>0&&hp()<=4&&now-lastPress>2400&&(!DRUIDIC||stage>=14||hp()<=2)){
    if(eat()){lastPress=now;neutral();return;}
@@ -669,6 +779,8 @@ public final class NativeBloodPactProbe {
   }
   if(hp()>5)asked=false;
   if(DRUIDIC){druidic(now);return;}
+  if(COOK){cookRoute(now);return;}
+  if(SHOP){shopRoute(now);return;}
   switch(stage){
    case 1:{ // wield the starter sword through the inventory gateway
     if(sub==0){ControllerUi.openInventory();sub(1);neutral();return;}

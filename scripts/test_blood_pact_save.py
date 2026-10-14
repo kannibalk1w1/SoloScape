@@ -75,5 +75,38 @@ class BloodPactSaveTests(unittest.TestCase):
                 smoke_profile.verify_blood_pact_save(save, magic=True)
 
 
+class OvernightRouteSaveTests(unittest.TestCase):
+    def test_xp_scaling_is_exact(self):
+        save = {'experience': [0] * 8 + [2500] + [0] * 16}
+        smoke_profile.verify_xp_save(save, 5)
+        for rate in (1, 4.9, 10):
+            with self.subTest(rate=rate), self.assertRaises(RuntimeError):
+                smoke_profile.verify_xp_save(save, rate)
+
+    def test_cook_save_needs_skill_xp_and_food(self):
+        xp = [0] * 25
+        xp[8], xp[11], xp[7] = 500, 800, 600
+        save = {'experience': xp, 'inventories': {'inventory': [{'id': 'cooked_chicken'}]}}
+        smoke_profile.verify_cook_save(save)
+        burnt = {'experience': [0] * 8 + [500] + [0] * 2 + [400] + [0] * 13, 'inventories': {'inventory': [{'id': 'burnt_chicken'}]}}
+        smoke_profile.verify_cook_save(burnt)
+        for broken in ({'experience': [0] * 25, 'inventories': save['inventories']},
+                       {'experience': xp, 'inventories': {'inventory': []}}):
+            with self.subTest(broken=broken), self.assertRaises(RuntimeError):
+                smoke_profile.verify_cook_save(broken)
+
+    def test_shop_save_needs_coins_and_no_sold_item(self):
+        smoke_profile.verify_shop_save({'inventories': {'inventory': [{'id': 'coins', 'amount': 4}]}})
+        for items in ([], [{'id': 'coins', 'amount': 4}, {'id': 'bronze_dagger'}]):
+            with self.subTest(items=items), self.assertRaises(RuntimeError):
+                smoke_profile.verify_shop_save({'inventories': {'inventory': items}})
+
+    def test_druidic_save(self):
+        xp = [0] * 15 + [2500] + [0] * 9
+        smoke_profile.verify_druidic_save({'variables': {'druidic_ritual': 'completed', 'quest_points': 4}, 'experience': xp})
+        with self.assertRaises(RuntimeError):
+            smoke_profile.verify_druidic_save({'variables': {'druidic_ritual': 'kaqemeex', 'quest_points': 0}, 'experience': xp})
+
+
 if __name__ == '__main__':
     unittest.main()

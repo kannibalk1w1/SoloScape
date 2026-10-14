@@ -1,0 +1,154 @@
+{
+ "start_step": "origin",
+ "initial_preset_status": "Native graphics",
+ "native_object_shadow_setting": 2,
+ "started_monotonic_ns": 66982138841289,
+ "native_dimensions": "1280x800",
+ "preset_status": "Deck 60 unavailable: OpenGL could not start",
+ "fps_target": 180,
+ "pacing": false,
+ "start_tile": "[3221, 3219, 0]",
+ "renderer": "oa",
+ "canvas": "java.awt.Dimension[width=1280,height=800]",
+ "diagnostic_single_loop": false,
+ "renderer_after_route": "oa",
+ "renderer_transitions": [
+  {
+   "elapsed_ns": 20120234,
+   "renderer": "oa",
+   "step": "origin"
+  },
+  {
+   "elapsed_ns": 426267356430,
+   "renderer": "ha_Sub1",
+   "step": "map"
+  },
+  {
+   "elapsed_ns": 428111033750,
+   "renderer": "oa",
+   "step": "close_map"
+  },
+  {
+   "elapsed_ns": 845554562543,
+   "renderer": "ha_Sub1",
+   "step": "map"
+  },
+  {
+   "elapsed_ns": 846797013115,
+   "renderer": "oa",
+   "step": "close_map"
+  },
+  {
+   "elapsed_ns": 1259482320562,
+   "renderer": "ha_Sub1",
+   "step": "map"
+  },
+  {
+   "elapsed_ns": 1260775453983,
+   "renderer": "oa",
+   "step": "close_map"
+  },
+  {
+   "elapsed_ns": 1675839285823,
+   "renderer": "ha_Sub1",
+   "step": "map"
+  },
+  {
+   "elapsed_ns": 1677074013502,
+   "renderer": "oa",
+   "step": "close_map"
+  },
+  {
+   "elapsed_ns": 2098156765795,
+   "renderer": "ha_Sub1",
+   "step": "map"
+  },
+  {
+   "elapsed_ns": 2099426396395,
+   "renderer": "oa",
+   "step": "close_map"
+  }
+ ],
+ "seconds": 2100.158540439,
+ "loops": 5,
+ "samples": 102897,
+ "average_fps": 48.99538692848557,
+ "p95_ms": 22.838982,
+ "p99_ms": 25.766535,
+ "max_ms": 776.277457,
+ "finish_tile": "[3221, 3219, 0]",
+ "canvas_focused": true,
+ "controller_connected": false,
+ "combat_attempted": true,
+ "combat_xp_gained": 5,
+ "phase_timings": {
+  "enabled": true,
+  "frames": 102898,
+  "logic_cycles": 104487,
+  "logic": {
+   "calls": 102898,
+   "truncated": false,
+   "ms_per_frame": 0.4142989869773951,
+   "median_call_ms": 0.247551,
+   "p99_call_ms": 0.942492,
+   "max_call_ms": 647.412845
+  },
+  "plugins": {
+   "calls": 102898,
+   "truncated": false,
+   "ms_per_frame": 0.05213688405994285,
+   "median_call_ms": 0.036062,
+   "p99_call_ms": 0.386926,
+   "max_call_ms": 11.885839
+  },
+  "overlay_paint": {
+   "calls": 102898,
+   "truncated": false,
+   "ms_per_frame": 0.5756810921495072,
+   "median_call_ms": 0.496133,
+   "p99_call_ms": 1.313778,
+   "max_call_ms": 14.992218
+  },
+  "overlay_upload": {
+   "calls": 102366,
+   "truncated": false,
+   "ms_per_frame": 1.236799288538164,
+   "median_call_ms": 1.211444,
+   "p99_call_ms": 1.997304,
+   "max_call_ms": 15.103213
+  },
+  "frame_including_overlays": {
+   "calls": 102898,
+   "truncated": false,
+   "ms_per_frame": 15.344837966743766,
+   "median_call_ms": 15.19884,
+   "p99_call_ms": 25.005564,
+   "max_call_ms": 484.432842
+  },
+  "event_queue": {
+   "calls": 102898,
+   "truncated": false,
+   "ms_per_frame": 0.010787085541021207,
+   "median_call_ms": 0.010665,
+   "p99_call_ms": 0.01602,
+   "max_call_ms": 0.311395
+  },
+  "present": {
+   "calls": 0,
+   "truncated": false,
+   "ms_per_frame": 0.0
+  }
+ },
+ "gc_since_process_start": [
+  {
+   "name": "PS Scavenge",
+   "collections": 354,
+   "milliseconds": 1161
+  },
+  {
+   "name": "PS MarkSweep",
+   "collections": 62,
+   "milliseconds": 3029
+  }
+ ]
+}

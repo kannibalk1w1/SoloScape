@@ -66,6 +66,40 @@ def verify_druidic_save(saved):
         raise RuntimeError('Druidic Ritual Herblore reward was not preserved.')
 
 
+def verify_cook_save(saved):
+    """Woodcutting, Firemaking and Cooking XP and the cooked food must survive Save & Quit and Continue."""
+    experience = saved.get('experience', [])
+    # Tenths of XP; Cooking 7, Woodcutting 8, Firemaking 11.
+    if len(experience) <= 11 or experience[8] <= 0 or experience[11] <= 0:
+        raise RuntimeError('Woodcutting or Firemaking XP was not saved.')
+    items = {}
+    for stack in saved.get('inventories', {}).get('inventory', []):
+        if stack:
+            items[stack.get('id')] = items.get(stack.get('id'), 0) + stack.get('amount', 1)
+    if not (items.get('cooked_chicken') or items.get('burnt_chicken')) or experience[7] <= 0 and not items.get('burnt_chicken'):
+        raise RuntimeError(f'Cooked food or Cooking XP missing after reload: {items} cooking xp {experience[7]}')
+
+
+def verify_xp_save(saved, rate):
+    """Two normal-tree logs are 25 XP each; the world's rate must scale that exactly and the saved value must survive Continue."""
+    experience = saved.get('experience', [])
+    expected = round(2 * 25 * rate * 10)
+    if len(experience) <= 8 or experience[8] != expected:
+        raise RuntimeError(f'Woodcutting XP {experience[8] if len(experience) > 8 else None} (tenths) is not the {expected} expected at rate {rate}.')
+
+
+def verify_shop_save(saved):
+    """Coins from the sale and the bought item must survive Save & Quit and Continue; the sold dagger must be gone."""
+    items = {}
+    for stack in saved.get('inventories', {}).get('inventory', []):
+        if stack:
+            items[stack.get('id')] = items.get(stack.get('id'), 0) + stack.get('amount', 1)
+    if items.get('coins', 0) <= 0:
+        raise RuntimeError(f'No coins from the shop sale after reload: {items}')
+    if 'bronze_dagger' in items:
+        raise RuntimeError('The sold bronze dagger is still in the saved inventory.')
+
+
 def _main():
     parser=argparse.ArgumentParser(description="Disposable native New/Continue/save and optional adventure UI probe.")
     parser.add_argument("--adventure",action="store_true",help="Probe real native adventure tabs, local settings and software overlay intervals.")
@@ -82,6 +116,12 @@ def _main():
     parser.add_argument("--content-coverage",action="store_true",help="Native quest intro/reward and production fixtures with supplied materials; no actual-route claim.")
     parser.add_argument("--blood-pact",action="store_true",help="Play The Blood Pact from a fresh character with controller input only: real travel, earned combat, loot and B cancellation; no admin fixtures.")
     parser.add_argument("--druidic-ritual",action="store_true",help="Earn Druidic Ritual from a fresh character: hunt the four meats, walk to Taverley by stick, perform the ritual; no admin fixtures.")
+    parser.add_argument("--gather-cook",action="store_true",help="Earn logs, a player-lit fire and cooked chicken through controller item-use, with a B cancellation of the cooking menu; no admin fixtures.")
+    parser.add_argument("--world-xp-check",type=float,default=0,help="Earn two logs in a disposable world configured with this XP rate (and optional --world-drops/--world-infinite-run), then verify the exactly scaled Woodcutting XP survives Continue.")
+    parser.add_argument("--world-drops",type=float,default=1)
+    parser.add_argument("--world-infinite-run",action="store_true")
+    parser.add_argument("--deck-route-software",action="store_true",help="With --deck-route-seconds: run the real-map route on the software renderer (private Xvfb cannot start the OpenGL toolkit). Host evidence only.")
+    parser.add_argument("--shop-trade",action="store_true",help="Earn coins by selling a starter item to the Lumbridge general store and buy another item back through the native shop panel; no admin fixtures.")
     parser.add_argument("--druidic-dev-stage",type=int,default=0,help="Debug only: start the Druidic probe at a later stage using admin teleports/items. Results are labelled as a fixture, never earned acceptance.")
     parser.add_argument("--blood-pact-magic",action="store_true",help="Earned Blood Pact where Reese is beaten with Caitlin's staff and an autocast spell using tutor runes; implies --blood-pact.")
     parser.add_argument("--blood-pact-kayle",choices=("spare","kill"),help="Override Kayle's fate in the earned Blood Pact route; implies --blood-pact.")
@@ -95,7 +135,7 @@ def _main():
     parser.add_argument("--deck60-gl-only",action="store_true",help="Skip software stages and compare OpenGL pacing at full resolution.")
     parser.add_argument("--deck-route-seconds",type=int,default=0,help="Repeat the real-map full-resolution route for 60–3600 seconds, then verify a no-action reload.")
     options=parser.parse_args()
-    if options.druidic_ritual:options.blood_pact=True
+    if options.druidic_ritual or options.gather_cook or options.world_xp_check or options.shop_trade:options.blood_pact=True
     if options.blood_pact_kill_cultists or options.blood_pact_magic or options.blood_pact_kayle or options.blood_pact_caitlin or options.blood_pact_reese=="spare":options.blood_pact=True
     if options.fullscreen_gl_only:options.fullscreen=True
     if options.deck60_gl_only:options.deck60=True
@@ -107,6 +147,8 @@ def _main():
     root=local_dev.ROOT;testroot=root/'.runtime/alpha-tests'/('session-'+str(time.time_ns()));testroot.mkdir(parents=True,exist_ok=True)
     profiles.PROFILES=testroot/'profiles'
     profile=profiles.create('Native isolated smoke','AlphaTest')
+    if options.world_xp_check:
+        profiles.configure_world(profile.manifest['id'],{'xp':options.world_xp_check,'drops':options.world_drops,'infinite_run':options.world_infinite_run})
     marker=testroot/'native-login.marker';marker.unlink(missing_ok=True)
     original=subprocess.Popen
     def fingerprint():
@@ -146,7 +188,7 @@ def _main():
             if '-jar' in argv and any('void-client-' in arg for arg in argv):
                 i=argv.index('-jar');jar=argv[i+1]
                 label='Existing authorized X11/XWayland desktop; native overlay-render intervals, real Gateway/synthetic UI input and AWT events through native canvas mouse handlers. No physical controller or Gaming Mode acceptance.' if options.desktop else 'Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.'
-                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.probe.awt.mouse=true'] if options.desktop else [])+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+(['-Dsoloscape.text.probe.fast=true'] if options.text else [])+(['-Dsoloscape.playable.probe=true'] if options.journey else [])+(['-Dsoloscape.deck60.route=true','-Dsoloscape.deck60.route.seconds='+str(options.deck_route_seconds if iteration==0 else 0),'-Dsoloscape.performance.timings=true'] if options.deck_route_seconds else [])+(['-Dsoloscape.deck60.startStage=5'] if options.deck60_gl_only else [])+(['-Dsoloscape.deck60.probe=true','-Dsoloscape.performance.timings=true'] if options.deck60 else [])+(['-Dsoloscape.fullscreen.glOnly=true'] if options.fullscreen_gl_only else [])+(['-Dsoloscape.fullscreen.probe=true']+([] if options.desktop else ['-Dsoloscape.fullscreen.softwareOnly=true']) if options.fullscreen else [])+(['-Dsoloscape.playtest2.probe=true'] if options.playtest_two and iteration==0 else [])+(['-Dsoloscape.map.probe=true'] if options.map else [])+(['-Dsoloscape.content.probe=true'] if options.content_coverage and iteration==0 else [])+(['-Dsoloscape.bloodpact.probe=true'] + (['-Dsoloscape.bloodpact.route=druidic','-Dsoloscape.probe.seconds=7200']+(['-Dsoloscape.druidic.devStage='+str(options.druidic_dev_stage)] if options.druidic_dev_stage else []) if options.druidic_ritual else []) + (['-Dsoloscape.bloodpact.killCultists=true'] if options.blood_pact_kill_cultists else []) + (['-Dsoloscape.bloodpact.magic=true'] if options.blood_pact_magic else []) + (['-Dsoloscape.bloodpact.kayle='+options.blood_pact_kayle] if options.blood_pact_kayle else []) + (['-Dsoloscape.bloodpact.caitlin='+options.blood_pact_caitlin] if options.blood_pact_caitlin else []) + (['-Dsoloscape.bloodpact.reese='+options.blood_pact_reese] if options.blood_pact_reese=="spare" else []) if options.blood_pact and iteration==0 else [])+(['-Dsoloscape.quit.probe=true'] if options.save_quit and iteration==0 else [])+(['-Dsoloscape.artwork.probe=true'] if options.artwork and iteration==0 else [])+(['-Dsoloscape.tabbar.probe=true'] if options.tab_bar and iteration==0 else [])+(['-Dsoloscape.performance.probe=true'] if options.performance else [])+(['-Dsoloscape.sidebar.probe=true'] if options.sidebar else [])+(['-Dsoloscape.sidebar.baseline=true'] if options.sidebar_baseline else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
+                argv=argv[:i]+['-Dsoloscape.probe.environment='+label]+(['-Dsoloscape.probe.awt.mouse=true'] if options.desktop else [])+(['-Dsoloscape.adventure.probe=true'] if options.adventure else [])+(['-Dsoloscape.text.probe.fast=true'] if options.text else [])+(['-Dsoloscape.playable.probe=true'] if options.journey else [])+(['-Dsoloscape.deck60.route=true','-Dsoloscape.deck60.route.seconds='+str(options.deck_route_seconds if iteration==0 else 0),'-Dsoloscape.performance.timings=true']+(['-Dsoloscape.deck60.route.software=true'] if options.deck_route_software else []) if options.deck_route_seconds else [])+(['-Dsoloscape.deck60.startStage=5'] if options.deck60_gl_only else [])+(['-Dsoloscape.deck60.probe=true','-Dsoloscape.performance.timings=true'] if options.deck60 else [])+(['-Dsoloscape.fullscreen.glOnly=true'] if options.fullscreen_gl_only else [])+(['-Dsoloscape.fullscreen.probe=true']+([] if options.desktop else ['-Dsoloscape.fullscreen.softwareOnly=true']) if options.fullscreen else [])+(['-Dsoloscape.playtest2.probe=true'] if options.playtest_two and iteration==0 else [])+(['-Dsoloscape.map.probe=true'] if options.map else [])+(['-Dsoloscape.content.probe=true'] if options.content_coverage and iteration==0 else [])+(['-Dsoloscape.bloodpact.probe=true'] + (['-Dsoloscape.bloodpact.route=druidic','-Dsoloscape.probe.seconds=7200']+(['-Dsoloscape.druidic.devStage='+str(options.druidic_dev_stage)] if options.druidic_dev_stage else []) if options.druidic_ritual else []) + (['-Dsoloscape.bloodpact.route=cook','-Dsoloscape.probe.seconds=1800'] if options.gather_cook else [])+(['-Dsoloscape.bloodpact.route=xp','-Dsoloscape.probe.seconds=1800'] if options.world_xp_check else [])+(['-Dsoloscape.bloodpact.route=shop','-Dsoloscape.probe.seconds=900'] if options.shop_trade else [])+(['-Dsoloscape.bloodpact.killCultists=true'] if options.blood_pact_kill_cultists else []) + (['-Dsoloscape.bloodpact.magic=true'] if options.blood_pact_magic else []) + (['-Dsoloscape.bloodpact.kayle='+options.blood_pact_kayle] if options.blood_pact_kayle else []) + (['-Dsoloscape.bloodpact.caitlin='+options.blood_pact_caitlin] if options.blood_pact_caitlin else []) + (['-Dsoloscape.bloodpact.reese='+options.blood_pact_reese] if options.blood_pact_reese=="spare" else []) if options.blood_pact and iteration==0 else [])+(['-Dsoloscape.quit.probe=true'] if options.save_quit and iteration==0 else [])+(['-Dsoloscape.artwork.probe=true'] if options.artwork and iteration==0 else [])+(['-Dsoloscape.tabbar.probe=true'] if options.tab_bar and iteration==0 else [])+(['-Dsoloscape.performance.probe=true'] if options.performance else [])+(['-Dsoloscape.sidebar.probe=true'] if options.sidebar else [])+(['-Dsoloscape.sidebar.baseline=true'] if options.sidebar_baseline else [])+['-cp',jar+':'+str(harness),'NativeSessionSmoke',str(marker),'43595']
             if (options.deck60 or options.deck_route_seconds) and any("void-server-" in arg for arg in argv):
                 argv=argv[:1]+["-Dsoloscape.performance.timings.file="+str(testroot/("server-new.csv" if iteration==0 else "server-continue.csv"))]+argv[1:]
             if options.journey and any("void-server-" in arg for arg in argv):
@@ -194,7 +236,19 @@ def _main():
             saved=profiles.validate_save((profile.state/'saves/alphatest.toml').read_bytes())
             if options.content_coverage:
                 verify_content_save(saved)
-            if options.druidic_ritual:
+            if options.shop_trade:
+                verify_shop_save(saved)
+                if iteration==0:
+                    Path(str(marker)+'.bloodpact.json').replace(testroot/'shop.json')
+            elif options.world_xp_check:
+                verify_xp_save(saved, options.world_xp_check)
+                if iteration==0:
+                    Path(str(marker)+'.bloodpact.json').replace(testroot/'xp-check.json')
+            elif options.gather_cook:
+                verify_cook_save(saved)
+                if iteration==0:
+                    Path(str(marker)+'.bloodpact.json').replace(testroot/'cook.json')
+            elif options.druidic_ritual:
                 verify_druidic_save(saved)
                 if iteration==0:
                     Path(str(marker)+'.bloodpact.json').replace(testroot/'druidic.json')

@@ -1,0 +1,18 @@
+{
+  "method": "Native overlay frame intervals, including loading and UI. Rolling windows span at least five seconds; no hardware presentation attribution.",
+  "seconds": 10.479012938,
+  "frames": 524,
+  "average_fps": 50.00470970885254,
+  "p95_ms": 20.934807,
+  "p99_ms": 21.683395,
+  "max_ms": 26.698921,
+  "frames_over_20_ms": 255,
+  "client_state_frame_counts": {
+    "10": 524
+  },
+  "minimum_rolling_5s_fps": 49.961812188471924,
+  "rolling_windows_below_58": 274,
+  "duration_30_minutes_met": false,
+  "full_trace_p99_20ms_met": false,
+  "full_trace_rolling_58fps_met": false
+}

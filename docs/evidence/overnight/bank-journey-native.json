@@ -1,0 +1,41 @@
+{
+ "command": "scripts/smoke-profile.sh --text --journey (private Xvfb, software renderer, synthetic input; the loop runs again after Continue)",
+ "new": {
+  "environment": "Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.",
+  "native_item_source_cancel": true,
+  "native_equipment_wield_remove": true,
+  "existing_pot_reused": true,
+  "actual_castle_floor_1": true,
+  "actual_castle_floor_2": true,
+  "actual_banker_opened": true,
+  "bank_coins_before_cancel": 25,
+  "server_pending_before_cancel": "int",
+  "client_withdraw_x_cancel_issued": true,
+  "server_pending_after_cancel": "none",
+  "cancel_preserved_bank_and_items": true,
+  "actual_search_filtered_coins": true,
+  "actual_bank_search_edit_cancel_toggle": true,
+  "normal_withdraw_after_cancel": true,
+  "gameplay_round_trip_seconds": 210.099,
+  "actual_lumbridge_bank_round_trip": true
+ },
+ "continue": {
+  "environment": "Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.",
+  "native_item_source_cancel": true,
+  "native_equipment_wield_remove": true,
+  "existing_pot_reused": true,
+  "actual_castle_floor_1": true,
+  "actual_castle_floor_2": true,
+  "actual_banker_opened": true,
+  "bank_coins_before_cancel": 25,
+  "server_pending_before_cancel": "int",
+  "client_withdraw_x_cancel_issued": true,
+  "server_pending_after_cancel": "none",
+  "cancel_preserved_bank_and_items": true,
+  "actual_search_filtered_coins": true,
+  "actual_bank_search_edit_cancel_toggle": true,
+  "normal_withdraw_after_cancel": true,
+  "gameplay_round_trip_seconds": 207.08,
+  "actual_lumbridge_bank_round_trip": true
+ }
+}
