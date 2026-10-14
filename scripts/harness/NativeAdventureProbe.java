@@ -38,6 +38,10 @@ public final class NativeAdventureProbe {
       if((mouse.getID()==java.awt.event.MouseEvent.MOUSE_PRESSED||mouse.getID()==java.awt.event.MouseEvent.MOUSE_RELEASED)&&mouse.getSource()==RuneLite.getInjector().getInstance(com.GameClient.class).getCanvas())unexpectedMouseClicks++;
      }
     },java.awt.AWTEvent.MOUSE_EVENT_MASK);
+    if(Boolean.getBoolean("soloscape.settings.probe")){ // Home Settings ownership only: no tabs, journal or text stages
+     for(net.runelite.client.plugins.Plugin candidate:RuneLite.getInjector().getInstance(net.runelite.client.plugins.PluginManager.class).getPlugins())if(candidate instanceof SoloScapeControllerPlugin)plugin=(SoloScapeControllerPlugin)candidate;
+     require(plugin!=null,"Managed controller plugin missing");results.put("settings_only",true);step=8;lastStep=started-2000;
+    }
     if(Boolean.getBoolean("soloscape.text.probe.fast")){
      for(net.runelite.client.plugins.Plugin candidate:RuneLite.getInjector().getInstance(net.runelite.client.plugins.PluginManager.class).getPlugins())if(candidate instanceof SoloScapeControllerPlugin)plugin=(SoloScapeControllerPlugin)candidate;
      require(plugin!=null,"Managed controller plugin missing");results.put("text_focused",true);step=15;
@@ -69,7 +73,7 @@ public final class NativeAdventureProbe {
     if(now-lastStep<5000)return false;results.put("custom_journal",frames.finish());
     capture(marker+".live-journal.png");ControllerUi.cancelWorld();step++;lastStep=now;return false;
    }
-   if(step==8){display=null;selected=null;require(!ControllerUi.hasModalPanel(),"Native journal did not close");require(ControllerUi.openTab(HomeTab.SETTINGS.ordinal()),"Native settings failed to open");step++;lastStep=now;return false;}
+   if(step==8){display=null;selected=null;require(!ControllerUi.hasModalPanel(),"Native journal did not close");if(!ControllerUi.openTab(HomeTab.SETTINGS.ordinal())){require(now-lastStep<30000,"Native settings failed to open");return false;}step++;lastStep=now;return false;}
    if(step==9){
     require(state.panel!=null&&(state.panel.id==261||state.panel.id==982),"Native settings not visible");
     for(net.runelite.client.plugins.Plugin candidate:RuneLite.getInjector().getInstance(net.runelite.client.plugins.PluginManager.class).getPlugins())if(candidate instanceof SoloScapeControllerPlugin)plugin=(SoloScapeControllerPlugin)candidate;
@@ -77,13 +81,18 @@ public final class NativeAdventureProbe {
     settingsOpen=SoloScapeControllerPlugin.class.getDeclaredField("settingsOpen");settingsOpen.setAccessible(true);
     Method open=SoloScapeControllerPlugin.class.getDeclaredMethod("openHomeTab",int.class);open.setAccessible(true);require((Boolean)open.invoke(plugin,HomeTab.SETTINGS.ordinal()),"Plugin Settings opening failed");
     Field uiField=SoloScapeControllerPlugin.class.getDeclaredField("ui");uiField.setAccessible(true);ui=(UiControls)uiField.get(plugin);
-    ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());ui.update(new GamepadState(),System.nanoTime());
+    padOn();ui.focusHomeTab(HomeTab.SETTINGS.ordinal(),System.nanoTime());padMark=padTicks;
+    step=91;lastStep=now;return false;
+   }
+   if(step==91){ // first real plugin tick after opening
+    if(padTicks<padMark+1){require(now-lastStep<10000,"No plugin input tick ran");return false;}
     require(settingsOpen.getBoolean(plugin),"Adoption cancelled local settings");require(ui.focusedPanel()!=null&&ui.focusedPanel().id==ControllerSettingsModel.ID,"Local settings not adopted");
-    checkedSettings=true;step++;lastStep=now;return false;
+    checkedSettings=true;padMark=padTicks;step=10;lastStep=now;return false;
    }
    if(step==10){
-    ui.update(new GamepadState(),System.nanoTime());require(checkedSettings&&settingsOpen.getBoolean(plugin),"Local settings failed across ticks");
-    require(ui.focusedPanel()!=null&&ui.focusedPanel().id==ControllerSettingsModel.ID,"Settings disappeared on second tick: settingsOpen="+settingsOpen.getBoolean(plugin)+" focusedPanel="+(ui.focusedPanel()==null?"none":String.valueOf(ui.focusedPanel().id))+" native="+(ControllerUi.snapshot(false).panel==null?"none":ControllerUi.snapshot(false).panel.id+"/modal="+ControllerUi.snapshot(false).panel.modal)+" uiActive="+ui.active()+" canvasFocus="+RuneLite.getInjector().getInstance(com.GameClient.class).getCanvas().isFocusOwner()+" padConnected="+((GamepadState)rawOf(plugin)).connected);
+    if(padTicks<padMark+2){require(now-lastStep<10000,"No plugin input ticks ran");return false;} // two more real ticks, with the pad held neutral
+    require(checkedSettings&&settingsOpen.getBoolean(plugin),"Local settings failed across ticks");
+    require(ui.focusedPanel()!=null&&ui.focusedPanel().id==ControllerSettingsModel.ID,"Settings disappeared on second tick: settingsOpen="+settingsOpen.getBoolean(plugin)+" focusedPanel="+(ui.focusedPanel()==null?"none":String.valueOf(ui.focusedPanel().id))+" native="+(ControllerUi.snapshot(false).panel==null?"none":ControllerUi.snapshot(false).panel.id+"/modal="+ControllerUi.snapshot(false).panel.modal)+" uiActive="+ui.active()+" padTicks="+padTicks);
     display=ui.state();selected=ui.focus();capture(marker+".live-settings.png");results.put("settings_gateway_two_tick_adoption",true);
     ConfigManager config=RuneLite.getInjector().getInstance(ConfigManager.class);SoloScapeControllerConfig preferences=config.getConfig(SoloScapeControllerConfig.class);
     Field modelField=SoloScapeControllerPlugin.class.getDeclaredField("settings");modelField.setAccessible(true);ControllerSettingsModel model=(ControllerSettingsModel)modelField.get(plugin);
@@ -92,9 +101,24 @@ public final class NativeAdventureProbe {
     row=model.snapshot(true).panes[0].widgets[1];require(model.invoke(row,row.actions[1],true)==0,"Local preference reversal rejected");require(preferences.deadzone()==before,"Config proxy did not restore local preference");results.put("settings_config_round_trip",true);
     KeyboardMode keyboardBefore=preferences.keyboardMode();row=model.snapshot(true).panes[0].widgets[9];require(model.invoke(row,row.actions[0],true)==0&&preferences.keyboardMode()!=keyboardBefore,"Keyboard preference change rejected");row=model.snapshot(true).panes[0].widgets[9];require(model.invoke(row,row.actions[1],true)==0&&preferences.keyboardMode()==keyboardBefore,"Keyboard preference reversal rejected");
     boolean classicBefore=preferences.classicTheme();row=model.snapshot(true).panes[0].widgets[10];require(model.invoke(row,row.actions[0],true)==0&&preferences.classicTheme()!=classicBefore,"Classic preference change rejected");row=model.snapshot(true).panes[0].widgets[10];require(model.invoke(row,row.actions[0],true)==0&&preferences.classicTheme()==classicBefore,"Classic preference reversal rejected");results.put("keyboard_classic_settings_round_trip",true);
-    GamepadState back=new GamepadState();back.buttonsHeld=back.buttonsPressed=0;ui.update(back,System.nanoTime());back.buttonsHeld=back.buttonsPressed=2;ui.update(back,System.nanoTime());
-    require(!settingsOpen.getBoolean(plugin),"B did not close local settings");require(ui.takeHomeBack()==HomeTab.SETTINGS.ordinal(),"B lost Home ancestry");results.put("settings_back_to_home",true);
-    step=15;lastStep=now;return false;
+    results.put("settings_plugin_ticks_before_back",padTicks);
+    padHeld=0;padMark=padTicks;step=101;lastStep=now;return false;
+   }
+   if(step==101){ // neutral beat: the UI re-arms only from neutral
+    if(padTicks<padMark+3){require(now-lastStep<10000,"No plugin input ticks ran");return false;}
+    padHeld=2;padMark=padTicks;step=102;lastStep=now;return false; // B
+   }
+   if(step==102){ // exactly one tick of B, then release
+    if(padTicks<padMark+1){require(now-lastStep<10000,"No plugin input tick ran");return false;}
+    padHeld=0;padMark=padTicks;step=103;lastStep=now;return false;
+   }
+   if(step==103){
+    if(padTicks<padMark+2){require(now-lastStep<10000,"No plugin input ticks ran");return false;}
+    Field radialField=SoloScapeControllerPlugin.class.getDeclaredField("radial");radialField.setAccessible(true);TabRadialControls radial=(TabRadialControls)radialField.get(plugin);
+    require(!settingsOpen.getBoolean(plugin),"B did not close local settings");
+    require(radial.active()&&radial.selected()==HomeTab.SETTINGS.ordinal(),"B lost Home ancestry: radial active="+radial.active()+" selected="+radial.selected());
+    results.put("settings_back_to_home",true);padOff();Field polling=SoloScapeControllerPlugin.class.getDeclaredField("failed");polling.setAccessible(true);require(!polling.getBoolean(plugin),"SDL polling was not restored");results.put("sdl_polling_restored",true);display=null;selected=null;
+    step=Boolean.getBoolean("soloscape.settings.probe")?11:15;lastStep=now;return false;
    }
    if(step==15){if(!NativeTextProbe.tick(plugin,results)){lastStep=now;return false;}step=Boolean.getBoolean("soloscape.playable.probe")?16:11;lastStep=now;return false;}
    if(step==16){if(!NativePlayableLoopProbe.tick(results)){lastStep=now;return false;}step=11;lastStep=now;return false;}
@@ -136,8 +160,45 @@ public final class NativeAdventureProbe {
     results.put("probe_seconds",(now-started)/1000.0);Files.write(Paths.get(marker+".adventure.json"),new Gson().toJson(results).getBytes("UTF-8"));return true;
    }
    return false;
-  }catch(Exception ex){try{NativeTextProbe.cleanup();}catch(Exception cleanup){ex.addSuppressed(cleanup);}failure=ex.toString();results.put("failed_step",step);results.put("failure",failure);try{Files.write(Paths.get(marker+".adventure-failure.json"),new Gson().toJson(results).getBytes("UTF-8"));}catch(Exception ignored){}throw new IllegalStateException("Native adventure probe failed at step "+step+": "+failure,ex);}
+  }catch(Exception ex){padOff();try{NativeTextProbe.cleanup();}catch(Exception cleanup){ex.addSuppressed(cleanup);}failure=ex.toString();results.put("failed_step",step);results.put("failure",failure);try{Files.write(Paths.get(marker+".adventure-failure.json"),new Gson().toJson(results).getBytes("UTF-8"));}catch(Exception ignored){}throw new IllegalStateException("Native adventure probe failed at step "+step+": "+failure,ex);}
  }
+
+ // ---- scoped virtual pad (Settings steps) ----
+ // A no-pad host makes the plugin's own tick reset all UI ownership every tick (production behaviour for a disconnected
+ // pad, kept as is). The Settings steps therefore pause only SDL polling (the plugin's `failed` flag, as the other pad
+ // probes do) and drive the plugin's real processInput from a ClientTick listener with a connected, neutral raw state.
+ private static Field failedField;private static Method processMethod;private static GamepadState rawPad;
+ private static volatile int padHeld;private static volatile int padTicks;private static int padBefore;private static boolean padRegistered;
+ private static final PadTick PAD=new PadTick();
+ public static final class PadTick{
+  @net.runelite.client.eventbus.Subscribe(priority=-1000) public void onClientTick(net.runelite.api.events.ClientTick event){
+   if(failedField==null)return;
+   try{
+    int held=padHeld;rawPad.connected=true;rawPad.leftX=rawPad.leftY=rawPad.rightX=rawPad.rightY=rawPad.leftTrigger=rawPad.rightTrigger=0;
+    rawPad.buttonsPressed=held&~padBefore;rawPad.buttonsReleased=padBefore&~held;rawPad.buttonsHeld=held;padBefore=held;
+    processMethod.invoke(plugin,0L);padTicks++;
+   }catch(Exception ex){failure=ex.toString();}
+  }
+ }
+ private static void padOn()throws Exception{
+  if(failedField!=null)return;
+  failedField=SoloScapeControllerPlugin.class.getDeclaredField("failed");failedField.setAccessible(true);
+  processMethod=SoloScapeControllerPlugin.class.getDeclaredMethod("processInput",long.class);processMethod.setAccessible(true);
+  Field raw=SoloScapeControllerPlugin.class.getDeclaredField("rawState");raw.setAccessible(true);rawPad=(GamepadState)raw.get(plugin);
+  padHeld=padBefore=0;failedField.setBoolean(plugin,true);
+  if(!padRegistered){RuneLite.getInjector().getInstance(net.runelite.client.eventbus.EventBus.class).register(PAD);padRegistered=true;}
+  results.put("settings_probe_pad","virtual connected-neutral rawState; SDL polling paused for the Settings steps only");
+ }
+ /** Always safe to call: restores SDL polling and the plugin's own tick. */
+ private static void padOff(){
+  try{
+   if(padRegistered){RuneLite.getInjector().getInstance(net.runelite.client.eventbus.EventBus.class).unregister(PAD);padRegistered=false;}
+   if(failedField!=null&&plugin!=null)failedField.setBoolean(plugin,false);
+   failedField=null;
+   if(rawPad!=null){padHeld=0;rawPad.clear();}
+  }catch(Exception ignored){}
+ }
+ private static int padMark;
  private static String nonce()throws Exception{
   Field field=SoloScapeConnection.class.getDeclaredField("capabilities");field.setAccessible(true);Object capabilities=field.get(null);
   Field nonce=ServerCapabilities.class.getDeclaredField("nonce");nonce.setAccessible(true);return (String)nonce.get(capabilities);
