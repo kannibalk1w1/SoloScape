@@ -33,12 +33,12 @@ class ConfigExportTests(unittest.TestCase):
         self.java.write_text('#!/usr/bin/env python3\n'+DUMP)
         self.java.chmod(0o755)
 
-    def run_wrappers(self, config='', inherited=None):
+    def run_wrappers(self, config='', inherited=None, wrappers=WRAPPERS):
         (self.root/'config/local.env').write_text(config+'\nCLIENT_JAVA='+str(self.java)+'\n')
         env = {k:v for k,v in os.environ.items() if k not in SELECTORS}
         env.update(inherited or {})
         results=[]
-        for name in WRAPPERS:
+        for name in wrappers:
             with self.subTest(wrapper=name):
                 result=subprocess.run(['bash',str(self.root/'scripts'/name)],env=env,
                                       cwd=self.root,capture_output=True,text=True,timeout=10)
@@ -61,3 +61,10 @@ class ConfigExportTests(unittest.TestCase):
     def test_exported_invocation_environment_remains_supported(self):
         expected={key:str(self.root/key) for key in SELECTORS}
         for result in self.run_wrappers(inherited=expected): self.assertEqual(result,expected)
+
+    def test_launcher_exports_its_shared_home_from_local_config(self):
+        dump=DUMP.replace(repr(SELECTORS),repr(SELECTORS+('SOLOSCAPE_LAUNCHER_HOME',)))
+        self.java.write_text('#!/usr/bin/env python3\n'+dump)
+        expected=str(self.root/'shared launcher')
+        result=self.run_wrappers('SOLOSCAPE_LAUNCHER_HOME="'+expected+'"',wrappers=('launcher.sh',))[0]
+        self.assertEqual(result['SOLOSCAPE_LAUNCHER_HOME'],expected)
