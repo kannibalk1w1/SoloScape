@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-17",
+  "source_commit": "2c1922647432a59feeaaec3674066ad14150aa4b",
+  "patch_count": {
+    "server": 50,
+    "client": 56
+  },
+  "snapshot_entries_verified": 10881,
+  "backups_validated": 5,
+  "sampled_resources": {
+    "new": {
+      "sample_count": 46,
+      "peak_rss_kib": {
+        "server": 1599260,
+        "client": 1229708
+      },
+      "peak_combined_rss_kib": 2828240
+    },
+    "continue": {
+      "sample_count": 45,
+      "peak_rss_kib": {
+        "server": 1205652,
+        "client": 1521824
+      },
+      "peak_combined_rss_kib": 2719712
+    }
+  },
+  "private_export_relative": ".runtime/deck-exports/1792275179695548410",
+  "manifest_sha256": "89f4e6ff793f748ccf9c76cdeb2f7e376de1a638de5e69caa75ea2e4d6d96487",
+  "stamp_sha256": "dd9ac42890d74be359ba86b0b09178a17e538a9b60677eb9cdd57306fd6928bf",
+  "jars_sha256": {
+    "server": "3fc9085053ebb539aedc7274e3873fc7b2c7cb20cec17fed57d19398c4a97f2d",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+  },
+  "native_new_continue": {
+    "new_session_seconds": 23.796,
+    "continue_session_seconds": 23.418,
+    "native_save_failure": null,
+    "native_startup_cancel_preserved": true,
+    "original_mutable_paths_unchanged": true,
+    "session_environment": {
+      "XDG_SESSION_DESKTOP": "KDE",
+      "XDG_CURRENT_DESKTOP": "KDE",
+      "DISPLAY": ":1",
+      "SteamAppId": null,
+      "SteamGameId": null
+    },
+    "adventure": [],
+    "text_focused": false,
+    "playable_journey": false,
+    "playtest_two": false,
+    "fullscreen_probe": false,
+    "fullscreen_renderers": null,
+    "sidebar_probe": false,
+    "sidebar_baseline": false,
+    "display": "private-xvfb",
+    "precondition": "Owned private display.",
+    "screenshots": "Private evidence only; desktop overlays may appear or Wayland capture may be unavailable. Review before publishing.",
+    "note": "Native session totals and overlay-render intervals; not physical controller or Gaming Mode acceptance."
+  },
+  "ingame_quit": {
+    "first_press_blocked": true,
+    "confirmed_quit_requested": true
+  },
+  "screenshot": {
+    "path": "docs/images/native-test-build-50-20261017.png",
+    "sha256": "2b4f6b112cda0d3417563d25df5cec77151922d7513468f6ab07ce0e984edaaa",
+    "size": [
+      892,
+      529
+    ]
+  },
+  "limits": [
+    "Private development snapshot, not a public redistributable package.",
+    "Owned Xvfb/software rendering and private empty ALSA/no audio.",
+    "Complete-session timings include readiness dwell/save; sampled cold JVM RSS is not FPS, steady-state or comparative performance.",
+    "No physical pad, Deck/Gaming Mode, audio or suspend acceptance.",
+    "No owner install/save transfer or release publishing."
+  ]
+}
