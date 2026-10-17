@@ -1,14 +1,27 @@
-# Backport Lab — design stage
+# Backport Lab — occupancy inspection only
 
-This directory contains **proposal manifests**, not an enabled feature, converter or patched cache. [Architecture](../docs/BACKPORT_ARCHITECTURE.md) defines the gated pipeline and ten acceptance checks. [Manifest guide](../docs/BACKPORT_MANIFEST_EXAMPLE.md) explains unresolved fields.
+The first executable step is a read-only catalogue of occupied item, NPC, object and sequence slots from an owner-supplied 634-compatible cache. It includes unnamed slots using the native reference-table parser. It does not allocate IDs, decode/convert assets, patch caches or enable content. [Dated evidence and limits](../docs/BACKPORT_CATALOGUE_20261017.md).
 
-Keep all user-supplied data and generated binary outputs outside Git, preferably in `.runtime/backport-lab/<experiment>/`:
+From the repository root, after the normal native source/build setup:
+
+```sh
+python3 scripts/backport_catalogue.py \
+  --cache /path/to/authorized/634-cache \
+  --server-jar upstream/game-server/game/build/libs/void-server-dev.jar \
+  --java-home .runtime/jdks/jdk21
+```
+
+The report is confined to ignored `.runtime/backport-lab/`; an existing report is never overwritten. Use `--output .runtime/backport-lab/<new-name>.json` for an explicit name. The jar must contain the native `FileCache` implementation; use the project's normal matched build, not a downloaded runtime. No network fetch occurs. Input fingerprints are checked before and after; a changed input withholds the report. Source digests and jar digest are recorded independently; they do not certify that an arbitrary jar matches the supplied source.
+
+Private inputs, generated catalogues, binaries and test copies stay outside Git:
 
 ```
-source-data/     # immutable authorized caches, keys, catalogues; never downloaded automatically
-converted/       # staged minimal definition/asset outputs, never a live cache
-reports/         # dependency closure, codecs, fingerprints, changes, provenance
-cache-copy/      # disposable candidate, rebuilt from a separately verified baseline
+source-data/     # immutable authorized inputs, no automatic downloads
+converted/       # future staged minimal outputs, never a live cache
+reports/         # private catalogues, future dependency/provenance reports
+cache-copy/      # disposable candidate only
 ```
 
-An original synthetic item is the first plumbing test. A behaviour-only Superior Slayer-style proposal is the first later-content candidate after native acceptance. Neither is implemented here. Do not reserve or deploy a target ID until the actual modified 634 cache, server data, client overrides and protocol limits have been audited together.
+`CacheSlotsOracle.java` is an optional cross-check against the already pinned Displee 7.1.7 parser. It must run from the repository root on a directory named `cache-copy` inside `.runtime/backport-lab/`; it refuses the installed cache and existing/inside-cache outputs. Displee opens files for writing, so copy the supplied cache first. Compile with the existing native server jar plus pinned rs-cache-library 7.1.7, disio 2.2, ant 1.10.14 and lzma-java 1.3 jars; run with the same classpath plus the compiled class directory. Pass the disposable copy and a new report pathname. No `update`/packing method is called. Compare all four `occupied_ids` arrays, not only counts. The primary inspector does not depend on Displee.
+
+[Architecture](../docs/BACKPORT_ARCHITECTURE.md) defines the remaining gates. [The feature proposal](manifests/superior-slayer.example.json) remains deliberately unbuildable. An original synthetic token is still the first conversion experiment; no later-content feature or synthetic token is enabled. Audit server definitions, client overrides, packet/decoder limits, reservations and save compatibility before reserving any target ID. Missing metadata slots are not safe allocations.

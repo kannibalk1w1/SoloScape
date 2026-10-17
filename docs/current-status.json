@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "1fcb0d1",
+  "reviewed_base": "88e9e3659fec864850a3bc589c0048edea69194c",
   "entries": [
     {
       "id": "controls",
@@ -217,6 +217,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "COOKING_TARGET_LIFETIME_20261017.md",
       "note": "Two red-before/green-after cases; eight selected native cases pass. Only reproduced queued fire/input exits stop the marker; movement cancellation and actual fire expiry remain unproven."
+    },
+    {
+      "id": "backport-occupancy",
+      "scope": "Read-only supplied-cache item/NPC/object/sequence occupancy catalogue",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "BACKPORT_CATALOGUE_20261017.md",
+      "note": "Two deterministic native runs and independent full-ID-array comparison pass, plus input/output rejection controls. Header-declared occupancy only; safe allocation, conversion and cache patching remain unimplemented."
     }
   ]
 }

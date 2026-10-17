@@ -1,0 +1,76 @@
+{
+  "scope": "634 supplied-cache reference-table occupancy only; no allocation/definition/asset validation",
+  "native_counts": {
+    "item": {
+      "count": 20178,
+      "highest_occupied_id": 20178
+    },
+    "npc": {
+      "count": 13984,
+      "highest_occupied_id": 15511
+    },
+    "object": {
+      "count": 57203,
+      "highest_occupied_id": 57264
+    },
+    "sequence": {
+      "count": 15237,
+      "highest_occupied_id": 15259
+    }
+  },
+  "cache_fingerprint_sha256": "a4293ba42198ed092f8db93f2b9c2dc8e755db1d6c16bdd91f4dcf0ad68c43fd",
+  "two_fresh_report_bytes_equal": true,
+  "report_sha256": "d6fc3faa4bf98b80cdf41729a0f77c8fa96a6c6a07ae52f6d7ce231b70cf2d99",
+  "original_cache_byte_hashes_unchanged": true,
+  "all_four_full_id_arrays_equal_independent_displee": true,
+  "native_server_jar_sha256": "ab8c231d06239ff2e5a0b339a9e66e08f2927da0b843ac58acad78f2d8167a33",
+  "native_source_sha256": {
+    "CacheLoader.kt": "cd4380526e145d3f206f2a02cb48a9aab2a7725799da6e10d2387a37cdb90ce5",
+    "FileCache.kt": "388cbf623b2505645e0561a9984cd82187cf650fd860745117b9ad1103c0b925",
+    "Index.kt": "2303ca6d2b56bb8a21e97197c276376929baaed41a38314f366e7fc9eea5829b",
+    "ReadOnlyCache.kt": "2de3f5882b9d179876d8c113bcc2f5995442d861d95ccbd856632e8a81a65b03",
+    "definition/decoder/AnimationDecoder.kt": "351127a3b547a6c7401a65a7e15cdb5c3462e039754f79511f3abe8b4a444d1c",
+    "definition/decoder/ItemDecoder.kt": "cc0b71cbd31bed3a679a1ea55356581ff674de3c9962a41b771654a3e5333ea9",
+    "definition/decoder/NPCDecoder.kt": "9285f2290e8f93ad8340377603d0711adfc4f79d148b88678a1453484ee45df0",
+    "definition/decoder/ObjectDecoder.kt": "b9d783bb2fa52d772e68400fafc02e74960587a560e5fb02ba6060dee1b8afc3"
+  },
+  "tools_sha256": {
+    "scripts/backport_catalogue.py": "dfee0848466c3cc74ae5219991e2e9ce8b9625f5339ffaed900700a609cf4d85",
+    "backport/tooling/CacheSlots.java": "3b5173c5a7ebb798c31e7d9faaef9cb7ab7a3f0d9a8219451d65ee3b11881037",
+    "backport/tooling/CacheSlotsOracle.java": "5eaad8683cf98b1367551b53359b5dee1eafe66ee6461fe2c90d202551d4df58"
+  },
+  "oracle_dependencies_sha256": {
+    "void-server-dev.jar": "ab8c231d06239ff2e5a0b339a9e66e08f2927da0b843ac58acad78f2d8167a33",
+    "rs-cache-library-7.1.7.jar": "ae1963bc1c5cecc59c142e041b60ddf0ea3fa0a037ce1ef2ee034296b6b8ba0f",
+    "disio-2.2.jar": "c4eb3fd121df53906a0d0444570aa070debec7697fa38110ba8979231ae88a71",
+    "ant-1.10.14.jar": "4cbbd9243de4c1042d61d9a15db4c43c90ff93b16d78b39481da1c956c8e9671",
+    "lzma-java-1.3.jar": "75ccc0e24d37ed5b8916e1bcffad1e067c2b1cfa21b635287f968db5c3c1963a"
+  },
+  "oracle_rejection_controls": [
+    "original-cache",
+    "existing-output",
+    "symlinked-output-parent"
+  ],
+  "automated_fixture_tests": 7,
+  "root_tooling_tests": 148,
+  "root_tooling_optional_skips": 1,
+  "claude_review": {
+    "model": "Haiku",
+    "dispatch": "ctx_44e7e78d3ff3",
+    "result": "Index/split/read-only paths match pinned source; clarified header-declared occupancy and undetected supplied revision; fixed oracle symlinked-output-parent rejection."
+  },
+  "private_evidence": [
+    ".runtime/backport-lab/catalogue-reviewed-a-20261017.json",
+    ".runtime/backport-lab/catalogue-reviewed-b-20261017.json",
+    ".runtime/backport-lab/oracle-20261017/oracle-reviewed.json"
+  ],
+  "not_claimed": [
+    "safe ID ranges",
+    "auto-detected revision",
+    "definition or asset decode",
+    "cache integrity certification",
+    "cache patching",
+    "playable later content",
+    "human/Deck acceptance"
+  ]
+}
