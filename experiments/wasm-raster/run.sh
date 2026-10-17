@@ -8,7 +8,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 NATIVE_SRC="${1:?absolute path to ha_Sub1.java required}"
 NATIVE_JAR="${2:?absolute path to void-client-0.2.0_a2.jar required}"
-JDK="${JAVA_HOME:-/home/kannibalkiwi/orca/projects/SoloScape/.runtime/jdks/jdk21}"
+JDK="${JAVA_HOME:?set JAVA_HOME to a JDK 21 directory}"
 JAVAC="$JDK/bin/javac"
 JAVA="$JDK/bin/java"
 UPSTREAM_GRADLEW="${UPSTREAM_GRADLEW:-$HERE/../../upstream/runelite-client/gradlew}"

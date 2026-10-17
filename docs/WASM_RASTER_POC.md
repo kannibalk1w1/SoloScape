@@ -1,6 +1,8 @@
 # WASM raster proof: one native face-edge kernel through TeaVM WasmGC
 
-Status: **bounded attempt complete; partial pass.** One real 634 software-raster kernel (`ha_Sub1.method3636`) compiles through a narrow closure into TeaVM 0.16.0 WasmGC. Its framebuffer hashes match the JVM bytecode from the client jar at 765×503 and 1280×800 in headless Chromium. Presentation through a per-pixel JavaScript conversion dominates the frame. The experiment does not establish a 3D triangle rasteriser, the full 634 scene path, or any device budget. Code: [experiments/wasm-raster](../experiments/wasm-raster/README.md). Plan: [WASM_SPIKE_PLAN](WASM_SPIKE_PLAN.md).
+Status: **bounded attempt complete; partial pass.** One real 634 software-raster kernel (`ha_Sub1.method3636`) compiles through a narrow closure into TeaVM 0.16.0 WasmGC. Its framebuffer hashes match the JVM bytecode from the client jar at 765×503 and 1280×800 in headless Chromium. Presentation through a per-pixel JavaScript conversion dominates the frame.
+
+**UNPROVEN:** the triangle, model and full-raster gate. The kernel is a masked line/edge stepper, not a triangle fill. The 3D triangle filler was not isolated, no model or full scene was rendered, and no device budget was measured. Code: [experiments/wasm-raster](../experiments/wasm-raster/README.md). Plan: [WASM_SPIKE_PLAN](WASM_SPIKE_PLAN.md).
 
 ## Inputs and digests
 
@@ -34,12 +36,12 @@ Hashes are identical across every run. FNV-1a is over 32-bit framebuffer words.
 
 A screenshot of the browser run shows the triangular mask clipping the edges, with opaque, blended and additive edges visible.
 
-Measured costs, browser (TeaVM WasmGC, headless Chromium 153.0.8010.52, Intel i7-14700HX, 28 threads, Linux 7.2.9-2-cachyos). Two complete wrapper runs and one screenshot run (which captured 765×503 raster only). Ranges are min–max of the values captured.
+Measured costs, browser (TeaVM WasmGC, headless Chromium 153.0.8010.52, Intel i7-14700HX, 28 threads, Linux 7.2.9-2-cachyos). Three complete wrapper runs and one screenshot run (which captured 765×503 raster only). Ranges are min–max of the values captured.
 
 | Size | Raster median per frame | Wasm→JS conversion, one frame | `putImageData` |
 | --- | --- | --- | --- |
-| 765×503 | 7.6–10.4 ms (3 runs) | 11.9–19.7 ms (2 runs) | 1.4–1.9 ms (2 runs) |
-| 1280×800 | 11.0–16.1 ms (2 runs) | 26.9–33.4 ms (2 runs) | 1.9–2.3 ms (2 runs) |
+| 765×503 | 6.6–10.4 ms (4 runs) | 10.0–19.7 ms (3 runs) | 1.3–1.9 ms (3 runs) |
+| 1280×800 | 10.1–16.1 ms (3 runs) | 23.3–33.4 ms (3 runs) | 1.8–2.3 ms (3 runs) |
 
 Raster is the median of six frames after one warm-up. Conversion writes each pixel into a JavaScript `Int32Array` through a JSBody call, so it is one boundary crossing per pixel. On this host the frame budget is about 16.7 ms at 60 FPS, and at 1280×800 the naive presentation alone is roughly twice that. These are host numbers only. They are not Deck or Chromebook numbers, and power and thermal state were not controlled.
 
@@ -60,7 +62,7 @@ Module payload: `raster.wasm` 40,442 bytes raw, 21,223 bytes with `gzip -9`. The
 - One kernel is not a triangle filler and not a 3D scene. An original triangle mask only exercises clipping and edge stepping.
 - The hash is a 32-bit FNV-1a, not a cryptographic digest. Matching hashes on this scene make a bit-exact difference unlikely but do not rule it out.
 - The browser timings are from a headless Chromium with `--virtual-time-budget`. Their absolute values are not tied to a real display.
-- The native reference is reflective and is used only for correctness.
+- The native reference is reflective and is used only for correctness. It allocates `ha_Sub1` and `aa_Sub3` with `sun.misc.Unsafe.allocateInstance`, bypassing their constructors. That is the only use of `Unsafe`, it is not in the browser build, and it is not extended.
 - `ha_Sub1` was not constructed. The native constructor needs a live Canvas and renderer state, so only the raster method is exercised.
 - No login, server, cache, world simulation or physical device was used.
 
