@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "4570ced",
+  "reviewed_base": "191cb64",
   "entries": [
     {
       "id": "controls",
@@ -409,6 +409,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "PROFILE_JVM_OPTIONS_20261017.md",
       "note": "Actual supported Java 8 override reproduced before filtering; actual owned environment and unsafe control verify the fix without creating home/cache directories. Simulated owned-child lifecycle regression; no game/Deck or arbitrary-agent sandbox claim."
+    },
+    {
+      "id": "persisted-list-save-snapshots",
+      "scope": "Native mutable persisted list ownership at queued account-save capture",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "SAVE_VARIABLE_SNAPSHOTS_20261017.md",
+      "note": "Three actual native snapshot/codec reds, two controls; final snapshot 5/engine save 15/journeys 3 pass without skips. Flat list containers isolated; no recursive graph, DB, whole-world or hardware acceptance."
     }
   ]
 }

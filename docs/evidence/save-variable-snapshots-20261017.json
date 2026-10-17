@@ -1,0 +1,61 @@
+{
+  "base_commit": "191cb64",
+  "server_patch_count": 44,
+  "client_patch_count": 56,
+  "patched_server_files": 90,
+  "patched_client_files": 140,
+  "patch_sha256": "79d4931a971283e9352b17b422bc4022d47befcb5c0b2efc486bddb56607dc30",
+  "jars": {
+    "server": "5e2e22123025200987a5de0fc76f4a4cdde4306cc70137d6d72f06cce8775875",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+  },
+  "groups": [
+    {
+      "group": "snapshot",
+      "module": "game",
+      "totals": {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "private_report": ".runtime/content-coverage/1792266081246853277/summary.json"
+    },
+    {
+      "group": "save",
+      "module": "engine",
+      "totals": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "private_report": ".runtime/content-coverage/1792266102518525259/summary.json"
+    },
+    {
+      "group": "journeys",
+      "module": "game",
+      "totals": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "private_report": ".runtime/content-coverage/1792266111183643726/summary.json"
+    }
+  ],
+  "targeted_native_tests": 23,
+  "before": {
+    "tests": 5,
+    "failures": 3,
+    "errors": 0,
+    "skipped": 0,
+    "private_xml": ".runtime/save-variable-snapshot-20261017/repro/test-results/TEST-content.entity.player.SaveVariableSnapshotTest.xml"
+  },
+  "private_repro": ".runtime/save-variable-snapshot-20261017/repro/README.md",
+  "native_backend": "Actual FileStorage/PlayerSave codec, bounded public SaveQueue scheduling/barrier",
+  "physical_acceptance": false,
+  "owner_deployment": false,
+  "root_tooling_tests": 242,
+  "root_tooling_optional_skips": 1
+}
