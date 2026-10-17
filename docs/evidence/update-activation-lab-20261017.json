@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-17",
+  "scope": "original inert fixture activation mechanism; no production updater",
+  "tools": {
+    "experiments/update-activation/gate.py": "cadca68e1c8a8ac48d3b0642cc61726c55687995a531432e5114e24e8dad9b7d",
+    "experiments/update-activation/README.md": "d8786b43d3a92f173e70ae89ae4d613b80eff1fa1b846992ccba14cc75af12f6",
+    "scripts/test_update_activation.py": "c663113eae92cff8bf9e30f6515c7c739cb2ba7385947eac63e3c4aca332214c"
+  },
+  "tests": {
+    "activation": 14,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "root": 261,
+    "root_optional_skips": 1
+  },
+  "negative_control": {
+    "mutation": "exclusive lock requests changed to shared in private copied source",
+    "tests": 14,
+    "failed_assertions": 4,
+    "exit": 1
+  },
+  "observed": [
+    "world/apply exclusion in both directions",
+    "start resolves pointer only after actual blocked acquire",
+    "inherited child keeps lease after coordinator exits",
+    "strict sealed candidate verification including FIFO/link refusal",
+    "concurrent marker retention has exactly one winner",
+    "stale pointer compare refuses activation and rollback",
+    "forced coordinator exit before/after replace leaves old/new pointer",
+    "post-replace directory-fsync error requires reread",
+    "rollback preserves new original world-state bytes"
+  ],
+  "limits": [
+    "cooperative filesystem, stable guard inodes required",
+    "one lab marker, no real multi-profile registry",
+    "no native game/payload execution",
+    "no package authentication, download, migration or health confirmation",
+    "process exits and injected fsync errors do not prove power-loss durability",
+    "native grave/floor persistence remains open"
+  ]
+}

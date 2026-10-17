@@ -311,7 +311,7 @@ chosen for that release, not every optional future milestone.
 - [ ] M13-02 Audit code/dependency/native-library licences and retain required notices. The [offline runtime/notice metadata inventory](RUNTIME_NOTICE_INVENTORY_20261017.md) records 55 server and 24 client artifacts; local-jar provenance and component/distribution review remain open.
 - [ ] M13-03 Package Linux/Deck runtime and launcher reproducibly, with game data supplied separately where required.
 - [ ] M13-04 Test clean-machine install, fully offline play after setup and Steam library integration.
-- [ ] M13-05 Add versioned upgrades, save backups/migrations and an explicit rollback path.
+- [ ] M13-05 Add versioned upgrades, save backups/migrations and an explicit rollback path. The [activation mechanism lab](UPDATE_ACTIVATION_LAB_20261017.md) passes original fixture lock/marker/pointer checks; real updater integration and health confirmation remain open.
 - [ ] M13-06 Run the full release acceptance matrix: controls, saves, content slice, graphics presets, suspend and hosting if included.
 - [ ] M13-07 Document limitations, troubleshooting, changelog and recovery instructions.
 - [ ] M13-08 Consider Windows only after the Linux/Deck release path is dependable.

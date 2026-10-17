@@ -449,6 +449,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "SUMMONING_LOOT_DELIVERY_20261017.md",
       "note": "22 selected Summoning cases; controlled fatal damage/drop roll, members-only final item filter; earned route and physical input still open"
+    },
+    {
+      "id": "update-activation-lab",
+      "scope": "Original-fixture stopped-world activation lock, marker and code rollback lab",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "UPDATE_ACTIVATION_LAB_20261017.md",
+      "note": "14 lab cases pass; unsafe shared-lock control fails four assertions. No real installer/session registry/health check, native integration, power-loss proof or owner deployment."
     }
   ]
 }
