@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+    id 'org.teavm' version '0.16.0'
+}
+repositories { mavenCentral() }
+def choice = providers.gradleProperty('probe').getOrElse('controller')
+if (!(choice in ['controller', 'presenter'])) throw new GradleException('Choose -Pprobe=controller or -Pprobe=presenter')
+layout.buildDirectory.set(file("build/${choice}"))
+sourceSets.main.java.srcDirs = ["src/${choice}"]
+dependencies {
+    implementation files('../../upstream/runelite-client/client/build/libs/void-client-0.2.0_a2.jar')
+}
+teavm {
+    all { mainClass = 'PortabilityProbe' }
+    wasmGC { targetFileName = 'probe.wasm' }
+}

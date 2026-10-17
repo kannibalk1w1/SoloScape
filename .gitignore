@@ -4,3 +4,5 @@
 /**/__pycache__/
 /config/local.env
 *.log
+/experiments/wasm-kernel/build/
+/experiments/wasm-kernel/.gradle/
