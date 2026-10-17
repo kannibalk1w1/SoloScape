@@ -148,6 +148,17 @@ profile_session.run(profiles.Profile(Path(sys.argv[3])),threading.Event(),lambda
         self.assertFalse((self.root/'client.stopped').exists())
         self.assertFalse((self.root/'server.stopped').exists())
 
+    def test_recovery_without_native_confirmation_keeps_record_and_previous_backup(self):
+        os.environ['TEST_CASE'] = 'no-save-receipt'
+        self.orphan()
+        before = set((self.profile.directory / 'backups').glob('*.zip'))
+        with self.assertRaisesRegex(RuntimeError, 'confirm'):
+            session_recovery.recover(self.profile, threading.Event(), lambda *args: None)
+        self.assertIsNotNone(session_recovery.read(self.profile))
+        self.assertEqual(set((self.profile.directory / 'backups').glob('*.zip')), before)
+        for role in ('server', 'client'):
+            self.assertEqual((self.root / (role + '.stopped')).read_text(), 'graceful')
+
     def test_dirty_recovered_save_retains_record_and_previous_backup(self):
         self.orphan()
         (self.profile.state/'saves/.save-incomplete.tmp').write_text('unfinished')

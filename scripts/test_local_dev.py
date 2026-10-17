@@ -21,6 +21,16 @@ role = "server" if "void-server" in sys.argv[2] else "client"
 (root / (role + ".pid")).write_text(str(os.getpid()))
 def stop(*args):
     (root / (role + ".stopped")).write_text("graceful")
+    if role == "server" and os.environ["TEST_CASE"] != "no-save-receipt":
+        session = os.environ.get("SOLOSCAPE_SESSION_ID")
+        if session:
+            if os.environ["TEST_CASE"] == "wrong-save-receipt":
+                session = "0" * 32
+            receipt = "SOLOSCAPE_WORLD_SAVED_V1 " + session
+            if os.environ["TEST_CASE"] == "prefixed-save-receipt":
+                receipt = "unrelated text " + receipt
+            # The native console logger leaves colour-reset bytes before raw println output.
+            print(chr(27) + "[31m" + chr(27) + "[0;39m" + receipt, flush=True)
     sys.exit(0)
 signal.signal(signal.SIGTERM, stop)
 if role == "server":

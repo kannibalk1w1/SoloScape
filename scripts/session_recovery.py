@@ -198,6 +198,19 @@ def archive_ended(profile, owner_active=None):
         return {'message': 'Ended session record archived. Current world closure remains unverified; restore a verified backup before trusting a damaged save.'}
 
 
+def primary_save_confirmed(profile, record):
+    """Match the current owned server's post-world-save receipt, never a previous session's log."""
+    path = profile.directory / 'session-logs/server.log'
+    if path.is_symlink():
+        return False
+    expected = 'SOLOSCAPE_WORLD_SAVED_V1 ' + record['session']
+    try:
+        with path.open(encoding='utf-8', errors='replace') as source:
+            return any(re.sub(r'\x1b\[[0-9;]*m', '', line).rstrip('\r\n') == expected for line in source)
+    except OSError:
+        return False
+
+
 def save_artifacts_need_inspection(profile):
     """A readable previous save cannot prove this shutdown's write succeeded."""
     return any((profile.state / 'errors').rglob('*')) or any(profile.state.rglob('.save-*.tmp'))
@@ -250,6 +263,8 @@ def recover(profile, cancelled, notify, owner_active=None):
                 dirty = save_artifacts_need_inspection(profile)
                 if dirty:
                     raise RuntimeError('Recovered processes closed, but save errors/temporary files need inspection. Previous backups and session record retained.')
+                if not primary_save_confirmed(profile, record):
+                    raise RuntimeError('Recovered world closed without confirming its latest save. Previous backups and session record retained.')
                 profile._backup('after-recovered-shutdown', recovered_from_session=record['session'])
                 (profile.directory/RECORD).unlink()
                 profiles.fsync_directory(profile.directory)

@@ -1,0 +1,65 @@
+{
+  "task": "native-primary-save-confirmation",
+  "patch": "patches/server/0034-native-primary-save-confirmation.patch",
+  "patch_sha256": "5dc6a5e47253bd2f9e7d389fc0373416832857270b9bf9d7ed61a64882960739",
+  "sources_sha256": {
+    "engine/src/main/kotlin/world/gregs/voidps/engine/data/SaveQueue.kt": "e43beda40a9a11e8ab62469dba7f17c603ecaa98a0b66f588c284ea6a9d5576e",
+    "engine/src/test/kotlin/world/gregs/voidps/engine/data/SaveQueueTest.kt": "dfd15aa8d98ff0d40a93eae7bd7da0d07e986582cc33776d311c6e581fd0255f",
+    "game/src/main/kotlin/content/entity/player/AutoSave.kt": "551e3a0ed5c074d9ee202892ae41f219235926797d1a5c973ef9a05dc891ae04",
+    "game/src/main/kotlin/Main.kt": "1ac738984838a3fde6e9ef13ac76dbdc16f2c0a1b9b3d24f032b7f0fb961f734"
+  },
+  "engine_test": {
+    "task": ":engine:test --tests world.gregs.voidps.engine.data.SaveQueueTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "new_tests": 3,
+    "result": "pass",
+    "xml_sha256": "058530463a4a5128aa0b008d4be3a37aa498c0a1869a8a3a83ab581d670e33e2"
+  },
+  "game_compile": {
+    "task": ":game:compileKotlin",
+    "result": "pass"
+  },
+  "verify_patches_server": "all 74 modified/patched source files match the exported stack",
+  "pending": [
+    "Human controller Save & Quit and Steam Gaming Mode lifecycle acceptance"
+  ],
+  "coordinator_ordering_review": "Exchange save is attempted before checking primary result, preserving best available world snapshots; receipt still requires both primary and exchange success.",
+  "python_integration": {
+    "tests": 140,
+    "skipped": 1,
+    "result": "pass",
+    "new_contracts": [
+      "normal missing receipt",
+      "wrong session receipt",
+      "receipt embedded in unrelated text",
+      "orphan missing receipt"
+    ],
+    "colour_handling": "Strip ANSI SGR colour sequences only, then require exact whole-line current session marker."
+  },
+  "native_smoke": {
+    "new_session_seconds": 21.961,
+    "continue_session_seconds": 22.722,
+    "native_startup_cancel_preserved": true,
+    "original_mutable_paths_unchanged": true,
+    "native_save_failure": {
+      "primary_and_fallback_write_failures_observed": true,
+      "error_artifacts_absent": true,
+      "current_session_receipt_absent": true,
+      "launcher_refused_clean_status": true,
+      "previous_primary_bytes_preserved": true,
+      "unverified_record_retained_then_archived": true,
+      "verified_backup_restored": true,
+      "failed_generation_retained": true
+    },
+    "environment": "Private owned Xvfb/software; Java21 server/Java8 client; no physical-controller or Deck acceptance.",
+    "command": "bash scripts/smoke-profile.sh --save-quit --save-failure",
+    "private_summary": ".runtime/alpha-tests/session-1792250383157069882/native-smoke-summary.json",
+    "summary_sha256": "9b3e3ee20cfa37467ef28100b92cc3496d514e91459241250507307a17cee69e"
+  },
+  "jars": {
+    "server": "ab8c231d06239ff2e5a0b339a9e66e08f2927da0b843ac58acad78f2d8167a33",
+    "client": "ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918"
+  }
+}
