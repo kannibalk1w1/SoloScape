@@ -71,6 +71,40 @@ class ProfileTests(unittest.TestCase):
         other=profiles.create('Other','Other')
         with self.assertRaises(ValueError):other.validate_backup(self.profile.backup())
 
+    def test_checksums_do_not_make_a_wrong_primary_account_restorable(self):
+        backup = self.profile.backup()
+        before_manifest = (self.profile.directory / 'profile.json').read_bytes()
+        before_state = self.profile.state
+        with zipfile.ZipFile(backup) as archive:
+            contents = {entry.filename: archive.read(entry) for entry in archive.infolist()}
+        wrong_account = native_save('Other')
+        contents['state/saves/tester.toml'] = wrong_account
+        metadata = json.loads(contents['backup.json'])
+        metadata['files']['saves/tester.toml'] = {
+            'size': len(wrong_account), 'sha256': profiles.hash_bytes(wrong_account),
+        }
+        contents['backup.json'] = json.dumps(metadata).encode()
+        with zipfile.ZipFile(backup, 'w') as archive:
+            for name, data in contents.items():
+                archive.writestr(name, data)
+        archive_bytes = backup.read_bytes()
+        self.assertFalse(profiles.list_backups(self.profile.manifest['id'])[0]['valid'])
+        with self.assertRaisesRegex(ValueError, 'different account'):
+            self.profile.restore(backup.name)
+        self.assertEqual(self.profile.state, before_state)
+        self.assertEqual((self.profile.directory / 'profile.json').read_bytes(), before_manifest)
+        self.assertEqual(self.save.read_bytes(), native_save())
+        self.assertEqual(backup.read_bytes(), archive_bytes)
+        self.assertEqual(len(list((self.profile.directory / 'states').iterdir())), 1)
+
+    def test_backup_refuses_wrong_primary_account_without_publishing_an_archive(self):
+        self.save.write_bytes(native_save('Other'))
+        before = self.save.read_bytes()
+        with self.assertRaisesRegex(ValueError, 'different account'):
+            self.profile.backup()
+        self.assertEqual(self.save.read_bytes(), before)
+        self.assertEqual(list((self.profile.directory / 'backups').iterdir()), [])
+
     def test_unsafe_zip_paths_duplicates_and_symbolic_links_are_rejected(self):
         backup=self.profile.backup();old=self.profile.state
         for member in ('../escape','/absolute','saves\\escape'):
@@ -109,6 +143,33 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(next(self.profile.directory.glob('damaged-manifest-*.json')).read_text(),'broken metadata')
         manifest.unlink();profiles.restore_profile(uid,backup.name)
         self.assertTrue(profiles.load(uid).metadata()['saved'])
+
+    def test_invalid_account_metadata_isolated_and_recoverable_without_data_loss(self):
+        healthy = profiles.create('Healthy character', 'Healthy')
+        healthy_bytes = (healthy.directory / 'profile.json').read_bytes()
+        backup = self.profile.backup()
+        uid = self.profile.manifest['id']
+        original_state = self.profile.state
+        manifest_path = self.profile.directory / 'profile.json'
+        valid_manifest = dict(self.profile.manifest)
+        for account in (None, 42, [], {}, True, '   '):
+            with self.subTest(account=account):
+                manifest_path.write_text(json.dumps(dict(valid_manifest, account=account)))
+                damaged_bytes = manifest_path.read_bytes()
+                listed = {row['id']: row for row in profiles.list_profiles()}
+                self.assertTrue(listed[uid]['error'])
+                self.assertFalse(listed[uid]['saved'])
+                self.assertIsNone(listed[healthy.manifest['id']]['error'])
+                self.assertEqual(manifest_path.read_bytes(), damaged_bytes)
+                self.assertTrue(profiles.list_backups(uid)[0]['valid'])
+                profiles.restore_profile(uid, backup.name)
+                restored = profiles.load(uid)
+                self.assertEqual(restored.manifest['account'], 'Tester')
+                self.assertEqual((restored.state / 'saves/tester.toml').read_bytes(), native_save())
+                preserved = restored.directory / restored.manifest['recovered_from_manifest']
+                self.assertEqual(preserved.read_bytes(), damaged_bytes)
+                self.assertEqual((original_state / 'saves/tester.toml').read_bytes(), native_save())
+                self.assertEqual((healthy.directory / 'profile.json').read_bytes(), healthy_bytes)
 
     def test_recovery_refuses_active_profile_and_tampered_archive(self):
         backup=self.profile.backup();uid=self.profile.manifest['id']

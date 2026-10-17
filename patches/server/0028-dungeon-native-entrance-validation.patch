@@ -1,0 +1,99 @@
+diff --git a/game/src/test/kotlin/content/skill/dungeoneering/SoloDungeonLifecycleTest.kt b/game/src/test/kotlin/content/skill/dungeoneering/SoloDungeonLifecycleTest.kt
+--- a/game/src/test/kotlin/content/skill/dungeoneering/SoloDungeonLifecycleTest.kt
++++ b/game/src/test/kotlin/content/skill/dungeoneering/SoloDungeonLifecycleTest.kt
+@@ -5,13 +5,13 @@
+ import content.area.wilderness.daemonheim.DungeoneeringParty.Companion.dungeonMembers
+ import dialogueOption
+ import itemOption
+-import kotlinx.coroutines.CoroutineScope
+-import kotlinx.coroutines.Dispatchers
+-import kotlinx.coroutines.launch
++import objectOption
+ import kotlinx.coroutines.runBlocking
+ import org.junit.jupiter.api.Assertions.assertEquals
+ import org.junit.jupiter.api.Assertions.assertTrue
+ import org.junit.jupiter.api.Test
++import org.junit.jupiter.params.ParameterizedTest
++import org.junit.jupiter.params.provider.CsvSource
+ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
+ import world.gregs.voidps.engine.client.ui.dialogue
+ import world.gregs.voidps.engine.data.PlayerSave
+@@ -20,8 +20,6 @@
+ import world.gregs.voidps.engine.data.file.FileStorage
+ import world.gregs.voidps.engine.get
+ import world.gregs.voidps.engine.entity.Despawn
+-import world.gregs.voidps.engine.entity.Operation
+-import world.gregs.voidps.engine.entity.character.mode.interact.PlayerOnObjectInteract
+ import world.gregs.voidps.engine.entity.character.player.Player
+ import world.gregs.voidps.engine.entity.character.player.Players
+ import world.gregs.voidps.engine.entity.character.player.name
+@@ -41,18 +39,20 @@
+  * Fixtures and limits (recorded, not hidden):
+  * - The ring of kinship is added to the inventory; the tutor purchase is not exercised.
+  * - The player spawns beside the entrance; the walk is not exercised.
+- * - The entrance click is delivered by invoking the registered `Climb-down:daemonheim_dungeon_entrance`
+- *   native handler directly in an Unconfined coroutine. The `InteractObject` packet path does not reach
+- *   the handler in this harness (no dialogue after 12 ticks, while the direct call opens it).
++ * - Entrance clicks go through the normal InteractObject instruction. Mirrored entrances have
++ *   directional access: stand east of the western door or west of the eastern door.
++ * - The earlier test fixture started on the blocked side of the eastern door. No collision or
++ *   interaction handler bypass is needed when the fixture uses the native accessible side.
+  * - The save is read back from the saved TOML file. This is not a second live login.
+  * - Not proven: combat, Icy Bones, keys and doors, the trapdoor completion, reward and XP.
+  */
+ @EnabledIfEnvironmentVariable(named = "SOLOSCAPE_TEST_ROOT", matches = ".+")
+ class SoloDungeonLifecycleTest : WorldTest() {
+ 
+-    @Test
+-    fun `solo entrance entry supplies a bound starting item and saves after leaving`() {
+-        val player = enterSoloDungeon()
++    @ParameterizedTest
++    @CsvSource("3444,3445", "3455,3454")
++    fun `solo entrance entry supplies a bound starting item and saves after leaving`(entranceX: Int, playerX: Int) {
++        val player = enterSoloDungeon(entranceX,playerX)
+         val dungeon = requireNotNull(player.get<DungeonMap>("dungeon")) { "Generation must not return null for solo small c1 floor 1" }
+ 
+         assertTrue(player["in_dungeoneering", false])
+@@ -113,10 +113,10 @@
+      * Entrance Climb-down twice: the first starts a party with the player as leader, the second generates
+      * and enters a solo small floor 1 dungeon. The party choice is answered with the normal dialogue helper.
+      */
+-    private fun enterSoloDungeon(): Player {
+-        val player = createPlayer(Tile(3456, 3723, 0))
++    private fun enterSoloDungeon(entranceX: Int = 3455, playerX: Int = 3454): Player {
++        val player = createPlayer(Tile(playerX, 3723, 0))
+         player.inventory.add("ring_of_kinship")
+-        val entrance = GameObjects.find(Tile(3455, 3723, 0), "daemonheim_dungeon_entrance")
++        val entrance = GameObjects.find(Tile(entranceX, 3723, 0), "daemonheim_dungeon_entrance")
+ 
+         clickEntrance(player, entrance)
+         tick(2)
+@@ -131,14 +131,21 @@
+         return player
+     }
+ 
+-    /** Runs the registered native Climb-down handler for the entrance; see the class doc for why the packet path is bypassed. */
++    /** The normal instruction validates identity/options and respects native access-side flags. */
+     private fun clickEntrance(player: Player, entrance: GameObject) {
+-        val handlers = Operation.playerObject["Climb-down:daemonheim_dungeon_entrance"] ?: error("No native Climb-down handler registered for the Daemonheim entrance")
+-        CoroutineScope(Dispatchers.Unconfined).launch {
+-            for (handler in handlers) {
+-                handler(player, PlayerOnObjectInteract(entrance, "Climb-down", player))
+-            }
+-        }
++        player.objectOption(entrance,"Climb-down")
++    }
++
++    @Test
++    fun `blocked entrance side does not bypass native directional access`() {
++        val player = createPlayer(Tile(3456,3723))
++        player.inventory.add("ring_of_kinship")
++        player.objectOption(GameObjects.find(Tile(3455,3723),"daemonheim_dungeon_entrance"),"Climb-down")
++        tick(12)
++        assertEquals(null,player.dialogue)
++        assertEquals(false,DungeoneeringParty.inParty(player))
++        assertEquals(false,player["in_dungeoneering",false])
++        assertEquals(1,player.inventory.count("ring_of_kinship"))
+     }
+ 
+     private fun starterRapier(player: Player): String = requireNotNull(player.inventory.items.firstOrNull { it.id.endsWith("_rapier") }) { "Complexity 1 starting supplies include a rapier" }.id

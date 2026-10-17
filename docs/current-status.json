@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "502df960241d2dbc7eae4d0985273a7db9dcef28",
+  "reviewed_base": "e8942f826521fa18046499e6fb169111a2d44b11",
   "entries": [
     {
       "id": "controls",
@@ -100,11 +100,11 @@
     },
     {
       "id": "solo-dungeon",
-      "scope": "Solo small-c1 floor-1 entry handlers, binding, leaving and logout save",
+      "scope": "Native packet entry through both mirrored solo small-c1 floor-1 entrances, binding and exit/logout save",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
-      "evidence": "DUNGEONEERING_TARGETED_PASS_20261017.md",
-      "note": "Direct registered entrance-handler fixture; packet entry, doors/boss/rewards and full floor remain unproven"
+      "evidence": "DUNGEONEERING_NATIVE_ENTRY_20261017.md",
+      "note": "Blocked-side fixture corrected; no direct handler bypass. Ring/initial position supplied; doors/boss/rewards/full floor and physical input remain unproven."
     },
     {
       "id": "solo-summoning",
@@ -123,6 +123,86 @@
       "note": "Actual starter kit and native resources; bounded ordinary-input retries handle roaming NPCs. Same-JVM restore, not launcher restart; inventory-full/death and physical controller acceptance remain open."
     },
     {
+      "id": "summoning-acquisition",
+      "scope": "Spirit-wolf supply shop accounting and controlled member charm drop contract",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "SUMMONING_ACQUISITION_20261017.md",
+      "note": "14 targeted cases pass; supplied coins, created tutor at configured coordinates and controlled table roll; earned combat/travel/material-to-summon journey remains unproven"
+    },
+    {
+      "id": "profile-metadata-recovery",
+      "scope": "Damaged account metadata isolation and verified backup recovery",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "PROFILE_METADATA_RECOVERY_20261017.md",
+      "note": "Six malformed metadata values recover on disposable profiles while preserving damaged bytes, previous save and healthy profile; no owner/device test"
+    },
+    {
+      "id": "production-capacity",
+      "scope": "Fishing full-inventory rejection and three-output cooking transaction retry",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "PRODUCTION_CAPACITY_RECOVERY_20261017.md",
+      "note": "7 selected native cases pass; supplied items and empty-tile fixtures, native Drop/retry; earned journey, death and process restart remain separate evidence"
+    },
+    {
+      "id": "session-record-validation",
+      "scope": "Malformed session metadata isolation before owned-process recovery",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "SESSION_RECORD_VALIDATION_20261017.md",
+      "note": "11 malformed forms preserve records and healthy-profile listing without signals; 16 recovery harness tests pass; native save and suspend acceptance separate"
+    },
+    {
+      "id": "backup-primary-account",
+      "scope": "Primary character identity in verified backups and restore",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "BACKUP_ACCOUNT_VALIDATION_20261017.md",
+      "note": "Wrong primary account is rejected even with matching checksums; archive, manifest and current save preserved; multi-account copies remain supported"
+    },
+    {
+      "id": "dungeon-boss-trapdoor",
+      "scope": "Cached solo small-c1 boss spawn and trapdoor unlock via native death pipeline",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "DUNGEON_BOSS_TRAPDOOR_20261017.md",
+      "note": "5 targeted cases pass; supplied ring, directly opened boss room and controlled lethal hit; earned combat/traversal/rewards remain unproven; rotation helper issue identified"
+    },
+    {
+      "id": "dungeon-room-rotation",
+      "scope": "Shared dungeon room tile rotation and native room-object scans",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "DUNGEON_ROOM_ROTATION_20261017.md",
+      "note": "Fix uses original coordinates for rotated Y; 26 selected cases pass, including all 256 tiles at each orientation; boss combat/keys/full-floor and Deck acceptance remain open"
+    },
+    {
+      "id": "save-artifact-closure",
+      "scope": "Normal shutdown refuses clean status when save-error or atomic-write artifacts remain",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "SAVE_ARTIFACT_CLOSURE_20261017.md",
+      "note": "Two failing lifecycle reproductions fixed; 136 tooling cases pass (one optional skip); explicit native save-success receipt and real-process smoke still required"
+    },
+    {
+      "id": "dungeon-reward-notice",
+      "scope": "Solo dungeon reward delivery before next-floor countdown",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "DUNGEON_REWARD_NOTICE_FIX_20261017.md",
+      "note": "Reproduced lost201XP/20tokens/floorcredit when notice timed out; countdown now starts after reward queue completes; 28 selected cases pass, full-floor/exit/save and group acceptance remain open"
+    },
+    {
+      "id": "native-save-confirmation",
+      "scope": "Current-session primary world save confirmation for normal and orphan shutdown",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "NATIVE_SAVE_CONFIRMATION_20261017.md",
+      "note": "10 native save-queue tests, 140 tooling cases (one optional skip), real New/Continue/cancel and no-artifact primary+fallback write failure/restore pass on private Xvfb; no Deck acceptance"
+    },
+    {
       "id": "wasm-triangle",
       "scope": "Native flat-colour WASM triangle fill and original synthetic mesh; no full game scene",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
@@ -137,6 +217,14 @@
       "acceptance": "DEFERRED",
       "evidence": "WASM_MATERIAL_INVESTIGATION.md",
       "note": "Ten synthetic scene/size cases and six palette/texel controls match native jar/JVM/WASM; texture-heavy cost is significant. Real model/texture decoding, projection, full scene and device performance unproven."
+    },
+    {
+      "id": "wasm-face",
+      "scope": "Isolated native model vertex projection, face selection and flat fill through TeaVM WasmGC",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_FACE_PROOF_20261017.md",
+      "note": "Ten original synthetic cases match native jar, extracted JVM and WASM, including back-face sensitivity and 18 independent rejection controls; real cache decoding, clipping, lighting and a playable browser client remain unproven. Draft PR27 stays separate from native main."
     }
   ]
 }

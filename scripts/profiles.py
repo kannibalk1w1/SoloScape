@@ -163,7 +163,8 @@ class Profile:
         if identifier(self.manifest.get('id')) != self.directory.name:
             raise ValueError('Profile identity does not match its directory.')
         identifier(self.manifest.get('generation'))
-        if not ACCOUNT.fullmatch(self.manifest.get('account', '')):
+        account = self.manifest.get('account')
+        if not isinstance(account, str) or not account.strip() or not ACCOUNT.fullmatch(account):
             raise ValueError('Invalid profile account.')
         world_settings(self.manifest.get('world'))
         if not self.state.is_dir() or self.state.is_symlink():
@@ -265,7 +266,8 @@ class Profile:
             relative = path.relative_to(self.state).as_posix()
             data = path.read_bytes()
             if relative.startswith('saves/') and relative.endswith('.toml') and '/' not in relative[6:]:
-                validate_save(data)
+                primary = 'saves/' + self.manifest['account'].lower() + '.toml'
+                validate_save(data, self.manifest['account'] if relative == primary else None)
             contents[relative] = data
         manifest = {'format': FORMAT, 'profile': self.manifest['id'], 'account': self.manifest['account'],
                     'metadata': {k: self.manifest[k] for k in ('label', 'created', 'last_played', 'tutorial')},
@@ -322,7 +324,8 @@ class Profile:
                     if len(data) != record['size'] or hash_bytes(data) != record['sha256']:
                         raise ValueError('Backup checksum does not match.')
                     if relative.startswith('saves/') and relative.endswith('.toml') and '/' not in relative[6:]:
-                        validate_save(data)
+                        primary = 'saves/' + self.manifest['account'].lower() + '.toml'
+                        validate_save(data, self.manifest['account'] if relative == primary else None)
                     result[relative] = data
                 return manifest, result
         except (zipfile.BadZipFile, KeyError, TypeError, json.JSONDecodeError) as exc:

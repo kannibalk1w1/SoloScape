@@ -1,0 +1,141 @@
+diff --git a/game/src/test/kotlin/content/skill/dungeoneering/SoloBossTrapdoorUnlockTest.kt b/game/src/test/kotlin/content/skill/dungeoneering/SoloBossTrapdoorUnlockTest.kt
+new file mode 100644
+index 0000000..cedacc3
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/dungeoneering/SoloBossTrapdoorUnlockTest.kt
+@@ -0,0 +1,135 @@
++package content.skill.dungeoneering
++
++import WorldTest
++import content.area.wilderness.daemonheim.DungeoneeringParty
++import content.entity.combat.hit.directHit
++import dialogueOption
++import objectOption
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertNotNull
++import org.junit.jupiter.api.Assertions.assertNull
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
++import world.gregs.voidps.engine.client.ui.dialogue
++import world.gregs.voidps.engine.data.definition.Rows
++import world.gregs.voidps.engine.entity.character.npc.NPCs
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.entity.obj.GameObjects
++import world.gregs.voidps.engine.get
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.type.Tile
++import world.gregs.voidps.type.area.Rectangle
++
++/**
++ * One normal-player solo small complexity-1 floor-1 boss-trapdoor contract, from the cached boss room to the object state.
++ *
++ * Ordinary entry with supplied ring (as in SoloDungeonLifecycleTest):
++ * - The ring of kinship is injected into the inventory. It is supplied, not earned; the tutor purchase is not exercised.
++ * - Entrance Climb-down from the western approach of the eastern entrance, once to start the party and once to enter
++ *   the generated solo dungeon. The party choice is answered with the normal dialogue helper.
++ *
++ * Fixture setup (not earned traversal, and not full-floor completion):
++ * - The boss room is opened directly with DungeonRoom.open, the call DungeonDoors makes when a door opens. No other
++ *   room is opened, and unlock_dungeon and start_dungeon are not used.
++ * - The seed is WorldTest's deterministic FakeRandom, set before entry. No other seed is applied.
++ * - Controlled death fixture, not combat: one direct hit of the boss's full constitution through the native
++ *   CombatApi damage path (Character.directHit, the call TzhaarFightCaveTest uses). The npcDeath handler is not
++ *   invoked by the test. No attacks, levels, equipment or walking are exercised.
++ *
++ * Asserted against the real cached map: one rand_ice_lord_boss_* from the configured boss_spawns row, one locked end
++ * trapdoor inside the boss room before the kill, and the same tile unlocked after the death.
++ *
++ * Not proven: walking to or fighting the boss, the boss's own attacks, levels or equipment for the kill, reward, the
++ * next-floor countdown, the full floor, leaving, and saving.
++ */
++@EnabledIfEnvironmentVariable(named = "SOLOSCAPE_TEST_ROOT", matches = ".+")
++class SoloBossTrapdoorUnlockTest : WorldTest() {
++
++    @Test
++    fun `controlled boss death unlocks the locked end trapdoor in the cached boss room`() {
++        val player = enterSoloDungeon()
++        assertTrue(player["in_dungeoneering", false])
++        assertEquals("Small", player["dungeoneering_party_size", ""])
++        val dungeon = requireNotNull(player.get<DungeonMap>("dungeon")) { "Generation must not return null for solo small c1 floor 1" }
++        val boss = dungeon.grid.filterNotNull().single { it.type == DungeonRoomType.Boss }
++        val bossName = requireNotNull(boss.name) { "The boss room needs a template name" }
++        val spawnRow = requireNotNull(Rows.getOrNull("boss_spawns.$bossName")) { "Boss room $bossName needs a boss_spawns row" }
++        val configuredIds = spawnRow.npcList("ids")
++
++        // FIXTURE: open the boss room directly. Every other room stays closed.
++        boss.open(player, dungeon)
++        tick()
++
++        val bossTile = dungeon.tile(boss, 7, 7)
++        val spawned = NPCs.at(bossTile.regionLevel).filter { it.id.startsWith("rand_ice_lord_boss_") }
++        assertEquals(1, spawned.size, "Opening the boss room must spawn exactly one rand_ice_lord_boss_*")
++        val bossNpc = spawned.single()
++        assertTrue(bossNpc.id in configuredIds, "${bossNpc.id} must come from the configured boss_spawns.$bossName ids")
++        assertEquals(bossTile, bossNpc.tile, "The boss spawns at its configured room-local tile")
++
++        // Before the kill: the cached boss room holds exactly one locked end trapdoor, which is not yet unlocked.
++        val locked = "rand_dungeon_end_trapdoor_locked_frozen"
++        val unlocked = "rand_dungeon_end_trapdoor_unlocked_frozen"
++        // Plain base-relative sweep. DungeonRoom.open copies the cached 16x16 zone to this base in standard orientation.
++        val base = dungeon.tile(boss)
++        val roomTiles = (0 until 16).flatMap { x -> (0 until 16).map { y -> base.add(x, y) } }
++        println("BOSS_ROOM rotation=${boss.rotation} base=$base spawnFormulaTile=${dungeon.tile(boss, 7, 7)} npcTile=${bossNpc.tile}")
++        val lockedTiles = roomTiles.filter { GameObjects.findOrNull(it, locked) != null }
++        assertEquals(1, lockedTiles.size, "The cached boss room must hold exactly one $locked, found $lockedTiles")
++        val trapdoor = lockedTiles.single()
++        assertEquals(0, roomTiles.count { GameObjects.findOrNull(it, unlocked) != null }, "No unlocked trapdoor exists before the kill")
++
++        // Record which native search path would find it (DungeonDeaths.kt:74 probes, then the 3x3 corner fallback).
++        val bounds = DungeonRoom.dungeonRoomBounds(bossNpc.tile)
++        val probes = probeTiles(bounds)
++        val corner = Rectangle(bounds.minX - 1, bounds.minY - 1, bounds.minX + 1, bounds.minY + 1).toList()
++        val path = when {
++            trapdoor in probes -> "primary-probe"
++            trapdoor in corner -> "corner-fallback"
++            else -> "not-found-by-native-search"
++        }
++        println("BOSS_TRAPDOOR_PATH $path trapdoor=$trapdoor boss=${bossNpc.id} bossTile=$bossTile")
++        assertTrue(path != "not-found-by-native-search", "The native search must be able to reach the locked trapdoor at $trapdoor")
++
++        // CONTROLLED DEATH FIXTURE (not combat): one directHit through the native damage path. The npcDeath handler runs from the engine.
++        bossNpc.directHit(player, bossNpc.levels.get(Skill.Constitution))
++        tick(5)
++
++        assertNull(GameObjects.findOrNull(trapdoor, locked), "The locked trapdoor must be replaced after the boss dies")
++        assertNotNull(GameObjects.findOrNull(trapdoor, unlocked), "The end trapdoor must be unlocked after the boss dies")
++        assertEquals(1, roomTiles.count { GameObjects.findOrNull(it, unlocked) != null }, "Exactly one end trapdoor is unlocked")
++    }
++
++    /** The same four wall-midpoint probes as DungeonDeaths.findDoor, written out for classification only. */
++    private fun probeTiles(bounds: Rectangle): List<Tile> {
++        val x = bounds.minX - 1
++        val y = bounds.minY - 1
++        return listOf(Tile(x, y + 7), Tile(x + 15, y + 7), Tile(x + 7, y), Tile(x + 7, y + 15))
++    }
++
++    /**
++     * Copy of the SoloDungeonLifecycleTest entry steps (its helper is private): ring, party, then the second Climb-down.
++     * Uses the eastern entrance from its legal western approach, Tile(3454, 3723).
++     */
++    private fun enterSoloDungeon(): Player {
++        val player = createPlayer(Tile(3454, 3723, 0))
++        player.inventory.add("ring_of_kinship")
++        val entrance = GameObjects.find(Tile(3455, 3723, 0), "daemonheim_dungeon_entrance")
++
++        player.objectOption(entrance, "Climb-down")
++        tick(2)
++        assertTrue(player.dialogue == "dialogue_multi2", "Climb-down without a party must ask whether to start one")
++        player.dialogueOption(1)
++        tick(2)
++        assertTrue(DungeoneeringParty.inParty(player), "Choosing Yes must make the player party leader")
++
++        player.objectOption(entrance, "Climb-down")
++        tick(5)
++        return player
++    }
++}
++
++private fun Rectangle.toList(): List<Tile> = (minX..maxX).flatMap { x -> (minY..maxY).map { y -> Tile(x, y) } }

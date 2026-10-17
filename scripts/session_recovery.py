@@ -52,8 +52,26 @@ def read(profile):
     if (not isinstance(record, dict) or record.get('format') != 1
             or record.get('profile') != profile.manifest['id']
             or record.get('generation') != profile.manifest['generation']
-            or not re.fullmatch('[0-9a-f]{32}', str(record.get('session', '')))):
+            or not isinstance(record.get('session'), str)
+            or not re.fullmatch('[0-9a-f]{32}', record['session'])):
         raise ValueError('Session record does not match this world; preserve it for manual recovery.')
+    children = record.get('children')
+    jars = record.get('jars')
+    locks = record.get('locks')
+    if (not isinstance(children, dict) or set(children) - {'server', 'client'}
+            or not isinstance(record.get('boot'), str) or not record['boot']
+            or not isinstance(record.get('phase'), str)
+            or not isinstance(jars, dict)
+            or any(not isinstance(jars.get(role), str) or not jars[role] for role in ('server', 'client'))
+            or not isinstance(locks, dict) or set(locks) != {'profile', 'build'}
+            or any(not isinstance(value, list) or len(value) != 2
+                   or any(type(part) is not int or part < 0 for part in value) for value in locks.values())):
+        raise ValueError('Session record metadata is damaged; preserve it for manual recovery.')
+    for process in [record.get('owner'), *children.values()]:
+        if (not isinstance(process, dict)
+                or type(process.get('pid')) is not int or process['pid'] < 1
+                or type(process.get('start')) is not int or process['start'] < 0):
+            raise ValueError('Session record process identity is damaged; preserve it for manual recovery.')
     return record
 
 
@@ -180,6 +198,24 @@ def archive_ended(profile, owner_active=None):
         return {'message': 'Ended session record archived. Current world closure remains unverified; restore a verified backup before trusting a damaged save.'}
 
 
+def primary_save_confirmed(profile, record):
+    """Match the current owned server's post-world-save receipt, never a previous session's log."""
+    path = profile.directory / 'session-logs/server.log'
+    if path.is_symlink():
+        return False
+    expected = 'SOLOSCAPE_WORLD_SAVED_V1 ' + record['session']
+    try:
+        with path.open(encoding='utf-8', errors='replace') as source:
+            return any(re.sub(r'\x1b\[[0-9;]*m', '', line).rstrip('\r\n') == expected for line in source)
+    except OSError:
+        return False
+
+
+def save_artifacts_need_inspection(profile):
+    """A readable previous save cannot prove this shutdown's write succeeded."""
+    return any((profile.state / 'errors').rglob('*')) or any(profile.state.rglob('.save-*.tmp'))
+
+
 def recover(profile, cancelled, notify, owner_active=None):
     if not hasattr(os, 'pidfd_open') or not hasattr(signal, 'pidfd_send_signal'):
         raise RuntimeError('Safe session recovery needs Linux pidfd support; no process was signalled.')
@@ -224,9 +260,11 @@ def recover(profile, cancelled, notify, owner_active=None):
             with profile.lock():
                 if read(profile)['session'] != record['session']:
                     raise RuntimeError('Session record changed during recovery.')
-                dirty = any((profile.state/'errors').rglob('*')) or any(profile.state.rglob('.save-*.tmp'))
+                dirty = save_artifacts_need_inspection(profile)
                 if dirty:
                     raise RuntimeError('Recovered processes closed, but save errors/temporary files need inspection. Previous backups and session record retained.')
+                if not primary_save_confirmed(profile, record):
+                    raise RuntimeError('Recovered world closed without confirming its latest save. Previous backups and session record retained.')
                 profile._backup('after-recovered-shutdown', recovered_from_session=record['session'])
                 (profile.directory/RECORD).unlink()
                 profiles.fsync_directory(profile.directory)

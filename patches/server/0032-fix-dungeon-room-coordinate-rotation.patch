@@ -1,0 +1,63 @@
+--- a/game/src/main/kotlin/content/skill/dungeoneering/DungeonMap.kt
++++ b/game/src/main/kotlin/content/skill/dungeoneering/DungeonMap.kt
+@@ -215,7 +215,7 @@
+ 
+     fun tile(room: DungeonRoom, x: Int, y: Int): Tile {
+         val rotX = rotateX(x, y, room.rotation, 15)
+-        val rotY = rotateY(rotX, y, room.rotation, 15)
++        val rotY = rotateY(x, y, room.rotation, 15)
+         return tile(room).add(rotX, rotY)
+     }
+ 
+--- a/game/src/test/kotlin/content/skill/dungeoneering/SoloBossTrapdoorUnlockTest.kt
++++ b/game/src/test/kotlin/content/skill/dungeoneering/SoloBossTrapdoorUnlockTest.kt
+@@ -80,6 +80,8 @@
+         val lockedTiles = roomTiles.filter { GameObjects.findOrNull(it, locked) != null }
+         assertEquals(1, lockedTiles.size, "The cached boss room must hold exactly one $locked, found $lockedTiles")
+         val trapdoor = lockedTiles.single()
++        // The scan used by native key placement must visit this cached object exactly once.
++        assertEquals(listOf(trapdoor), boss.findObjects(dungeon, setOf(locked)).map { it.tile })
+         assertEquals(0, roomTiles.count { GameObjects.findOrNull(it, unlocked) != null }, "No unlocked trapdoor exists before the kill")
+ 
+         // Record which native search path would find it (DungeonDeaths.kt:74 probes, then the 3x3 corner fallback).
+diff --git a/game/src/test/kotlin/content/skill/dungeoneering/DungeonRoomCoordinateTest.kt b/game/src/test/kotlin/content/skill/dungeoneering/DungeonRoomCoordinateTest.kt
+new file mode 100644
+index 0000000..a752a2c
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/dungeoneering/DungeonRoomCoordinateTest.kt
+@@ -0,0 +1,35 @@
++package content.skill.dungeoneering
++
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.params.ParameterizedTest
++import org.junit.jupiter.params.provider.ValueSource
++import world.gregs.voidps.type.Region
++import world.gregs.voidps.type.Tile
++
++class DungeonRoomCoordinateTest {
++    @ParameterizedTest
++    @ValueSource(ints = [0, 1, 2, 3])
++    fun `Room rotation preserves all tile positions and agrees with quarter-turn geometry`(rotation: Int) {
++        val room = DungeonRoom(Tile(2, 1), isCritical = true).apply { this.rotation = rotation }
++        val grid = arrayOfNulls<DungeonRoom>(20).apply { this[7] = room }
++        val dungeon = DungeonMap(5, 4, room.tile, grid, "frozen", 1).apply { region = Region(100, 50) }
++        val base = dungeon.tile(room)
++        val positions = mutableSetOf<Tile>()
++        for (x in 0 until 16) {
++            for (y in 0 until 16) {
++                // Independent geometric oracle: rotate a point around the 16x16 square, one quarter-turn at a time.
++                var expectedX = x
++                var expectedY = y
++                repeat(rotation) {
++                    val previousX = expectedX
++                    expectedX = 15 - expectedY
++                    expectedY = previousX
++                }
++                val actual = dungeon.tile(room, x, y)
++                assertEquals(base.add(expectedX, expectedY), actual, "rotation=$rotation input=($x,$y)")
++                positions.add(actual)
++            }
++        }
++        assertEquals(256, positions.size, "A rotated room must not collapse different source tiles")
++    }
++}

@@ -1,0 +1,72 @@
+{
+  "environment": "Isolated host native server; mixed unit, supplied-input and actual-map route fixtures. No graphical or physical controller acceptance. See suite sources for setup.",
+  "group": "capacity",
+  "server_patches_sha256": {
+    "0001-controller-direct-movement.patch": "9c9deeee3bf04c093d175cbcbbe2cd37a3ccf8369ac469e689d6da6ad6ba2aba",
+    "0002-controller-world-cancel.patch": "badab72e2cbff33d91f8fe3ba4802665e48ca0e1c0aed0923152307123aeda1a",
+    "0003-controller-cancel-cleanup.patch": "f3a3020bcd38ccac88531c7db5b299ee0951136962398a45686df309b4436ec8",
+    "0004-profile-save-durability-and-loopback.patch": "cd9974042afd733ceba5dd84448a7a41e456ade896750a045502e17554186ac8",
+    "0005-exchange-file-save-durability.patch": "9aee9f965d281ca94c72781d5faa9e6e32a15b8505f255b90dfa6527a64b3c3d",
+    "0006-isolated-level-one-progression-fixture.patch": "5f16b1f8f58fe4a5b2999545a9748b0894e7fb2d0d667b19654d6dc894bda8d7",
+    "0007-session-capability-negotiation.patch": "6e1dfcf9616de74f7ef8540dfb92ceb133f69d0bc0d1e69f7747bfea69c9a9bd",
+    "0008-exchange-counter-crash-recovery.patch": "430709ac013726b2247db47c45b27632cc571f871c83fd49847dd115848ce8dc",
+    "0009-general-store-validation-and-session-adventure.patch": "f555b69ae8fccb751c127d48427ab8b0750fa5f6b109cbe3c361a7a0c60678e6",
+    "0010-actual-adventure-route-audit.patch": "d79bc83b4e394480ae911df2c3beee8b2ad800bf0a2096572b2e010b57ca4a4b",
+    "0011-full-native-adventure-journeys.patch": "9eba588c7055414de52c0424a580c6ffec8b0558de347bcc971d5a80e1efdee0",
+    "0012-playable-loop.patch": "0585e80c7d4990a194a64bbad6327c45b2b8b1e8248eb0b1e06f71cb4daa8d01",
+    "0013-private-entry-probe.patch": "29f337c60ac4dc36a2d0a2bd5f3cab5332e040fb7a2bb4af432216c35640f319",
+    "0014-script-cancellation.patch": "8f05efcf7ddb2a9b58677ef668dd77e4a4c47bc1735199e154f5550476e748d6",
+    "0015-stop-game-loop-before-saving.patch": "637ac3f2e2b2c78d1b8ed432dff9142ed742cec00b97ba5dc507b5ec4bc8bb2b",
+    "0016-direct-movement-sliding-and-recovery.patch": "b83f67de385ee5585d95636c3b1dfe210881d6c8d0f0229e360cb42b62c7de4a",
+    "0017-opt-in-game-loop-timings.patch": "3e1ce16fb6ef9ab7f823a53e587d17bc9c2a034fd517abc2806879c7b2ec0b4f",
+    "0018-player-lit-fire-use.patch": "1042687359390e780c7e8aaa86c6a5fb3973f89f8249ed5fa02435d75319fd32",
+    "0019-pottery-fire-skip-finished-items.patch": "133a0e2b3c836a6f122256fdab3e7ffa8e28b7bb7de526ac417af3f538fa2a22",
+    "0020-pottery-recipe-products-and-levels.patch": "2e56067c0db1850823f54e7cb87470c4256a189bf6b2bb064648ebb8f9efb317",
+    "0021-grow-save-reader-string-buffer.patch": "f4c536a7d0cebae7eb06449dd3b39bbcd6805ddfb56cd4b3a68f90f58c00f740",
+    "0022-toml-safe-save-string-escapes.patch": "590b43482c9fb346a693ced562cfadb3e9d010d585141bfcfc93fc33e2b2b754",
+    "0023-dungeoneering-real-template-solvability.patch": "db4a40603eacafd90fe995ebcaa325e34d65136d16c875732bb57eaff772227f",
+    "0024-controller-corner-running.patch": "7c8c7a2b92c4a1f417a3743d86284946f92ece8f74a41fd938939fb262c07f9d",
+    "0025-targeted-solo-dungeoneering.patch": "eefd82e4669ee513f73e20079148ea2a76557170fd50294d10831ea3eb824080",
+    "0026-targeted-solo-summoning.patch": "b76af2ad88206ea2800cc61bf1456657dd9779b5f248c532c319fcda3f657f29",
+    "0027-earned-lumbridge-progression.patch": "e93cac44082e1f2e239292627d46db9bde1c2e7037ce3e9442bd17bc2a4c9838",
+    "0028-dungeon-native-entrance-validation.patch": "c7492b0772a05ff77cc72320b644106838fdf7f1c5ce56d23050689b4fc2b495",
+    "0029-summoning-supply-acquisition.patch": "1cc0431c4717ad47c88e6078dcd0ce70779f6b0a07cfb2a702cc46a3b9b9c771",
+    "0030-production-capacity-recovery.patch": "5133a7289fb9f9f079c5ecb95b9c31efff8817cfde4a1b7447a341372e59b711"
+  },
+  "suites": [
+    {
+      "suite": "content.soloscape.ProductionCapacityRecoveryTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.fishing.FishingTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.cooking.CookingTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "exit_code": 0,
+  "baseline_commit": "60e6cb580026f69d92d900e6c3796576473d6f1f",
+  "command": "SERVER_JAVA=/path/to/jdk21/bin/java bash scripts/test-content-coverage.sh --group capacity",
+  "private_xml_archive": ".runtime/content-coverage/1792247162147029720",
+  "source_sha256": "c5277079c8488c10a5e8c3976d476acb7fc833449dd3ba406bddc7265b6401b9",
+  "patch_sha256": "5133a7289fb9f9f079c5ecb95b9c31efff8817cfde4a1b7447a341372e59b711",
+  "scope": "Supplied full-inventory fixture contracts: fishing rejection/retry and three-output bread dough transaction rollback/retry. Not an earned journey or physical controller test.",
+  "totals": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}
