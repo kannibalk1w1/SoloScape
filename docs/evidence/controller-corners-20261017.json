@@ -1,0 +1,477 @@
+{
+  "environment": "Host JVM tests; synthetic flags passed through the real RSMod StepValidator for four corner quadrants; other engine fixtures mock dependencies. No physical Deck acceptance or full safe-spot combat journey.",
+  "groups": {
+    "client": {
+      "suites": [
+        {
+          "suite": "ControllerAdventureDetailsTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "ControllerCameraTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "ControllerDirectMovementTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "ControllerEntryTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "ControllerItemImagesTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "ControllerPanelDetailsTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "ControllerSelectionTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "ControllerSpellDetailsTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "ControllerUiTest",
+          "tests": 29,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "ControllerWorldActionsTest",
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "ControllerWorldTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "CycleListSnapshotTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "DetachedRendererTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "NativeGraphicsLibraryTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "OverlayPixelsTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "OwnedCacheTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.ActionMapTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.ControllerMathTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.ControllerQuitTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.ControllerSettingsModelTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.DirectInputTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.EntryControlsTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.PanelControlsTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.PanelPresentationTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.QuickRadialControlsTest",
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.SdlGamepadTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        {
+          "suite": "net.runelite.client.input.controller.SelectionReturnTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.ServerCapabilitiesTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.StickScrollTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.SystemEntryControlsTest",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.TabBarControlsTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.TabRadialControlsTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.UiControlsTest",
+          "tests": 27,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.WorldControlsTest",
+          "tests": 19,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.input.controller.WorldInputTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.plugins.soloscapecontroller.ControllerArtworkTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.plugins.soloscapecontroller.ControllerHintsTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.plugins.soloscapecontroller.ControllerThemeTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.plugins.soloscapecontroller.PanelOverlayTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.soloscape.launcher.LauncherControllerInputTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.soloscape.launcher.LauncherKeyboardTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "net.runelite.client.soloscape.launcher.LocalCredentialsTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "totals": {
+        "tests": 254,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    "server_movement": {
+      "suites": [
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$SpecialAttackPrepareTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.DirectMovementModeTest",
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.MovedTest$EnteredTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.MovedTest$ExitedTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.MovedTest$MovedTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.MovedTest$NPCMovedTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.MovementTest",
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.StepTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$NPCCombatAttackTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$NPCCombatDamageTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$NPCCombatPrepareTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$NPCCombatStartTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$NPCCombatStopTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$NPCCombatSwingTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$PlayerCombatAttackTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$PlayerCombatDamageTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$PlayerCombatPrepareTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$PlayerCombatStartTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$PlayerCombatStopTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$PlayerCombatSwingTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$SpecialAttackDamageTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "world.gregs.voidps.engine.entity.character.mode.move.combat.CombatApiTest$SpecialAttackTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "totals": {
+        "tests": 98,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    }
+  },
+  "patches_sha256": {
+    "patches/client/0054-controller-precision-walking.patch": "88d4b4857a295d2980b6b42882d5770cfafdf7251f3c0221c3127bf4213161e0",
+    "patches/server/0024-controller-corner-running.patch": "7c8c7a2b92c4a1f417a3743d86284946f92ece8f74a41fd938939fb262c07f9d"
+  }
+}
