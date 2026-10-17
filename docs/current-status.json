@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "20562d7",
+  "reviewed_base": "75f7a19",
   "entries": [
     {
       "id": "controls",
@@ -337,6 +337,14 @@
       "acceptance": "DEFERRED",
       "evidence": "GRAVE_CHECKPOINT_PROCESS_EXIT_20261017.md",
       "note": "Eight halt boundaries, one normal publish and five corruption controls pass with42 distinct native JVMs. Exact inventory/pile/timer/version tuples conserve12coins. Publication mechanism only; no live grave persistence, power-loss or profile integration proof."
+    },
+    {
+      "id": "offline-save-failure-retention",
+      "scope": "Failed queued offline saves remain pending through fallback and final confirmation",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "OFFLINE_SAVE_FAILURE_RETENTION_20261017.md",
+      "note": "Three actual FileStorage/SaveQueue reds;13 queue and15 official engine save-group cases pass. Primary retry restores the snapshot; fallback never retires it. No network logout/Main receipt, target-hardware or power-cut acceptance."
     }
   ]
 }

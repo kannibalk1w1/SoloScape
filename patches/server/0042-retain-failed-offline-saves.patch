@@ -1,0 +1,117 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/SaveQueue.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/SaveQueue.kt
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/data/SaveQueue.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/SaveQueue.kt
+@@ -74,13 +74,15 @@
+             logger.error(exception) { "Error saving ${accounts.size} ${"account".plural(accounts.size)}, retrying next tick." }
+             return
+         }
+-        logger.error(exception) { "Giving up on ${exhausted.size} ${"account".plural(exhausted.size)}, writing to fallback storage: ${exhausted.joinToString { it.name }}" }
++        logger.error(exception) { "Primary save still failing for ${exhausted.size} ${"account".plural(exhausted.size)}, retaining pending and writing fallback: ${exhausted.joinToString { it.name }}" }
+         try {
+             fallback.save(exhausted)
+         } catch (e: Exception) {
+             logger.error(e) { "Fallback save failed!" }
+         }
+-        clearPending(exhausted)
++        // A fallback is recovery evidence, not a successful primary save. Keep queued
++        // offline snapshots retryable and block stale relogin through saving(name).
++        // Restart the fallback cooldown; primary retries continue on following ticks.
+         clearFailing(exhausted)
+     }
+ 
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/data/SaveQueueTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/data/SaveQueueTest.kt
+--- a/engine/src/test/kotlin/world/gregs/voidps/engine/data/SaveQueueTest.kt
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/data/SaveQueueTest.kt
+@@ -2,6 +2,10 @@
+ 
+ import kotlinx.coroutines.runBlocking
+ import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.io.TempDir
++import world.gregs.voidps.engine.data.file.FileStorage
++import java.nio.file.Files
++import java.nio.file.Path
+ import world.gregs.voidps.engine.data.config.AccountDefinition
+ import world.gregs.voidps.engine.data.exchange.Claim
+ import world.gregs.voidps.engine.data.exchange.OpenOffers
+@@ -22,6 +26,81 @@
+ 
+ internal class SaveQueueTest : KoinMock() {
+ 
++    @TempDir
++    lateinit var nativeDirectory: Path
++
++    private fun refusedAccount(directory: Path, account: String): FileStorage {
++        Files.createDirectories(directory.resolve("$account.toml"))
++        Files.writeString(directory.resolve("$account.toml/sentinel"), "original fixture")
++        return FileStorage(directory.toFile())
++    }
++
++    @Test
++    fun `Offline double write failure cannot become an empty successful shutdown`() {
++        val account = "offline_double"
++        val primary = refusedAccount(nativeDirectory.resolve("primary"), account)
++        val fallback = refusedAccount(nativeDirectory.resolve("fallback"), account)
++        val queue = SaveQueue(primary, fallback, retryMillis = 0)
++        queue.save(Player(accountName = account, tile = Tile(3200, 3201)))
++        queue.run()
++        runBlocking { queue.awaitInFlight() }
++        val results = CopyOnWriteArrayList<Boolean>()
++
++        runBlocking { queue.direct { results.add(it) }.join() }
++
++        assertEquals(listOf(false), results, "A failed offline save must still fail final primary confirmation")
++        assertTrue(queue.saving(account), "The failed offline snapshot must remain pending")
++        assertEquals("original fixture", Files.readString(nativeDirectory.resolve("primary/$account.toml/sentinel")))
++        assertEquals("original fixture", Files.readString(nativeDirectory.resolve("fallback/$account.toml/sentinel")))
++    }
++
++    @Test
++    fun `Offline fallback success cannot become an empty primary confirmation`() {
++        val account = "offline_fallback"
++        val primary = refusedAccount(nativeDirectory.resolve("primary"), account)
++        val fallbackDirectory = Files.createDirectories(nativeDirectory.resolve("fallback"))
++        val fallback = FileStorage(fallbackDirectory.toFile())
++        val queue = SaveQueue(primary, fallback, retryMillis = 0)
++        val tile = Tile(3202, 3203)
++        queue.save(Player(accountName = account, tile = tile))
++        queue.run()
++        runBlocking { queue.awaitInFlight() }
++        assertEquals(tile, fallback.load(account)?.tile, "Native fallback actually received the snapshot")
++        val results = CopyOnWriteArrayList<Boolean>()
++
++        runBlocking { queue.direct { results.add(it) }.join() }
++
++        assertEquals(listOf(false), results, "Fallback is not a successful primary account save")
++        assertTrue(queue.saving(account), "Relogin stays blocked by the existing pending-save gate")
++    }
++
++    @Test
++    fun `Offline fallback keeps the snapshot available for a later primary retry`() {
++        val account = "offline_retry"
++        val primaryDirectory = nativeDirectory.resolve("primary")
++        val primary = refusedAccount(primaryDirectory, account)
++        val fallback = FileStorage(Files.createDirectories(nativeDirectory.resolve("fallback")).toFile())
++        val queue = SaveQueue(primary, fallback, retryMillis = 0)
++        val tile = Tile(3204, 3205)
++        queue.save(Player(accountName = account, tile = tile))
++        queue.run()
++        runBlocking { queue.awaitInFlight() }
++        assertEquals(tile, fallback.load(account)?.tile)
++        assertTrue(queue.saving(account), "Fallback must not discard the retryable offline snapshot")
++
++        // Remove only this test's deliberate refusal fixture, allowing the primary disk write.
++        Files.delete(primaryDirectory.resolve("$account.toml/sentinel"))
++        Files.delete(primaryDirectory.resolve("$account.toml"))
++        queue.run()
++        runBlocking { queue.awaitInFlight() }
++
++        assertEquals(tile, primary.load(account)?.tile, "Primary retry writes the original offline snapshot")
++        assertFalse(queue.saving(account))
++        assertTrue(queue.empty())
++        assertEquals(tile, fallback.load(account)?.tile, "Retain the fallback evidence")
++    }
++
++
+     private open class TestStorage : Storage {
+         override fun names(): Map<String, AccountDefinition> = emptyMap()
+ 
