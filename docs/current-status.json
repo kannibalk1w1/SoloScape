@@ -113,6 +113,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "SUMMONING_TARGETED_PASS_20261017.md",
       "note": "Recipe materials supplied; same-JVM fresh-player restore, not server restart; controller and earned materials not exercised"
+    },
+    {
+      "id": "earned-lumbridge",
+      "scope": "Connected native Cook, gathering, player-lit cooking, combat, bank and fresh-player disk restore",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "EARNED_LUMBRIDGE_SLICE_20261017.md",
+      "note": "Actual starter kit and native resources; bounded ordinary-input retries handle roaming NPCs. Same-JVM restore, not launcher restart; inventory-full/death and physical controller acceptance remain open."
     }
   ]
 }
