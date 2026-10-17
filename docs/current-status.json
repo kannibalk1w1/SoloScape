@@ -241,6 +241,14 @@
       "acceptance": "DEFERRED",
       "evidence": "WORLD_TRANSIENT_SAVE_AUDIT_20261017.md",
       "note": "Source audit finds no runtime grave/floor writer and nonpersistent marker variables. Two-JVM restart reproduction and explicit lifecycle policy remain open; recovered inventory tests do not cover this boundary."
+    },
+    {
+      "id": "slayer-kill-ownership",
+      "scope": "Native Slayer single-attacker credit, passive-player isolation and saved task counts",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "SLAYER_KILL_OWNERSHIP_20261017.md",
+      "note": "36 selected native cases pass independently, including two ownership/save cases. Explicit tasks/stats/spawns and in-process fresh-player reload; contested kills, earned assignment and later-content mechanics remain separate."
     }
   ]
 }
