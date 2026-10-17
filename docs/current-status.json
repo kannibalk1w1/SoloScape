@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "502df960241d2dbc7eae4d0985273a7db9dcef28",
+  "reviewed_base": "7cf8c1f7bc1b25d9fde2eca9b95e8afddb73e2a1",
   "entries": [
     {
       "id": "controls",
@@ -121,6 +121,22 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "EARNED_LUMBRIDGE_SLICE_20261017.md",
       "note": "Actual starter kit and native resources; bounded ordinary-input retries handle roaming NPCs. Same-JVM restore, not launcher restart; inventory-full/death and physical controller acceptance remain open."
+    },
+    {
+      "id": "summoning-acquisition",
+      "scope": "Spirit-wolf supply shop accounting and controlled member charm drop contract",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "SUMMONING_ACQUISITION_20261017.md",
+      "note": "14 targeted cases pass; supplied coins, created tutor at configured coordinates and controlled table roll; earned combat/travel/material-to-summon journey remains unproven"
+    },
+    {
+      "id": "profile-metadata-recovery",
+      "scope": "Damaged account metadata isolation and verified backup recovery",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "PROFILE_METADATA_RECOVERY_20261017.md",
+      "note": "Six malformed metadata values recover on disposable profiles while preserving damaged bytes, previous save and healthy profile; no owner/device test"
     }
   ]
 }

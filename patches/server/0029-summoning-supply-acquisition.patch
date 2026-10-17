@@ -1,0 +1,156 @@
+diff --git a/game/src/test/kotlin/content/skill/summoning/SummoningSupplyAcquisitionTest.kt b/game/src/test/kotlin/content/skill/summoning/SummoningSupplyAcquisitionTest.kt
+new file mode 100644
+index 0000000..ecc842c
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/summoning/SummoningSupplyAcquisitionTest.kt
+@@ -0,0 +1,150 @@
++package content.skill.summoning
++
++import FakeRandom
++import WorldTest
++import containsMessage
++import dialogueContinue
++import dialogueOption
++import interfaceOption
++import npcOption
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertFalse
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.Test
++import world.gregs.voidps.engine.client.ui.dialogue
++import world.gregs.voidps.engine.client.ui.hasOpen
++import world.gregs.voidps.engine.data.definition.ItemDefinitions
++import world.gregs.voidps.engine.data.definition.NPCDefinitions
++import world.gregs.voidps.engine.entity.character.npc.NPC
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.item.Item
++import world.gregs.voidps.engine.entity.item.drop.DropTables
++import world.gregs.voidps.engine.get
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.type.Tile
++import world.gregs.voidps.type.setRandom
++import content.entity.npc.shop.shop
++import content.entity.npc.shop.shopInventory
++import content.entity.npc.shop.stock.Price
++
++/**
++ * Native acquisition of the spirit wolf materials, without fixtures that grant the items themselves.
++ *
++ * - Pikkupstix at his real Taverley spawn opens `summoning_supplies` through Talk-to and the second choice.
++ * - The shop sells the blank pouch and spirit shards, but not the gold charm or wolf bones. Those come from
++ *   the white wolf drop table, so they are checked against the table with a controlled roll.
++ *
++ * Coins are supplied explicitly as the shop currency. Nothing here claims the coins were earned.
++ */
++class SummoningSupplyAcquisitionTest : WorldTest() {
++
++    private val pikkupstixTile = Tile(2925, 3443)
++    private val pouchId = "spirit_wolf_pouch"
++
++    /**
++     * Talks to the Pikkupstix NPC created at its configured Taverley spawn tile and picks "Can I buy some
++     * Summoning supplies, please?". Each dialogue stage is asserted, so the shop is only reached through
++     * the real menu: the Quiz option emits the player's line before the tutor's reply.
++     */
++    private fun buySupplies(player: Player): NPC {
++        val pikkupstix = createNPC("pikkupstix", pikkupstixTile)
++        player.npcOption(pikkupstix, "Talk-to")
++        tick(2)
++        assertTrue(player.dialogue.orEmpty().startsWith("dialogue_npc_chat")) { "stage 1 is the tutor's greeting, was ${player.dialogue}" }
++        player.dialogueContinue() // "Welcome to my humble abode. How can I help you?"
++        assertTrue(player.dialogue.orEmpty().startsWith("dialogue_multi")) { "stage 2 is the choice menu, was ${player.dialogue}" }
++        player.dialogueOption(2) // "Can I buy some Summoning supplies, please?"
++        assertTrue(player.dialogue.orEmpty().startsWith("dialogue_chat")) { "stage 3 is the player's chosen line, was ${player.dialogue}" }
++        player.dialogueContinue() // the player's line, then the tutor's "If you like! It's good to see you training."
++        assertTrue(player.dialogue.orEmpty().startsWith("dialogue_npc_chat")) { "stage 4 is the tutor's reply, was ${player.dialogue}" }
++        player.dialogueContinue()
++        tick(2)
++        return pikkupstix
++    }
++
++    /** The shop interface slot for an item, as the stock list is laid out (six slots per row). */
++    private fun stockSlot(player: Player, item: String) = player.shopInventory(false).indexOf(item) * 6
++
++    @Test
++    fun `Pikkupstix opens the summoning supplies shop from the second choice`() {
++        val player = createPlayer(pikkupstixTile.addY(-1))
++
++        buySupplies(player)
++
++        assertTrue(player.hasOpen("shop")) { "the summoning supplies shop did not open" }
++        assertEquals("summoning_supplies", player.shop())
++    }
++
++    @Test
++    fun `Recipe quantities of blank pouch and spirit shards buy through shop packets`() {
++        val player = createPlayer(pikkupstixTile.addY(-1))
++        player.inventory.add("coins", 1000)
++        buySupplies(player)
++        val shop = player.shopInventory(false)
++        val pouch = Item(pouchId)
++        val shardId = ItemDefinitions.get(pouch.def["summoning_shard_id", -1]).stringId
++        val shardAmount: Int = pouch.def["summoning_shard_amount"]
++        val blankId = ItemDefinitions.get(pouch.def["summoning_pouch_id", -1]).stringId
++        val blankAmount: Int = pouch.def["summoning_pouch_amount"]
++        val shardStock = shop.count(shardId)
++        val blankStock = shop.count(blankId)
++        val shardPrice = Price.of(shardId)
++        val blankPrice = Price.of(blankId)
++
++        player.interfaceOption("shop", "stock", "Buy-5", item = Item(shardId), slot = stockSlot(player, shardId))
++        tick()
++        player.interfaceOption("shop", "stock", "Buy-1", item = Item(shardId), slot = stockSlot(player, shardId))
++        player.interfaceOption("shop", "stock", "Buy-1", item = Item(shardId), slot = stockSlot(player, shardId))
++        tick()
++        player.interfaceOption("shop", "stock", "Buy-1", item = Item(blankId), slot = stockSlot(player, blankId))
++        tick()
++
++        assertEquals(shardAmount, player.inventory.count(shardId), "the shard recipe quantity is in the inventory")
++        assertEquals(blankAmount, player.inventory.count(blankId), "the blank pouch recipe quantity is in the inventory")
++        assertEquals(shardStock - shardAmount, shop.count(shardId), "the shop loses exactly the shards bought")
++        assertEquals(blankStock - blankAmount, shop.count(blankId), "the shop loses exactly the blank pouches bought")
++        val spent = shardAmount * shardPrice + blankAmount * blankPrice
++        assertEquals(1000 - spent, player.inventory.count("coins"), "coins are charged the native shop price per item")
++    }
++
++    @Test
++    fun `Insufficient coins grant and consume nothing and leave shop stock unchanged`() {
++        val player = createPlayer(pikkupstixTile.addY(-1))
++        val shardId = "spirit_shards"
++        val coins = Price.of(shardId) - 1
++        player.inventory.add("coins", coins)
++        buySupplies(player)
++        val shop = player.shopInventory(false)
++        val stock = shop.count(shardId)
++
++        player.interfaceOption("shop", "stock", "Buy-5", item = Item(shardId), slot = stockSlot(player, shardId))
++        tick()
++
++        assertTrue(player.containsMessage("You don't have enough coins.")) { "the player is told the coins are short" }
++        assertEquals(0, player.inventory.count(shardId), "no shards are granted")
++        assertEquals(coins, player.inventory.count("coins"), "no coins are taken")
++        assertEquals(stock, shop.count(shardId), "shop stock is unchanged")
++    }
++
++    @Test
++    fun `White wolf charm drops only for members with the controlled roll and wolf bones always drop`() {
++        setRandom(object : FakeRandom() {
++            override fun nextInt(from: Int, until: Int) = from
++        })
++        val player = createPlayer(pikkupstixTile)
++        val table = get<DropTables>().getValue("white_wolf_drop_table")
++        val npcTable = "${NPCDefinitions.get("wolf_stronghold_of_security")["drop_table", "none"]}_drop_table"
++        assertEquals("white_wolf_drop_table", npcTable, "the stronghold wolf uses the white wolf drop table")
++
++        settings["world.members"] = "true"
++        val members = table.roll(player = player).map { it.id }
++        settings["world.members"] = "false"
++        val freeToPlay = table.roll(player = player).map { it.id }
++
++        assertTrue("gold_charm" in members, "the members roll includes the gold charm")
++        assertTrue("wolf_bones" in members, "the members roll includes wolf bones")
++        assertFalse("gold_charm" in freeToPlay, "the free-to-play world gates the charm table")
++        assertTrue("wolf_bones" in freeToPlay, "wolf bones are not members-gated")
++    }
++}
