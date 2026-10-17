@@ -1,0 +1,20 @@
+import groovy.json.JsonOutput
+allprojects {
+    afterEvaluate { project ->
+        tasks.register('soloScapeRuntimeInventory') {
+            doLast {
+                def cfg = project.configurations.findByName('runtimeClasspath')
+                if (cfg == null) throw new GradleException('runtimeClasspath missing')
+                def rows = cfg.resolvedConfiguration.resolvedArtifacts.collect { artifact ->
+                    [coordinate: artifact.moduleVersion.id.toString(), name: artifact.name,
+                     classifier: artifact.classifier, type: artifact.type, path: artifact.file.canonicalPath]
+                }.sort { a,b -> a.coordinate <=> b.coordinate }
+                def known = rows.collect { it.path }.toSet()
+                cfg.files.findAll { !known.contains(it.canonicalPath) }.each { file ->
+                    rows.add([coordinate: null, name: file.name, classifier: null, type: file.name.tokenize('.').last(), path: file.canonicalPath, origin: 'file-or-unattributed'])
+                }
+                println('SOLOSCAPE_RUNTIME_ARTIFACTS ' + JsonOutput.toJson(rows))
+            }
+        }
+    }
+}
