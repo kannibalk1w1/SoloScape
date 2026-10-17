@@ -43,6 +43,22 @@ def cache_directory(environ=None):
     return directory
 
 
+LAUNCHER_HOME_ENV = "SOLOSCAPE_LAUNCHER_HOME"
+
+
+def launcher_directory(environ=None):
+    """Shared launcher settings/art; build and recovery context remain version-local."""
+    value = (os.environ if environ is None else environ).get(LAUNCHER_HOME_ENV)
+    if value is None:
+        return RUNTIME
+    if not value or "\0" in value or not Path(value).is_absolute():
+        raise ValueError(LAUNCHER_HOME_ENV + " must be a nonempty absolute directory path.")
+    directory = Path(value)
+    if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
+        raise ValueError(LAUNCHER_HOME_ENV + " must name a directory, not a file or symbolic link.")
+    return directory
+
+
 @contextmanager
 def build_lock(shared=False):
     """Keep archives stable while any owned JVM may lazily load/save classes."""

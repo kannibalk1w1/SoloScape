@@ -16,7 +16,7 @@ import release_updates
 import signal
 
 MAX_REQUEST = 16384
-SETTINGS = local_dev.ROOT / ".runtime/launcher-settings.json"
+SETTINGS = local_dev.launcher_directory() / "launcher-settings.json"
 
 
 class Backend:

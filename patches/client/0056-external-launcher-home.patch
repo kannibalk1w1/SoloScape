@@ -1,0 +1,111 @@
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+index d54edb5..ca65130 100644
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -52,13 +52,14 @@ public final class SoloScapeLauncher
+     private SoloScapeLauncher(Path project) throws IOException
+     {
+         root = project;
++        Path launcherHome = LauncherPaths.directory(root, System.getenv("SOLOSCAPE_LAUNCHER_HOME"));
+         backend = new ProcessBuilder("python3", root.resolve("scripts/launcher_backend.py").toString())
+             .directory(root.toFile()).redirectError(ProcessBuilder.Redirect.INHERIT).start();
+         input = new BufferedWriter(new OutputStreamWriter(backend.getOutputStream(), StandardCharsets.UTF_8));
+         output = new BufferedReader(new InputStreamReader(backend.getInputStream(), StandardCharsets.UTF_8));
+         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+         frame.addWindowListener(new WindowAdapter() { @Override public void windowClosing(WindowEvent e) { close(); } });
+-        JPanel content = new LauncherScene(root.resolve(".runtime/launcher-art/brazier.jpg"));
++        JPanel content = new LauncherScene(launcherHome.resolve("launcher-art/brazier.jpg"));
+         content.setLayout(new BorderLayout(18, 18));
+         content.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+         JLabel title = new LauncherTheme.ShadowLabel("SoloScape", LauncherTheme.bold(32), LauncherTheme.ORANGE);
+diff --git a/client/src/net/runelite/client/soloscape/launcher/LauncherPaths.java b/client/src/net/runelite/client/soloscape/launcher/LauncherPaths.java
+new file mode 100644
+index 0000000..ac75ef5
+--- /dev/null
++++ b/client/src/net/runelite/client/soloscape/launcher/LauncherPaths.java
+@@ -0,0 +1,21 @@
++package net.runelite.client.soloscape.launcher;
++
++import java.io.IOException;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++
++/** Only settings/art are shared; world ownership and build locks belong to their code version. */
++final class LauncherPaths
++{
++    static Path directory(Path root, String value) throws IOException
++    {
++        if (value == null) return root.resolve(".runtime");
++        if (value.isEmpty() || value.indexOf('\0') >= 0 || !Paths.get(value).isAbsolute())
++            throw new IOException("SOLOSCAPE_LAUNCHER_HOME must be a nonempty absolute directory path.");
++        Path directory = Paths.get(value);
++        if (Files.isSymbolicLink(directory) || (Files.exists(directory) && !Files.isDirectory(directory)))
++            throw new IOException("SOLOSCAPE_LAUNCHER_HOME must name a directory, not a file or symbolic link.");
++        return directory;
++    }
++}
+diff --git a/client/test/net/runelite/client/soloscape/launcher/LauncherPathsTest.java b/client/test/net/runelite/client/soloscape/launcher/LauncherPathsTest.java
+new file mode 100644
+index 0000000..e879949
+--- /dev/null
++++ b/client/test/net/runelite/client/soloscape/launcher/LauncherPathsTest.java
+@@ -0,0 +1,58 @@
++package net.runelite.client.soloscape.launcher;
++
++import java.io.IOException;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import org.junit.Test;
++import org.junit.Rule;
++import org.junit.rules.TemporaryFolder;
++import static org.junit.Assert.*;
++
++public class LauncherPathsTest
++{
++    @Rule public TemporaryFolder temporary = new TemporaryFolder();
++
++    @Test public void defaultBelongsToTheSuppliedCodeVersion() throws Exception
++    {
++        Path root = temporary.getRoot().toPath();
++        assertEquals(root.resolve(".runtime"), LauncherPaths.directory(root, null));
++        assertFalse(Files.exists(root.resolve(".runtime")));
++    }
++
++    @Test public void explicitHomeSurvivesCodeVersionChangeWithoutCreation() throws Exception
++    {
++        Path root = temporary.getRoot().toPath(), shared = root.resolve("shared launcher");
++        assertEquals(shared, LauncherPaths.directory(root.resolve("version-a"), shared.toString()));
++        assertEquals(shared, LauncherPaths.directory(root.resolve("version-b"), shared.toString()));
++        assertFalse(Files.exists(shared));
++    }
++
++    @Test public void selectedHomeSuppliesTheActualSceneArtwork() throws Exception
++    {
++        Path root = temporary.getRoot().toPath(), shared = root.resolve("shared");
++        Path art = shared.resolve("launcher-art/brazier.jpg"); Files.createDirectories(art.getParent());
++        java.awt.image.BufferedImage original = new java.awt.image.BufferedImage(8, 8, java.awt.image.BufferedImage.TYPE_INT_RGB);
++        java.awt.Graphics2D paint = original.createGraphics();
++        paint.setColor(java.awt.Color.GREEN); paint.fillRect(0, 0, 8, 8); paint.dispose();
++        javax.imageio.ImageIO.write(original, "png", art.toFile());
++        LauncherScene scene = new LauncherScene(LauncherPaths.directory(root.resolve("new-version"), shared.toString()).resolve("launcher-art/brazier.jpg"));
++        scene.setSize(100, 100);
++        java.awt.image.BufferedImage frame = new java.awt.image.BufferedImage(100, 100, java.awt.image.BufferedImage.TYPE_INT_RGB);
++        java.awt.Graphics2D output = frame.createGraphics(); scene.paint(output); output.dispose();
++        java.awt.Color center = new java.awt.Color(frame.getRGB(50, 50));
++        assertTrue("Original green fixture was rendered from external artwork", center.getGreen() > center.getRed() + 50);
++        assertFalse(Files.exists(root.resolve("new-version")));
++    }
++
++    @Test public void invalidExplicitHomesAreRefused() throws Exception
++    {
++        Path root = temporary.getRoot().toPath(), file = Files.createFile(root.resolve("file"));
++        Path link = root.resolve("link"); Files.createSymbolicLink(link, root.resolve("missing"));
++        for (String value : new String[]{"", ".", "relative", "bad\0path", file.toString(), link.toString()})
++        {
++            try { LauncherPaths.directory(root, value); fail("Accepted invalid launcher home"); }
++            catch (IOException expected) { }
++        }
++        assertTrue(Files.exists(file)); assertTrue(Files.isSymbolicLink(link));
++    }
++}

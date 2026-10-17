@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "1425509",
+  "reviewed_base": "c8ad11a",
   "entries": [
     {
       "id": "controls",
@@ -369,6 +369,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "CACHE_LOCATION_20261017.md",
       "note": "207 tooling cases with one optional skip; actual disposable profile session boots and confirms closure using an external private cache copy. No character/client/Deck acceptance; default and profile-owned client cache unchanged."
+    },
+    {
+      "id": "external-launcher-location",
+      "scope": "Optional shared launcher settings and locally supplied art outside version-owned runtime",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "LAUNCHER_LOCATION_20261017.md",
+      "note": "Disposable two-code-root backend settings round trip; original native scene-art fixture and launcher path/input cases. No migration, managed activation or owner/Deck deployment."
     }
   ]
 }
