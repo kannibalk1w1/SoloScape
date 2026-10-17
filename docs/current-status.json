@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "2c19226",
+  "reviewed_base": "a97df79",
   "entries": [
     {
       "id": "controls",
@@ -463,8 +463,8 @@
       "scope": "Current prepared private native build and New/Save & Quit/Continue",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
-      "evidence": "NATIVE_TEST_BUILD_50_20261017.md",
-      "note": "10,881 listed entries and five fixture backups verify after actual exported New/Save & Quit/Continue/cancellation on software Xvfb without audio. Includes identical-item/charged-loot fixes. No physical pad/Deck/FPS or owner installation claim."
+      "evidence": "NATIVE_TEST_BUILD_51_20261017.md",
+      "note": "10,888 listed entries and five fixture backups verify after actual exported New/Save & Quit/Continue/cancellation on software Xvfb without audio. Includes native grave timer fixes. No physical pad/Deck/FPS or owner installation claim."
     },
     {
       "id": "backport-lab-token",
@@ -505,6 +505,22 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "DEATH_DROP_CHARGES_20261017.md",
       "note": "Reproduced floor charges0 instead of12,345; same charged floor loot survives refused Take, then recovers once.29 death/40 related cases pass (five overlap). No disk/Deck or grave persistence claim."
+    },
+    {
+      "id": "gravestone-timer",
+      "scope": "Native grave phase ordering and cancellation at expired lifetime",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "GRAVESTONE_TIMER_20261017.md",
+      "note": "Reproduced collapse->broken regression and immortal expired NPC.31 native death/loot cases pass, including real scheduled stop cleanup. Fixture clocks; no restart/Deck or suspend claim."
+    },
+    {
+      "id": "grave-record-codec",
+      "scope": "Original immutable subset grave/pile records through native save/load",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "GRAVE_RECORD_CODEC_20261017.md",
+      "note": "12 scenarios / 22 JVMs; 53 named checks. Separate piles, provenance, charges and counters survive supplied native roundtrip; file guards refuse after linked-parent fix. No live capture, layout, restart persistence or owner-state change."
     },
     {
       "id": "wasm-triangle",
