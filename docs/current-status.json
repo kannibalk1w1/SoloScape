@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "10f11d8",
+  "reviewed_base": "00e1514",
   "entries": [
     {
       "id": "controls",
@@ -481,6 +481,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "CONNECTED_SUMMONING_SUPPLIES_20261017.md",
       "note": "One joined level1/members case;23 selected native cases pass. Fatal hit/RNG/coins/teleports are fixtures; no earned journey, connected save/reload, client/Deck or grave persistence claim."
+    },
+    {
+      "id": "kept-item-charges",
+      "scope": "Preserve protected per-item charge state through native player death",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "KEPT_ITEM_CHARGES_20261017.md",
+      "note": "Reproduced12,345->1 charge loss; fixed without changing quantity/coin splits.26 death and37 charge-related cases pass (two overlap); packaged classes match. No general dropped-charge, disk/Deck or grave persistence claim."
     }
   ]
 }
