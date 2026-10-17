@@ -17,7 +17,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
 | client | 54 | `0054-controller-precision-walking.patch` | `edbbcc303e2cb43d7622116de70639453586b10021b4c6dfd12d22a8cd65e7d1` |
-| server | 35 | `0035-cooking-target-lifetime.patch` | `99d3cb8a7704fcd1b72c439534757fe29df515a7fd19d5ed82fa86d0ee47d237` |
+| server | 34 | `0034-native-primary-save-confirmation.patch` | `a48ba0c68692d09aacf12f84b6ca89907549be59d87dbd1713db54e3c18a5230` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
 
