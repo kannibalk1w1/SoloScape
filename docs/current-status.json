@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "992c4b3",
+  "reviewed_base": "1d02850",
   "entries": [
     {
       "id": "controls",
@@ -273,6 +273,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "FAMILIAR_OWNERSHIP_AUDIT_20261017.md",
       "note": "Controlled player-index reuse reproduced wrong-account Slayer credit; four targeted cases now pass. Supplied tasks/pouch/API damage and forced allocator state; ordinary logout timing, damage XP and other ownership consumers remain separate."
+    },
+    {
+      "id": "launcher-release-discovery",
+      "scope": "Read-only GitHub release discovery and launcher modal controller ancestry",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "GITHUB_UPDATE_DISCOVERY_20261017.md",
+      "note": "159 tooling cases (one optional skip), actual no-public-release check and real Swing/controller-adapter plus existing launcher probes pass. Download/apply/rollback and installed release identity remain unimplemented; no Deck deployment."
     }
   ]
 }

@@ -1,0 +1,85 @@
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+index bacb33d..d54edb5 100644
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -278,6 +278,21 @@ public final class SoloScapeLauncher
+         JSpinner number = new JSpinner(new SpinnerNumberModel(port, 1, 65535, 1));
+         JPanel fields = new JPanel(new GridLayout(0, 1, 6, 6)); fields.add(new JLabel("Local game port (use another free port for an independent world)")); fields.add(number);
+         fields.add(new JLabel("Gameplay controller settings remain in the SoloScape Controller plugin."));
++        JButton updates = new LauncherButton("Check for updates"); fields.add(updates);
++        updates.addActionListener(e -> {
++            updates.setEnabled(false);
++            request(command("update_check"), result -> {
++                updates.setEnabled(true);
++                JsonObject data = result.getAsJsonObject();
++                String message = data.get("message").getAsString();
++                if (!fields.isShowing()) { status.setText(message); return; }
++                if (data.has("notes") && !data.get("notes").getAsString().isEmpty())
++                    message += "\n\n" + data.get("notes").getAsString();
++                JTextArea text = new JTextArea(message, 14, 60); text.setEditable(false);
++                text.setLineWrap(true); text.setWrapStyleWord(true); text.setCaretPosition(0);
++                JOptionPane.showMessageDialog(fields, new JScrollPane(text), "SoloScape updates", JOptionPane.INFORMATION_MESSAGE);
++            }, failure -> updates.setEnabled(true));
++        });
+         if (JOptionPane.showConfirmDialog(frame, fields, "Launcher Settings", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
+         { JsonObject cmd=command("settings");cmd.addProperty("port",(Integer)number.getValue());cmd.addProperty("save",true);request(cmd,result -> {port=result.getAsJsonObject().get("port").getAsInt();status.setText("Launcher settings saved.");}); }
+     }
+@@ -291,6 +306,12 @@ public final class SoloScapeLauncher
+             finally { requests.shutdown(); SwingUtilities.invokeLater(frame::dispose); }
+         });
+     }
++    private boolean ownsWindow(Window window)
++    {
++        for (Window current=window; current!=null; current=current.getOwner())
++            if (current==frame) return true;
++        return false;
++    }
+     private void startController()
+     {
+         final SdlGamepad pad = new SdlGamepad(); final GamepadState state = new GamepadState(), raw = new GamepadState();
+@@ -299,7 +320,7 @@ public final class SoloScapeLauncher
+         final boolean[] armed = {false}; final long[] next = {0}, entryRevision={-1}; final Window[] priorWindow={null};
+         KeyEventDispatcher mappedKeys=event->{
+             Window window=SwingUtilities.getWindowAncestor(event.getComponent());
+-            boolean ours=window==frame||(window!=null&&window.getOwner()==frame);
++            boolean ours=ownsWindow(window);
+             if(ours&&keyboard!=null&&keyboard.systemMode()&&keyboard.accepts(event.getComponent())&&
+                 (event.getID()==KeyEvent.KEY_TYPED||event.getKeyCode()==KeyEvent.VK_SPACE||event.getKeyCode()==KeyEvent.VK_ENTER)){
+                 keyboard.activate((JTextField)event.getComponent());return false;
+@@ -313,7 +334,7 @@ public final class SoloScapeLauncher
+         javax.swing.Timer timer = new javax.swing.Timer(25, e -> {
+             if (closing) { ((javax.swing.Timer)e.getSource()).stop();KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(mappedKeys);pad.close();return; }
+             pad.poll(raw); navigation.merge(raw,state,Boolean.getBoolean("soloscape.launcher.steamKeyboard")); Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+-            if (nativeNavigation.isSelected() || !state.connected || active == null || !(active == frame || active.getOwner() == frame)) { navigation.clear();state.clear();armed[0] = false; return; }
++            if (nativeNavigation.isSelected() || !state.connected || active == null || !ownsWindow(active)) { navigation.clear();state.clear();armed[0] = false; return; }
+             if(active!=priorWindow[0]){priorWindow[0]=active;armed[0]=false;}
+             if(keyboard!=null&&entryRevision[0]!=keyboard.revision()){entryRevision[0]=keyboard.revision();armed[0]=false;}
+             if(keyboard!=null&&active==keyboard.owner&&keyboard.active()){navigation.clear();keyboard.update(state,System.nanoTime());armed[0]=false;return;}
+@@ -334,8 +355,25 @@ public final class SoloScapeLauncher
+                 else if (previous) focus.transferFocusBackward(); else focus.transferFocus();
+                 next[0] = now + 180_000_000L;
+             }
+-            if ((state.buttonsPressed & 1) != 0) { if (focus instanceof AbstractButton) ((AbstractButton)focus).doClick(); else if (focus == list && play.isEnabled()) play.doClick(); }
+-            if ((state.buttonsPressed & 2) != 0) { if (active instanceof JDialog) active.dispose(); else list.requestFocusInWindow(); }
++            // Modal button actions must run after this timer callback returns, otherwise Swing's
++            // coalesced timer cannot deliver controller input while the modal event loop is open.
++            if ((state.buttonsPressed & 1) != 0) SwingUtilities.invokeLater(() -> {
++                KeyboardFocusManager manager=KeyboardFocusManager.getCurrentKeyboardFocusManager();
++                if (closing || manager.getActiveWindow()!=active || manager.getFocusOwner()!=focus) return;
++                if (focus instanceof AbstractButton) ((AbstractButton)focus).doClick();
++                else if (focus==list && play.isEnabled()) play.doClick();
++            });
++            if ((state.buttonsPressed & 2) != 0) {
++                if (active instanceof JDialog) {
++                    Window parent=active.getOwner();
++                    Component priorFocus=parent==null?null:parent.getMostRecentFocusOwner();
++                    active.dispose();
++                    if (parent!=null && parent.isShowing()) SwingUtilities.invokeLater(() -> {
++                        parent.toFront(); parent.requestFocus();
++                        if (priorFocus!=null && priorFocus.isShowing()) priorFocus.requestFocusInWindow();
++                    });
++                } else list.requestFocusInWindow();
++            }
+             if ((state.buttonsPressed & (1<<9)) != 0 && focus != null) focus.transferFocusBackward();
+             if ((state.buttonsPressed & (1<<10)) != 0 && focus != null) focus.transferFocus();
+         }); timer.start();

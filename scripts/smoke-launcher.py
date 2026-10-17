@@ -13,6 +13,7 @@ import argparse
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--desktop',action='store_true',help='Use the authorized current DISPLAY; never terminate it.')
+    parser.add_argument('--updates', action='store_true', help='Test release discovery dialogs with private deterministic metadata, no downloads.')
     options=parser.parse_args()
     root=local_dev.ROOT/'.runtime/launcher-tests'/str(time.time_ns())
     (root/'scripts').mkdir(parents=True)
@@ -23,12 +24,19 @@ def main():
         if artwork.is_file():
             (root/'.runtime/launcher-art').mkdir(parents=True,exist_ok=True)
             shutil.copyfile(artwork,root/'.runtime/launcher-art'/name)
+    if options.updates:
+        with (root/'scripts/release_updates.py').open('a') as fixture:
+            fixture.write('\n# Private metadata fixture only; real backend and GUI remain unchanged.\n'
+                          'def check():\n    import time\n    from pathlib import Path\n'
+                          '    data=json.loads((Path(__file__).parent.parent/"update-response.json").read_text())\n'
+                          '    time.sleep(data.pop("delay") / 1000)\n    return data\n')
+    probe = 'NativeLauncherUpdateProbe' if options.updates else 'NativeLauncherProbe'
     java=Path(os.environ.get('CLIENT_JAVA','java')).resolve()
     javac=java.with_name('javac')
     classes=root/'classes';classes.mkdir()
     jar=local_dev.jar(local_dev.CLIENT/'client','void-client-*.jar')
     with local_dev.build_lock(shared=True) as guard:
-        subprocess.run([str(javac),'-encoding','UTF-8','-cp',str(jar),'-d',str(classes),str(local_dev.ROOT/'scripts/harness/NativeLauncherProbe.java')],check=True)
+        subprocess.run([str(javac),'-encoding','UTF-8','-cp',str(jar),'-d',str(classes),str(local_dev.ROOT/'scripts/harness'/(probe+'.java'))],check=True)
         display=None
         if options.desktop:
             if not os.environ.get('DISPLAY'):raise RuntimeError('--desktop requires an explicit authorized DISPLAY.')
@@ -45,7 +53,7 @@ def main():
                 number=os.read(read_fd,64).decode().strip()
                 if not number.isdigit() or display.poll() is not None:raise RuntimeError('No owned display; refusing fallback.')
                 environment=dict(os.environ,DISPLAY=':'+number)
-            subprocess.run([str(java),'-Duser.home='+str(root/'home'),'-cp',str(jar)+':'+str(classes),'net.runelite.client.soloscape.launcher.NativeLauncherProbe',str(root)],env=environment,pass_fds=(guard.fileno(),),check=True,timeout=90)
+            subprocess.run([str(java),'-Duser.home='+str(root/'home'),'-cp',str(jar)+':'+str(classes),'net.runelite.client.soloscape.launcher.'+probe,str(root)],env=environment,pass_fds=(guard.fileno(),),check=True,timeout=90)
             print('Private launcher evidence:',root)
         finally:
             if display is not None:
