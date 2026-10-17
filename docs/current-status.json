@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "a0aad4996578eca99f0aa49346500fb1aa290d99",
+  "reviewed_base": "c70733b3925aa48f2f54a525bd84d4426b86f8ac",
   "entries": [
     {
       "id": "controls",
@@ -417,6 +417,30 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "SAVE_VARIABLE_SNAPSHOTS_20261017.md",
       "note": "Three actual native snapshot/codec reds, two controls; final snapshot 5/engine save 15/journeys 3 pass without skips. Flat list containers isolated; no recursive graph, DB, whole-world or hardware acceptance."
+    },
+    {
+      "id": "grave-shop-authority",
+      "scope": "Server-side quest availability check before gravestone selection/payment",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "GRAVESTONE_SHOP_AUTHORITY_20261017.md",
+      "note": "24 selected death/gravestone cases; supplied-input shop controls, no purchase-ownership model or stopped-world grave persistence added"
+    },
+    {
+      "id": "prebuilt-version-lifecycle",
+      "scope": "Private native A/B profile lock, original-context orphan recovery and code rollback retaining new progress",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "PREBUILT_VERSION_LIFECYCLE_20261017.md",
+      "note": "Specific server42/45 client56 builds, 10 valid backups, actual ground-click tile change survives rollback; no installer/apply/public package/audio/Deck acceptance"
+    },
+    {
+      "id": "runtime-notice-inventory",
+      "scope": "Offline resolved runtime artifact, notice candidate and embedded-native metadata inventory",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "RUNTIME_NOTICE_INVENTORY_20261017.md",
+      "note": "55 server /24 client artifacts; 3 unattributed local jars; metadata only, M13-02 distribution review remains open"
     },
     {
       "id": "wasm-triangle",

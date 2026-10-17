@@ -308,7 +308,7 @@ Priority: prototype packaging can begin after M4; release gates apply to the fea
 chosen for that release, not every optional future milestone.
 
 - [ ] M13-01 Define an initial release scope and freeze its required feature set.
-- [ ] M13-02 Audit code/dependency/native-library licences and retain required notices.
+- [ ] M13-02 Audit code/dependency/native-library licences and retain required notices. The [offline runtime/notice metadata inventory](RUNTIME_NOTICE_INVENTORY_20261017.md) records 55 server and 24 client artifacts; local-jar provenance and component/distribution review remain open.
 - [ ] M13-03 Package Linux/Deck runtime and launcher reproducibly, with game data supplied separately where required.
 - [ ] M13-04 Test clean-machine install, fully offline play after setup and Steam library integration.
 - [ ] M13-05 Add versioned upgrades, save backups/migrations and an explicit rollback path.
