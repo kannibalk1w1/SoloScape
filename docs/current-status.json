@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "a5d93aa",
+  "reviewed_base": "79e5b3e",
   "entries": [
     {
       "id": "controls",
@@ -463,8 +463,8 @@
       "scope": "Current prepared private native build and New/Save & Quit/Continue",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
-      "evidence": "NATIVE_TEST_BUILD_50_20261017.md",
-      "note": "10,881 listed entries and five fixture backups verify after actual exported New/Save & Quit/Continue/cancellation on software Xvfb without audio. Includes identical-item/charged-loot fixes. No physical pad/Deck/FPS or owner installation claim."
+      "evidence": "NATIVE_TEST_BUILD_51_20261017.md",
+      "note": "10,888 listed entries and five fixture backups verify after actual exported New/Save & Quit/Continue/cancellation on software Xvfb without audio. Includes native grave timer fixes. No physical pad/Deck/FPS or owner installation claim."
     },
     {
       "id": "backport-lab-token",
