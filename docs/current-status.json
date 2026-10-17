@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "c26b1ca",
+  "reviewed_base": "4570ced",
   "entries": [
     {
       "id": "controls",
@@ -401,6 +401,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "NPC_QUEUE_LIFECYCLE_20261017.md",
       "note": "Seven original engine reds plus an independent lookup red; final 14 NPC and 24 related engine controls pass. Native Summoning 20/death 19/dungeon 28 pass (105 total), patch reproduction and matched jars pass. No owner deployment or physical/long-uptime acceptance."
+    },
+    {
+      "id": "profile-late-jvm-options",
+      "scope": "Owned client home/cache properties protected from inherited late HotSpot options",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "PROFILE_JVM_OPTIONS_20261017.md",
+      "note": "Actual supported Java 8 override reproduced before filtering; actual owned environment and unsafe control verify the fix without creating home/cache directories. Simulated owned-child lifecycle regression; no game/Deck or arbitrary-agent sandbox claim."
     }
   ]
 }
