@@ -1,0 +1,34 @@
+{
+  "browser": "Chromium 153.0.8010.52 Arch Linux",
+  "returncode": 0,
+  "passed": true,
+  "wall_seconds_includes_browser_start_and_virtual_time": 0.568191453000054,
+  "wasm_bytes": 24975,
+  "loader_bytes": 17268,
+  "date": "2026-10-17",
+  "reviewed_native_base": "502df960241d2dbc7eae4d0985273a7db9dcef28",
+  "jdk": "21 (project-local build runtime)",
+  "gradle": "8.14.4 (pinned upstream wrapper)",
+  "teavm": "0.16.0",
+  "method": "Isolated original scaffolding; unchanged StickMath bytecode from the existing native shadow jar. Browser served only experiment output on localhost; no cache/server/launcher/assets used.",
+  "wasm_sha256": "71c42c2ea574f594758b70825e5bab96b8466b3b1722451c335721316c1b799e",
+  "client_jar_sha256": "3c791fe7510da4036710529c579b69f71bf9a86aa6eee98c5055275e42fe97a7",
+  "presenter_probe": {
+    "outcome": "expected compiler rejection",
+    "root": "Class348_Sub31_Sub1.method3008(null,503,-100,765)",
+    "diagnostics": [
+      "Class java.awt.Rectangle was not found",
+      "Class java.awt.image.DirectColorModel was not found",
+      "Class Loader extends java.applet.Applet, which is missing in the classpath"
+    ],
+    "scope": "Native software framebuffer presenter closure only; not a whole-client port attempt"
+  },
+  "reproduction": "experiments/wasm-kernel/README.md; tracked controller/presenter variants both rerun",
+  "limits": [
+    "Tiny kernel only, not renderer/game payload",
+    "No game performance or memory benchmark",
+    "No physical browser controller test",
+    "No full client/server compilation",
+    "Byte-for-byte output across different toolchain machines not asserted"
+  ]
+}
