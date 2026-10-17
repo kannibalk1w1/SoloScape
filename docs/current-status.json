@@ -1,6 +1,6 @@
 {
-  "reviewed_on": "2026-10-17",
-  "reviewed_base": "7f64a36",
+  "reviewed_on": "2026-10-18",
+  "reviewed_base": "39fd65b",
   "entries": [
     {
       "id": "controls",
@@ -521,6 +521,14 @@
       "acceptance": "DEFERRED",
       "evidence": "GRAVE_RECORD_CODEC_20261017.md",
       "note": "12 scenarios / 22 JVMs; 53 named checks. Separate piles, provenance, charges and counters survive supplied native roundtrip; file guards refuse after linked-parent fix. No live capture, layout, restart persistence or owner-state change."
+    },
+    {
+      "id": "lab-token-native-session",
+      "scope": "Original Lab token through live native JS5/container and fresh save sessions",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "BACKPORT_NATIVE_TOKEN_20261018.md",
+      "note": "New plus two fresh server/client reconnects retain one stack of 2 and starter slots; native transaction rollback and cold read pass; six backups verify. Original cache inputs unchanged. Fixture only: no appearance, earned content, permanent allocation, production uninstall or Deck acceptance."
     },
     {
       "id": "wasm-triangle",

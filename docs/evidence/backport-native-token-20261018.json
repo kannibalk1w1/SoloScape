@@ -1,0 +1,385 @@
+{
+  "scope": "original definition-only token; real native server/client, fixture inventory injection",
+  "appearance_proof": false,
+  "production_uninstall_proof": false,
+  "source_commit": "39fd65b169621d86d1d53a9aa6e3c2070f4f1187",
+  "server_sha256": "d5c5143031c38ea0b344d75660597eb2ea003d6642f62735b9356849071e991e",
+  "client_sha256": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b",
+  "helper_sha256": "7ca3d32c0d884fecc934e6360be0d3e6986b93f2f423e99ac98e699ee69c6aab",
+  "probe_sha256": "86215a09e06e0c19af208de348e61108aeaf917047e478740742db3059259649",
+  "runner_sha256": "c6f54736b1a2db408d2ab95d6b5196937dbb965c580953cf63c49a968e341331",
+  "source_inputs_sha256": {
+    "LabTokenHelper.java": "7ca3d32c0d884fecc934e6360be0d3e6986b93f2f423e99ac98e699ee69c6aab",
+    "LabTokenClientProbe.java": "86215a09e06e0c19af208de348e61108aeaf917047e478740742db3059259649",
+    "run.py": "c6f54736b1a2db408d2ab95d6b5196937dbb965c580953cf63c49a968e341331"
+  },
+  "baseline_unchanged": true,
+  "candidate_unchanged": true,
+  "snapshot_other_listed_files_unchanged": true,
+  "baseline_missing_definition_refused_unchanged": true,
+  "sessions": [
+    {
+      "ready": true,
+      "capabilities_verified": true,
+      "definition_id": 20179,
+      "name": "SoloScape Lab token",
+      "cost": 37,
+      "stackable": 1,
+      "quantity": 0,
+      "stacks": 0,
+      "slots": [
+        [
+          1351,
+          1,
+          0
+        ],
+        [
+          590,
+          1,
+          1
+        ],
+        [
+          303,
+          1,
+          2
+        ],
+        [
+          315,
+          1,
+          3
+        ],
+        [
+          1925,
+          1,
+          4
+        ],
+        [
+          1931,
+          1,
+          5
+        ],
+        [
+          2309,
+          1,
+          6
+        ],
+        [
+          1265,
+          1,
+          7
+        ],
+        [
+          1205,
+          1,
+          8
+        ],
+        [
+          1277,
+          1,
+          9
+        ],
+        [
+          1171,
+          1,
+          10
+        ],
+        [
+          841,
+          1,
+          11
+        ],
+        [
+          882,
+          25,
+          12
+        ],
+        [
+          556,
+          25,
+          13
+        ],
+        [
+          558,
+          15,
+          14
+        ],
+        [
+          555,
+          6,
+          15
+        ],
+        [
+          557,
+          4,
+          16
+        ],
+        [
+          559,
+          2,
+          17
+        ]
+      ],
+      "label": "new",
+      "session_seconds": 25.677556640999683
+    },
+    {
+      "ready": true,
+      "capabilities_verified": true,
+      "definition_id": 20179,
+      "name": "SoloScape Lab token",
+      "cost": 37,
+      "stackable": 1,
+      "quantity": 2,
+      "stacks": 1,
+      "slots": [
+        [
+          1351,
+          1,
+          0
+        ],
+        [
+          590,
+          1,
+          1
+        ],
+        [
+          303,
+          1,
+          2
+        ],
+        [
+          315,
+          1,
+          3
+        ],
+        [
+          1925,
+          1,
+          4
+        ],
+        [
+          1931,
+          1,
+          5
+        ],
+        [
+          2309,
+          1,
+          6
+        ],
+        [
+          1265,
+          1,
+          7
+        ],
+        [
+          1205,
+          1,
+          8
+        ],
+        [
+          1277,
+          1,
+          9
+        ],
+        [
+          1171,
+          1,
+          10
+        ],
+        [
+          841,
+          1,
+          11
+        ],
+        [
+          882,
+          25,
+          12
+        ],
+        [
+          556,
+          25,
+          13
+        ],
+        [
+          558,
+          15,
+          14
+        ],
+        [
+          555,
+          6,
+          15
+        ],
+        [
+          557,
+          4,
+          16
+        ],
+        [
+          559,
+          2,
+          17
+        ],
+        [
+          20179,
+          2,
+          18
+        ]
+      ],
+      "label": "continue-one",
+      "session_seconds": 25.610734469999443
+    },
+    {
+      "ready": true,
+      "capabilities_verified": true,
+      "definition_id": 20179,
+      "name": "SoloScape Lab token",
+      "cost": 37,
+      "stackable": 1,
+      "quantity": 2,
+      "stacks": 1,
+      "slots": [
+        [
+          1351,
+          1,
+          0
+        ],
+        [
+          590,
+          1,
+          1
+        ],
+        [
+          303,
+          1,
+          2
+        ],
+        [
+          315,
+          1,
+          3
+        ],
+        [
+          1925,
+          1,
+          4
+        ],
+        [
+          1931,
+          1,
+          5
+        ],
+        [
+          2309,
+          1,
+          6
+        ],
+        [
+          1265,
+          1,
+          7
+        ],
+        [
+          1205,
+          1,
+          8
+        ],
+        [
+          1277,
+          1,
+          9
+        ],
+        [
+          1171,
+          1,
+          10
+        ],
+        [
+          841,
+          1,
+          11
+        ],
+        [
+          882,
+          25,
+          12
+        ],
+        [
+          556,
+          25,
+          13
+        ],
+        [
+          558,
+          15,
+          14
+        ],
+        [
+          555,
+          6,
+          15
+        ],
+        [
+          557,
+          4,
+          16
+        ],
+        [
+          559,
+          2,
+          17
+        ],
+        [
+          20179,
+          2,
+          18
+        ]
+      ],
+      "label": "continue-two",
+      "session_seconds": 25.704089595994446
+    }
+  ],
+  "backups_verified": 6,
+  "native_inject": {
+    "mode": "inject",
+    "semantic": "lab_token",
+    "id": 20179,
+    "name": "SoloScape Lab token",
+    "cost": 37,
+    "stackable": 1,
+    "itemarraycount": 20180,
+    "nativearraycount": 28,
+    "tokenquantity": 2,
+    "slotcount": 19,
+    "transactioncheckflags": {
+      "add3_remove1_committed": true,
+      "overremove3_rejected_and_rolled_back": true,
+      "single_stack_qty2": true
+    }
+  },
+  "native_cold_read": {
+    "mode": "read",
+    "semantic": "lab_token",
+    "id": 20179,
+    "name": "SoloScape Lab token",
+    "cost": 37,
+    "stackable": 1,
+    "itemarraycount": 20180,
+    "nativearraycount": 28,
+    "quantity": 2,
+    "slotcount": 19
+  },
+  "private_summary_sha256": "c4ce3af23fd9062c495662ee86d117d15aa22828df59e40db631730f00c7e2c2",
+  "cache_overlay": {
+    "source_commit": "39fd65b169621d86d1d53a9aa6e3c2070f4f1187",
+    "original_manifest_sha256": "49f0c58a99185c113381a6fe42fdc622f4da48bb97d7ab9a25ff81e82c3cb26b",
+    "mapping": "upstream/game-server/data/entity/lab_token.items.toml",
+    "mapping_sha256": "bc5084a54f02d0e139f9c4b2e217acbee0a3601800386ef9aa0c6cd31c63b840",
+    "cache_generation_summary_sha256": "38c401f80e3ab697e080030617a7f177feab4adbdef1c2d76fb26fc622d1d1cd",
+    "baseline_fingerprint_sha256": "a4293ba42198ed092f8db93f2b9c2dc8e755db1d6c16bdd91f4dcf0ad68c43fd",
+    "candidate_fingerprint_sha256": "f6ed21f471bfda634e3bc87b6c93026711d0b1ead71def4557482eb4b35f56b3"
+  },
+  "independent_post_run_a_b_39_file_equality": true
+}
