@@ -1,0 +1,77 @@
+{
+  "bootstrap_tests": 4,
+  "jar_sizes": {
+    "client": 14358038,
+    "server": 49793516
+  },
+  "manifest_tests": 22,
+  "optional_skip": 1,
+  "owner_install_access": false,
+  "payload_declared_bytes": 72786272,
+  "preparation": {
+    "cache_revision_detected": false,
+    "cache_tree_sha256": "800f2a7b546b16315989e287db2c9c96730ec50cd028edf66a2262e8691f549b",
+    "data_bytes": 8530252,
+    "data_files": 3843,
+    "files": 3856,
+    "jars": {
+      "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b",
+      "server": "43d001e80f6a4a1ceff529d3e5a25d1a6312d1da48ca34e72480474f6d2f6e30"
+    },
+    "manifest_sha256": "85566eda18845095146cc65e0f83d03be476e5e833c2f331c70249a5e0d74674",
+    "passed": true,
+    "payload_tree_sha256": "bb6042e0e914d7560b259237bf9a65433dc39924d95bc90f6b592c90ed6e16bf",
+    "preparer_sha256": "39fcfcbd82a4f0c3dd3443a1a1dbd2dbb60176b7af85a31af704b10a6d94ae5a",
+    "public_distribution_approved": false,
+    "roles": {
+      "client": "upstream/runelite-client/client/build/libs/void-client-0.2.0_a2.jar",
+      "launcher": "scripts/launcher.sh",
+      "server": "upstream/game-server/game/build/libs/void-server-dev.jar"
+    },
+    "scope": "Private runtime preparation only; no public package or activation.",
+    "source_cache_unchanged": true,
+    "source_commit": "c0fa87a5ba14f640f54482692f2adf584258dac9"
+  },
+  "private_preparation": ".runtime/prebuilt-runtime/1792263763130383199/preparation.json",
+  "private_probe": ".runtime/prebuilt-runtime/1792263763130383199/probe.json",
+  "probe": {
+    "audio_excluded": true,
+    "cache_unchanged": true,
+    "compared_account_fields_equal": true,
+    "jars": {
+      "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b",
+      "server": "43d001e80f6a4a1ceff529d3e5a25d1a6312d1da48ca34e72480474f6d2f6e30"
+    },
+    "manifest_sha256": "85566eda18845095146cc65e0f83d03be476e5e833c2f331c70249a5e0d74674",
+    "native_source_checkout_in_payload": false,
+    "passed": true,
+    "payload_unchanged": true,
+    "physical_input": false,
+    "prebuilt_preflight_enabled": true,
+    "preflight": {
+      "ok": true,
+      "text": "Private prebuilt preflight: 0 error(s); cache revision is declared, not detected.\n"
+    },
+    "probe_sha256": "8dcf308504fb1e4a218b93ab282e5770d2106849a009d4c1a8296378f71fe25e",
+    "rounds": [
+      {
+        "elapsedSeconds": 24.733826206,
+        "finalStatus": "World saved and verified. You can continue later.",
+        "round": "new"
+      },
+      {
+        "elapsedSeconds": 24.930984131,
+        "finalStatus": "World saved and verified. You can continue later.",
+        "round": "continue"
+      }
+    ],
+    "runtime_contexts": 1,
+    "scope": "Private experimental prebuilt preflight plus actual graphical launcher/native New/Continue. No release/update/Deck acceptance.",
+    "source_build_doctor_used": false,
+    "source_commit": "c0fa87a5ba14f640f54482692f2adf584258dac9",
+    "verified_backups": 4
+  },
+  "report_note": "The raw probe source_build_doctor_bypassed field meant checked=False was not used. This sanitized record names the actual behavior explicitly: experimental prebuilt doctor enabled; original source-build doctor replaced.",
+  "root_tooling_cases": 241,
+  "source_checkout_still_mounted": true
+}
