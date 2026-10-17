@@ -65,12 +65,16 @@ def read_results(report_directory, suites, archive):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--group', choices=('early', 'm6', 'journeys', 'summoning', 'capacity'), default='early')
+    parser.add_argument('--group', choices=('early', 'm6', 'journeys', 'summoning', 'capacity', 'dungeon'), default='early')
     options = parser.parse_args()
     suites = {
         'early': SUITES,
         'm6': M6_SUITES,
         'summoning': SUMMONING_SUITES,
+        'dungeon': (
+            'content.skill.dungeoneering.SoloBossTrapdoorUnlockTest',
+            'content.skill.dungeoneering.SoloDungeonLifecycleTest',
+        ),
         'capacity': (
             'content.soloscape.ProductionCapacityRecoveryTest',
             'content.skill.fishing.FishingTest',

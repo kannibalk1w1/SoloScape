@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "898847c",
+  "reviewed_base": "005ba355f1a784e03940a9fc2ea904a6b5053446",
   "entries": [
     {
       "id": "controls",
@@ -161,6 +161,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "BACKUP_ACCOUNT_VALIDATION_20261017.md",
       "note": "Wrong primary account is rejected even with matching checksums; archive, manifest and current save preserved; multi-account copies remain supported"
+    },
+    {
+      "id": "dungeon-boss-trapdoor",
+      "scope": "Cached solo small-c1 boss spawn and trapdoor unlock via native death pipeline",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "DUNGEON_BOSS_TRAPDOOR_20261017.md",
+      "note": "5 targeted cases pass; supplied ring, directly opened boss room and controlled lethal hit; earned combat/traversal/rewards remain unproven; rotation helper issue identified"
     }
   ]
 }
