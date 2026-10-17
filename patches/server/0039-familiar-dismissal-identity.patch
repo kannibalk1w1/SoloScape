@@ -1,0 +1,197 @@
+diff --git a/game/src/main/kotlin/content/skill/summoning/Summoning.kt b/game/src/main/kotlin/content/skill/summoning/Summoning.kt
+--- a/game/src/main/kotlin/content/skill/summoning/Summoning.kt
++++ b/game/src/main/kotlin/content/skill/summoning/Summoning.kt
+@@ -57,6 +57,9 @@
+         if (value != null) {
+             set("follower_index", value.index)
+             set("follower_id", value.id)
++        } else {
++            clear("follower_index")
++            clear("follower_id")
+         }
+     }
+ 
+diff --git a/game/src/test/kotlin/content/skill/summoning/FamiliarDismissalIdentityTest.kt b/game/src/test/kotlin/content/skill/summoning/FamiliarDismissalIdentityTest.kt
+new file mode 100644
+index 0000000..b9e5ab3
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/summoning/FamiliarDismissalIdentityTest.kt
+@@ -0,0 +1,178 @@
++package content.skill.summoning
++
++import WorldTest
++import dialogueOption
++import interfaceOption
++import itemOption
++import objectOption
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertNotNull
++import org.junit.jupiter.api.Assertions.assertNull
++import org.junit.jupiter.api.Assertions.assertSame
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
++import world.gregs.voidps.engine.data.definition.EnumDefinitions
++import world.gregs.voidps.engine.data.definition.ItemDefinitions
++import world.gregs.voidps.engine.entity.MAX_NPCS
++import world.gregs.voidps.engine.entity.character.npc.NPC
++import world.gregs.voidps.engine.entity.character.npc.NPCs
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.entity.item.Item
++import world.gregs.voidps.engine.entity.obj.GameObjects
++import world.gregs.voidps.engine.get
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.engine.inv.transact.add
++import world.gregs.voidps.engine.inv.transact.operation.AddItem.add
++import world.gregs.voidps.type.Tile
++import java.lang.reflect.Modifier
++
++/**
++ * Native spirit wolf dismissal identity reproductions. Each case is one independent test method.
++ *
++ * 1. Native dismissal: a spirit wolf is summoned from a supplied pouch, the world counts are captured as a
++ *    baseline, then the familiar_details "Dismiss Familiar" confirmation runs. The live NPC iterator and
++ *    [NPCs.size] must both return to the baseline, so the queued removal must be counted exactly once.
++ * 2. Stale follower slot: the wolf's original NPC index is captured, the wolf is dismissed through the same
++ *    native confirmation, and then [NPCs] private indexer is forced to [MAX_NPCS] only inside the fixture (restored
++ *    in `finally`) so a real unrelated rat takes the freed slot through the normal add path. The cleared
++ *    owner must not resolve to that rat, and a fresh pouch must still summon.
++ *
++ * Fixtures are explicit: the owner is a new level 1 account with a full summoning point pool, the pouch
++ * materials are added straight into the inventory, and the points are restored through the native obelisk
++ * renewal. The reflective late-uptime indexer is a test-only allocator state and is not gameplay.
++ */
++@EnabledIfEnvironmentVariable(named = "SOLOSCAPE_TEST_ROOT", matches = ".+")
++class FamiliarDismissalIdentityTest : WorldTest() {
++
++    private val obeliskTile = Tile(2521, 3055)
++    private val pouchId = "spirit_wolf_pouch"
++    private val familiarId = "spirit_wolf_familiar"
++    private val unrelatedId = "rat"
++    private val unrelatedTile = Tile(2530, 3060)
++
++    /** Adds the supplied materials and infuses one pouch at the obelisk, as the existing lifecycle test does. */
++    private fun infuseSpiritWolfPouch(player: Player) {
++        val pouch = Item(pouchId)
++        val charmId: Int = pouch.def["summoning_charm_id"]
++        val charmAmount: Int = pouch.def["summoning_charm_amount"]
++        val shardId: Int = pouch.def["summoning_shard_id"]
++        val shardAmount: Int = pouch.def["summoning_shard_amount"]
++        val blankId: Int = pouch.def["summoning_pouch_id"]
++        val blankAmount: Int = pouch.def["summoning_pouch_amount"]
++        val tertiaryId: Int = pouch.def["summoning_pouch_req_item_id_1"]
++        val tertiaryAmount: Int = pouch.def["summoning_pouch_req_item_amount_1"]
++        val recipe = listOf(
++            Item(ItemDefinitions.get(charmId).stringId, charmAmount),
++            Item(ItemDefinitions.get(shardId).stringId, shardAmount),
++            Item(ItemDefinitions.get(blankId).stringId, blankAmount),
++            Item(ItemDefinitions.get(tertiaryId).stringId, tertiaryAmount),
++        )
++        player.inventory.transaction { recipe.forEach { add(it.id, it.amount) } }
++
++        player.objectOption(GameObjects.find(obeliskTile, "obelisk"), "Infuse-pouch")
++        tick()
++        // The obelisk interface addresses pouches by enum index: (slot + 3) / 5 in SummoningCrafting.
++        val enumIndex = EnumDefinitions.get("summoning_pouch_ids_1").map!!.entries.first { it.value == pouch.def.id }.key as Int
++        player.interfaceOption("summoning_pouch_creation", "pouches", "Infuse", item = Item(pouchId), slot = enumIndex * 5 - 3)
++        tick()
++    }
++
++    private fun summonFromPouch(player: Player) {
++        player.itemOption("Summon", pouchId)
++        tick(3)
++    }
++
++    /** Restores the summoning points pool through the native obelisk renewal. */
++    private fun renewSummoningPoints(player: Player) {
++        player.objectOption(GameObjects.find(obeliskTile, "obelisk"), "Renew-points")
++        tick(4)
++    }
++
++    private fun dismissWithNativeConfirmation(player: Player) {
++        player.interfaceOption("familiar_details", "dismiss", "Dismiss Familiar")
++        player.dialogueOption(1) // "Yes."
++        tick()
++    }
++
++    /** Live spirit wolves owned by [player], counted from the world rather than one follower reference. */
++    private fun ownedFamiliars(player: Player) = NPCs.count { it.id == familiarId && it["owner_index", -1] == player.index }
++
++    /**
++     * Runs [block] with [NPCs] private indexer forced to [MAX_NPCS], so the next add must scan for a freed
++     * slot. Only this test's fixture uses it, and the previous value is restored in `finally`.
++     */
++    private fun <T> lateUptimeIndexer(block: () -> T): T {
++        val field = NPCs::class.java.getDeclaredField("indexer")
++        field.isAccessible = true
++        val receiver = if (Modifier.isStatic(field.modifiers)) null else NPCs
++        val previous = field.getInt(receiver)
++        field.setInt(receiver, MAX_NPCS)
++        try {
++            return block()
++        } finally {
++            field.setInt(receiver, previous)
++        }
++    }
++
++    @Test
++    fun `Native dismissal removes the spirit wolf once so the NPC counter matches the live world`() {
++        val player = createPlayer(Tile(2523, 3056))
++        infuseSpiritWolfPouch(player)
++        val baselineLive = NPCs.count()
++        val baselineSize = NPCs.size
++        assertEquals(baselineLive, baselineSize, "precondition: the NPC counter matches the live NPCs before summoning")
++
++        summonFromPouch(player)
++
++        assertEquals(familiarId, player.follower?.id, "precondition: the summoned spirit wolf is the follower")
++        assertEquals(1, ownedFamiliars(player), "precondition: exactly one spirit wolf is live for this owner")
++        assertEquals(baselineLive + 1, NPCs.count(), "summoning adds exactly one live NPC")
++        assertEquals(baselineSize + 1, NPCs.size, "summoning adds exactly one to the NPC counter")
++
++        dismissWithNativeConfirmation(player)
++
++        assertNull(player.follower, "dismissing clears the follower")
++        assertEquals(0, ownedFamiliars(player), "no spirit wolf is left in the world after dismissal")
++        assertEquals(baselineLive, NPCs.count(), "live NPCs return to the baseline after dismissal")
++        assertEquals(NPCs.count(), NPCs.size, "the NPC counter agrees with the live entries after the queued removal")
++    }
++
++    @Test
++    fun `A dismissed spirit wolf's stale slot never resolves to an unrelated NPC that reuses it`() {
++        val player = createPlayer(Tile(2523, 3056))
++        infuseSpiritWolfPouch(player)
++        summonFromPouch(player)
++        assertNotNull(player.follower, "precondition: a spirit wolf is summoned")
++        val originalIndex = player.follower!!.index
++
++        dismissWithNativeConfirmation(player)
++
++        assertNull(NPCs.indexed(originalIndex), "precondition: the dismissed wolf's slot is freed")
++        assertNull(player.follower, "precondition: no follower before the freed slot is reused")
++        assertEquals(0, ownedFamiliars(player), "precondition: no spirit wolf is live before reuse")
++
++        val unrelated: NPC = lateUptimeIndexer { createNPC(unrelatedId, unrelatedTile) }
++
++        assertEquals(originalIndex, unrelated.index, "the unrelated rat takes the freed slot through the normal indexer")
++        assertSame(unrelated, NPCs.indexed(originalIndex), "the freed slot now holds the unrelated rat")
++        assertNull(player.follower, "the cleared follower must not resolve to the unrelated rat")
++
++        renewSummoningPoints(player)
++        assertEquals(
++            player.levels.getMax(Skill.Summoning),
++            player.levels.get(Skill.Summoning),
++            "precondition: the obelisk restores the summoning points pool",
++        )
++        infuseSpiritWolfPouch(player)
++        assertEquals(1, player.inventory.count(pouchId), "precondition: a fresh spirit wolf pouch is infused")
++        summonFromPouch(player)
++
++        assertEquals(familiarId, player.follower?.id, "a fresh pouch summons a new spirit wolf")
++        assertTrue(player.follower !== unrelated, "the new follower is not the unrelated rat")
++        assertEquals(unrelatedId, unrelated.id, "the unrelated rat keeps its definition")
++        assertEquals(unrelatedTile, unrelated.tile, "the unrelated rat keeps its tile")
++        assertEquals(-1, unrelated["owner_index", -1], "the unrelated rat is not owned by the player")
++    }
++}

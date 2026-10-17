@@ -21,7 +21,7 @@ git pull --ff-only
 ./scripts/prepare-build.sh
 ```
 
-Only pull after committing/stashing your own tracked changes; do not discard local work. The local branch name can differ from the tracked remote `overnight/controller-sprint`. Do not switch back to public main in the same patched source checkout: use a fresh checkout for the older stack. Do not update upstream pins casually; the patch stack and compatible cache are audited against exact commits.
+Only pull after preserving your own tracked work. Merged `main` is authoritative; experiments should use separate checkouts. Do not change upstream pins casually: the patch stack and compatible cache are audited against exact commits. The launcher now offers [GitHub release discovery](GITHUB_UPDATES.md), but it does not yet download or install playable updates. These source-build instructions remain the supported update path until packaging and rollback are proven.
 
 New Character/Continue in the graphical launcher uses private per-character worlds. Existing legacy saves stay in `upstream/game-server/data/saves/`; importing uses the stopped-world-copy workflow in ALPHA_LAUNCHER.md/PROJECT_HANDOFF.md. Take a manual verified backup before an upgrade. If a save is damaged, restore a verified backup into a new generation; prior generations stay on disk. Manage Backups provides explicit previewed cleanup of older automatic archives.
 
@@ -38,3 +38,5 @@ python3 scripts/verify_patches.py server
 Native gameplay smoke requires Xvfb and the matched local cache/build: `./scripts/smoke-profile.sh`. It uses a separate display, port and disposable world; it preserves the existing game and compares original mutable paths. Native client/server suites require the pinned checkouts and project-local Java toolchains; the repository CI runs the asset-free root checks, shell/patch syntax and whitespace only.
 
 See CONSOLE_SESSION_ACCEPTANCE.md for physical controller/Deck checks and reproducible performance records. A desktop source build remains the supported development delivery; installer/distributable licences and Steam Gaming Mode release packaging are future work.
+
+Managed-install preparation can opt into an [external profile directory](PROFILE_LOCATION_20261017.md) with `SOLOSCAPE_PROFILE_HOME`. Defaults remain unchanged; this does not perform migration or install an update. Settle owned sessions in their original build context before switching versions.

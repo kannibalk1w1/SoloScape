@@ -39,7 +39,8 @@ class LauncherTests(unittest.TestCase):
         self.java.chmod(0o755)
         self.env = patch.dict(os.environ, {'SERVER_JAVA': str(self.java), 'CLIENT_JAVA': str(self.java),
                                            'TEST_ROOT': str(self.root), 'TEST_CASE': 'interrupt',
-                                           'storage.players.path': '/unsafe/inherited/world'})
+                                           'storage.players.path': '/unsafe/inherited/world',
+                                           profiles.PROFILE_HOME_ENV: str(self.root/'unselected-profile-home')})
         self.env.start();self.addCleanup(self.env.stop)
         local_dev.write_build_stamp(local_dev.jar(local_dev.SERVER/'game','void-server-*.jar'), local_dev.jar(local_dev.CLIENT/'client','void-client-*.jar'))
         self.profile = profiles.create('Disposable', 'Tester')
@@ -59,7 +60,8 @@ profile=profiles.Profile(Path(sys.argv[3]))
 profile_session.run(profile,threading.Event(),lambda *args:None,checked=False)
 """
         process=subprocess.Popen([sys.executable,'-c',harness,str(Path(__file__).parent),str(self.root),str(self.profile.directory)],
-                                 stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                                 stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
+                                 env=dict(os.environ, SOLOSCAPE_PROFILE_HOME=str(profiles.PROFILES)))
         try:
             self.wait_for(lambda:(self.root/'client.args').exists() or process.poll() is not None)
             self.assertIsNone(process.poll(),'Isolated launcher failed before starting')
@@ -244,6 +246,7 @@ profile_session.run(profile,threading.Event(),lambda *args:None,checked=False)
 
     def test_profile_environment_overrides_inherited_dotted_settings(self):
         env=profile_session.owned_environment(self.profile,43595)
+        self.assertNotIn(profiles.PROFILE_HOME_ENV, env)
         self.assertEqual(env['storage.players.path'],str(self.profile.state/'saves')+'/')
         self.assertEqual(env['bots.count'],'0')
         self.assertEqual(env['TEST_ROOT'],str(self.root))

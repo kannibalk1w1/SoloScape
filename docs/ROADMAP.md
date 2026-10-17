@@ -9,7 +9,7 @@ promised before the relevant subsystem has been inspected.
 
 Keep the existing milestone IDs and dated checkpoints below. Checkboxes record scoped implementation, not physical acceptance; [CURRENT_STATUS](CURRENT_STATUS.md) indexes newer evidence without rewriting historical reports. This research does not authorize substantial feature implementation.
 
-1. **Physical native session and P0/P1 fixes (M0–M4):** save/closure truth (including [unrecovered grave/floor loot at restart](WORLD_TRANSIENT_SAVE_AUDIT_20261017.md)), controller ownership/B/neutral, Steam text input and a single representative production/commerce/combat loop. Unverified ended owner sessions and the unexplained one-tile Settings save difference remain explicit follow-ups. Do not run every quest as a substitute for human acceptance.
+1. **Physical native session and P0/P1 fixes (M0–M4):** save/closure truth (including [unrecovered grave/floor loot at restart](GRAVE_COLD_JVM_PROBE_20261017.md)), controller ownership/B/neutral, Steam text input and a single representative production/commerce/combat loop. Unverified ended owner sessions and the unexplained one-tile Settings save difference remain explicit follow-ups. Do not run every quest as a substitute for human acceptance.
 2. **Bounded M6 audit alongside lifecycle/performance diagnosis:** inspect what actually works, including Slayer, Summoning/Dungeoneering and solo bottlenecks. Audit one proposed progression slice before expanding content. Continue measured region rebuild/map-renderer diagnosis; keep current 60 FPS criteria open.
 3. **One enjoyable complete solo slice (M7), with M3/M4 as concurrent gates:** freshness, readability, progression, persistence and failure recovery on real Deck. Challenge the idea that lifecycle/performance can wait until after content: fix P0/P1 and measure them now; final acceptance can accompany the slice. Do not relax performance targets or claim pause/suspend support implicitly.
 4. **Close Deck lifecycle/performance acceptance (M4) before release/expansion:** controlled comparable power/renderer traces, suspend or explicit safe fallback, reconnect and save/reload; use measured changes, not an architectural rewrite.
@@ -301,6 +301,8 @@ Priority: secondary to solo quality. Depends on M5 and tested lifecycle/persiste
 Acceptance: a small group can reliably play a private hosted world without public-server infrastructure or ambiguous save ownership.
 
 ## M13 — reproducible packaging and release readiness
+
+The owner requested GitHub launcher updates on17 October. [Release discovery and the staged delivery plan](GITHUB_UPDATES.md) bring bounded packaging work forward alongside native acceptance: discover releases, separate saved state/assets, prove staging/apply/rollback on fixtures, then accept a disposable Deck update. Discovery alone does not complete M13-03/04/05, and the private Deck export must not become a public package.
 
 Priority: prototype packaging can begin after M4; release gates apply to the features
 chosen for that release, not every optional future milestone.

@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "ba8b1ad",
+  "reviewed_base": "0507ad4",
   "entries": [
     {
       "id": "controls",
@@ -239,8 +239,8 @@
       "scope": "Unrecovered grave/floor loot through a full local-world restart",
       "delivery": "NOT IMPLEMENTED",
       "acceptance": "DEFERRED",
-      "evidence": "WORLD_TRANSIENT_SAVE_AUDIT_20261017.md",
-      "note": "Source audit finds no runtime grave/floor writer and nonpersistent marker variables. Two-JVM restart reproduction and explicit lifecycle policy remain open; recovered inventory tests do not cover this boundary."
+      "evidence": "GRAVE_COLD_JVM_PROBE_20261017.md",
+      "note": "Two cold native WorldTest JVMs on one private storage root reproduce absent unexpired grave/drop while kept account state survives. Native shutdown/primary save pass; no network Main or physical acceptance. Recovery policy, persistence and no-duplication implementation remain open."
     },
     {
       "id": "slayer-kill-ownership",
@@ -267,6 +267,7 @@
       "note": "Six native encoder/three-reader cases, six malformed controls and deterministic fresh reports. High note references disagree; allocation, linked cache loading, asset conversion and gameplay remain blocked."
     },
     {
+<<<<<<< HEAD
       "id": "wasm-triangle",
       "scope": "Native flat-colour WASM triangle fill and original synthetic mesh; no full game scene",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
@@ -289,6 +290,46 @@
       "acceptance": "DEFERRED",
       "evidence": "WASM_FACE_PROOF_20261017.md",
       "note": "Ten original synthetic cases match native jar, extracted JVM and WASM, including back-face sensitivity and 18 independent rejection controls; real cache decoding, clipping, lighting and a playable browser client remain unproven. Draft PR27 stays separate from native main."
+=======
+      "id": "familiar-kill-owner-session",
+      "scope": "Familiar kill credit binds the original online player session",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "FAMILIAR_OWNERSHIP_AUDIT_20261017.md",
+      "note": "Controlled player-index reuse reproduced wrong-account Slayer credit; four targeted cases now pass. Supplied tasks/pouch/API damage and forced allocator state; ordinary logout timing, damage XP and other ownership consumers remain separate."
+    },
+    {
+      "id": "launcher-release-discovery",
+      "scope": "Read-only GitHub release discovery and launcher modal controller ancestry",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "GITHUB_UPDATE_DISCOVERY_20261017.md",
+      "note": "159 tooling cases (one optional skip), actual no-public-release check and real Swing/controller-adapter plus existing launcher probes pass. Download/apply/rollback and installed release identity remain unimplemented; no Deck deployment."
+    },
+    {
+      "id": "external-profile-home",
+      "scope": "Optional stable profile directory across launcher code roots",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "PROFILE_LOCATION_20261017.md",
+      "note": "Five external-home cases, cross-build recovery refusal and165 tooling cases (one optional skip) pass. Real private Swing probe preserves inherited-home canary. Default unchanged; no migration, managed install or version rollback."
+    },
+    {
+      "id": "update-staging-lab",
+      "scope": "Original-fixture verified update candidate staging lab",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "UPDATE_STAGING_LAB_20261017.md",
+      "note": "24 staging cases and189 root cases (one optional skip); actual CLI stages exact dummy bytes and refuses replacement. No real package, download, activation, publisher authentication or power-loss durability proof."
+    },
+    {
+      "id": "familiar-dismissal-identity",
+      "scope": "Familiar dismissal clears binding and removes the NPC once",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "FAMILIAR_DISMISSAL_IDENTITY_20261017.md",
+      "note": "Two native red-before/green-after cases;52 targeted and20 selected Summoning cases pass. Forced NPC-slot reuse cannot alias an unrelated rat. Supplied materials; no earned journey or hardware acceptance."
+>>>>>>> origin/main
     }
   ]
 }

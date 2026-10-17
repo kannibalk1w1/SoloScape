@@ -1,0 +1,31 @@
+{
+  "native_launcher_probe_passed": true,
+  "unselected_disposable_home_unchanged": true,
+  "canary_before_sha256": {
+    "must-remain.txt": "b09959d87ea549bd2e8680fd4229b42dbc56eed510738c572068f8714823967a"
+  },
+  "canary_after_sha256": {
+    "must-remain.txt": "b09959d87ea549bd2e8680fd4229b42dbc56eed510738c572068f8714823967a"
+  },
+  "tooling_tests": {
+    "tests": 165,
+    "errors": 0,
+    "failures": 0,
+    "optional_skips": 1
+  },
+  "profile_location_cases": 5,
+  "cross_build_recovery_case": true,
+  "private_evidence": ".runtime/profile-location-20261017",
+  "limits": [
+    "Default profile location unchanged; no migration, installer or version switch.",
+    "Two code copies use a disposable shared profile; game-world network acceptance not tested.",
+    "Native Swing backend/input regression uses a disposable inherited-home canary, no owner data."
+  ],
+  "tools_sha256": {
+    "scripts/profiles.py": "a42a64feb7e24bc42088738d474437a5aa6a7734c8062a3fe05d481fbe1ac04f",
+    "scripts/profile_session.py": "9855a7c91520c230ecaa4514a6247113d28c9b05e547bb6fd1155d6c3121e16b",
+    "scripts/test_profile_location.py": "f230ffdc72b2b1e7b78873d743613f77356c9fdc6309f9a6990d89ed4c5ce823",
+    "scripts/smoke-launcher.py": "037cadf2842dfe10da8e7c01adaa0a1373c254b2b7e2d2b5a9027e3d3d213ae3",
+    "scripts/test_session_recovery.py": "55c2444b2552daad290deee4cf220ccb29fc6bde92a8e4197a6f30758383dd43"
+  }
+}
