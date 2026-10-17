@@ -1,0 +1,297 @@
+{
+  "baseline_fingerprint_sha256": "a4293ba42198ed092f8db93f2b9c2dc8e755db1d6c16bdd91f4dcf0ad68c43fd",
+  "baseline_is_authorized_reference": true,
+  "builds": {
+    "run-a": {
+      "appearance_proof": false,
+      "archive_containers_changed": [
+        "19/78"
+      ],
+      "archive_containers_compared": 101205,
+      "archive_containers_identical": 101204,
+      "archive_crc_mismatches_after": 0,
+      "archive_footer_mismatches_after": 0,
+      "archive_whirlpool_compared": 36,
+      "archive_whirlpool_mismatches_after": 0,
+      "cache_copy_only": true,
+      "cache_written": true,
+      "cost": 37,
+      "decoders": {
+        "client_cost": 37,
+        "consumed_bytes": 28,
+        "server_full_cost": 37,
+        "server_light_cost": 37
+      },
+      "encoded_bytes": 28,
+      "failures": [],
+      "item_entries_after": 20179,
+      "item_entries_before": 20178,
+      "item_namespace_after_sha256": "45d47c99814fb8ecf64792e92745678c8c0fa9872fcf483d4c4e7795e8c6a031",
+      "item_namespace_before_sha256": "17b025d283070316e055d61215ebc70a914c39ab498f1c4d50ba0c5bf563c23e",
+      "mode": "lab-token-integrity-write",
+      "new_entry_sha256": "5c70155d8b3d3c4ed16ab8173dc87191bbb660d0694e43764fab5acdc870ed5d",
+      "opcodes": [
+        2,
+        11,
+        12,
+        0
+      ],
+      "post_gate": {
+        "body_bytes": 5992,
+        "container_bytes": 5994,
+        "container_sha256": "ee51e8e4ee10a82b8db0596bf90199c07eaff697b72b17a6b3c2e76f3f7c8412",
+        "crc_ok": true,
+        "footer_ok": true,
+        "gate_passed": true,
+        "native_crc32": -1606685183,
+        "stored_crc32": -1606685183,
+        "stored_revision": 29,
+        "target": "19/78",
+        "trailer_revision": 29,
+        "whirlpool_ok": true,
+        "whirlpool_present": false
+      },
+      "pre_gate": {
+        "body_bytes": 5968,
+        "container_bytes": 5970,
+        "container_sha256": "2778280a4ebd43f5030bc685f49b0d1005d8fefd4be299c85c075553aecd5bea",
+        "crc_ok": true,
+        "footer_ok": true,
+        "gate_passed": true,
+        "native_crc32": -1830551819,
+        "stored_crc32": -1830551819,
+        "stored_revision": 28,
+        "target": "19/78",
+        "trailer_revision": 28,
+        "whirlpool_ok": true,
+        "whirlpool_present": false
+      },
+      "preexisting_entries_identical": 20178,
+      "raw_files_changed": [
+        "main_file_cache.dat2",
+        "main_file_cache.idx19"
+      ],
+      "reference_container_after_19_sha256": "1dc0c91c03936d2abb6c4e5c7da73155a93bb9b052713965bdf2aa4e8ad78fa2",
+      "reference_container_before_19_sha256": "7f7c473356cd2afe96165909248e9c7b9ec521ecc7049428e9b3f1060d947fd9",
+      "reference_containers_changed": [
+        "19"
+      ],
+      "reference_containers_compared": 37,
+      "reference_containers_identical": 36,
+      "reference_full_crc_compared_informational": 36,
+      "reference_full_crc_matches_informational": 36,
+      "target": {
+        "archive": 78,
+        "file": 211,
+        "id": 20179,
+        "index": 19
+      },
+      "target_container_after_sha256": "ee51e8e4ee10a82b8db0596bf90199c07eaff697b72b17a6b3c2e76f3f7c8412",
+      "target_container_before_sha256": "2778280a4ebd43f5030bc685f49b0d1005d8fefd4be299c85c075553aecd5bea",
+      "target_revision_after": 29,
+      "target_revision_before": 28,
+      "verdict": true
+    },
+    "run-b": {
+      "appearance_proof": false,
+      "archive_containers_changed": [
+        "19/78"
+      ],
+      "archive_containers_compared": 101205,
+      "archive_containers_identical": 101204,
+      "archive_crc_mismatches_after": 0,
+      "archive_footer_mismatches_after": 0,
+      "archive_whirlpool_compared": 36,
+      "archive_whirlpool_mismatches_after": 0,
+      "cache_copy_only": true,
+      "cache_written": true,
+      "cost": 37,
+      "decoders": {
+        "client_cost": 37,
+        "consumed_bytes": 28,
+        "server_full_cost": 37,
+        "server_light_cost": 37
+      },
+      "encoded_bytes": 28,
+      "failures": [],
+      "item_entries_after": 20179,
+      "item_entries_before": 20178,
+      "item_namespace_after_sha256": "45d47c99814fb8ecf64792e92745678c8c0fa9872fcf483d4c4e7795e8c6a031",
+      "item_namespace_before_sha256": "17b025d283070316e055d61215ebc70a914c39ab498f1c4d50ba0c5bf563c23e",
+      "mode": "lab-token-integrity-write",
+      "new_entry_sha256": "5c70155d8b3d3c4ed16ab8173dc87191bbb660d0694e43764fab5acdc870ed5d",
+      "opcodes": [
+        2,
+        11,
+        12,
+        0
+      ],
+      "post_gate": {
+        "body_bytes": 5992,
+        "container_bytes": 5994,
+        "container_sha256": "ee51e8e4ee10a82b8db0596bf90199c07eaff697b72b17a6b3c2e76f3f7c8412",
+        "crc_ok": true,
+        "footer_ok": true,
+        "gate_passed": true,
+        "native_crc32": -1606685183,
+        "stored_crc32": -1606685183,
+        "stored_revision": 29,
+        "target": "19/78",
+        "trailer_revision": 29,
+        "whirlpool_ok": true,
+        "whirlpool_present": false
+      },
+      "pre_gate": {
+        "body_bytes": 5968,
+        "container_bytes": 5970,
+        "container_sha256": "2778280a4ebd43f5030bc685f49b0d1005d8fefd4be299c85c075553aecd5bea",
+        "crc_ok": true,
+        "footer_ok": true,
+        "gate_passed": true,
+        "native_crc32": -1830551819,
+        "stored_crc32": -1830551819,
+        "stored_revision": 28,
+        "target": "19/78",
+        "trailer_revision": 28,
+        "whirlpool_ok": true,
+        "whirlpool_present": false
+      },
+      "preexisting_entries_identical": 20178,
+      "raw_files_changed": [
+        "main_file_cache.dat2",
+        "main_file_cache.idx19"
+      ],
+      "reference_container_after_19_sha256": "1dc0c91c03936d2abb6c4e5c7da73155a93bb9b052713965bdf2aa4e8ad78fa2",
+      "reference_container_before_19_sha256": "7f7c473356cd2afe96165909248e9c7b9ec521ecc7049428e9b3f1060d947fd9",
+      "reference_containers_changed": [
+        "19"
+      ],
+      "reference_containers_compared": 37,
+      "reference_containers_identical": 36,
+      "reference_full_crc_compared_informational": 36,
+      "reference_full_crc_matches_informational": 36,
+      "target": {
+        "archive": 78,
+        "file": 211,
+        "id": 20179,
+        "index": 19
+      },
+      "target_container_after_sha256": "ee51e8e4ee10a82b8db0596bf90199c07eaff697b72b17a6b3c2e76f3f7c8412",
+      "target_container_before_sha256": "2778280a4ebd43f5030bc685f49b0d1005d8fefd4be299c85c075553aecd5bea",
+      "target_revision_after": 29,
+      "target_revision_before": 28,
+      "verdict": true
+    }
+  },
+  "candidate_absent_from_baseline_and_toml": {
+    "inspected_files": 7860,
+    "inspected_files_sha256": "e640b61b43af627c71bf442c91ed649b8debddcd41feb931d96c10ff97ffdfe7",
+    "item_toml_reservations": 0,
+    "other_toml_occurrences": [
+      {
+        "commented": true,
+        "file": "upstream/game-server/data/entity/npc/wander_ranges.tables.toml",
+        "line": 50053
+      }
+    ],
+    "source_literal_occurrences": 0
+  },
+  "controls": {
+    "corrupt_payload": {
+      "changed_offset": 186975952,
+      "exit": 1,
+      "new_byte": 101,
+      "old_byte": 154,
+      "refusal": {
+        "cache_written": false,
+        "gate": {
+          "body_bytes": 5992,
+          "container_bytes": 5994,
+          "container_sha256": "a163cfa251a483dbc228e60b775201f030b5834e906f88cfaf137aa6e00bccf7",
+          "crc_ok": false,
+          "footer_ok": true,
+          "gate_passed": false,
+          "native_crc32": -885215591,
+          "stored_crc32": -1606685183,
+          "stored_revision": 29,
+          "target": "19/78",
+          "trailer_revision": 29,
+          "whirlpool_ok": true,
+          "whirlpool_present": false
+        },
+        "mode": "lab-token-integrity-verify",
+        "refused_at": "crc-gate"
+      }
+    },
+    "occupied_candidate": {
+      "cache_unchanged": true,
+      "exit": 1
+    }
+  },
+  "deterministic_equal": {
+    "encoded_bytes": true,
+    "item_namespace_after_sha256": true,
+    "new_entry_sha256": true,
+    "opcodes": true
+  },
+  "input_sha256": {
+    "ant": "4cbbd9243de4c1042d61d9a15db4c43c90ff93b16d78b39481da1c956c8e9671",
+    "cache": "2aefbba97c0ac62b5d750daa434518e1522b1dd5a18325b535ceac4539c3e255",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b",
+    "disio": "c4eb3fd121df53906a0d0444570aa070debec7697fa38110ba8979231ae88a71",
+    "lzma-java": "75ccc0e24d37ed5b8916e1bcffad1e067c2b1cfa21b635287f968db5c3c1963a",
+    "rs-cache-library": "ae1963bc1c5cecc59c142e041b60ddf0ea3fa0a037ce1ef2ee034296b6b8ba0f",
+    "server": "9a873520a9b55f27fe30efdfbc41c77b1c2c15d982f03fd206b31710d6c87682"
+  },
+  "limits": [
+    "One original definition in disposable copies only; the authorized baseline is never written.",
+    "Model0 numeric default; no appearance, packet, controller, render or save claim.",
+    "Byte determinism is claimed only for the new entry and decoded namespace, not for the container.",
+    "Source consumer audit is partial: client item lookup is id-keyed and server array size follows the cache, but full growth/packet audits remain open.",
+    "Candidate20179 is a temporary lab mapping, not a general allocation or production reservation.",
+    "Archive target has no Whirlpool;36 other stored archive digests were compared.",
+    "Reference CRC agreement does not prove a live client JS5/version-table exchange.",
+    "Deleting the private candidates removes the experiment; no installed cache/profile was changed."
+  ],
+  "manifest_sha256": "3ed02314d78393a163534c2970a0e7dae641ed17ebda79ca05e446b50123c92a",
+  "schema_version": 1,
+  "semantic_key": "lab_token",
+  "target": {
+    "archive": 78,
+    "ceiling_exclusive": 32768,
+    "file": 211,
+    "id": 20179,
+    "index": 19,
+    "kind": "item"
+  },
+  "tool_sha256": {
+    "LabTokenCache.java": "690942c5e582e4091371caf09f07c8bd0712da23fd71026da6ac537474f1205a",
+    "backport_lab_token.py": "b2a8ef4bf70705cae9c22b94435023768eb6d9172df3f88800b4f5e05992ded8"
+  },
+  "date": "2026-10-17",
+  "scope": "one original definition in two disposable cache copies, not a gameplay backport",
+  "candidate_cache_determinism": {
+    "files_per_candidate": 39,
+    "all_candidate_cache_files_equal": true,
+    "candidate_cache_fingerprint_sha256": "f6ed21f471bfda634e3bc87b6c93026711d0b1ead71def4557482eb4b35f56b3"
+  },
+  "validation": {
+    "root_tests": 276,
+    "root_optional_skips": 1,
+    "boundary_tests": 15,
+    "native_write_runs": 2
+  },
+  "source_scan_excludes_before_traversal": [
+    "saves",
+    "errors",
+    ".temp",
+    "cache",
+    "exchange"
+  ],
+  "additional_sources_sha256": {
+    "scripts/test_backport_lab_token.py": "7879be88f27f2c4b1875b0754a3d1afb1977d301f617436a66107ffab440cd82",
+    "upstream/game-server/cache/src/main/kotlin/world/gregs/voidps/cache/CacheDelegate.kt": "6d817249ee612b0ecf6d9e613a08c0521332f2207fe94523bf08559e9b01d789",
+    "upstream/game-server/cache/src/main/kotlin/world/gregs/voidps/cache/ReadOnlyCache.kt": "2de3f5882b9d179876d8c113bcc2f5995442d861d95ccbd856632e8a81a65b03",
+    "upstream/game-server/cache/src/main/kotlin/world/gregs/voidps/cache/secure/VersionTableBuilder.kt": "7dcb9c5eb76f042b454fd88d472e817280cd0cdb50106ecefc5e6d16227b81ec"
+  }
+}
