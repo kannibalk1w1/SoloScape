@@ -1,0 +1,168 @@
+diff --git a/game/src/test/kotlin/content/skill/slayer/SlayerKillOwnershipTest.kt b/game/src/test/kotlin/content/skill/slayer/SlayerKillOwnershipTest.kt
+new file mode 100644
+index 0000000..82108a4
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/slayer/SlayerKillOwnershipTest.kt
+@@ -0,0 +1,162 @@
++package content.skill.slayer
++
++import FakeRandom
++import WorldTest
++import npcOption
++import kotlinx.coroutines.runBlocking
++import org.junit.jupiter.api.Assertions.assertArrayEquals
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
++import world.gregs.voidps.engine.data.AccountManager
++import world.gregs.voidps.engine.data.PlayerSave
++import world.gregs.voidps.engine.data.SaveQueue
++import world.gregs.voidps.engine.data.Settings
++import world.gregs.voidps.engine.data.file.FileStorage
++import world.gregs.voidps.engine.entity.Despawn
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.Players
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.get
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.equipment
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.network.login.protocol.visual.update.player.EquipSlot
++import world.gregs.voidps.type.Tile
++import world.gregs.voidps.type.setRandom
++import java.nio.file.Files
++import kotlin.test.assertEquals
++import kotlin.test.assertTrue
++
++/**
++ * Native Slayer credit is isolated to the active attacker in these single-attacker fixtures.
++ * Task assignments are explicit fixtures (not earned), and the chicken spawn is created by the test.
++ */
++@EnabledIfEnvironmentVariable(named = "SOLOSCAPE_TEST_ROOT", matches = ".+")
++class SlayerKillOwnershipTest : WorldTest() {
++
++    @Test
++    fun `Only the attacker is credited for a native chicken kill and both accounts reload`() {
++        setRandom(object : FakeRandom() {
++            override fun nextBits(bitCount: Int): Int = bitCount
++        })
++        val owner = supplyPlayer("slay_owner_a", Tile(3231, 3298), "birds", remaining = 2)
++        val bystander = supplyPlayer("slay_owner_b", Tile(3228, 3298), "birds", remaining = 2)
++        owner.inventory.add("shrimps")
++        bystander.inventory.add("bronze_sword")
++
++        val chicken = createNPC("chicken", owner.tile.addY(1))
++        val expectedXp = chicken.def["slayer_xp", 0.0] * Settings["world.experienceRate", 1.0]
++        assertTrue(expectedXp > 0)
++
++        owner.npcOption(chicken, "Attack")
++        tickIf(80) { chicken.levels.get(Skill.Constitution) > 0 }
++        assertEquals(0, chicken.levels.get(Skill.Constitution), "The negative credit checks require an actual native kill")
++        tick(5) // Npc death
++
++        assertEquals(1, owner.slayerTaskRemaining)
++        assertEquals(expectedXp, owner.experience.get(Skill.Slayer))
++        assertEquals(2, bystander.slayerTaskRemaining)
++        assertEquals(0.0, bystander.experience.get(Skill.Slayer))
++
++        // Further ticks after the death must not credit the kill again.
++        tick(20)
++        assertEquals(1, owner.slayerTaskRemaining)
++        assertEquals(expectedXp, owner.experience.get(Skill.Slayer))
++        assertEquals(2, bystander.slayerTaskRemaining)
++        assertEquals(0.0, bystander.experience.get(Skill.Slayer))
++
++        val dir = Files.createTempDirectory("soloscape-slayer-ownership-")
++        try {
++            runBlocking { SaveQueue(FileStorage(dir.toFile())).direct().join() }
++            val ownerSave = PlayerSave.load(dir.resolve("slay_owner_a.toml").toFile())
++            val bystanderSave = PlayerSave.load(dir.resolve("slay_owner_b.toml").toFile())
++            // toPlayer may share backing arrays with PlayerSave; freeze independent expectations before login.
++            val ownerXp = ownerSave.experience.copyOf()
++            val bystanderXp = bystanderSave.experience.copyOf()
++            val ownerInventories = ownerSave.inventories.mapValues { (_, items) -> items.copyOf() }
++            val bystanderInventories = bystanderSave.inventories.mapValues { (_, items) -> items.copyOf() }
++            for ((id, inv) in owner.inventories.instances) assertArrayEquals(inv.items, ownerSave.inventories[id])
++            for ((id, inv) in bystander.inventories.instances) assertArrayEquals(inv.items, bystanderSave.inventories[id])
++
++            Despawn.player(owner)
++            Players.remove(owner)
++            Despawn.player(bystander)
++            Players.remove(bystander)
++            tick()
++
++            val freshOwner = reload(ownerSave)
++            val freshBystander = reload(bystanderSave)
++
++            assertEquals("mazchna", freshOwner.slayerMaster)
++            assertEquals("birds", freshOwner.slayerTask)
++            assertEquals(1, freshOwner.slayerTaskRemaining)
++            assertEquals(0, freshOwner.slayerPoints)
++            assertEquals(expectedXp, freshOwner.experience.get(Skill.Slayer))
++            assertArrayEquals(ownerXp, freshOwner.experience.experience)
++            for ((id, items) in ownerInventories) assertArrayEquals(items, freshOwner.inventories.inventory(id).items)
++
++            assertEquals("mazchna", freshBystander.slayerMaster)
++            assertEquals("birds", freshBystander.slayerTask)
++            assertEquals(2, freshBystander.slayerTaskRemaining)
++            assertEquals(0, freshBystander.slayerPoints)
++            assertEquals(0.0, freshBystander.experience.get(Skill.Slayer))
++            assertArrayEquals(bystanderXp, freshBystander.experience.experience)
++            for ((id, items) in bystanderInventories) assertArrayEquals(items, freshBystander.inventories.inventory(id).items)
++        } finally {
++            dir.toFile().deleteRecursively()
++        }
++    }
++
++    @Test
++    fun `A nearby birds task does not take an off-task chicken kill by another player`() {
++        setRandom(object : FakeRandom() {
++            override fun nextBits(bitCount: Int): Int = bitCount
++        })
++        val owner = supplyPlayer("slay_owner_a", Tile(3231, 3298), "wolves", remaining = 2)
++        val bystander = supplyPlayer("slay_owner_b", Tile(3228, 3298), "birds", remaining = 2)
++
++        val chicken = createNPC("chicken", owner.tile.addY(1))
++        owner.npcOption(chicken, "Attack")
++        tickIf(80) { chicken.levels.get(Skill.Constitution) > 0 }
++        assertEquals(0, chicken.levels.get(Skill.Constitution), "The negative credit checks require an actual native kill")
++        tick(5) // Npc death
++
++        assertEquals("wolves", owner.slayerTask)
++        assertEquals(2, owner.slayerTaskRemaining)
++        assertEquals(0.0, owner.experience.get(Skill.Slayer))
++        assertEquals("birds", bystander.slayerTask)
++        assertEquals(2, bystander.slayerTaskRemaining)
++        assertEquals(0.0, bystander.experience.get(Skill.Slayer))
++
++        tick(20)
++        assertEquals(2, owner.slayerTaskRemaining)
++        assertEquals(0.0, owner.experience.get(Skill.Slayer))
++        assertEquals(2, bystander.slayerTaskRemaining)
++        assertEquals(0.0, bystander.experience.get(Skill.Slayer))
++    }
++
++    private fun supplyPlayer(name: String, tile: Tile, task: String, remaining: Int): Player {
++        val player = createPlayer(tile, name)
++        player.levels.set(Skill.Attack, 99)
++        player.levels.set(Skill.Strength, 99)
++        player.levels.set(Skill.Defence, 99)
++        player.levels.set(Skill.Constitution, 990)
++        player.levels.set(Skill.Slayer, 99)
++        player.equipment.set(EquipSlot.Weapon.index, "abyssal_whip")
++        player.equipment.set(EquipSlot.Hat.index, "earmuffs")
++        player.slayerMaster = "mazchna"
++        player.slayerTask = task
++        player.slayerTaskRemaining = remaining
++        return player
++    }
++
++    private fun reload(save: PlayerSave): Player {
++        val fresh = save.toPlayer()
++        val accounts = get<AccountManager>()
++        accounts.setup(fresh, null, 0, viewport = true)
++        assertTrue(accounts.index(fresh))
++        accounts.spawn(fresh, null)
++        tick(3)
++        return fresh
++    }
++}

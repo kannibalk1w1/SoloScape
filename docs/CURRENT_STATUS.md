@@ -17,7 +17,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
 | client | 54 | `0054-controller-precision-walking.patch` | `edbbcc303e2cb43d7622116de70639453586b10021b4c6dfd12d22a8cd65e7d1` |
-| server | 36 | `0036-death-loot-recovery.patch` | `a9ad7f4996112d18a4dcf3be4f2f7c2b4d616908dfe6d1cec01148b45487e373` |
+| server | 37 | `0037-slayer-kill-ownership.patch` | `db71407cab756b183dcff689e04c57f1db1575adad81976b23cd249f911c875e` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
 
@@ -55,6 +55,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 | Read-only supplied-cache item/NPC/object/sequence occupancy catalogue | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [Two deterministic native runs and independent full-ID-array comparison pass, plus input/output rejection controls. Header-declared occupancy only; safe allocation, conversion and cache patching remain unimplemented.](BACKPORT_CATALOGUE_20261017.md) |
 | Native death, capacity refusal, walking/drop/retry and recovered-inventory fresh-player restore | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Ten selected native death cases and nine capacity cases pass independently. Supplied items/API damage; fresh player in same process. Unrecovered ground loot across server restart remains separate.](DEATH_LOOT_RECOVERY_20261017.md) |
 | Unrecovered grave/floor loot through a full local-world restart | NOT IMPLEMENTED | DEFERRED | [Source audit finds no runtime grave/floor writer and nonpersistent marker variables. Two-JVM restart reproduction and explicit lifecycle policy remain open; recovered inventory tests do not cover this boundary.](WORLD_TRANSIENT_SAVE_AUDIT_20261017.md) |
+| Native Slayer single-attacker credit, passive-player isolation and saved task counts | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [36 selected native cases pass independently, including two ownership/save cases. Explicit tasks/stats/spawns and in-process fresh-player reload; contested kills, earned assignment and later-content mechanics remain separate.](SLAYER_KILL_OWNERSHIP_20261017.md) |
 
 ## Decisions and maintenance
 
