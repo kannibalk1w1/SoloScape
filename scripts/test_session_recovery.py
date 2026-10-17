@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+import select
 import signal
 import subprocess
 import sys
@@ -19,6 +20,23 @@ from test_profiles import native_save
 
 class RecoveryTests(LauncherTests):
     # Reuse only fixture setup/helpers, not the inherited launcher's test methods.
+    def test_fixture_cleanup_waits_for_slow_owned_children_to_exit(self):
+        self.java.write_text(self.java.read_text().replace(
+            'def stop(*args):', 'def stop(*args):\n    time.sleep(0.2)'))
+        record = self.orphan()
+        descriptors = [os.pidfd_open(child['pid']) for child in record['children'].values()]
+        try:
+            self.assertTrue(self.doCleanups())
+            for descriptor in descriptors:
+                self.assertTrue(select.select([descriptor], [], [], 0)[0],
+                                'Fixture cleanup returned before an owned child exited')
+            self.assertFalse(self.root.exists())
+        finally:
+            for descriptor in descriptors:
+                # Also settle the intentionally slow children when demonstrating the old failure.
+                select.select([descriptor], [], [], 5)
+                os.close(descriptor)
+
     def orphan(self):
         (self.profile.state/'saves/tester.toml').write_bytes(native_save())
         harness = '''
@@ -32,18 +50,45 @@ profiles.PROFILES=root/'profiles'
 profile_session.run(profiles.Profile(Path(sys.argv[3])),threading.Event(),lambda *args:None,checked=False)
 '''
         launcher=subprocess.Popen([sys.executable,'-c',harness,str(Path(__file__).parent),str(self.root),str(self.profile.directory)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        children = []
+        def remember_children():
+            record = session_recovery.read(self.profile)
+            if record is None:
+                return
+            for role, process in session_recovery.candidates(self.profile, record).items():
+                try:
+                    descriptor = os.pidfd_open(process['pid'])
+                except ProcessLookupError:
+                    continue
+                if session_recovery.verified(self.profile, record, process, role):
+                    children.append(descriptor)
+                else:
+                    os.close(descriptor)
         def cleanup():
-            if launcher.poll() is None:launcher.kill();launcher.wait(timeout=5)
-            for role in ('client','server'):
-                pid=self.root/(role+'.pid')
-                if pid.exists():
-                    try:os.kill(int(pid.read_text()),signal.SIGCONT);os.kill(int(pid.read_text()),signal.SIGTERM)
-                    except ProcessLookupError:pass
+            try:
+                # Capture partial startup too, before removing the parent and its guards.
+                if not children and launcher.poll() is None:
+                    remember_children()
+                if launcher.poll() is None:launcher.kill();launcher.wait(timeout=5)
+                for descriptor in children:
+                    try:
+                        signal.pidfd_send_signal(descriptor, signal.SIGCONT)
+                        signal.pidfd_send_signal(descriptor, signal.SIGTERM)
+                    except ProcessLookupError:
+                        pass
+                for descriptor in children:
+                    self.assertTrue(select.select([descriptor], [], [], 5)[0],
+                                    'Owned fixture child did not exit before directory cleanup')
+            finally:
+                for descriptor in children:
+                    os.close(descriptor)
         self.addCleanup(cleanup)
         self.wait_for(lambda:(self.root/'client.args').exists() or launcher.poll() is not None)
         self.assertIsNone(launcher.poll())
         # Both records must be durable before taking out the parent.
         self.wait_for(lambda:len(session_recovery.read(self.profile)['children'])==2)
+        remember_children()
+        self.assertEqual(len(children), 2)
         launcher.kill();launcher.wait(timeout=5)
         return session_recovery.read(self.profile)
 

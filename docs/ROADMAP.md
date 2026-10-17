@@ -177,7 +177,7 @@ and tested suspend/resume or an explicit safe fallback preserves the save.
 Priority: before global economy, population or pause changes. This is a smoke test,
 not a polished hosting product. Depends on M0/M3 and the matching protocol builds.
 
-- [ ] M5-01 Connect two clients/accounts to one server and verify independent positions, inventories and persistence.
+- [x] M5-01 Connect two clients/accounts to one server and verify independent positions, inventories and persistence. [Automated native localhost evidence](NATIVE_TWO_CLIENT_COMPATIBILITY_20261017.md); physical/private-network and guest-lifecycle acceptance remain separate.
 - [ ] M5-02 Test one controller player and one mouse player; include direct movement, world cancel and item ownership.
 - [ ] M5-03 Test a private LAN connection using explicit host configuration.
 - [ ] M5-04 Audit new features for shared/global state, target identity and per-player UI/controller state.
