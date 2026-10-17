@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-17",
+  "source_commit": "d2bccb2f00589e1b0442435298ef201560b20201",
+  "patch_count": {
+    "server": 48,
+    "client": 56
+  },
+  "snapshot_entries_verified": 10870,
+  "private_export_relative": ".runtime/deck-exports/1792273813506958042",
+  "manifest_sha256": "f63a6257a7e07b180dd1d4fbd2e107f2815c3608050d3f14f5e88de6aa99f7c4",
+  "stamp_sha256": "dc907dfb0c82fcad08dfc703c6efa83f77efb56b9926abc60b103316feb75e47",
+  "jars_sha256": {
+    "server": "78cb090da0bc7fb3165c01423f9a0b137187ec9e85ebfe8b6443789578343c5c",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+  },
+  "native_new_continue": {
+    "new_session_seconds": 23.866,
+    "continue_session_seconds": 23.887,
+    "native_save_failure": null,
+    "native_startup_cancel_preserved": true,
+    "original_mutable_paths_unchanged": true,
+    "session_environment": {
+      "XDG_SESSION_DESKTOP": "KDE",
+      "XDG_CURRENT_DESKTOP": "KDE",
+      "DISPLAY": ":1",
+      "SteamAppId": null,
+      "SteamGameId": null
+    },
+    "adventure": [],
+    "text_focused": false,
+    "playable_journey": false,
+    "playtest_two": false,
+    "fullscreen_probe": false,
+    "fullscreen_renderers": null,
+    "sidebar_probe": false,
+    "sidebar_baseline": false,
+    "display": "private-xvfb",
+    "precondition": "Owned private display.",
+    "screenshots": "Private evidence only; desktop overlays may appear or Wayland capture may be unavailable. Review before publishing.",
+    "note": "Native session totals and overlay-render intervals; not physical controller or Gaming Mode acceptance."
+  },
+  "ingame_quit": {
+    "first_press_blocked": true,
+    "confirmed_quit_requested": true
+  },
+  "backups_validated": 5,
+  "sampled_resources": {
+    "new": {
+      "sample_count": 46,
+      "peak_rss_kib": {
+        "server": 1471944,
+        "client": 1222592
+      },
+      "peak_combined_rss_kib": 2684036
+    },
+    "continue": {
+      "sample_count": 46,
+      "peak_rss_kib": {
+        "server": 1332228,
+        "client": 1539024
+      },
+      "peak_combined_rss_kib": 2870732
+    }
+  },
+  "screenshot": {
+    "path": "docs/images/native-test-build-48-20261017.png",
+    "sha256": "658159dcc06b4a7e11043a9e53fd183dd138b7b2f0f5e3bab85018979d23cc0a",
+    "size": [
+      892,
+      529
+    ]
+  },
+  "limits": [
+    "private development test snapshot, not a public package",
+    "instrumented native session; Xvfb/software with private empty ALSA/no audio",
+    "not physical pad/Deck, Gaming Mode, FPS or suspend acceptance",
+    "this session does not simulate charged equipment death; dedicated native regressions cover that code",
+    "owner installation/save transfer and release publishing held"
+  ]
+}
