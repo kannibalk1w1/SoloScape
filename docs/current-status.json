@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "755adde",
+  "reviewed_base": "8de1cd9",
   "entries": [
     {
       "id": "controls",
@@ -385,6 +385,14 @@
       "acceptance": "DEFERRED",
       "evidence": "PREBUILT_NATIVE_SESSION_20261017.md",
       "note": "Real fixture account/XP/inventory/tile survives fresh JVMs; four verified backups, payload/caches unchanged. Xvfb/software/no audio. Production source doctor bypassed after preparation checks; no launcher, orphan recovery, clean-machine, update or Deck acceptance."
+    },
+    {
+      "id": "prebuilt-launcher-contract",
+      "scope": "Private manifest/prebuilt preflight and real graphical native New/Continue experiment",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "PREBUILT_LAUNCHER_CONTRACT_20261017.md",
+      "note": "241 tooling cases (one optional skip); original manifest/bootstrap boundaries plus real GUI/native sessions 24.734/24.931s. Four backups, compared account fields and immutable inputs preserved. Software/no audio; no production package, owner deployment, native cross-version/orphan or update acceptance."
     }
   ]
 }
