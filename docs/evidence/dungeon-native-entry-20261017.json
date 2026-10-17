@@ -1,0 +1,68 @@
+{
+  "baseline": "2d0ff0322d74459621a27a89a5912d060a8f4461",
+  "date": "2026-10-17",
+  "suites": [
+    {
+      "suite": "content.area.wilderness.daemonheim.DaemonheimRewardsTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.wilderness.daemonheim.DungeoneeringPartyTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.wilderness.daemonheim.RingOfKinshipTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.dungeoneering.DungeonGenerationWorldTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.dungeoneering.DungeonGeneratorTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.dungeoneering.ItemBindingTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.dungeoneering.SoloDungeonLifecycleTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "native_class_tests": 4,
+  "production_changes": false,
+  "fixture_correction": "Eastern entrance start moved from blocked east side (3456,3723,0) to legal west side (3454,3723,0); mirrored western entrance tested from east (3445,3723,0). Both use ordinary InteractObject instructions, no direct handler/coroutine bypass.",
+  "negative_case": "Original blocked side creates no dialogue, party or dungeon and retains ring.",
+  "unproven": [
+    "Full floor combat/doors/keys/boss/rewards",
+    "Earned ring and travel to entrance",
+    "Graphical or physical controller acceptance",
+    "Whole-process restart"
+  ],
+  "patch_sha256": "c7492b0772a05ff77cc72320b644106838fdf7f1c5ce56d23050689b4fc2b495",
+  "source_sha256": "3b24bfa5a57fb24ca088d96f03e4f2684ab9746242beff31843b901f04da50f3",
+  "patch_verification": "64 modified/patched server source files match exported stack"
+}
