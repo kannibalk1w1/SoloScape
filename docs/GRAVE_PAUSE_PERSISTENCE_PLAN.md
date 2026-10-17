@@ -29,7 +29,7 @@ Restoration must recreate each record once per world and reattach UI on login. S
 
 ## Next integration decision
 
-The [isolated checkpoint experiment](GRAVE_CHECKPOINT_PROCESS_EXIT_20261017.md) now proves coherent publication across forced JVM exits with two actual native account files and an original pile ledger. It does not prove power-loss durability or integrate the running game/profile layout. Compare the production coupling with a durable receipt protocol before choosing either.
+The [isolated checkpoint experiment](GRAVE_CHECKPOINT_PROCESS_EXIT_20261017.md) now proves coherent publication across forced JVM exits with two actual native account files and an original pile ledger. It does not prove power-loss durability or integrate the running game/profile layout. The [native receipt comparator](GRAVE_RECEIPT_MODEL_20261017.md) now demonstrates its restricted ordering model and the erased-receipt failure. A primary source-creation barrier is mandatory before guest publication; otherwise the pre-death owner inventory can survive alongside new guest loot. Compare the production coupling and these invariants before choosing either.
 
 The next integration experiment must prove a crash-consistent transaction with **two original account snapshots and one original grave/pile ledger**, outside live saves. Inject failure before and after each publication step. Recovery must select one coherent state: exact item quantities across both inventories and remaining floor loot, with no loss/duplication. Include an already completed guest pickup even when the item was later banked, merged or consumed.
 

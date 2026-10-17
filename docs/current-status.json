@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "75f7a19",
+  "reviewed_base": "27096a6",
   "entries": [
     {
       "id": "controls",
@@ -345,6 +345,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "OFFLINE_SAVE_FAILURE_RETENTION_20261017.md",
       "note": "Three actual FileStorage/SaveQueue reds;13 queue and15 official engine save-group cases pass. Primary retry restores the snapshot; fallback never retires it. No network logout/Main receipt, target-hardware or power-cut acceptance."
+    },
+    {
+      "id": "grave-receipt-model",
+      "scope": "Original-fixture native whole-pile receipt/source-barrier comparator",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "GRAVE_RECEIPT_MODEL_20261017.md",
+      "note": "20 scenarios:18 restricted guard/exit outcomes and2 unsafe controls. Actual native inventory reloads; erased receipt is accepted by protocol and caught only by the independent oracle. No live save integration, production schema or power-loss acceptance."
     }
   ]
 }
