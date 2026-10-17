@@ -17,7 +17,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
 | client | 54 | `0054-controller-precision-walking.patch` | `edbbcc303e2cb43d7622116de70639453586b10021b4c6dfd12d22a8cd65e7d1` |
-| server | 34 | `0034-native-primary-save-confirmation.patch` | `a48ba0c68692d09aacf12f84b6ca89907549be59d87dbd1713db54e3c18a5230` |
+| server | 35 | `0035-cooking-target-lifetime.patch` | `99d3cb8a7704fcd1b72c439534757fe29df515a7fd19d5ed82fa86d0ee47d237` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
 
@@ -51,6 +51,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 | Solo dungeon reward delivery before next-floor countdown | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Reproduced lost201XP/20tokens/floorcredit when notice timed out; countdown now starts after reward queue completes; 28 selected cases pass, full-floor/exit/save and group acceptance remain open](DUNGEON_REWARD_NOTICE_FIX_20261017.md) |
 | Current-session primary world save confirmation for normal and orphan shutdown | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [10 native save-queue tests, 140 tooling cases (one optional skip), real New/Continue/cancel and no-artifact primary+fallback write failure/restore pass on private Xvfb; no Deck acceptance](NATIVE_SAVE_CONFIRMATION_20261017.md) |
 | Damaged compressed backup isolation during discovery and restore | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Corrupted metadata and save streams remain visible as invalid beside healthy backups; failed restore changes no save/generation and healthy restore succeeds. 141 tooling cases, one optional skip; disposable host fixtures only.](BACKUP_DEFLATE_RECOVERY_20261017.md) |
+| Cooking target/input disappearance and fresh-action retry | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Two red-before/green-after cases; eight selected native cases pass. Only reproduced queued fire/input exits stop the marker; movement cancellation and actual fire expiry remain unproven.](COOKING_TARGET_LIFETIME_20261017.md) |
 
 ## Decisions and maintenance
 

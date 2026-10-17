@@ -209,6 +209,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "BACKUP_DEFLATE_RECOVERY_20261017.md",
       "note": "Corrupted metadata and save streams remain visible as invalid beside healthy backups; failed restore changes no save/generation and healthy restore succeeds. 141 tooling cases, one optional skip; disposable host fixtures only."
+    },
+    {
+      "id": "cooking-target-lifetime",
+      "scope": "Cooking target/input disappearance and fresh-action retry",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "COOKING_TARGET_LIFETIME_20261017.md",
+      "note": "Two red-before/green-after cases; eight selected native cases pass. Only reproduced queued fire/input exits stop the marker; movement cancellation and actual fire expiry remain unproven."
     }
   ]
 }

@@ -1,0 +1,86 @@
+{
+  "task": "task_f2e1fa63e69e",
+  "dispatch": "ctx_5ddf1897df51",
+  "date": "2026-10-17",
+  "status": "fixed_with_red_before_green_after",
+  "scope": "shared cooking target lifetime: queued weakQueue conversion ends without stopping the cooking soft timer",
+  "source": {
+    "file": "upstream/game-server/game/src/main/kotlin/content/skill/cooking/Cooking.kt",
+    "sha256_after": "ca73a29f0d51569ae6a6123c3ab33520c09070c13609cffd43c8da795b95a3c8",
+    "changed_exits": [
+      "weakQueue: GameObjects.contains(obj) false -> softTimers.stop(\"cooking\")",
+      "weakQueue: failedToReplace(...) true -> softTimers.stop(\"cooking\")"
+    ],
+    "unchanged_exits": [
+      "weakQueue: leftover inventory.add failure (same early-return pattern, not reproduced, not in scope)"
+    ]
+  },
+  "test": {
+    "file": "upstream/game-server/game/src/test/kotlin/content/skill/cooking/CookingTargetLifetimeTest.kt",
+    "sha256": "b82eb6d9fb7cf10387794a101798af6b890e03829b69587cce8b2ae84905856b",
+    "cases": [
+      {
+        "name": "Removing the fire during queued cooking stops the activity without consuming or granting anything",
+        "fixtures": "supplied raw_shrimps x2, level 100 Cooking, spawnFire helper, ordinary Use + choice1; fire removed with GameObjects.remove before queued conversion; then fresh spawnFire and Use with one raw shrimp",
+        "red_before": "FAILED on softTimers.contains(\"cooking\") after removal (expected false, was true); item and XP checks before it passed",
+        "green_after": "PASSED"
+      },
+      {
+        "name": "Withdrawing raw input during queued cooking stops the activity without conversion",
+        "fixtures": "supplied raw_shrimps x2, level 100 Cooking, spawnFire helper, ordinary Use + choice1; raw input removed with inventory.remove as a controlled inventory fixture during queued work",
+        "red_before": "FAILED on softTimers.contains(\"cooking\") after withdrawal (expected false, was true)",
+        "green_after": "PASSED"
+      }
+    ],
+    "limits": [
+      "Fire removal is a test fixture removal, not fire expiry and not player cancellation.",
+      "Withdrawal is an explicit inventory fixture, not an ordinary player cancellation.",
+      "Does not cover leftover-item failure, movement or strong-queue cancellation of the weak action, or the success-path timer stop beyond the replacement case."
+    ]
+  },
+  "runs": {
+    "red_before": {
+      "log": ".runtime/earned-lumbridge-20261017/cooking-target-lifetime-red-final-20261017.log",
+      "xml": ".runtime/earned-lumbridge-20261017/cooking-target-lifetime-red-final-20261017.xml",
+      "classes": ["content.skill.cooking.CookingTargetLifetimeTest"],
+      "tests": 2,
+      "failures": 2,
+      "note": "A first red run on the final test showed one case as skipped with no message; the immediate rerun showed both failing and is the saved red artifact. The attempt log is kept at .runtime/earned-lumbridge-20261017/cooking-target-lifetime-red-final-attempt1-20261017.log."
+    },
+    "green_after": {
+      "log": ".runtime/earned-lumbridge-20261017/cooking-target-lifetime-green-combined-20261017.log",
+      "classes": [
+        "content.skill.cooking.CookingTargetLifetimeTest",
+        "content.skill.cooking.CookingTest",
+        "content.soloscape.ProductionCapacityRecoveryTest"
+      ],
+      "tests": 8,
+      "failures": 0,
+      "breakdown": {
+        "CookingTargetLifetimeTest": 2,
+        "CookingTest": 4,
+        "ProductionCapacityRecoveryTest": 2
+      },
+      "xml": [
+        ".runtime/earned-lumbridge-20261017/cooking-target-lifetime-green-CookingTargetLifetimeTest-20261017.xml",
+        ".runtime/earned-lumbridge-20261017/cooking-target-lifetime-green-CookingTest-20261017.xml",
+        ".runtime/earned-lumbridge-20261017/cooking-target-lifetime-green-ProductionCapacityRecoveryTest-20261017.xml"
+      ],
+      "new_only_log": ".runtime/earned-lumbridge-20261017/cooking-target-lifetime-green-new-only-20261017.log"
+    }
+  },
+  "patch": {
+    "file": "patches/server/0035-cooking-target-lifetime.patch",
+    "sha256": "fe56219742bd5f240baa8462a55af634c830ab83cb64b4cfddcd777bc8d0ebfb",
+    "contents": ["Cooking.kt incremental against the BEFORE snapshot", "new CookingTargetLifetimeTest.kt"],
+    "reverse_check": "git apply --check --reverse passed in upstream/game-server",
+    "verify_patches_server": "all 75 modified/patched source files match the exported stack (log: .runtime/earned-lumbridge-20261017/cooking-target-lifetime-verify-server-20261017.log)",
+    "stack_0001_0034": "unchanged; sha256 list at .runtime/earned-lumbridge-20261017/cooking-target-lifetime-stack-before-0035.sha256"
+  },
+  "not_run": [
+    "whole suite",
+    "deck restamp or deploy",
+    "physical acceptance",
+    "commit, stage, push, or branch switch"
+  ]
+}

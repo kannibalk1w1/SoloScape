@@ -83,6 +83,7 @@ def main():
             'content.soloscape.ProductionCapacityRecoveryTest',
             'content.skill.fishing.FishingTest',
             'content.skill.cooking.CookingTest',
+            'content.skill.cooking.CookingTargetLifetimeTest',
         ),
         'journeys': ('content.soloscape.FullAdventureJourneyTest',),
     }[options.group]
