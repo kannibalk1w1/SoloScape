@@ -4,6 +4,8 @@ Research date: 17 October 2026. Native baseline: merged `502df96`, revision 634 
 
 Recommendation: **later**, a bounded software-framebuffer/compiler-isolation experiment, then an existing Java server behind an explicitly scoped browser transport if rendering succeeds. Do not approve a whole-client rewrite, local browser server or universal transport abstraction now. The small compiler boundary experiment below is complete; a playable browser prototype is not.
 
+Follow-up: the [bounded masked-edge raster experiment](WASM_RASTER_POC.md) now matches JVM/browser hashes at two sizes. The triangle/model gate remains unproven; naive presentation misses a host 60 FPS budget. This does not change the native-first recommendation.
+
 ## Inspection and measured boundary experiment
 
 The client targets/runs Java 8 because `Loader` extends Applet. JDK 21 runs its Gradle build/tooling; the Kotlin server is JVM 21. RuneLite-style plugins, Guice/reflection, Swing/EDT, AWT Canvas, overlays, native rendering, filesystem and socket threads make the client substantially more than a Java rasterizer.

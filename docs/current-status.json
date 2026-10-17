@@ -89,6 +89,14 @@
       "acceptance": "DEFERRED",
       "evidence": "ROADMAP.md",
       "note": "Research/planning does not implement gameplay or authorize a port"
+    },
+    {
+      "id": "wasm-kernel",
+      "scope": "Isolated WASM masked-edge kernel; no triangle/model/game client",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_RASTER_POC.md",
+      "note": "JVM/browser hashes agree at two sizes; real-clock host measurements only"
     }
   ]
 }

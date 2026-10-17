@@ -14,6 +14,7 @@ Movement events run between steps. If an event replaces the mode, its new route 
 
 - Direct-mode regressions cover all four L-turn quadrants using synthetic collision flags passed through the real RSMod step validator, a blocked second step, continuous wall sliding, run energy, stale/released input, delay, replacement-mode route preservation and disabling corner running. Other isolated cases mock the validator; this does not establish every native map edge.
 - The client suite covers RT full-tilt walking, release restoring run, disabling the modifier, LT priority and A interaction. The full native client test selection and server movement package were run; results are recorded in [evidence](evidence/controller-corners-20261017.json).
+- Matched jars build. Private host New/Continue Settings smoke passes (42.852/41.851 seconds including readiness and save), saved fields survive reload, four backups verify, and cancelled startup preserves the saved world. This uses virtual input on Xvfb, not physical Deck buttons.
 - Production collision/pathfinder, combat range/line of sight and NPC pursuit algorithms are unchanged. This is a movement foundation, not acceptance of every safe spot or a new stationary-attack mode. A native Attack can still approach when its range/line-of-sight rules require it.
 - Existing movement outlines indicate intent; no authoritative two-step preview has been added.
 

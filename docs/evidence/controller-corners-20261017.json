@@ -473,5 +473,32 @@
   "patches_sha256": {
     "patches/client/0054-controller-precision-walking.patch": "88d4b4857a295d2980b6b42882d5770cfafdf7251f3c0221c3127bf4213161e0",
     "patches/server/0024-controller-corner-running.patch": "7c8c7a2b92c4a1f417a3743d86284946f92ece8f74a41fd938939fb262c07f9d"
+  },
+  "native_settings_smoke": {
+    "environment": "Private host Xvfb/software renderer, virtual connected-neutral controller Settings probe; no physical input or Steam Deck acceptance. Matched client 0054/server 0024.",
+    "new_session_seconds": 42.852,
+    "continue_session_seconds": 41.851,
+    "native_startup_cancel_preserved": true,
+    "original_mutable_paths_unchanged": true,
+    "verified_backups": 4,
+    "saved_fields_preserved": true,
+    "settings": {
+      "new": {
+        "settings_gateway_two_tick_adoption": true,
+        "settings_config_round_trip": true,
+        "settings_back_to_home": true,
+        "sdl_polling_restored": true,
+        "same_client_relogin": true,
+        "fresh_capabilities_after_relogin": true
+      },
+      "continue": {
+        "settings_gateway_two_tick_adoption": true,
+        "settings_config_round_trip": true,
+        "settings_back_to_home": true,
+        "sdl_polling_restored": true,
+        "same_client_relogin": true,
+        "fresh_capabilities_after_relogin": true
+      }
+    }
   }
 }

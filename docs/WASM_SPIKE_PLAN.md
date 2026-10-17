@@ -1,6 +1,6 @@
 # Smallest useful next WASM spike
 
-Status: **planned, later**. The compiler sanity/kernel and negative native-presenter tests are recorded in [feasibility](WASM_FEASIBILITY.md) and [the reproducible experiment](../experiments/wasm-kernel/README.md). They do not enable a browser game. Keep this track separate from the native release.
+Status: **partial masked-edge experiment complete; triangle/model gate unproven**. See the [reviewed result](WASM_RASTER_POC.md). The remaining full-raster closure is a later gate. The compiler sanity/kernel and negative native-presenter tests are recorded in [feasibility](WASM_FEASIBILITY.md) and [the reproducible experiment](../experiments/wasm-kernel/README.md). They do not enable a browser game. Keep this track separate from the native release.
 
 ## Decision and uncertainty
 

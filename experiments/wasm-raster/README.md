@@ -2,6 +2,8 @@
 
 Isolated experiment for [docs/WASM_RASTER_POC.md](../../docs/WASM_RASTER_POC.md). It is not a browser client and adds no runtime dependency to the native product.
 
+Requires JDK 21, Python 3, Node.js 18+, Chromium and the upstream Gradle wrapper (or installed Gradle). No npm packages are needed.
+
 Inputs are read from absolute local paths and nothing native is committed: `tools/extract_face_kernel.py` writes the verbatim `ha_Sub1.method3636` body into the ignored `build/` directory at build time.
 
 Run from the repository root with `JAVA_HOME` set to a JDK 21 directory (this is required; there is no default path):
@@ -27,4 +29,4 @@ Scene: a triangular span mask and 6000 fixed-seed edges with opaque, alpha-blend
 
 Self-test for the rejection path: `RASTER_SELFTEST_MUTATE=browser-hash` or `missing-browser` must make the run fail. Forcing `CHROMIUM=/bin/false` or `/bin/true` exercises the browser-failure and no-result paths.
 
-Known caveats: the hash is FNV-1a over 32-bit words, not a cryptographic digest. The browser timings come from a headless run with a virtual-time budget, and the reflection-based native reference is for correctness, not timing.
+Known caveats: the hash is FNV-1a over 32-bit words, not a cryptographic digest. The browser timings use performance.now through a private CDP pipe, with no virtual-time budget. They are host micro-scene measurements. The reflection-based native reference is for correctness, not timing. The runner also captures an original synthetic-scene PNG in the ignored build directory.

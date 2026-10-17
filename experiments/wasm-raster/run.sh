@@ -28,6 +28,13 @@ case "$NATIVE_JAR" in /*) ;; *) echo "jar path must be absolute" >&2; exit 2 ;; 
 
 rm -rf "$BUILD"
 mkdir -p "$BUILD"
+python3 -I - "$NATIVE_SRC" "$NATIVE_JAR" "$BUILD/inputs.json" <<'PY'
+import hashlib, json, pathlib, sys
+names = ('source_sha256', 'client_jar_sha256')
+inputs = {name: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+          for name, path in zip(names, sys.argv[1:3])}
+pathlib.Path(sys.argv[3]).write_text(json.dumps(inputs, indent=2) + '\n')
+PY
 python3 -I "$HERE/tools/extract_face_kernel.py" --src "$NATIVE_SRC" --out "$BUILD/generated-src"
 
 echo "== closure audit (verbatim kernel, no jar on classpath)"
@@ -72,17 +79,9 @@ for _ in $(seq 1 100); do [ -s "$PORT_FILE" ] && break; sleep 0.1; done
 PORT="$(cat "$PORT_FILE")"
 python3 -I "$HERE/tools/serve_loopback.py" --probe "$PORT"
 
-set +e
-timeout "$BROWSER_TIMEOUT" "$CHROMIUM" --headless=new --no-sandbox --disable-gpu \
-  --virtual-time-budget=30000 --dump-dom "http://127.0.0.1:$PORT/index.html" \
-  > "$BUILD/browser-dom.html" 2> "$BUILD/chromium.log"
-BROWSER_RC=$?
-set -e
-if [ "$BROWSER_RC" -ne 0 ]; then
-  echo "headless Chromium failed with status $BROWSER_RC; log tail:" >&2
-  tail -20 "$BUILD/chromium.log" >&2 || true
-  exit 1
-fi
+# A virtual-time budget can freeze performance.now() during the kernel. Use
+# a private CDP pipe and wait for the result with the browser's real clock.
+timeout "$BROWSER_TIMEOUT" "${NODE:-node}" "$HERE/tools/browser_probe.mjs" "$CHROMIUM" "http://127.0.0.1:$PORT/index.html" "$BUILD"
 
 echo "== validation (both sizes; jvm-native vs jvm-verbatim vs browser)"
 python3 -I "$HERE/tools/check_evidence.py" --build "$BUILD" ${MUTATE_ARGS[@]+"${MUTATE_ARGS[@]}"}

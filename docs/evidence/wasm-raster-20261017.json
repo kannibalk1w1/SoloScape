@@ -1,0 +1,65 @@
+{
+  "sizes": [
+    {
+      "size": "765x503",
+      "fnv1a": "9e30c466",
+      "hashes": {
+        "jvm-native": "9e30c466",
+        "jvm-verbatim": "9e30c466",
+        "browser": "9e30c466"
+      },
+      "timings": {
+        "verbatimJvmRasterMedianMs": 7.806014999747276,
+        "browserRasterMedianMs": 6.800000000745058,
+        "browserRasterMinMs": 6.799999998882413,
+        "browserConvertMs": 13.800000000745058,
+        "browserPutImageDataMs": 1.199999999254942
+      }
+    },
+    {
+      "size": "1280x800",
+      "fnv1a": "f22bb6bd",
+      "hashes": {
+        "jvm-native": "f22bb6bd",
+        "jvm-verbatim": "f22bb6bd",
+        "browser": "f22bb6bd"
+      },
+      "timings": {
+        "verbatimJvmRasterMedianMs": 7.811667999252677,
+        "browserRasterMedianMs": 12.199999999254942,
+        "browserRasterMinMs": 11.700000001117587,
+        "browserConvertMs": 27.700000001117587,
+        "browserPutImageDataMs": 2.0
+      }
+    }
+  ],
+  "runtime": "teavm-0.16.0-wasmgc",
+  "sha256": {
+    "jvm-verbatim.jsonl": "cb4576ca7b2240e004425ae2eb0ed5344293e8ff7a5836b5d408602f3d8a5b20",
+    "jvm-native.jsonl": "f163a169c37004bdd670ff044a402ddb3da134965f4246c66747e2438711c37e",
+    "browser-dom.html": "354c33686470a8e2a1ea53475688b263a65176729aac92c3a04946c2d685ab68",
+    "teavm-out/raster.wasm": "0adfe5df745ef5df4c822a0b49eec43206de4b5f330e0dbf6fed991a02ab6d96"
+  },
+  "inputs": {
+    "source_sha256": "f3f01437c28ad160ca356311ab021d9d4cfbc4759cb367435f0209eba4b0bae7",
+    "client_jar_sha256": "ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918"
+  },
+  "browser": {
+    "clock": "performance.now with real time; no virtual-time budget",
+    "browser": "Chromium 153.0.8010.52 Arch Linux",
+    "node": "v26.11.1",
+    "presentation": "headless Chromium software Canvas; host only"
+  },
+  "expectedSizes": [
+    "765x503",
+    "1280x800"
+  ],
+  "validated": true,
+  "environment": "Host headless Chromium, CPU/software Canvas, synthetic masked edges only. No Deck or whole-scene acceptance. Uncontrolled power/thermal state; one reviewed real-clock run.",
+  "worker_model": "Claude Haiku; coordinator independently reproduced and replaced virtual-time timing with real-clock CDP capture",
+  "negative_controls": {
+    "mismatched_browser_hash_rejected": true,
+    "missing_browser_result_rejected": true,
+    "zero_browser_raster_timing_rejected": true
+  }
+}

@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import html
 import json
+import math
 import pathlib
 import re
 import sys
@@ -100,10 +101,19 @@ def main():
             print("FAIL:", failure, file=sys.stderr)
         return 1
 
+    for row in evidence['sizes']:
+        for label, value in row['timings'].items():
+            if not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+                raise SystemExit(f"{row['size']}: invalid timing {label}={value!r}")
+        if row['timings']['browserRasterMedianMs'] <= 0:
+            raise SystemExit(f"{row['size']}: zero raster timing cannot establish performance")
+
     digests = {}
     for name in ("jvm-verbatim.jsonl", "jvm-native.jsonl", "browser-dom.html", "teavm-out/raster.wasm"):
         digests[name] = hashlib.sha256((build / name).read_bytes()).hexdigest()
     evidence.update({"runtime": browser_doc.get("runtime"), "sha256": digests,
+                     "inputs": json.loads((build / 'inputs.json').read_text()),
+                     "browser": json.loads((build / 'browser-meta.json').read_text()),
                      "expectedSizes": EXPECTED_SIZES, "validated": True})
     (build / "evidence.json").write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
     print(f"PASS: {len(EXPECTED_SIZES)} sizes, hashes agree across jvm-native, jvm-verbatim, browser")

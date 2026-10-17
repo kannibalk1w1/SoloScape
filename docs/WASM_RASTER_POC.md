@@ -9,7 +9,7 @@ Status: **bounded attempt complete; partial pass.** One real 634 software-raster
 | Input | SHA-256 |
 | --- | --- |
 | `upstream/.../client/src/ha_Sub1.java` (read only, local) | `f3f01437c28ad160ca356311ab021d9d4cfbc4759cb367435f0209eba4b0bae7` |
-| `upstream/.../client/build/libs/void-client-0.2.0_a2.jar` (read only, local) | `3c791fe7510da4036710529c579b69f71bf9a86aa6eee98c5055275e42fe97a7` |
+| `upstream/.../client/build/libs/void-client-0.2.0_a2.jar` (read only, local) | `ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918` |
 | Generated `raster.wasm` (TeaVM 0.16.0, not committed) | `0adfe5df745ef5df4c822a0b49eec43206de4b5f330e0dbf6fed991a02ab6d96` |
 
 Nothing from the native source or jar is committed. The extractor writes the method body to the ignored `experiments/wasm-raster/build/`. The licence status of the native source is not analysed here, and no legal conclusion is drawn.
@@ -32,18 +32,20 @@ Hashes are identical across every run. FNV-1a is over 32-bit framebuffer words.
 | --- | --- | --- | --- |
 | JVM native jar bytecode (`ha_Sub1.method3636`) | `9e30c466` | `f22bb6bd` | reference |
 | JVM generated verbatim kernel | `9e30c466` | `f22bb6bd` | yes |
-| TeaVM WasmGC in headless Chromium 153 (3 runs) | `9e30c466` | `f22bb6bd` | yes |
+| TeaVM WasmGC in headless Chromium 153 (reviewed real-clock run) | `9e30c466` | `f22bb6bd` | yes |
 
 A screenshot of the browser run shows the triangular mask clipping the edges, with opaque, blended and additive edges visible.
 
-Measured costs, browser (TeaVM WasmGC, headless Chromium 153.0.8010.52, Intel i7-14700HX, 28 threads, Linux 7.2.9-2-cachyos). Three complete wrapper runs and one screenshot run (which captured 765×503 raster only). Ranges are min–max of the values captured.
+Measured costs from the coordinator's reviewed real-clock run: TeaVM WasmGC, headless Chromium 153.0.8010.52, Intel i7-14700HX host. The original virtual-time captures were unsuitable for timing: an independent rerun returned **zero** for all browser durations. Those durations are superseded here. The wrapper now uses a private CDP pipe, waits for completion without virtual time and rejects zero raster timings. [Machine-readable result](evidence/wasm-raster-20261017.json).
 
 | Size | Raster median per frame | Wasm→JS conversion, one frame | `putImageData` |
 | --- | --- | --- | --- |
-| 765×503 | 6.6–10.4 ms (4 runs) | 10.0–19.7 ms (3 runs) | 1.3–1.9 ms (3 runs) |
-| 1280×800 | 10.1–16.1 ms (3 runs) | 23.3–33.4 ms (3 runs) | 1.8–2.3 ms (3 runs) |
+| 765×503 | 6.8 ms | 13.8 ms | 1.2 ms |
+| 1280×800 | 12.2 ms | 27.7 ms | 2.0 ms |
 
-Raster is the median of six frames after one warm-up. Conversion writes each pixel into a JavaScript `Int32Array` through a JSBody call, so it is one boundary crossing per pixel. On this host the frame budget is about 16.7 ms at 60 FPS, and at 1280×800 the naive presentation alone is roughly twice that. These are host numbers only. They are not Deck or Chromebook numbers, and power and thermal state were not controlled.
+Raster is the median of six frames after one warm-up; presentation is sampled once. Conversion crosses into JavaScript once per pixel. The combined micro-scene cost is roughly 22/42 ms at these sizes, so this presentation method does not meet a 60 FPS budget on the host. Power/thermal state was uncontrolled; startup, frame tails, heap, full-scene rendering and Deck/Chromebook performance were not measured.
+
+![Original synthetic masked edges rendered in the browser; not a game scene](images/wasm-synthetic-edges.png)
 
 Module payload: `raster.wasm` 40,442 bytes raw, 21,223 bytes with `gzip -9`. The TeaVM runtime JS is 17,268 bytes (6,130 gzip). The JVM verbatim run is not a browser benchmark: its medians (6–14 ms) vary between runs.
 
@@ -53,7 +55,7 @@ Module payload: `raster.wasm` 40,442 bytes raw, 21,223 bytes with `gzip -9`. The
 | --- | --- |
 | Code boundary | **Pass for this kernel.** Closure is six fields and two stubs. The AWT presenter and the triangle filler are not covered. |
 | Correctness | **Pass for hashes.** JVM jar bytecode, JVM verbatim and WasmGC match at both sizes. Integer-only scene, so no tolerance was needed. |
-| Performance | **Measured, not a pass.** Raster ~8–16 ms; per-pixel JS conversion dominates at 27–33 ms. A buffer view or a WebGL texture upload was not tried. |
+| Performance | **Measured, not a pass.** Real-clock raster ~7–12 ms; per-pixel JS conversion ~14–28 ms. A buffer view or a WebGL texture upload was not tried. |
 | Distribution | Nothing native committed. Dependencies: `org.teavm:teavm-jso:0.16.0` only, with the TeaVM Apache-2.0 note from the kernel experiment; a full inventory is still needed. |
 | Reversibility | No native source, patch, jar or profile is changed. Removing `experiments/wasm-raster/` and this doc reverts the work. |
 
@@ -61,7 +63,7 @@ Module payload: `raster.wasm` 40,442 bytes raw, 21,223 bytes with `gzip -9`. The
 
 - One kernel is not a triangle filler and not a 3D scene. An original triangle mask only exercises clipping and edge stepping.
 - The hash is a 32-bit FNV-1a, not a cryptographic digest. Matching hashes on this scene make a bit-exact difference unlikely but do not rule it out.
-- The browser timings are from a headless Chromium with `--virtual-time-budget`. Their absolute values are not tied to a real display.
+- Published timings use real-clock headless Chromium. Earlier virtual-time durations were rejected; these host measurements still do not establish frame pacing on a real display.
 - The native reference is reflective and is used only for correctness. It allocates `ha_Sub1` and `aa_Sub3` with `sun.misc.Unsafe.allocateInstance`, bypassing their constructors. That is the only use of `Unsafe`, it is not in the browser build, and it is not extended.
 - `ha_Sub1` was not constructed. The native constructor needs a live Canvas and renderer state, so only the raster method is exercised.
 - No login, server, cache, world simulation or physical device was used.
