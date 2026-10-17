@@ -17,7 +17,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
 | client | 56 | `0056-external-launcher-home.patch` | `60fa4f727ababa7d532ac495c62055ed38cbd83c07abc70c66a068cf24c7bc5a` |
-| server | 45 | `0045-gravestone-shop-server-availability.patch` | `4ef8a0268c95634e43f654bfbea0ca0f0636d09e9e7a72deb69b191206a2bed6` |
+| server | 46 | `0046-native-summoning-loot-delivery.patch` | `15495bc578a674e38aa4b19b49726aeb056b7c17766c34726044570590dbabdf` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
 
@@ -80,6 +80,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 | Server-side quest availability check before gravestone selection/payment | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [24 selected death/gravestone cases; supplied-input shop controls, no purchase-ownership model or stopped-world grave persistence added](GRAVESTONE_SHOP_AUTHORITY_20261017.md) |
 | Private native A/B profile lock, original-context orphan recovery and code rollback retaining new progress | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Specific server42/45 client56 builds, 10 valid backups, actual ground-click tile change survives rollback; no installer/apply/public package/audio/Deck acceptance](PREBUILT_VERSION_LIFECYCLE_20261017.md) |
 | Offline resolved runtime artifact, notice candidate and embedded-native metadata inventory | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [55 server /24 client artifacts; 3 unattributed local jars; metadata only, M13-02 distribution review remains open](RUNTIME_NOTICE_INVENTORY_20261017.md) |
+| Native wolf death through queued loot publication and ingredient Take delivery | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [22 selected Summoning cases; controlled fatal damage/drop roll, members-only final item filter; earned route and physical input still open](SUMMONING_LOOT_DELIVERY_20261017.md) |
 
 ## Decisions and maintenance
 

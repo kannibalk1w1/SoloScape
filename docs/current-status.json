@@ -441,6 +441,14 @@
       "acceptance": "DEFERRED",
       "evidence": "RUNTIME_NOTICE_INVENTORY_20261017.md",
       "note": "55 server /24 client artifacts; 3 unattributed local jars; metadata only, M13-02 distribution review remains open"
+    },
+    {
+      "id": "summoning-loot-delivery",
+      "scope": "Native wolf death through queued loot publication and ingredient Take delivery",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "SUMMONING_LOOT_DELIVERY_20261017.md",
+      "note": "22 selected Summoning cases; controlled fatal damage/drop roll, members-only final item filter; earned route and physical input still open"
     }
   ]
 }

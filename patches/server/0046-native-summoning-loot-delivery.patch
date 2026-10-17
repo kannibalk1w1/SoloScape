@@ -1,0 +1,132 @@
+diff --git a/game/src/test/kotlin/content/skill/summoning/SummoningLootDeliveryTest.kt b/game/src/test/kotlin/content/skill/summoning/SummoningLootDeliveryTest.kt
+new file mode 100644
+index 0000000..4bc1afa
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/summoning/SummoningLootDeliveryTest.kt
+@@ -0,0 +1,126 @@
++package content.skill.summoning
++
++import FakeRandom
++import WorldTest
++import content.entity.combat.dead
++import content.entity.combat.killer
++import content.entity.combat.hit.hit
++import floorItemOption
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertNotNull
++import org.junit.jupiter.api.Assertions.assertSame
++import org.junit.jupiter.api.Assertions.assertNull
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.Test
++import world.gregs.voidps.engine.entity.character.npc.NPC
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.entity.item.floor.FloorItems
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.engine.data.definition.ItemDefinitions
++import world.gregs.voidps.type.Tile
++import world.gregs.voidps.type.setRandom
++
++/**
++ * Native white wolf loot delivery from a real death to the player's inventory.
++ *
++ * - The stronghold wolf is created at a configured spawn tile of `wolf_stronghold_of_security`.
++ * - A fatal [hit] is launched by the player, then the native death queue and `NPCDeath.dropLoot` run.
++ * - The roll is forced to its lowest value only after the hit is launched, so the death loot uses it.
++ * - Members is set per case and restored afterwards. The drops are taken with the native Take option.
++ *
++ * The fatal damage is an explicit fixture, not an earned fight or combat-balance result.
++ */
++class SummoningLootDeliveryTest : WorldTest() {
++
++    private val deathTile = Tile(1873, 5239)
++    private val playerTile = Tile(1873, 5238)
++
++    /** Creates the wolf at its configured tile, hits it fatally from the player, and runs the native death. */
++    private fun killWolf(player: Player): NPC {
++        val wolf = createNPC("wolf_stronghold_of_security", deathTile)
++        val hitpoints = wolf.levels.get(Skill.Constitution)
++        assertTrue(hitpoints > 0, "the native wolf starts alive")
++        assertEquals(hitpoints, player.hit(wolf, damage = hitpoints, delay = 0))
++        setRandom(object : FakeRandom() {
++            override fun nextInt(from: Int, until: Int) = from
++        })
++        tickIf(20) { wolf.levels.get(Skill.Constitution) > 0 }
++        assertEquals(0, wolf.levels.get(Skill.Constitution), "the supplied fatal hit must kill the wolf")
++        assertTrue(wolf.dead, "native death processing was entered")
++        assertSame(player, wolf.killer, "the native damage path attributes the kill to the player")
++        // Drops are filtered before the corpse hides; both member modes have this completion witness.
++        tickIf(100) { !wolf.hide && wolf.index > 0 }
++        tick() // Publish any floor items queued by the completed native death.
++        return wolf
++    }
++
++    private fun setMembers(value: String): String? {
++        val previous = settings["world.members"] as? String
++        settings["world.members"] = value
++        return previous
++    }
++
++    private fun restoreMembers(previous: String?) {
++        if (previous == null) {
++            settings.remove("world.members")
++        } else {
++            settings["world.members"] = previous
++        }
++    }
++
++    @Test
++    fun `Members wolf death drops gold charm and wolf bones that both reach the inventory by Take`() {
++        val previous = setMembers("true")
++        try {
++            assertTrue(ItemDefinitions.get("gold_charm").members, "the cached gold charm is members-only")
++            assertTrue(ItemDefinitions.get("wolf_bones").members, "the cached wolf bones are members-only")
++            val player = createPlayer(playerTile)
++            killWolf(player)
++
++            val charm = FloorItems.firstOrNull(deathTile, "gold_charm")
++            val bones = FloorItems.firstOrNull(deathTile, "wolf_bones")
++            assertNotNull(charm, "members death publishes the gold charm on the floor")
++            assertNotNull(bones, "members death publishes wolf bones on the floor")
++            assertEquals(1, charm!!.amount)
++            assertEquals(1, bones!!.amount)
++
++            player.floorItemOption(charm, "Take")
++            tick(2)
++            assertEquals(1, player.inventory.count("gold_charm"), "the gold charm is in the inventory once")
++            assertNull(FloorItems.firstOrNull(deathTile, "gold_charm"), "the gold charm is consumed from the floor")
++
++            player.floorItemOption(bones, "Take")
++            tick(2)
++            assertEquals(1, player.inventory.count("wolf_bones"), "the wolf bones are in the inventory once")
++            assertNull(FloorItems.firstOrNull(deathTile, "wolf_bones"), "the wolf bones are consumed from the floor")
++
++            tick(20)
++            assertEquals(1, player.inventory.count("gold_charm"), "no duplicate gold charm after further ticks")
++            assertEquals(1, player.inventory.count("wolf_bones"), "no duplicate wolf bones after further ticks")
++        } finally {
++            restoreMembers(previous)
++        }
++    }
++
++    @Test
++    fun `Nonmembers native death filters both members-only ingredients even though the table lists bones`() {
++        val previous = setMembers("false")
++        try {
++            assertTrue(ItemDefinitions.get("gold_charm").members)
++            assertTrue(ItemDefinitions.get("wolf_bones").members)
++            val player = createPlayer(playerTile)
++            killWolf(player)
++
++            assertNull(FloorItems.firstOrNull(deathTile, "gold_charm"))
++            assertNull(FloorItems.firstOrNull(deathTile, "wolf_bones"))
++            assertEquals(0, player.inventory.count("gold_charm"))
++            assertEquals(0, player.inventory.count("wolf_bones"))
++            tick(20)
++            assertNull(FloorItems.firstOrNull(deathTile, "gold_charm"), "no delayed charm publication")
++            assertNull(FloorItems.firstOrNull(deathTile, "wolf_bones"), "no delayed bone publication")
++        } finally {
++            restoreMembers(previous)
++        }
++    }
++}

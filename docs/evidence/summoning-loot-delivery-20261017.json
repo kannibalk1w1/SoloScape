@@ -1,0 +1,121 @@
+{
+  "date": "2026-10-17",
+  "scope": "Native controlled wolf death and ingredient Take delivery; not an earned fight or full Summoning journey",
+  "passed": true,
+  "patch": "0046-native-summoning-loot-delivery.patch",
+  "patch_sha256": "6ad7751d5e91d142fcbcfbdd5aeabb23f8f1174042f32ca365c7a1df7d9715bb",
+  "native_group": {
+    "group": "summoning",
+    "suites": [
+      {
+        "suite": "content.area.asgarnia.taverley.PikkupstixTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.skill.summoning.SummoningSupplyAcquisitionTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.skill.summoning.SummoningLootDeliveryTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.skill.summoning.SoloSpiritWolfLifecycleTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.skill.summoning.FamiliarOwnerIdentityTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.skill.summoning.FamiliarDismissalIdentityTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.skill.summoning.SummoningLevelGateTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.skill.summoning.SummoningObeliskTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "summary_sha256": "4685adbd367685f5904a621dfb3fe999440ea1fe8931a2cabd2b0cbed318bdc4",
+    "exit_code": 0
+  },
+  "fixture": {
+    "npc": "wolf_stronghold_of_security",
+    "created_at_configured_tile": [
+      1873,
+      5239
+    ],
+    "player_tile": [
+      1873,
+      5238
+    ],
+    "fatal_damage": "explicit native starting hitpoints through Character.hit",
+    "drop_roll": "controlled low roll after launching hit",
+    "cache_item_members": {
+      "gold_charm": true,
+      "wolf_bones": true
+    }
+  },
+  "observed": {
+    "members_inventory": {
+      "gold_charm": 1,
+      "wolf_bones": 1
+    },
+    "members_floor_ingredients_after_take": 0,
+    "nonmembers_floor_ingredients": 0,
+    "nonmembers_inventory_ingredients": 0,
+    "no_duplicates_after_further_ticks": true
+  },
+  "matched_build": {
+    "server_patches": 46,
+    "client_patches": 56,
+    "pins": {
+      "game-server": "9f9113559eb686abd917893b5dca16404be07f93",
+      "634-client": "b39d45f49a0480f3f200fe3e31ad0798faf163ab",
+      "runelite-client": "297bc8a4861755b676855664d32859054779c067"
+    },
+    "jars": {
+      "server": "9a873520a9b55f27fe30efdfbc41c77b1c2c15d982f03fd206b31710d6c87682",
+      "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+    },
+    "production_jar_bytes_unchanged_from_stack45": true
+  },
+  "source_export_files": {
+    "server": 93,
+    "client": 140
+  },
+  "limits": [
+    "Created NPC at configured tile; no loaded spawns/travel",
+    "Explicit fatal damage and drop roll, not combat balance or probability sampling",
+    "No earned coin/shop/infusion/summon journey",
+    "No graphical/physical controller or save/restoration/stopped-world loot persistence"
+  ]
+}
