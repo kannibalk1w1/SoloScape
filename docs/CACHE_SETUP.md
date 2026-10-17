@@ -93,3 +93,18 @@ the running local server.
 Verification: doctor passes; the pinned server reaches world readiness in 3561ms
 and runs save/shutdown hooks on SIGTERM. This establishes startup compatibility;
 client rendering and per-character save/restart still require manual acceptance.
+
+## Optional external cache directory
+
+Source launches still default to `upstream/game-server/data/cache`. Set
+`SOLOSCAPE_CACHE_HOME=/absolute/path/to/authorized-cache` in `config/local.env`
+to use an existing cache outside the code installation. Doctor and both owned
+launch paths use that directory. Empty/relative paths, files and a symbolic link
+at the selected directory are rejected; missing cache files fail doctor. Nothing
+is downloaded, moved or created there by the selector. Presence checks do not
+identify a revision.
+
+The server supplies data to the client; each profile retains its own writable
+client cache. Account storage, backups and build/recovery locks are unchanged.
+This is a shared-input path option, not an updater or a public package. See the
+[external-cache validation](CACHE_LOCATION_20261017.md).

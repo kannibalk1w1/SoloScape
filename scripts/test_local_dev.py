@@ -19,6 +19,7 @@ import time
 root = Path(os.environ["TEST_ROOT"])
 role = "server" if "void-server" in sys.argv[2] else "client"
 (root / (role + ".pid")).write_text(str(os.getpid()))
+(root / (role + ".cache")).write_text(os.environ.get("storage.cache.path", ""))
 def stop(*args):
     (root / (role + ".stopped")).write_text("graceful")
     if role == "server" and os.environ["TEST_CASE"] != "no-save-receipt":
@@ -118,6 +119,16 @@ except RuntimeError as e:
         self.assertEqual((self.root / "server.stopped").read_text(), "graceful")
         self.assertIn("--address 127.0.0.1 --port 43594", (self.root / "client.args").read_text())
         self.assertIn("Void loaded in 150ms", output)
+
+    def test_server_child_receives_external_cache_override(self):
+        cache = self.root / "external cache"
+        with patch.dict(os.environ, {"SOLOSCAPE_CACHE_HOME": str(cache),
+                                     "storage.cache.path": "/inherited/wrong/"}):
+            process = self.start("client-exit")
+        output = self.finish(process)
+        self.assertEqual(process.returncode, 3, output)
+        self.assertEqual((self.root / "server.cache").read_text(), str(cache) + "/")
+        self.assertFalse(cache.exists())
 
     def test_server_failure_never_starts_client(self):
         process = self.start("server-failure")
