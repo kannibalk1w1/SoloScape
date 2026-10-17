@@ -42,6 +42,7 @@ M6_SUITES = (
 SUMMONING_SUITES = (
     'content.area.asgarnia.taverley.PikkupstixTest',
     'content.skill.summoning.SummoningSupplyAcquisitionTest',
+    'content.skill.summoning.SummoningLootDeliveryTest',
     'content.skill.summoning.SoloSpiritWolfLifecycleTest',
     'content.skill.summoning.FamiliarOwnerIdentityTest',
     'content.skill.summoning.FamiliarDismissalIdentityTest',

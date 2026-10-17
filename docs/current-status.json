@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "c70733b3925aa48f2f54a525bd84d4426b86f8ac",
+  "reviewed_base": "191cb64",
   "entries": [
     {
       "id": "controls",
@@ -441,6 +441,22 @@
       "acceptance": "DEFERRED",
       "evidence": "RUNTIME_NOTICE_INVENTORY_20261017.md",
       "note": "55 server /24 client artifacts; 3 unattributed local jars; metadata only, M13-02 distribution review remains open"
+    },
+    {
+      "id": "summoning-loot-delivery",
+      "scope": "Native wolf death through queued loot publication and ingredient Take delivery",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "SUMMONING_LOOT_DELIVERY_20261017.md",
+      "note": "22 selected Summoning cases; controlled fatal damage/drop roll, members-only final item filter; earned route and physical input still open"
+    },
+    {
+      "id": "update-activation-lab",
+      "scope": "Original-fixture stopped-world activation lock, marker and code rollback lab",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "UPDATE_ACTIVATION_LAB_20261017.md",
+      "note": "14 lab cases pass; unsafe shared-lock control fails four assertions. No real installer/session registry/health check, native integration, power-loss proof or owner deployment."
     },
     {
       "id": "wasm-triangle",
