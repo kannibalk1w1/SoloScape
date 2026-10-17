@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "68f367c",
+  "reviewed_base": "0507ad4",
   "entries": [
     {
       "id": "controls",
@@ -297,6 +297,14 @@
       "acceptance": "DEFERRED",
       "evidence": "UPDATE_STAGING_LAB_20261017.md",
       "note": "24 staging cases and189 root cases (one optional skip); actual CLI stages exact dummy bytes and refuses replacement. No real package, download, activation, publisher authentication or power-loss durability proof."
+    },
+    {
+      "id": "familiar-dismissal-identity",
+      "scope": "Familiar dismissal clears binding and removes the NPC once",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "FAMILIAR_DISMISSAL_IDENTITY_20261017.md",
+      "note": "Two native red-before/green-after cases;52 targeted and20 selected Summoning cases pass. Forced NPC-slot reuse cannot alias an unrelated rat. Supplied materials; no earned journey or hardware acceptance."
     }
   ]
 }
