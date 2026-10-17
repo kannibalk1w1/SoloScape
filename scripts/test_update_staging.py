@@ -137,6 +137,46 @@ class StageTests(unittest.TestCase):
         self.assertNotIn('original launcher', (candidate / 'report.json').read_text())
         self.assertEqual(self.listing(), sorted([stage.LOCK_NAME, 'sentinel.txt', digest]))
 
+    def test_fifo_bundle_is_refused_without_waiting_for_a_writer(self):
+        os.mkfifo(self.bundle_path)
+        before = self.listing()
+        code = "import sys; sys.path.insert(0,sys.argv[1]); import stage;\ntry: stage.stage(sys.argv[2], '0'*64, sys.argv[3])\nexcept stage.StageError as exc: print(str(exc)); sys.exit(2)\n"
+        result = subprocess.run([sys.executable, '-I', '-c', code, str(Path(stage.__file__).parent),
+                                 str(self.bundle_path), str(self.lab)], capture_output=True, text=True, timeout=3)
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn('regular file', result.stdout)
+        self.assertEqual(self.listing(), before)
+        self.assertTrue(stat.S_ISFIFO(self.bundle_path.lstat().st_mode))
+        self.assertEqual((self.lab/'sentinel.txt').read_bytes(), b'unrelated sentinel')
+
+    def test_nonregular_staging_guard_is_refused_without_publishing(self):
+        bundle(self.bundle_path)
+        digest = self.sha_of(self.bundle_path)
+        lock = self.lab/stage.LOCK_NAME
+        for kind in ('fifo', 'directory', 'symlink'):
+            with self.subTest(kind=kind):
+                if lock.is_dir() and not lock.is_symlink():
+                    lock.rmdir()
+                else:
+                    lock.unlink()
+                if kind == 'fifo':
+                    os.mkfifo(lock)
+                elif kind == 'directory':
+                    lock.mkdir()
+                else:
+                    lock.symlink_to(self.lab/'sentinel.txt')
+                before = self.listing()
+                guard_before = lock.lstat()
+                with self.assertRaisesRegex(stage.StageError, 'guard.*regular file'):
+                    stage.stage(self.bundle_path, digest, self.lab)
+                self.assertEqual(self.listing(), before)
+                guard_after = lock.lstat()
+                self.assertEqual((guard_before.st_dev, guard_before.st_ino, guard_before.st_mode),
+                                 (guard_after.st_dev, guard_after.st_ino, guard_after.st_mode))
+                self.assertFalse((self.lab/digest).exists())
+                self.assertEqual(self.sha_of(self.bundle_path), digest)
+                self.assertEqual((self.lab/'sentinel.txt').read_bytes(), b'unrelated sentinel')
+
     def test_wrong_or_malformed_archive_digest_refuses_before_staging(self):
         bundle(self.bundle_path)
         self.refuse('does not match the expected digest', sha='0' * 64)
