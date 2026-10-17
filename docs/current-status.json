@@ -8,7 +8,7 @@
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "CONTROLLER_INTERACTION_ACCEPTANCE.md",
-      "note": "Owner happy with current general Deck testing on 17 October; individual activities/build not specified"
+      "note": "Owner reports Lumbridge to Wizards Tower playable without blockers on the current Deck build, 17 October; other activities and lifecycle boundaries remain unaccepted"
     },
     {
       "id": "corners",
@@ -72,7 +72,7 @@
       "delivery": "NOT IMPLEMENTED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "SOLO_CONTENT_AUDIT.md",
-      "note": "First audit batch: 273 cases; full working-content inventory and earned progression gaps remain"
+      "note": "First audit batch: 273 cases; targeted handler/save tests added for solo small-c1 entry/binding/exit and level-1 spirit wolf. Full floor completion and earned Summoning materials remain unproven"
     },
     {
       "id": "pause",
@@ -97,6 +97,22 @@
       "acceptance": "DEFERRED",
       "evidence": "WASM_RASTER_POC.md",
       "note": "JVM/browser hashes agree at two sizes; real-clock host measurements only"
+    },
+    {
+      "id": "solo-dungeon",
+      "scope": "Solo small-c1 floor-1 entry handlers, binding, leaving and logout save",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "DUNGEONEERING_TARGETED_PASS_20261017.md",
+      "note": "Direct registered entrance-handler fixture; packet entry, doors/boss/rewards and full floor remain unproven"
+    },
+    {
+      "id": "solo-summoning",
+      "scope": "Level-1 spirit wolf native infusion, summon, dismissal and fresh-player disk restore",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "SUMMONING_TARGETED_PASS_20261017.md",
+      "note": "Recipe materials supplied; same-JVM fresh-player restore, not server restart; controller and earned materials not exercised"
     }
   ]
 }

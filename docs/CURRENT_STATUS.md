@@ -17,7 +17,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
 | client | 54 | `0054-controller-precision-walking.patch` | `edbbcc303e2cb43d7622116de70639453586b10021b4c6dfd12d22a8cd65e7d1` |
-| server | 24 | `0024-controller-corner-running.patch` | `096e5d9b19cd45e54b3cfe1e1f562f1ead304a9bb8b7bb60935f5edfcabca916` |
+| server | 26 | `0026-targeted-solo-summoning.patch` | `62ff8d036f9e2f957a132a13b915aeb9f00c4f305c5774a73c8b1ebab2dce457` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
 
@@ -25,7 +25,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 
 | Capability / scope | Delivery | Acceptance | Evidence / limit |
 | --- | --- | --- | --- |
-| Controller/world/UI adapters, source targeting, quick slots, text ownership | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Owner happy with current general Deck testing on 17 October; individual activities/build not specified](CONTROLLER_INTERACTION_ACCEPTANCE.md) |
+| Controller/world/UI adapters, source targeting, quick slots, text ownership | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Owner reports Lumbridge to Wizards Tower playable without blockers on the current Deck build, 17 October; other activities and lifecycle boundaries remain unaccepted](CONTROLLER_INTERACTION_ACCEPTANCE.md) |
 | L-shaped direct running and RT precision walking | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Host regressions pass; new changes not yet deployed or accepted on Deck](CONTROLLER_CORNER_MOVEMENT.md) |
 | Native shop stock click-box metadata and buy/sell persistence | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [r30 real Deck hardware with scripted input; not human button acceptance](DECK_CONTROLLER_VALIDATION_20261014.md) |
 | Settings lifetime, B ancestry and exact save comparison | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Two strict reruns pass; earlier one-tile difference remains unexplained](DECK_CONTROLLER_VALIDATION_20261014.md) |
@@ -33,10 +33,12 @@ These are tracked source identities, not an installed-device inventory or proof 
 | Steam Gaming Mode route and loading-phase instrumentation | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [36-minute r29 average 59.04 FPS misses tails; r32 mixed-power ~30 FPS is diagnostic](DECK_STALL_DIAGNOSIS_20261014.md) |
 | Reliable suspend/resume, low-battery exit and reconnect campaign | NOT IMPLEMENTED | PHYSICAL ACCEPTANCE REQUIRED | [Campaign/policy incomplete; input-gap reset is not world pause](CONSOLE_SESSION_ACCEPTANCE.md) |
 | Representative early quests and production routes | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Partial coverage only; Druidic earned route partial, not all quests audited](CONTENT_COVERAGE.md) |
-| Complete M6 existing-content, Summoning/Dungeoneering and solo audit | NOT IMPLEMENTED | PHYSICAL ACCEPTANCE REQUIRED | [First audit batch: 273 cases; full working-content inventory and earned progression gaps remain](SOLO_CONTENT_AUDIT.md) |
+| Complete M6 existing-content, Summoning/Dungeoneering and solo audit | NOT IMPLEMENTED | PHYSICAL ACCEPTANCE REQUIRED | [First audit batch: 273 cases; targeted handler/save tests added for solo small-c1 entry/binding/exit and level-1 spirit wolf. Full floor completion and earned Summoning materials remain unproven](SOLO_CONTENT_AUDIT.md) |
 | True solo simulation pause | DEFERRED | DEFERRED | [Menus currently do not freeze the world](ROADMAP.md) |
 | Later-content compatibility runtime, AI/economy expansion and web port | NOT IMPLEMENTED | DEFERRED | [Research/planning does not implement gameplay or authorize a port](ROADMAP.md) |
 | Isolated WASM masked-edge kernel; no triangle/model/game client | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [JVM/browser hashes agree at two sizes; real-clock host measurements only](WASM_RASTER_POC.md) |
+| Solo small-c1 floor-1 entry handlers, binding, leaving and logout save | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Direct registered entrance-handler fixture; packet entry, doors/boss/rewards and full floor remain unproven](DUNGEONEERING_TARGETED_PASS_20261017.md) |
+| Level-1 spirit wolf native infusion, summon, dismissal and fresh-player disk restore | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Recipe materials supplied; same-JVM fresh-player restore, not server restart; controller and earned materials not exercised](SUMMONING_TARGETED_PASS_20261017.md) |
 
 ## Decisions and maintenance
 

@@ -1,0 +1,161 @@
+diff --git a/game/src/test/kotlin/content/skill/dungeoneering/SoloDungeonLifecycleTest.kt b/game/src/test/kotlin/content/skill/dungeoneering/SoloDungeonLifecycleTest.kt
+new file mode 100644
+index 0000000..de0627c
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/dungeoneering/SoloDungeonLifecycleTest.kt
+@@ -0,0 +1,155 @@
++package content.skill.dungeoneering
++
++import WorldTest
++import content.area.wilderness.daemonheim.DungeoneeringParty
++import content.area.wilderness.daemonheim.DungeoneeringParty.Companion.dungeonMembers
++import dialogueOption
++import itemOption
++import kotlinx.coroutines.CoroutineScope
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.launch
++import kotlinx.coroutines.runBlocking
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
++import world.gregs.voidps.engine.client.ui.dialogue
++import world.gregs.voidps.engine.data.PlayerSave
++import world.gregs.voidps.engine.data.Settings
++import world.gregs.voidps.engine.data.SaveQueue
++import world.gregs.voidps.engine.data.file.FileStorage
++import world.gregs.voidps.engine.get
++import world.gregs.voidps.engine.entity.Despawn
++import world.gregs.voidps.engine.entity.Operation
++import world.gregs.voidps.engine.entity.character.mode.interact.PlayerOnObjectInteract
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.Players
++import world.gregs.voidps.engine.entity.character.player.name
++import world.gregs.voidps.engine.entity.obj.GameObject
++import world.gregs.voidps.engine.entity.obj.GameObjects
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.equipment
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.type.Tile
++import java.io.File
++import java.nio.file.Files
++
++/**
++ * One normal-player solo small complexity-1 floor-1 lifecycle: the native entrance handler,
++ * starting supplies, one bind, leaving the dungeon and a save-file read, then a logout inside the dungeon.
++ *
++ * Fixtures and limits (recorded, not hidden):
++ * - The ring of kinship is added to the inventory; the tutor purchase is not exercised.
++ * - The player spawns beside the entrance; the walk is not exercised.
++ * - The entrance click is delivered by invoking the registered `Climb-down:daemonheim_dungeon_entrance`
++ *   native handler directly in an Unconfined coroutine. The `InteractObject` packet path does not reach
++ *   the handler in this harness (no dialogue after 12 ticks, while the direct call opens it).
++ * - The save is read back from the saved TOML file. This is not a second live login.
++ * - Not proven: combat, Icy Bones, keys and doors, the trapdoor completion, reward and XP.
++ */
++@EnabledIfEnvironmentVariable(named = "SOLOSCAPE_TEST_ROOT", matches = ".+")
++class SoloDungeonLifecycleTest : WorldTest() {
++
++    @Test
++    fun `solo entrance entry supplies a bound starting item and saves after leaving`() {
++        val player = enterSoloDungeon()
++        val dungeon = requireNotNull(player.get<DungeonMap>("dungeon")) { "Generation must not return null for solo small c1 floor 1" }
++
++        assertTrue(player["in_dungeoneering", false])
++        assertEquals("Small", player["dungeoneering_party_size", ""])
++        assertEquals(1, dungeon.playerCount)
++        assertEquals(dungeon.startTile(), player.tile)
++        assertEquals(1, player.equipment.count("ring_of_kinship"))
++        assertEquals(0, player.inventory.count("ring_of_kinship"))
++        assertTrue(player.inventory.count("air_rune_dungeoneering") in 86..165, "Starting air runes come from allocateGear")
++        val rapier = starterRapier(player)
++
++        player.itemOption("Option3", rapier)
++        tick()
++
++        assertEquals(0, player.inventory.count(rapier))
++        assertEquals(1, player.inventory.count("${rapier}_bound"))
++        assertEquals(1, player.inventories.inventory("dungeoneering_bound").count("${rapier}_bound"))
++
++        DungeoneeringParty.leave(player)
++        tick(5)
++
++        assertEquals(false, player["in_dungeoneering", false])
++        assertEquals(Tile(3460, 3721, 1), player.tile)
++        assertEquals(1, player.inventories.inventory("dungeoneering_bound").count("${rapier}_bound"))
++
++        val save = saveAndLoad(player)
++        assertEquals(Tile(3460, 3721, 1), save.tile)
++        assertTrue(save.inventories["dungeoneering_bound"]!!.any { it.id == "${rapier}_bound" }, "Bound item must persist in the saved bound inventory")
++    }
++
++    @Test
++    fun `logout inside a solo dungeon keeps the bound item and saves the castle tile`() {
++        val player = enterSoloDungeon()
++        assertTrue(player["in_dungeoneering", false])
++        val rapier = starterRapier(player)
++        player.itemOption("Option3", rapier)
++        tick()
++
++        // Same order as AccountManager.logout: Despawn.player, saveQueue.save takes its snapshot in that tick,
++        // then the player is removed from the world. persistence is enabled for this test only.
++        Settings.load(mapOf("storage.disabled" to "false"))
++        val saveQueue = get<SaveQueue>()
++        Despawn.player(player)
++        saveQueue.save(player)
++        Players.remove(player)
++        runBlocking { saveQueue.direct().join() }
++        tick(5)
++
++        assertEquals(false, player["in_dungeoneering", false])
++        assertEquals(1, player.inventories.inventory("dungeoneering_bound").count("${rapier}_bound"))
++
++        val save = PlayerSave.load(File(Settings["storage.players.path"]).resolve("${player.accountName.lowercase()}.toml"))
++        assertTrue(save.inventories["dungeoneering_bound"]!!.any { it.id == "${rapier}_bound" })
++        assertEquals(Tile(3460, 3721, 1), save.tile, "A logout inside the dungeon must not save an instance tile")
++    }
++
++    /**
++     * Entrance Climb-down twice: the first starts a party with the player as leader, the second generates
++     * and enters a solo small floor 1 dungeon. The party choice is answered with the normal dialogue helper.
++     */
++    private fun enterSoloDungeon(): Player {
++        val player = createPlayer(Tile(3456, 3723, 0))
++        player.inventory.add("ring_of_kinship")
++        val entrance = GameObjects.find(Tile(3455, 3723, 0), "daemonheim_dungeon_entrance")
++
++        clickEntrance(player, entrance)
++        tick(2)
++        assertTrue(player.dialogue == "dialogue_multi2", "Climb-down without a party must ask whether to start one")
++        player.dialogueOption(1)
++        tick(2)
++        assertTrue(DungeoneeringParty.inParty(player), "Choosing Yes must make the player party leader")
++        assertEquals(listOf(player.name), player.dungeonMembers.map { it.name })
++
++        clickEntrance(player, entrance)
++        tick(5)
++        return player
++    }
++
++    /** Runs the registered native Climb-down handler for the entrance; see the class doc for why the packet path is bypassed. */
++    private fun clickEntrance(player: Player, entrance: GameObject) {
++        val handlers = Operation.playerObject["Climb-down:daemonheim_dungeon_entrance"] ?: error("No native Climb-down handler registered for the Daemonheim entrance")
++        CoroutineScope(Dispatchers.Unconfined).launch {
++            for (handler in handlers) {
++                handler(player, PlayerOnObjectInteract(entrance, "Climb-down", player))
++            }
++        }
++    }
++
++    private fun starterRapier(player: Player): String = requireNotNull(player.inventory.items.firstOrNull { it.id.endsWith("_rapier") }) { "Complexity 1 starting supplies include a rapier" }.id
++
++    private fun saveAndLoad(player: Player): PlayerSave {
++        val dir = Files.createTempDirectory("soloscape-solo-dungeon-")
++        try {
++            runBlocking { SaveQueue(FileStorage(dir.toFile())).direct().join() }
++            return PlayerSave.load(dir.resolve("${player.accountName.lowercase()}.toml").toFile())
++        } finally {
++            dir.toFile().deleteRecursively()
++        }
++    }
++}
