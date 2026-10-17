@@ -267,30 +267,6 @@
       "note": "Six native encoder/three-reader cases, six malformed controls and deterministic fresh reports. High note references disagree; allocation, linked cache loading, asset conversion and gameplay remain blocked."
     },
     {
-<<<<<<< HEAD
-      "id": "wasm-triangle",
-      "scope": "Native flat-colour WASM triangle fill and original synthetic mesh; no full game scene",
-      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
-      "acceptance": "DEFERRED",
-      "evidence": "WASM_RENDERER_INVESTIGATION.md",
-      "note": "Six colour/depth hash comparisons independently reproduced; textures/model projection/UI remain unproven"
-    },
-    {
-      "id": "wasm-material",
-      "scope": "Isolated native shaded, Gouraud and textured WASM raster fills",
-      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
-      "acceptance": "DEFERRED",
-      "evidence": "WASM_MATERIAL_INVESTIGATION.md",
-      "note": "Ten synthetic scene/size cases and six palette/texel controls match native jar/JVM/WASM; texture-heavy cost is significant. Real model/texture decoding, projection, full scene and device performance unproven."
-    },
-    {
-      "id": "wasm-face",
-      "scope": "Isolated native model vertex projection, face selection and flat fill through TeaVM WasmGC",
-      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
-      "acceptance": "DEFERRED",
-      "evidence": "WASM_FACE_PROOF_20261017.md",
-      "note": "Ten original synthetic cases match native jar, extracted JVM and WASM, including back-face sensitivity and 18 independent rejection controls; real cache decoding, clipping, lighting and a playable browser client remain unproven. Draft PR27 stays separate from native main."
-=======
       "id": "familiar-kill-owner-session",
       "scope": "Familiar kill credit binds the original online player session",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
@@ -329,7 +305,30 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "FAMILIAR_DISMISSAL_IDENTITY_20261017.md",
       "note": "Two native red-before/green-after cases;52 targeted and20 selected Summoning cases pass. Forced NPC-slot reuse cannot alias an unrelated rat. Supplied materials; no earned journey or hardware acceptance."
->>>>>>> origin/main
+    },
+    {
+      "id": "wasm-triangle",
+      "scope": "Native flat-colour WASM triangle fill and original synthetic mesh; no full game scene",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_RENDERER_INVESTIGATION.md",
+      "note": "Six colour/depth hash comparisons independently reproduced; textures/model projection/UI remain unproven"
+    },
+    {
+      "id": "wasm-material",
+      "scope": "Isolated native shaded, Gouraud and textured WASM raster fills",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_MATERIAL_INVESTIGATION.md",
+      "note": "Ten synthetic scene/size cases and six palette/texel controls match native jar/JVM/WASM; texture-heavy cost is significant. Real model/texture decoding, projection, full scene and device performance unproven."
+    },
+    {
+      "id": "wasm-face",
+      "scope": "Isolated native model vertex projection, face selection and flat fill through TeaVM WasmGC",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_FACE_PROOF_20261017.md",
+      "note": "Ten original synthetic cases match native jar, extracted JVM and WASM, including back-face sensitivity and 18 independent rejection controls; real cache decoding, clipping, lighting and a playable browser client remain unproven. Draft PR27 stays separate from native main."
     }
   ]
 }
