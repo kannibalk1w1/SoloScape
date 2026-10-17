@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-18",
-  "reviewed_base": "f29c549",
+  "reviewed_base": "5aba982",
   "entries": [
     {
       "id": "controls",
@@ -295,8 +295,8 @@
       "scope": "Original-fixture verified update candidate staging lab",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "DEFERRED",
-      "evidence": "UPDATE_STAGING_LAB_20261017.md",
-      "note": "24 staging cases and189 root cases (one optional skip); actual CLI stages exact dummy bytes and refuses replacement. No real package, download, activation, publisher authentication or power-loss durability proof."
+      "evidence": "UPDATE_STAGING_SPECIAL_FILES_20261018.md",
+      "note": "26 staging cases and 278 root cases (one optional skip). FIFO archive and FIFO/directory/symlink guards now refuse without publication or input changes; prior exact dummy ZIP/CLI checks still pass. No production download/apply, real package, publisher authentication or power-loss proof."
     },
     {
       "id": "familiar-dismissal-identity",

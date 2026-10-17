@@ -41,7 +41,7 @@ class StageError(Exception):
 
 def _freeze(bundle_path, expected_sha256):
     """Read the bundle once with a hard bound, refuse if it changed while read, then check its digest."""
-    fd = os.open(bundle_path, os.O_RDONLY | os.O_NOFOLLOW)
+    fd = os.open(bundle_path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
         before = os.fstat(fd)
         if not stat.S_ISREG(before.st_mode) or before.st_size > MAX_ARCHIVE:
@@ -203,13 +203,17 @@ def stage(bundle_path, expected_archive_sha256, lab_root):
         raise StageError('lab root must be an existing real directory, not a symlink')
     data, archive_sha = _freeze(bundle_path, expected_archive_sha256)
     candidate = lab / archive_sha
-    lock = os.open(lab / LOCK_NAME, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     try:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
-        os.close(lock)
-        raise StageError('update lab is locked by another staging run') from None
+        lock = os.open(lab / LOCK_NAME, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+    except OSError as exc:
+        raise StageError('staging guard must be a readable regular file') from exc
     try:
+        if not stat.S_ISREG(os.fstat(lock).st_mode):
+            raise StageError('staging guard must be a regular file')
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise StageError('update lab is locked by another staging run') from None
         if os.path.lexists(candidate):
             raise StageError('candidate already exists for this archive')
         partial = Path(tempfile.mkdtemp(prefix='.partial-', dir=lab))
