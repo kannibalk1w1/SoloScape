@@ -19,8 +19,9 @@ import session_recovery
 def owned_environment(profile, port):
     # Dotted properties inherited from another launcher must not change ownership.
     environment = {key: value for key, value in os.environ.items()
-                   if '.' not in key and key != profiles.PROFILE_HOME_ENV}
+                   if '.' not in key and key not in (profiles.PROFILE_HOME_ENV, local_dev.CACHE_HOME_ENV)}
     environment.update(profile.environment(port))
+    environment["storage.cache.path"] = str(local_dev.cache_directory()) + "/"
     return environment
 
 
@@ -38,6 +39,7 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
     server_jar = local_dev.jar(local_dev.SERVER / 'game', 'void-server-*.jar')
     client_jar = local_dev.jar(local_dev.CLIENT / 'client', 'void-client-*.jar')
     local_dev.verify_build_stamp(server_jar, client_jar)
+    environment = owned_environment(profile, port)
     with profile.lock(descriptor=True) as profile_guard:
         # Children keep these same flock descriptions alive if the launcher dies.
         # Closing the parent's descriptors must not permit a live world to be
@@ -59,7 +61,6 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
         client_home = profile.directory / 'client-home'
         profiles.private_directory(client_home)
         record = session_recovery.begin(profile, port, server_jar, client_jar)
-        environment = owned_environment(profile, port)
         environment['SOLOSCAPE_SESSION_ID'] = record['session']
         server = client = None
         ready = False

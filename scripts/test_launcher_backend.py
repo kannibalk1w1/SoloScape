@@ -251,6 +251,14 @@ profile_session.run(profile,threading.Event(),lambda *args:None,checked=False)
         self.assertEqual(env['bots.count'],'0')
         self.assertEqual(env['TEST_ROOT'],str(self.root))
 
+    def test_invalid_cache_selector_stops_before_backup_session_record_or_child(self):
+        with patch.dict(os.environ, {local_dev.CACHE_HOME_ENV: 'relative/cache'}):
+            with self.assertRaisesRegex(ValueError, 'SOLOSCAPE_CACHE_HOME'):
+                profile_session.run(self.profile, threading.Event(), lambda *args: None, checked=False)
+        self.assertFalse((self.root / 'server.pid').exists())
+        self.assertFalse((self.profile.directory / 'session.json').exists())
+        self.assertEqual(list((self.profile.directory / 'backups').glob('*.zip')), [])
+
     def test_stdio_returns_exactly_one_json_response_per_request_and_hides_secrets(self):
         source=io.StringIO('not-json\n'+json.dumps({'id':1,'action':'list'})+'\n'+json.dumps({'id':2,'action':'create','label':'Other','account':'Other'})+'\n')
         destination=io.StringIO();launcher_backend.serve(source,destination)
