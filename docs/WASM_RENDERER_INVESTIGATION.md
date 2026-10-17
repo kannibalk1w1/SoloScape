@@ -2,7 +2,7 @@
 
 Status: **gate 1 and gate 2 pass for the flat-colour triangle fill; the rest of the model renderer is unproven.** The real native triangle fill from `Class109` compiles through TeaVM 0.16.0 WasmGC with a closure of **two methods plus the constructor**. An original single triangle and an original 2,180-triangle mesh produce identical colour and depth-buffer hashes on the native jar bytecode, the extracted source on the JVM, and WasmGC in headless Chromium at 765×503 and 1280×800.
 
-**UNPROVEN:** textured, Gouraud-shaded and wireframe triangles, vertex transform/projection, model decoding, animation, colour palette and any real model or scene. Code: [experiments/wasm-triangle](../experiments/wasm-triangle/README.md). Machine-readable result: [evidence/wasm-triangle-20261017.json](evidence/wasm-triangle-20261017.json). Earlier work: [WASM_RASTER_POC](WASM_RASTER_POC.md) (masked edges only), [WASM_SPIKE_PLAN](WASM_SPIKE_PLAN.md), [WASM_FEASIBILITY](WASM_FEASIBILITY.md).
+**Update 2026-10-17:** the shaded, Gouraud and textured fills (`method1022/1027/1024/1020`) now also pass at both sizes, see [WASM_MATERIAL_INVESTIGATION](WASM_MATERIAL_INVESTIGATION.md). **UNPROVEN:** wireframe triangles, vertex transform/projection, model decoding, animation, colour palette and any real model or scene. Code: [experiments/wasm-triangle](../experiments/wasm-triangle/README.md). Machine-readable result: [evidence/wasm-triangle-20261017.json](evidence/wasm-triangle-20261017.json). Earlier work: [WASM_RASTER_POC](WASM_RASTER_POC.md) (masked edges only), [WASM_SPIKE_PLAN](WASM_SPIKE_PLAN.md), [WASM_FEASIBILITY](WASM_FEASIBILITY.md).
 
 ![Original synthetic mesh, rendered by the native triangle fill in WasmGC at 1280×800; not a game scene](evidence/wasm-triangle-20261017-mesh.png)
 
@@ -120,9 +120,9 @@ Module payload: `triangle.wasm` 57,528 bytes raw, 25,859 gzip -9 (hash in the ev
 - 32-bit FNV hashes are not cryptographic; equal colour and depth hashes across three runtimes make a hidden difference unlikely, not impossible.
 - Host headless Chromium only, no display, real frame pacing, memory, cold-start, Deck or Chromebook measurement. No login, server, cache decoding or whole-client port was attempted.
 
-## Next step (not started)
+## Next step
 
-Audit `method1022/1027` (shaded) and the textured path closures from the same extractor, then the smallest face loop in `Class64_Sub1` that feeds `method1018` from projected vertices. Stop at the same boundary: a broad `Class64_Sub1` or `ha_Sub1` port is a different decision.
+The shaded and textured closures are audited and pass ([material report](WASM_MATERIAL_INVESTIGATION.md)). Next: the smallest face loop in `Class64_Sub1` that feeds `method1018` from projected vertices. Stop at the same boundary: a broad `Class64_Sub1` or `ha_Sub1` port is a different decision.
 
 ## Coordinator verification
 

@@ -1,0 +1,485 @@
+{
+  "schema": "soloscape.wasm-material.evidence/1",
+  "inputsSha256": {
+    "client_jar": "ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918",
+    "Class109.java": "058b9ffd636007796f75dd50f25a422e173e820f7dcee135b6b71989d874308a",
+    "Class167.java": "d76c65b840aaca9bf042581c68c6e5c4b5bcd037f00c19a72f82edacbd1a5975",
+    "ha_Sub1.java": "f3f01437c28ad160ca356311ab021d9d4cfbc4759cb367435f0209eba4b0bae7",
+    "ha.java": "f50efd45125feb64dfee81a3dcbe6b25324550b1a8d5701f6121d0b91a8d2a6b",
+    "Class64_Sub1.java": "e02518708ff51fc07c42e1f3fa587810c40c715948054c344b90484afda91398",
+    "s_Sub1.java": "3d19c1b424aa08723ec6d7c2db300e4c1fc763ee0d80eaa48b5d10c995f48219",
+    "Class6.java": "824995b61329c462d5c6a3a0f124130185d0ef910bc73e7035a6555cf8c1f77e",
+    "Class126.java": "32e88d03cc4d973f3c65d1b9fbd859ec9164a585887acba5f3921abedcd89a39",
+    "d.java": "2ed57c58a64871d7bfd4a78855e6710fb133011a815c6ea9ef2ab3e103bf5c49",
+    "Class12.java": "145c67a57064536c25a62a3eeec132acd2bc764a7c1ac7365edb072e93bb0332",
+    "ReferenceCache.java": "c8e50cc359f29eb878bf3c53d87af14e1bdb15097dde4d051c8bce2e196bdc10",
+    "Class348_Sub25.java": "30995a18101d2646a618ce99b74b7e96bfad8d19c52bc2ff3ad3e76e3b681791"
+  },
+  "toolchain": {
+    "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS",
+    "teavm": "0.16.0 (org.teavm plugin and teavm-jso)",
+    "outputSha256": {
+      "material.wasm": "0bb29e2e670a2b69cbe49b6ad35a07c5ecd1e26ef4b7c3d3fc6c5c1e4969e8ed",
+      "material.wasm-runtime.js": "4fa1e0e0d686cc6e0a0d111e606cb876f7168bd695d9e3d639e7d5684453089b"
+    },
+    "experimentSourceSha256": {
+      ".gitignore": "d7bfa9d1404f30876e789d8e89cedc0ad54d06c478d9a20cc60f16b06bd8bec4",
+      "build.gradle": "e671f8c7f5ce30371a8e268bfe8734b6317919637933746ec0dc65e92077d382",
+      "run.sh": "00cbada760e9b37d0c362846dd301299278a5d7791d516451c0a279c065f4f09",
+      "settings.gradle": "a51a9f81efbf69a52abe8bedac8f5ff5b5ee3e9a053604c594beff6cd6db2b8d",
+      "src/browser/java/MaterialProbe.java": "3b76ec024928783ab164bc8b8bef4b3f1d5d10c63c9855b2044044481690e8dd",
+      "src/jvm/java/NativeJar.java": "eb28430027ecde37bbf626df48d2d759dfa0ed6c3d95bc42454fc8bfa51847a2",
+      "src/jvm/java/VerbatimJvm.java": "cd668e9681497d2dd72957ec311fdcc1a45c9f6ec332de96cabbfc22b4f18628",
+      "src/shared/java/Bench.java": "4d07926787940fe61d9f479459af5271315f80646d6830ac72483dc7e445f8ec",
+      "src/shared/java/Fill.java": "54dc739f20ce2f6bda357bd8603b0ec7eb5f7671440e3f2f673212bd0b6ab053",
+      "src/shared/java/Scene.java": "0f2965ff10538ac0fdaa5579ad591f73386ce4a86790c9575eeb2fe6e7756538",
+      "src/shared/java/SynthAssets.java": "cb3b28f3bec31b0f8572a2f3dccc65adc95ce29d5f5b53987d8a77545c8ed3e6",
+      "src/shared/java/VerbatimFill.java": "71b9bd601ea7836e3a0262625fa9f42cb998a11a5af2013eed640ad7ef57176a",
+      "tools/browser_probe.mjs": "4a4ef0e4e38c58693355adb941b5eb113ae8b0b3124a3b584a1e4edbb0a899f1",
+      "tools/check_evidence.py": "e59b9ac95554df9d67f51bb3bc6854b1678989fbc55d8daf2d63067760284a61",
+      "tools/extract_material_closure.py": "a22e047998173b781913ff680919cf6e79baafd8ffc486a7c6073fb88b1afbe4",
+      "tools/serve_loopback.py": "1364485dccb7acbadab1d2cc2e1f66c3059902c546d695f1acf30d937a143fd6",
+      "web/index.html": "7fb3dc54e9f0ab809bb18c3df861aab212c592a7cf2d92e578381f516be57cd6"
+    },
+    "generatedSourceSha256": {
+      "Class109.java": "7757c6896ba546a6219778e1ef0178bd817839316248073fae6d9ad35d2d22c8",
+      "Class126.java": "ba8ec1c654e7d4e91ab5da874c81b40aa96297c9b6251efb9bbe358d8ac6ad12",
+      "Class167.java": "79eefb3ffabfdfc0afb87a192560e33eebc71d2910631204818bb53ac31f6c36",
+      "Class6.java": "f20668ac960711cf10ecfe91c5509f054e47399b5bc89f843d60fe88c544298f",
+      "ha_Sub1.java": "2521d76aceb4a2a1a6a7fabf050e0fcc52814d820c61d49fe9e803dafe5b624b"
+    },
+    "closure": {
+      "inputs_sha256": {
+        "Class109.java": "058b9ffd636007796f75dd50f25a422e173e820f7dcee135b6b71989d874308a",
+        "Class167.java": "d76c65b840aaca9bf042581c68c6e5c4b5bcd037f00c19a72f82edacbd1a5975",
+        "ha_Sub1.java": "f3f01437c28ad160ca356311ab021d9d4cfbc4759cb367435f0209eba4b0bae7",
+        "ha.java": "f50efd45125feb64dfee81a3dcbe6b25324550b1a8d5701f6121d0b91a8d2a6b",
+        "Class64_Sub1.java": "e02518708ff51fc07c42e1f3fa587810c40c715948054c344b90484afda91398",
+        "s_Sub1.java": "3d19c1b424aa08723ec6d7c2db300e4c1fc763ee0d80eaa48b5d10c995f48219",
+        "Class6.java": "824995b61329c462d5c6a3a0f124130185d0ef910bc73e7035a6555cf8c1f77e",
+        "Class126.java": "32e88d03cc4d973f3c65d1b9fbd859ec9164a585887acba5f3921abedcd89a39",
+        "d.java": "2ed57c58a64871d7bfd4a78855e6710fb133011a815c6ea9ef2ab3e103bf5c49",
+        "Class12.java": "145c67a57064536c25a62a3eeec132acd2bc764a7c1ac7365edb072e93bb0332"
+      },
+      "roots": [
+        "method1022",
+        "method1027",
+        "method1020",
+        "method1024"
+      ],
+      "extracted_methods": [
+        "method1016",
+        "method1019",
+        "method1020",
+        "method1021",
+        "method1022",
+        "method1024",
+        "method1025",
+        "method1027"
+      ],
+      "extracted_lines": 3868,
+      "class109_total_lines": 4467,
+      "native_methods_not_extracted": [
+        "method1017",
+        "method1018",
+        "method1023",
+        "method1026",
+        "method1028"
+      ],
+      "ha_Sub1_members_used": [
+        "aFloatArray7511",
+        "anInt7477",
+        "anInt7501",
+        "anIntArray7483",
+        "method3645",
+        "method3714",
+        "method3718",
+        "method3719",
+        "method3726",
+        "method3727"
+      ],
+      "class167_members_used": [
+        "aBoolean2202"
+      ],
+      "external_statics_used": [
+        "Class126.anIntArray4983",
+        "Class6.method206"
+      ],
+      "root_call_sites": {
+        "method1022": [
+          "Class64_Sub1.java:373",
+          "Class64_Sub1.java:1994",
+          "Class64_Sub1.java:2013",
+          "Class64_Sub1.java:2014",
+          "s_Sub1.java:1047",
+          "s_Sub1.java:1048",
+          "s_Sub1.java:1078",
+          "s_Sub1.java:1165",
+          "s_Sub1.java:1186",
+          "s_Sub1.java:1208",
+          "s_Sub1.java:1351",
+          "s_Sub1.java:1358",
+          "s_Sub1.java:1366",
+          "s_Sub1.java:1373",
+          "s_Sub1.java:1508",
+          "s_Sub1.java:1509",
+          "s_Sub1.java:1511",
+          "s_Sub1.java:1512",
+          "s_Sub1.java:1515",
+          "s_Sub1.java:1516",
+          "s_Sub1.java:1536",
+          "s_Sub1.java:1539",
+          "s_Sub1.java:1542"
+        ],
+        "method1024": [
+          "Class64_Sub1.java:379",
+          "Class64_Sub1.java:381",
+          "Class64_Sub1.java:2000",
+          "Class64_Sub1.java:2002",
+          "Class64_Sub1.java:2021",
+          "Class64_Sub1.java:2022",
+          "Class64_Sub1.java:2024",
+          "Class64_Sub1.java:2025",
+          "Class64_Sub1.java:2890",
+          "Class64_Sub1.java:2892",
+          "Class64_Sub1.java:2923",
+          "Class64_Sub1.java:2925",
+          "s_Sub1.java:599",
+          "s_Sub1.java:608",
+          "s_Sub1.java:638",
+          "s_Sub1.java:647",
+          "s_Sub1.java:879",
+          "s_Sub1.java:888",
+          "s_Sub1.java:905",
+          "s_Sub1.java:914",
+          "s_Sub1.java:932",
+          "s_Sub1.java:941",
+          "s_Sub1.java:958",
+          "s_Sub1.java:967",
+          "s_Sub1.java:1188",
+          "s_Sub1.java:1210",
+          "s_Sub1.java:1349",
+          "s_Sub1.java:1356",
+          "s_Sub1.java:1364",
+          "s_Sub1.java:1371",
+          "s_Sub1.java:1477"
+        ],
+        "method1027": [
+          "Class64_Sub1.java:2882",
+          "Class64_Sub1.java:2884",
+          "Class64_Sub1.java:2915",
+          "Class64_Sub1.java:2917",
+          "ha_Sub1.java:972",
+          "ha_Sub1.java:976",
+          "ha_Sub1.java:980",
+          "s_Sub1.java:573",
+          "s_Sub1.java:575",
+          "s_Sub1.java:602",
+          "s_Sub1.java:611",
+          "s_Sub1.java:641",
+          "s_Sub1.java:650",
+          "s_Sub1.java:882",
+          "s_Sub1.java:891",
+          "s_Sub1.java:908",
+          "s_Sub1.java:917",
+          "s_Sub1.java:935",
+          "s_Sub1.java:944",
+          "s_Sub1.java:961",
+          "s_Sub1.java:970",
+          "s_Sub1.java:1050",
+          "s_Sub1.java:1051",
+          "s_Sub1.java:1054",
+          "s_Sub1.java:1055",
+          "s_Sub1.java:1075",
+          "s_Sub1.java:1079",
+          "s_Sub1.java:1100",
+          "s_Sub1.java:1101"
+        ],
+        "method1020": [
+          "s_Sub1.java:1479"
+        ]
+      }
+    }
+  },
+  "runtime": "teavm-0.16.0-wasmgc",
+  "browser": {
+    "clock": "performance.now with real time; no virtual-time budget",
+    "browser": "Chromium 153.0.8010.52 Arch Linux",
+    "node": "v26.11.1",
+    "presentation": "headless Chromium software Canvas; host only"
+  },
+  "results": [
+    {
+      "scene": "shaded",
+      "size": "765x503",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 0,
+      "coveredPixels": 380049,
+      "distinctColours": 51013,
+      "colourFnv1a": "dd4fb87f",
+      "depthFnv1a": "9ada52e7",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 4.5,
+        "rasterMedianMs": 5.800000000745058,
+        "rasterP90Ms": 7.800000000745058,
+        "rasterMaxMs": 8.5
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 2.800000000745058,
+      "jvmVerbatimRasterMedianMs": 1.640014000236988,
+      "jvmNativeJarRasterMedianMs": 3.279059000313282
+    },
+    {
+      "scene": "gouraud",
+      "size": "765x503",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 0,
+      "coveredPixels": 380049,
+      "distinctColours": 51338,
+      "colourFnv1a": "81dcc01",
+      "depthFnv1a": "9ada52e7",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 7.400000000372529,
+        "rasterMedianMs": 10.400000000372529,
+        "rasterP90Ms": 16.59999999962747,
+        "rasterMaxMs": 34.600000001490116
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.0,
+      "jvmVerbatimRasterMedianMs": 1.6283500008285046,
+      "jvmNativeJarRasterMedianMs": 1.8007180001586676
+    },
+    {
+      "scene": "tex1",
+      "size": "765x503",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 98,
+      "coveredPixels": 377861,
+      "distinctColours": 59720,
+      "colourFnv1a": "4d9a14b2",
+      "depthFnv1a": "2797c522",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 23.600000001490116,
+        "rasterMedianMs": 25.90000000037253,
+        "rasterP90Ms": 30.299999998882413,
+        "rasterMaxMs": 33.0
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.0,
+      "jvmVerbatimRasterMedianMs": 7.386483000591397,
+      "jvmNativeJarRasterMedianMs": 7.991169000044465
+    },
+    {
+      "scene": "tex3",
+      "size": "765x503",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 98,
+      "coveredPixels": 380049,
+      "distinctColours": 165245,
+      "colourFnv1a": "2b9122d0",
+      "depthFnv1a": "290e90c",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 40.30000000074506,
+        "rasterMedianMs": 42.40000000037253,
+        "rasterP90Ms": 50.70000000111759,
+        "rasterMaxMs": 52.09999999962747
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 0.599999999627471,
+      "jvmVerbatimRasterMedianMs": 17.462456999346614,
+      "jvmNativeJarRasterMedianMs": 20.267868999391794
+    },
+    {
+      "scene": "mixed",
+      "size": "765x503",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 65,
+      "coveredPixels": 380049,
+      "distinctColours": 57744,
+      "colourFnv1a": "940b8970",
+      "depthFnv1a": "2fdbf9f6",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 5.399999998509884,
+        "rasterMedianMs": 5.599999999627471,
+        "rasterP90Ms": 6.0,
+        "rasterMaxMs": 6.099999999627471
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 0.6000000014901161,
+      "jvmVerbatimRasterMedianMs": 2.0538749992847443,
+      "jvmNativeJarRasterMedianMs": 2.1810159999877214
+    },
+    {
+      "scene": "shaded",
+      "size": "1280x800",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 0,
+      "coveredPixels": 1020698,
+      "distinctColours": 75145,
+      "colourFnv1a": "af7fae8c",
+      "depthFnv1a": "10f34170",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 6.699999999254942,
+        "rasterMedianMs": 7.099999999627471,
+        "rasterP90Ms": 7.399999998509884,
+        "rasterMaxMs": 7.400000000372529
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.700000001117587,
+      "jvmVerbatimRasterMedianMs": 4.287064999341965,
+      "jvmNativeJarRasterMedianMs": 4.442772001028061
+    },
+    {
+      "scene": "gouraud",
+      "size": "1280x800",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 0,
+      "coveredPixels": 1020698,
+      "distinctColours": 67751,
+      "colourFnv1a": "c0bf9201",
+      "depthFnv1a": "10f34170",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 7.599999999627471,
+        "rasterMedianMs": 7.900000000372529,
+        "rasterP90Ms": 8.199999999254942,
+        "rasterMaxMs": 9.099999999627471
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.599999999627471,
+      "jvmVerbatimRasterMedianMs": 4.357254000380635,
+      "jvmNativeJarRasterMedianMs": 4.849032999947667
+    },
+    {
+      "scene": "tex1",
+      "size": "1280x800",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 98,
+      "coveredPixels": 1012579,
+      "distinctColours": 74692,
+      "colourFnv1a": "9aadeea5",
+      "depthFnv1a": "c7117523",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 35.399999998509884,
+        "rasterMedianMs": 40.90000000037253,
+        "rasterP90Ms": 46.20000000111759,
+        "rasterMaxMs": 46.80000000074506
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.5,
+      "jvmVerbatimRasterMedianMs": 17.841901000589132,
+      "jvmNativeJarRasterMedianMs": 17.8332940004766
+    },
+    {
+      "scene": "tex3",
+      "size": "1280x800",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 98,
+      "coveredPixels": 1020697,
+      "distinctColours": 275992,
+      "colourFnv1a": "3bb354c7",
+      "depthFnv1a": "8f6ee621",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 75.90000000037253,
+        "rasterMedianMs": 82.0,
+        "rasterP90Ms": 92.19999999925494,
+        "rasterMaxMs": 94.80000000074506
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.299999998882413,
+      "jvmVerbatimRasterMedianMs": 42.756431998685,
+      "jvmNativeJarRasterMedianMs": 46.47058399952948
+    },
+    {
+      "scene": "mixed",
+      "size": "1280x800",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 65,
+      "coveredPixels": 1020698,
+      "distinctColours": 102130,
+      "colourFnv1a": "7cbc2928",
+      "depthFnv1a": "45b94a9b",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 11.0,
+        "rasterMedianMs": 11.099999999627471,
+        "rasterP90Ms": 11.900000000372529,
+        "rasterMaxMs": 13.099999999627471
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.300000000745058,
+      "jvmVerbatimRasterMedianMs": 5.484834000468254,
+      "jvmNativeJarRasterMedianMs": 6.204032000154257
+    }
+  ],
+  "negativeControls": [
+    {
+      "control": "shaded-palette-control",
+      "size": "765x503",
+      "baseScene": "shaded",
+      "referenceFnv1a": "dd4fb87f",
+      "variantFnv1a": "f855511d",
+      "match": "native-jar == jvm-verbatim == wasmgc, and differs from the reference"
+    },
+    {
+      "control": "tex1-texel-control",
+      "size": "765x503",
+      "baseScene": "tex1",
+      "referenceFnv1a": "4d9a14b2",
+      "variantFnv1a": "a9fb8636",
+      "match": "native-jar == jvm-verbatim == wasmgc, and differs from the reference"
+    },
+    {
+      "control": "tex3-texel-control",
+      "size": "765x503",
+      "baseScene": "tex3",
+      "referenceFnv1a": "2b9122d0",
+      "variantFnv1a": "bfadf2a",
+      "match": "native-jar == jvm-verbatim == wasmgc, and differs from the reference"
+    },
+    {
+      "control": "shaded-palette-control",
+      "size": "1280x800",
+      "baseScene": "shaded",
+      "referenceFnv1a": "af7fae8c",
+      "variantFnv1a": "3bb70561",
+      "match": "native-jar == jvm-verbatim == wasmgc, and differs from the reference"
+    },
+    {
+      "control": "tex1-texel-control",
+      "size": "1280x800",
+      "baseScene": "tex1",
+      "referenceFnv1a": "9aadeea5",
+      "variantFnv1a": "40146e52",
+      "match": "native-jar == jvm-verbatim == wasmgc, and differs from the reference"
+    },
+    {
+      "control": "tex3-texel-control",
+      "size": "1280x800",
+      "baseScene": "tex3",
+      "referenceFnv1a": "3bb354c7",
+      "variantFnv1a": "cb5adbd3",
+      "match": "native-jar == jvm-verbatim == wasmgc, and differs from the reference"
+    }
+  ],
+  "presentation": [
+    {
+      "size": "765x503",
+      "presentedFnv1a": "3d66b7ce",
+      "canvasReadbackFnv1a": "3d66b7ce"
+    },
+    {
+      "size": "1280x800",
+      "presentedFnv1a": "4501f209",
+      "canvasReadbackFnv1a": "4501f209"
+    }
+  ]
+}
