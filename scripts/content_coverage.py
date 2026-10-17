@@ -81,6 +81,7 @@ def main():
         'm6': M6_SUITES,
         'summoning': SUMMONING_SUITES,
         'slayer': (
+            'content.skill.slayer.SlayerBlockedTaskTest',
             'content.skill.slayer.SlayerKillOwnershipTest',
             'content.skill.slayer.SlayerTaskTest',
             'content.skill.slayer.SlayerMasterTest',

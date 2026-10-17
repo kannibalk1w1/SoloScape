@@ -17,7 +17,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
 | client | 56 | `0056-external-launcher-home.patch` | `60fa4f727ababa7d532ac495c62055ed38cbd83c07abc70c66a068cf24c7bc5a` |
-| server | 51 | `0051-gravestone-degrade-phase-and-expiry.patch` | `6e13d594f14f6eb3c1df5e36a687ee8030facb6bc7de97a714907afb653dfc6e` |
+| server | 52 | `0052-honor-slayer-task-blocks.patch` | `aecbb89e5a7c235e285f1122f79f2cf5ddb3e9becb83a23aa815640bb3b174bb` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
 

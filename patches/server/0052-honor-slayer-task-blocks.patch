@@ -1,0 +1,167 @@
+diff --git a/game/src/main/kotlin/content/skill/slayer/Slayer.kt b/game/src/main/kotlin/content/skill/slayer/Slayer.kt
+--- a/game/src/main/kotlin/content/skill/slayer/Slayer.kt
++++ b/game/src/main/kotlin/content/skill/slayer/Slayer.kt
+@@ -113,6 +113,9 @@
+ 
+ private fun hasRequirements(player: Player, table: TableDefinition, row: Int): Boolean {
+     val category = Rows.get(row).rowId
++    if ((0 until 5).any { player["blocked_task_$it", ""] == category }) {
++        return false
++    }
+     // A master listing a task with no matching slayer_tasks entry shouldn't crash the whole
+     // assignment - skip it so the other tasks can still be rolled.
+     val npc = Tables.intOrNull("slayer_tasks.$category.npc") ?: return false
+diff --git a/data/skill/slayer/slayer.vars.toml b/data/skill/slayer/slayer.vars.toml
+--- a/data/skill/slayer/slayer.vars.toml
++++ b/data/skill/slayer/slayer.vars.toml
+@@ -41,3 +41,23 @@
+ [strike_wyrms]
+ persist = true
+ format = "boolean"
++
++[blocked_task_0]
++persist = true
++format = "string"
++
++[blocked_task_1]
++persist = true
++format = "string"
++
++[blocked_task_2]
++persist = true
++format = "string"
++
++[blocked_task_3]
++persist = true
++format = "string"
++
++[blocked_task_4]
++persist = true
++format = "string"
+diff --git a/game/src/test/kotlin/content/skill/slayer/SlayerBlockedTaskTest.kt b/game/src/test/kotlin/content/skill/slayer/SlayerBlockedTaskTest.kt
+new file mode 100644
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/slayer/SlayerBlockedTaskTest.kt
+@@ -0,0 +1,122 @@
++package content.skill.slayer
++
++import FakeRandom
++import WorldTest
++import interfaceOption
++import org.junit.jupiter.api.DynamicTest.dynamicTest
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.TestFactory
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
++import world.gregs.voidps.engine.client.ui.open
++import kotlinx.coroutines.runBlocking
++import world.gregs.voidps.engine.data.SaveQueue
++import world.gregs.voidps.engine.data.PlayerSave
++import world.gregs.voidps.engine.data.definition.InterfaceDefinitions
++import world.gregs.voidps.engine.data.file.FileStorage
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.entity.character.player.skill.level.Level
++import world.gregs.voidps.type.Tile
++import world.gregs.voidps.type.setRandom
++import java.nio.file.Files
++import java.nio.file.Path
++import kotlin.test.assertEquals
++import kotlin.test.assertNotEquals
++import kotlin.test.assertTrue
++
++/** Supplied levels, task and points; real cache tables/interface validation and native disk save. */
++@EnabledIfEnvironmentVariable(named = "SOLOSCAPE_TEST_ROOT", matches = ".+")
++class SlayerBlockedTaskTest : WorldTest() {
++    @TestFactory
++    fun `Each existing block slot excludes its task from weighted assignment`() = (0 until 5).map { slot ->
++        dynamicTest("blocked slot $slot") {
++            val player = suppliedPlayer("blocked$slot")
++            player["blocked_task_$slot"] = "banshees"
++            val fresh = saveAndLoad(player)
++            assertEquals("banshees", fresh["blocked_task_$slot", ""], "Each block slot must survive disk load")
++            setRandom(FakeRandom()) // Without the exclusion, the first eligible Mazchna row is banshees.
++            val (task, amount) = assignTask(fresh, "mazchna")
++            assertNotEquals("banshees", task)
++            assertTrue(amount > 0)
++            assertEquals(task, fresh.slayerTask)
++            assertEquals(amount, fresh.slayerTaskRemaining)
++            assertEquals("banshees", player["blocked_task_$slot", ""])
++        }
++    }
++
++    @Test
++    fun `A block belongs to its account and does not remove the task from other players`() {
++        val blocked = suppliedPlayer("blockowner")
++        val other = suppliedPlayer("blockother")
++        blocked["blocked_task_4"] = "banshees"
++        setRandom(FakeRandom())
++        assertNotEquals("banshees", assignTask(blocked, "mazchna").first)
++        setRandom(FakeRandom())
++        assertEquals("banshees", assignTask(other, "mazchna").first)
++    }
++
++    @Test
++    fun `Paying for a permanent block excludes the task after a native disk load`() {
++        val player = suppliedPlayer("blockbuyer")
++        player.slayerTask = "banshees"
++        player.slayerTaskRemaining = 11
++        player.slayerMaster = "mazchna"
++        player.slayerPoints = 150
++        player.open("slayer_rewards_assignment")
++        blockCurrentTask(player)
++        assertEquals(50, player.slayerPoints)
++        assertEquals("nothing", player.slayerTask)
++        assertEquals("banshees", player["blocked_task_0", ""])
++        val fresh = saveAndLoad(player)
++        assertEquals("banshees", fresh["blocked_task_0", ""])
++        assertEquals(50, fresh.slayerPoints)
++        setRandom(FakeRandom())
++        assertNotEquals("banshees", assignTask(fresh, "mazchna").first)
++        assertEquals(50, fresh.slayerPoints, "Rolling the next task must not charge again")
++    }
++
++    @Test
++    fun `A refused purchase leaves the task available and points unchanged`() {
++        val player = suppliedPlayer("blockpoor")
++        player.slayerTask = "banshees"
++        player.slayerTaskRemaining = 11
++        player.slayerPoints = 99
++        player.open("slayer_rewards_assignment")
++        blockCurrentTask(player)
++        assertEquals(99, player.slayerPoints)
++        assertEquals("banshees", player.slayerTask)
++        assertEquals(11, player.slayerTaskRemaining)
++        assertTrue((0 until 5).none { player.contains("blocked_task_$it") })
++        setRandom(FakeRandom())
++        assertEquals("banshees", assignTask(player, "mazchna").first)
++    }
++
++    private fun saveAndLoad(player: Player): Player {
++        val dir = Files.createTempDirectory(Path.of(System.getenv("SOLOSCAPE_TEST_ROOT")), "slayer-block-")
++        try {
++            val storage = FileStorage(dir.toFile())
++            var primarySaved = false
++            runBlocking { SaveQueue(storage, storage).direct { primarySaved = it }.join() }
++            assertTrue(primarySaved, "The real primary save must succeed")
++            return PlayerSave.load(dir.resolve("${player.accountName.lowercase()}.toml").toFile()).toPlayer()
++        } finally {
++            dir.toFile().deleteRecursively()
++        }
++    }
++
++    private fun blockCurrentTask(player: Player) {
++        val definition = InterfaceDefinitions.getComponent("slayer_rewards_assignment", "block_text")!!
++        val option = definition.options!!.filterNotNull().first { it.startsWith("Permanently") }
++        player.interfaceOption("slayer_rewards_assignment", "block_text", option)
++    }
++
++    private fun suppliedPlayer(name: String): Player {
++        val player = createPlayer(Tile(3200, 3200), name)
++        for (skill in Skill.entries) {
++            val level = skill.maximum()
++            player.levels.set(skill, level)
++            player.experience.set(skill, Level.experience(skill, level))
++        }
++        return player
++    }
++}
