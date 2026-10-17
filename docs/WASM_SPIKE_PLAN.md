@@ -1,6 +1,10 @@
 # Smallest useful next WASM spike
 
-Status: **flat-colour triangle, shaded/Gouraud/textured fill and original synthetic mesh gates passed; full model/scene gate unproven**. See the [material fill investigation](WASM_MATERIAL_INVESTIGATION.md). See the [actual triangle investigation](WASM_RENDERER_INVESTIGATION.md). See the [reviewed result](WASM_RASTER_POC.md). The remaining full-raster closure is a later gate. The compiler sanity/kernel and negative native-presenter tests are recorded in [feasibility](WASM_FEASIBILITY.md) and [the reproducible experiment](../experiments/wasm-kernel/README.md). They do not enable a browser game. Keep this track separate from the native release.
+Status: **flat-colour triangle, shaded/Gouraud/textured fill, original synthetic mesh and flat-face projection/culling gates passed; full model/scene gate unproven**. See the [material fill investigation](WASM_MATERIAL_INVESTIGATION.md). See the [actual triangle investigation](WASM_RENDERER_INVESTIGATION.md). See the [reviewed result](WASM_RASTER_POC.md). The remaining full-raster closure is a later gate. The compiler sanity/kernel and negative native-presenter tests are recorded in [feasibility](WASM_FEASIBILITY.md) and [the reproducible experiment](../experiments/wasm-kernel/README.md). They do not enable a browser game. Keep this track separate from the native release.
+
+## Current next gate — 17 October 2026
+
+The [flat-face proof](WASM_FACE_PROOF_20261017.md) now compares native projection/culling and flat fill across the native jar, extracted JVM and WasmGC on original synthetic geometry. Its published scope requires every vertex in front of the near plane. The [reviewed clipping audit](WASM_CLIPPING_SPIKE_AUDIT_20261017.md) proposes the next small boundary: flat near-plane clipping, camera-space facing and independent sensitivity controls. That extension is not implemented or measured. Do not jump directly to cache/model imports or a browser client. The original gate design below remains context, not a claim that later gates passed.
 
 ## Decision and uncertainty
 
