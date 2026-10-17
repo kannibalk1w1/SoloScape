@@ -95,7 +95,7 @@ TeaVM WasmGC, headless Chromium 153, Intel i7-14700HX, software canvas, uncontro
 | tex3 | 1280x800 | 83.2 / 82.0 / 83.6 | 45.2 | 46.9 |
 | mixed | 1280x800 | 10.0 / 11.1 / 10.4 | 5.7 | 6.0 |
 
-Reading (the run-1 vs run-3 spread shows the contamination): WasmGC is roughly 1.5–3× slower than warm HotSpot on the textured fills in these runs and about equal on shaded/Gouraud at 1280×800 in run 1. The cause was not investigated. The scenes cover about 98% of the frame with 980 triangles, so `tex1` at 1280×800 (about 33–43 ms) and especially the three-layer `tex3` (about 80 ms) are heavy-fill figures on a desktop CPU, **over a 16.7 ms frame budget when a frame is full-screen textured (valuable negative performance evidence, not a reason to widen scope)**; typical scenes cover less and mix fill kinds (`mixed`: 10–11 ms). This says nothing about a real scene, Deck or Chromebook. Module payload: `material.wasm` 107,234 bytes raw, 39,826 gzip -9; TeaVM runtime JS 17,268 bytes.
+Reading (the run-1 vs run-3 spread shows the contamination): WasmGC is roughly 1.5–3× slower than warm HotSpot on the textured fills in these runs and about equal on shaded/Gouraud at 1280×800 in run 1. The cause was not investigated. The scenes cover about 98% of the frame with 980 triangles, so `tex1` at 1280×800 (about 33–43 ms) and especially the three-layer `tex3` (about 80 ms) are heavy-fill figures on a desktop CPU, **over a 16.7 ms frame budget when a frame is full-screen textured (valuable negative performance evidence, not a reason to widen scope)**; the synthetic mixed workload has a different cost (`mixed`: 10–11 ms). Real-scene coverage, overdraw and the mix of fill kinds have not been measured. This says nothing about a real scene, Deck or Chromebook. Module payload: `material.wasm` 107,234 bytes raw, 39,826 gzip -9; TeaVM runtime JS 17,268 bytes.
 
 ## Gates
 
@@ -119,3 +119,7 @@ Reading (the run-1 vs run-3 spread shows the contamination): WasmGC is roughly 1
 ## Next step (not started)
 
 Audit the smallest face loop that feeds these fills from projected vertices (`Class64_Sub1` model path) and decide whether that boundary is small or pulls in the whole model class; stop there. A broad `Class64_Sub1`/`ha_Sub1` port is a different decision.
+
+## Coordinator verification
+
+An independent clean wrapper run reproduced all ten scene/size comparisons and six palette/texel controls after the native test process had exited. [Coordinator evidence](evidence/wasm-material-20261017-coordinator.json) records the final source/toolchain digests and timings. Missing browser files, altered hashes, duplicate cases, zero/NaN timings, flat-colour substitution and unchanged palette/texel controls were rejected. The checker now validates timings for all three runtimes and rejects unexpected case identities. Class6’s generated helper preserves its source header. Presentation is checked by Canvas readback but is not timed by this probe.

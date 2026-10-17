@@ -133,6 +133,7 @@ def main():
         banner.format(file="Class109.java", sha=digests["Class109.java"]) + text, encoding="utf-8")
     (args.out / "Class6.java").write_text(
         banner.format(file="Class6.java (method206 only)", sha=digests["Class6.java"])
+        + "".join(c6[:next(i for i, line in enumerate(c6) if re.search(r"\bclass Class6\b", line))])
         + f"final class Class6 {{\n    static {declared_type(read('Class6.java'), c6_field)} {c6_field};\n\n" + m206 + "}\n",
         encoding="utf-8")
     (args.out / "Class126.java").write_text(

@@ -90,6 +90,15 @@ def main():
         for runtime in (browser_controls, native, verbatim):
             runtime[("tex1-texel-control", "765x503")]["fnv1a"] = browser[("tex1", "765x503")]["fnv1a"]
 
+    expected_cases = {(scene, size) for scene in SCENES for size in SIZES}
+    expected_controls = {(control, size) for control in CONTROLS for size in SIZES}
+    for label, actual, expected in (("native", set(native), expected_cases | expected_controls),
+                                     ("verbatim", set(verbatim), expected_cases | expected_controls),
+                                     ("browser", set(browser), expected_cases),
+                                     ("browser controls", set(browser_controls), expected_controls)):
+        if actual != expected:
+            raise SystemExit(f"{label}: unexpected/missing case identities: {actual ^ expected}")
+
     results = []
     for size in SIZES:
         for scene in SCENES:
@@ -113,14 +122,15 @@ def main():
                 n = rows[key]["samples"]
                 if not isinstance(n, int) or n != EXPECTED_SAMPLES:
                     raise SystemExit(f"{name} {scene} {size}: sample count {n!r} != {EXPECTED_SAMPLES}")
-            if not b["rasterMinMs"] <= b["rasterMedianMs"] <= b["rasterP90Ms"] <= b["rasterMaxMs"]:
-                raise SystemExit(f"browser {scene} {size}: timing statistics are not ordered")
-            for field in TIMING_FIELDS + ("clearMedianMs",):
-                value = b[field]
-                # The clear can fall under Chromium's 0.1 ms timer step; raster work must be measurable.
-                floor = 0 if field == "clearMedianMs" else 1e-9
-                if not isinstance(value, (int, float)) or not math.isfinite(value) or value < floor:
-                    raise SystemExit(f"browser {scene} {size}: invalid {field} ({value})")
+            for name, rows in (("jvm-native", native), ("jvm-verbatim", verbatim), ("browser", browser)):
+                measured = rows[key]
+                for field in TIMING_FIELDS + ("clearMedianMs",):
+                    value = measured[field]
+                    floor = 0 if field == "clearMedianMs" else 1e-9
+                    if not isinstance(value, (int, float)) or not math.isfinite(value) or value < floor:
+                        raise SystemExit(f"{name} {scene} {size}: invalid {field} ({value})")
+                if not measured["rasterMinMs"] <= measured["rasterMedianMs"] <= measured["rasterP90Ms"] <= measured["rasterMaxMs"]:
+                    raise SystemExit(f"{name} {scene} {size}: timing statistics are not ordered")
             results.append({
                 "scene": scene, "size": size, "triangles": ref["triangles"],
                 "nullTextureFallbackTriangles": ref["fallbackTriangles"], "coveredPixels": ref["covered"],

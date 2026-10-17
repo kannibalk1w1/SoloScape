@@ -121,6 +121,14 @@
       "acceptance": "DEFERRED",
       "evidence": "WASM_RENDERER_INVESTIGATION.md",
       "note": "Six colour/depth hash comparisons independently reproduced; textures/model projection/UI remain unproven"
+    },
+    {
+      "id": "wasm-material",
+      "scope": "Isolated native shaded, Gouraud and textured WASM raster fills",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_MATERIAL_INVESTIGATION.md",
+      "note": "Ten synthetic scene/size cases and six palette/texel controls match native jar/JVM/WASM; texture-heavy cost is significant. Real model/texture decoding, projection, full scene and device performance unproven."
     }
   ]
 }

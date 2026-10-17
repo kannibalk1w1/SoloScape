@@ -1,6 +1,6 @@
 /**
  * Real-clock timing. "raster" is only the triangle submissions; buffer clear and context binding are
- * reported separately and presentation is measured by the host.
+ * reported separately. Presentation is verified but not timed in this probe; see wasm-raster TransferProbe.
  */
 final class Bench {
     interface Clock {

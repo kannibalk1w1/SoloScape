@@ -40,6 +40,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 | Solo small-c1 floor-1 entry handlers, binding, leaving and logout save | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Direct registered entrance-handler fixture; packet entry, doors/boss/rewards and full floor remain unproven](DUNGEONEERING_TARGETED_PASS_20261017.md) |
 | Level-1 spirit wolf native infusion, summon, dismissal and fresh-player disk restore | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Recipe materials supplied; same-JVM fresh-player restore, not server restart; controller and earned materials not exercised](SUMMONING_TARGETED_PASS_20261017.md) |
 | Native flat-colour WASM triangle fill and original synthetic mesh; no full game scene | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [Six colour/depth hash comparisons independently reproduced; textures/model projection/UI remain unproven](WASM_RENDERER_INVESTIGATION.md) |
+| Isolated native shaded, Gouraud and textured WASM raster fills | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [Ten synthetic scene/size cases and six palette/texel controls match native jar/JVM/WASM; texture-heavy cost is significant. Real model/texture decoding, projection, full scene and device performance unproven.](WASM_MATERIAL_INVESTIGATION.md) |
 
 ## Decisions and maintenance
 
