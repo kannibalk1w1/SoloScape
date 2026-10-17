@@ -65,12 +65,16 @@ def read_results(report_directory, suites, archive):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--group', choices=('early', 'm6', 'journeys', 'summoning', 'capacity', 'dungeon'), default='early')
+    parser.add_argument('--group', choices=('early', 'm6', 'journeys', 'summoning', 'capacity', 'dungeon', 'death'), default='early')
     options = parser.parse_args()
     suites = {
         'early': SUITES,
         'm6': M6_SUITES,
         'summoning': SUMMONING_SUITES,
+        'death': (
+            'content.area.misthalin.lumbridge.church.DeathLootRecoveryTest',
+            'content.area.misthalin.lumbridge.church.GravestonesTest',
+        ),
         'dungeon': (
             'content.skill.dungeoneering.DungeonRoomCoordinateTest',
             'content.skill.dungeoneering.DungeonGenerationWorldTest',
