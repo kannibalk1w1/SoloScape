@@ -43,6 +43,7 @@ SUMMONING_SUITES = (
     'content.area.asgarnia.taverley.PikkupstixTest',
     'content.skill.summoning.SummoningSupplyAcquisitionTest',
     'content.skill.summoning.SoloSpiritWolfLifecycleTest',
+    'content.skill.summoning.FamiliarOwnerIdentityTest',
     'content.skill.summoning.SummoningLevelGateTest',
     'content.skill.summoning.SummoningObeliskTest',
 )
