@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-17",
+  "source_commit": "dcd4b7a38f91df90e34091c8fe8b57fe7a741247",
+  "patch_count": {
+    "server": 46,
+    "client": 56
+  },
+  "snapshot_entries_verified": 10853,
+  "private_export_relative": ".runtime/deck-exports/1792270751691129262",
+  "manifest_sha256": "580c2dc0011bdb51d46002f856b46feaf458b85a0d207f4fa22e9fa29fdcae04",
+  "stamp_sha256": "d57c89848f6729b18e67ecbb50f420fa7de40869888d74659c6785b63bcf43c1",
+  "jars": {
+    "server": "9a873520a9b55f27fe30efdfbc41c77b1c2c15d982f03fd206b31710d6c87682",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+  },
+  "native_new_continue": {
+    "new_session_seconds": 23.338,
+    "continue_session_seconds": 24.144,
+    "native_save_failure": null,
+    "native_startup_cancel_preserved": true,
+    "original_mutable_paths_unchanged": true,
+    "session_environment": {
+      "XDG_SESSION_DESKTOP": "KDE",
+      "XDG_CURRENT_DESKTOP": "KDE",
+      "DISPLAY": ":1",
+      "SteamAppId": null,
+      "SteamGameId": null
+    },
+    "adventure": [],
+    "text_focused": false,
+    "playable_journey": false,
+    "playtest_two": false,
+    "fullscreen_probe": false,
+    "fullscreen_renderers": null,
+    "sidebar_probe": false,
+    "sidebar_baseline": false,
+    "display": "private-xvfb",
+    "precondition": "Owned private display.",
+    "screenshots": "Private evidence only; desktop overlays may appear or Wayland capture may be unavailable. Review before publishing.",
+    "note": "Native session totals and overlay-render intervals; not physical controller or Gaming Mode acceptance."
+  },
+  "ingame_quit": {
+    "first_press_blocked": true,
+    "confirmed_quit_requested": true
+  },
+  "backups_validated": 5,
+  "sampled_resources": {
+    "new": {
+      "sample_count": 45,
+      "peak_rss_kib": {
+        "server": 1486340,
+        "client": 1298836
+      },
+      "peak_combined_rss_kib": 2775440
+    },
+    "continue": {
+      "sample_count": 46,
+      "peak_rss_kib": {
+        "server": 1315956,
+        "client": 1556232
+      },
+      "peak_combined_rss_kib": 2872188
+    }
+  },
+  "screenshot": {
+    "path": "docs/images/native-test-build-20261017.png",
+    "size": [
+      892,
+      529
+    ],
+    "sha256": "11fc8fd373e016efa3c3419eea7fa26f59c00e53fbbefb5633109aa03aaba89b"
+  },
+  "limits": [
+    "private source-build snapshot, not public redistribution package",
+    "Xvfb/software, audio disabled, instrumented native session harness",
+    "no physical controller, Gaming Mode, FPS or suspend acceptance",
+    "owner Deck installation and save transfer held",
+    "grave/floor persistence still open",
+    "build does not include draft WASM or experimental token"
+  ]
+}

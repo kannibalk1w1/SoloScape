@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "status": "disposable-cache-format-proof",
+  "semantic_key": "lab_token",
+  "origin": "Original synthetic definition authored for this lab. No upstream definition bytes, names or assets are copied.",
+  "target": {
+    "kind": "item",
+    "index": 19,
+    "archive": 78,
+    "file": 211,
+    "id": 20179,
+    "ceiling_exclusive": 32768
+  },
+  "definition": {
+    "name": "SoloScape Lab token",
+    "cost": 37,
+    "stackable": 1,
+    "opcodes": [2, 11, 12, 0],
+    "note_link": null,
+    "lend_link": null,
+    "stack_variants": null,
+    "wearable": false,
+    "animations": null,
+    "model": "model0 numeric default; no model is loaded or claimed"
+  },
+  "dependencies": [],
+  "appearance_proof": false,
+  "enabled_in_production": false,
+  "production_toml_entry": null,
+  "limits": [
+    "Disposable cache-copy proof only. Not safe general allocation and not a gameplay feature.",
+    "No native client/server session, packet, controller, render or save acceptance is claimed.",
+    "Client and server array growth were inspected by source only; see the lab notes for the exact limits."
+  ]
+}

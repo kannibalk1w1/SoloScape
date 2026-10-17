@@ -235,7 +235,7 @@ client/cache versioning and backed-up game data. This does not require a new ren
 - [ ] M8-05 Validate model scale, rotations, placement, collision definitions and both supported render paths.
 - [ ] M8-06 Build one small coherent demonstration area with a few original assets and controller-readable composition.
 - [ ] M8-07 Investigate animation/rig import separately; prove one animated asset before committing to custom creatures/characters.
-- [ ] M8-08 Add deterministic cache patch/build/version checks and preserve an untouched recovery copy.
+- [ ] M8-08 Add deterministic cache patch/build/version checks and preserve an untouched recovery copy. The [one-token copied-cache proof](BACKPORT_LAB_TOKEN_20261017.md) passes its fixed original-definition/integrity/determinism scope; general allocation, assets and live client/version delivery remain open.
 - [ ] M8-09 Record provenance and permitted distribution for every shipped original/imported asset.
 
 Acceptance: original sources can reproducibly produce a visually coherent in-game
