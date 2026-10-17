@@ -1,0 +1,44 @@
+{
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/60.5 Safari/605.1.15",
+  "webkit": "2.54.1",
+  "scope": "WebKitGTK engine compatibility only; not Tauri or a performance benchmark",
+  "inputs_sha256": {
+    "build/web-out/index.html": "314bfe9efe9cba9372293b47a19ee31357aec51d01ec0f123b4523215ad6d13b",
+    "build/web-out/bridge.wasm": "5f48b1d13a4a22bdce32139ef99301c60c1ca43571ace69c2aaf00bc00f72426",
+    "build/web-out/bridge.wasm-runtime.js": "4fa1e0e0d686cc6e0a0d111e606cb876f7168bd695d9e3d639e7d5684453089b",
+    "build/fixtures.json": "016ce039350b37d379f1cba7e4a5dcb0790177132f3a83a14573311824af8e99",
+    "build/native.json": "1c6495a51d7b9447b4f8110f1f869d0da0dc22d1a4fe4c4e989fe3a7c87778a4",
+    "build/extracted-jvm.json": "caca3a94bda774d84a6f4a491a852d4e5d0fd58faf772af51e867896c6501700",
+    "build/provenance.json": "be8fcdcf6cefa8d284bf930f9399203a6e498bd7c512baa7f7fcbaf2335d22d9"
+  },
+  "checker_sha256": "9487cf6d5e9406138b070f632bbd51d4a8441b75d0e5d16a3afbf16b9368286f",
+  "probe_sha256": "9bda06cda056298108bb6e1d0360c6fbdfb7ceab6a0dde134f8f504df94f15ed",
+  "checker_outcomes": {
+    "positive": 0,
+    "decoded-array": 1,
+    "browser-projected": 1,
+    "browser-frame": 1,
+    "palette": 1
+  },
+  "environment": "owned Xvfb, X11, forced software GL",
+  "proof": {
+    "cases": 12,
+    "runtimes": [
+      "native-jar",
+      "extracted-jvm",
+      "teavm-0.16.0-wasmgc"
+    ],
+    "palette": "5fcbf201",
+    "presentedRgbaFnv1a": "a0bf99a6",
+    "canvasReadbackFnv1a": "a0bf99a6",
+    "bypassDiffersFromCulledFrame": [
+      "cam0-765x503",
+      "cam0-1280x800"
+    ],
+    "bypassEqualToCulledFrame": [
+      "cam1-765x503",
+      "cam1-1280x800"
+    ],
+    "mutation": "none"
+  }
+}

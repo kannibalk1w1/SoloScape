@@ -1,6 +1,10 @@
 # Smallest useful next WASM spike
 
-Status: **partial masked-edge experiment complete; triangle/model gate unproven**. See the [reviewed result](WASM_RASTER_POC.md). The remaining full-raster closure is a later gate. The compiler sanity/kernel and negative native-presenter tests are recorded in [feasibility](WASM_FEASIBILITY.md) and [the reproducible experiment](../experiments/wasm-kernel/README.md). They do not enable a browser game. Keep this track separate from the native release.
+Status: **flat-colour triangle, shaded/Gouraud/textured fill, original synthetic mesh and flat-face projection/culling and bounded near-plane clipping gates passed; full model/scene gate unproven**. See the [material fill investigation](WASM_MATERIAL_INVESTIGATION.md). See the [actual triangle investigation](WASM_RENDERER_INVESTIGATION.md). See the [reviewed result](WASM_RASTER_POC.md). The remaining full-raster closure is a later gate. The compiler sanity/kernel and negative native-presenter tests are recorded in [feasibility](WASM_FEASIBILITY.md) and [the reproducible experiment](../experiments/wasm-kernel/README.md). They do not enable a browser game. Keep this track separate from the native release.
+
+## Current next gate — 17 October 2026
+
+The [flat-face proof](WASM_FACE_PROOF_20261017.md) covers ordinary front-only geometry. The [bounded clipping proof](WASM_CLIPPING_PROOF_20261017.md) added 18 camera-0 cases. The [general-matrix/adapter extension](WASM_GENERAL_CLIPPING_20261017.md) now checks 28 total rows with explicit binary32 input matrices, independent camera/projection expectations and actual extracted fill counts. Arbitrary matrices/flags and complete model/scene paths remain unproven. The [original old-format model decode proof](WASM_MODEL_DECODE_PROOF_20261017.md) now passes five original fixtures across the native jar, extracted JVM and WasmGC. The [decoded-model flat-face bridge](WASM_DECODED_FACE_PROOF_20261017.md) now passes12 cases and four controls. Next audit the smallest constructor/lighting dependency boundary; full model construction, real cache imports and a browser client remain unproven. The original gate design below remains context, not a claim that all later gates passed.
 
 ## Decision and uncertainty
 

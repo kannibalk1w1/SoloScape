@@ -108,6 +108,31 @@ def main():
         if row['timings']['browserRasterMedianMs'] <= 0:
             raise SystemExit(f"{row['size']}: zero raster timing cannot establish performance")
 
+    comparisons = browser_doc.get('transferComparisons')
+    if comparisons is not None:
+        expected = {(size, variant) for size in EXPECTED_SIZES
+                    for variant in ('per-pixel-js', 'bulk-array-copy', 'direct-nio')}
+        seen = set()
+        for row in comparisons:
+            key = row['size'], row['variant']
+            if key not in expected or key in seen:
+                raise SystemExit('Unexpected/duplicate transfer comparison: ' + str(key))
+            seen.add(key)
+            for field in ('conversionMedianMs', 'transferMedianMs', 'uploadMedianMs', 'totalMedianMs'):
+                value = row[field]
+                if not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+                    raise SystemExit('Invalid transfer timing: ' + field)
+            if row['totalMedianMs'] <= 0:
+                raise SystemExit('Transfer total below timer resolution')
+        if seen != expected:
+            raise SystemExit('Missing transfer comparison')
+        for size in EXPECTED_SIZES:
+            rows = [row for row in comparisons if row['size'] == size]
+            for field in ('rgbaFnv1a', 'canvasByteFnv1a'):
+                if len({row[field] for row in rows}) != 1:
+                    raise SystemExit(size + ': transfer pixel mismatch: ' + field)
+        evidence['transfer_comparisons'] = comparisons
+
     digests = {}
     for name in ("jvm-verbatim.jsonl", "jvm-native.jsonl", "browser-dom.html", "teavm-out/raster.wasm"):
         digests[name] = hashlib.sha256((build / name).read_bytes()).hexdigest()

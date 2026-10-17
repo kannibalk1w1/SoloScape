@@ -30,3 +30,9 @@ Scene: a triangular span mask and 6000 fixed-seed edges with opaque, alpha-blend
 Self-test for the rejection path: `RASTER_SELFTEST_MUTATE=browser-hash` or `missing-browser` must make the run fail. Forcing `CHROMIUM=/bin/false` or `/bin/true` exercises the browser-failure and no-result paths.
 
 Known caveats: the hash is FNV-1a over 32-bit words, not a cryptographic digest. The browser timings use performance.now through a private CDP pipe, with no virtual-time budget. They are host micro-scene measurements. The reflection-based native reference is for correctness, not timing. The runner also captures an original synthetic-scene PNG in the ignored build directory.
+
+## Pixel transfer comparison
+
+Set `RASTER_ENTRY=TransferProbe` before the same command to compare per-pixel JavaScript calls, automatic primitive-array copying and a reusable direct NIO buffer. Each variant converts the same ARGB pixels to RGBA. The run checks both transferred-word and Canvas readback hashes, warms up once and measures six samples per variant at both resolutions. Results appear in `build/evidence.json` under `transfer_comparisons`.
+
+The direct path still copies the native `int[]` framebuffer into the direct buffer. It avoids per-pixel JavaScript calls; it does not turn a Wasm GC array into zero-copy linear memory. See [the measured comparison](../../docs/WASM_TRANSFER_INVESTIGATION.md).

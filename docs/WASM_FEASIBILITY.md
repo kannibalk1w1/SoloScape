@@ -4,7 +4,7 @@ Research date: 17 October 2026. Native baseline: merged `502df96`, revision 634 
 
 Recommendation: **later**, a bounded software-framebuffer/compiler-isolation experiment, then an existing Java server behind an explicitly scoped browser transport if rendering succeeds. Do not approve a whole-client rewrite, local browser server or universal transport abstraction now. The small compiler boundary experiment below is complete; a playable browser prototype is not.
 
-Follow-up: the [bounded masked-edge raster experiment](WASM_RASTER_POC.md) now matches JVM/browser hashes at two sizes. The triangle/model gate remains unproven; naive presentation misses a host 60 FPS budget. This does not change the native-first recommendation.
+Follow-up: the [native flat-colour triangle investigation](WASM_RENDERER_INVESTIGATION.md) now matches colour/depth hashes for original synthetic geometry at two sizes. [Bulk pixel transfer](WASM_TRANSFER_INVESTIGATION.md) removes much of the earlier host-call overhead. Full model/scene rendering and the application/platform boundary remain unproven. This does not change the native-first recommendation.
 
 ## Inspection and measured boundary experiment
 
@@ -139,3 +139,7 @@ A public web deployment must not silently distribute cache/model/sprite/audio/in
 Code/runtime/bundled-library licences and game-asset permissions are separate unresolved distribution questions. OpenRS2 availability and upstream BSD headers are not blanket asset permission. CheerpJ self-host/offline terms need separate review; source-readable libraries without a clear licence need permission before reuse. No legal conclusion about a public RuneScape-derived service is made here.
 
 **Decision:** native physical acceptance and lifecycle/performance fixes first. Retain the successful tiny-kernel and failed-presenter evidence; later fund the [single framebuffer spike](WASM_SPIKE_PLAN.md). Prefer the existing Java server if that succeeds. Defer local WASM server, integrated protocol-free runtime, new renderer and public/offline packaging until separate measured gates pass.
+
+## Tauri follow-up — 17 October 2026
+
+The [Tauri investigation](TAURI_WASM_INVESTIGATION_20261017.md) and [WebKitGTK compatibility probe](../experiments/wasm-webkit/README.md) now pass the existing12-case original decoded-model fixture plus four controls in host WebKitGTK2.54.1. This is engine compatibility, not a Tauri build or performance advantage. A wrapper can aid desktop deployment later; it does not remove full-client/scene, protocol, ownership, target-device or distribution gates. Native Deck remains primary.

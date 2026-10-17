@@ -1,0 +1,299 @@
+{
+  "schema": "soloscape.wasm-material.evidence/1",
+  "inputsSha256": {
+    "client_jar": "ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918",
+    "Class109.java": "058b9ffd636007796f75dd50f25a422e173e820f7dcee135b6b71989d874308a",
+    "Class167.java": "d76c65b840aaca9bf042581c68c6e5c4b5bcd037f00c19a72f82edacbd1a5975",
+    "ha_Sub1.java": "f3f01437c28ad160ca356311ab021d9d4cfbc4759cb367435f0209eba4b0bae7",
+    "ha.java": "f50efd45125feb64dfee81a3dcbe6b25324550b1a8d5701f6121d0b91a8d2a6b",
+    "Class64_Sub1.java": "e02518708ff51fc07c42e1f3fa587810c40c715948054c344b90484afda91398",
+    "s_Sub1.java": "3d19c1b424aa08723ec6d7c2db300e4c1fc763ee0d80eaa48b5d10c995f48219",
+    "Class6.java": "824995b61329c462d5c6a3a0f124130185d0ef910bc73e7035a6555cf8c1f77e",
+    "Class126.java": "32e88d03cc4d973f3c65d1b9fbd859ec9164a585887acba5f3921abedcd89a39",
+    "d.java": "2ed57c58a64871d7bfd4a78855e6710fb133011a815c6ea9ef2ab3e103bf5c49",
+    "Class12.java": "145c67a57064536c25a62a3eeec132acd2bc764a7c1ac7365edb072e93bb0332",
+    "ReferenceCache.java": "c8e50cc359f29eb878bf3c53d87af14e1bdb15097dde4d051c8bce2e196bdc10",
+    "Class348_Sub25.java": "30995a18101d2646a618ce99b74b7e96bfad8d19c52bc2ff3ad3e76e3b681791"
+  },
+  "runtime": "teavm-0.16.0-wasmgc",
+  "browser": {
+    "clock": "performance.now with real time; no virtual-time budget",
+    "browser": "Chromium 153.0.8010.52 Arch Linux",
+    "node": "v26.11.1",
+    "presentation": "headless Chromium software Canvas; host only"
+  },
+  "results": [
+    {
+      "scene": "shaded",
+      "size": "765x503",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 0,
+      "coveredPixels": 380049,
+      "distinctColours": 51013,
+      "colourFnv1a": "dd4fb87f",
+      "depthFnv1a": "9ada52e7",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 2.799999998882413,
+        "rasterMedianMs": 3.0,
+        "rasterP90Ms": 3.300000000745058,
+        "rasterMaxMs": 3.300000000745058
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.5,
+      "jvmVerbatimRasterMedianMs": 1.7188740000128746,
+      "jvmNativeJarRasterMedianMs": 3.5026449989527464
+    },
+    {
+      "scene": "gouraud",
+      "size": "765x503",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 0,
+      "coveredPixels": 380049,
+      "distinctColours": 51338,
+      "colourFnv1a": "81dcc01",
+      "depthFnv1a": "9ada52e7",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 2.700000001117587,
+        "rasterMedianMs": 2.900000000372529,
+        "rasterP90Ms": 5.199999999254942,
+        "rasterMaxMs": 5.400000000372529
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 0.5,
+      "jvmVerbatimRasterMedianMs": 3.387838998809457,
+      "jvmNativeJarRasterMedianMs": 3.7481609992682934
+    },
+    {
+      "scene": "tex1",
+      "size": "765x503",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 98,
+      "coveredPixels": 377861,
+      "distinctColours": 59720,
+      "colourFnv1a": "4d9a14b2",
+      "depthFnv1a": "2797c522",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 13.0,
+        "rasterMedianMs": 13.599999999627471,
+        "rasterP90Ms": 14.800000000745058,
+        "rasterMaxMs": 14.899999998509884
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 0.5,
+      "jvmVerbatimRasterMedianMs": 8.14219000004232,
+      "jvmNativeJarRasterMedianMs": 9.607743000611663
+    },
+    {
+      "scene": "tex3",
+      "size": "765x503",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 98,
+      "coveredPixels": 380049,
+      "distinctColours": 165245,
+      "colourFnv1a": "2b9122d0",
+      "depthFnv1a": "290e90c",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 28.09999999962747,
+        "rasterMedianMs": 28.699999999254942,
+        "rasterP90Ms": 29.40000000037253,
+        "rasterMaxMs": 29.5
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 0.5,
+      "jvmVerbatimRasterMedianMs": 21.55329499952495,
+      "jvmNativeJarRasterMedianMs": 23.118687998503447
+    },
+    {
+      "scene": "mixed",
+      "size": "765x503",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 65,
+      "coveredPixels": 380049,
+      "distinctColours": 57744,
+      "colourFnv1a": "940b8970",
+      "depthFnv1a": "2fdbf9f6",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 3.900000000372529,
+        "rasterMedianMs": 4.0,
+        "rasterP90Ms": 4.099999999627471,
+        "rasterMaxMs": 4.100000001490116
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 0.40000000037252903,
+      "jvmVerbatimRasterMedianMs": 2.3155189994722605,
+      "jvmNativeJarRasterMedianMs": 2.6335220001637936
+    },
+    {
+      "scene": "shaded",
+      "size": "1280x800",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 0,
+      "coveredPixels": 1020698,
+      "distinctColours": 75145,
+      "colourFnv1a": "af7fae8c",
+      "depthFnv1a": "10f34170",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 4.800000000745058,
+        "rasterMedianMs": 5.0,
+        "rasterP90Ms": 5.099999999627471,
+        "rasterMaxMs": 5.100000001490116
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.1000000014901161,
+      "jvmVerbatimRasterMedianMs": 4.924877000972629,
+      "jvmNativeJarRasterMedianMs": 5.38429499976337
+    },
+    {
+      "scene": "gouraud",
+      "size": "1280x800",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 0,
+      "coveredPixels": 1020698,
+      "distinctColours": 67751,
+      "colourFnv1a": "c0bf9201",
+      "depthFnv1a": "10f34170",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 5.5,
+        "rasterMedianMs": 5.599999999627471,
+        "rasterP90Ms": 5.700000001117587,
+        "rasterMaxMs": 5.800000000745058
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.199999999254942,
+      "jvmVerbatimRasterMedianMs": 5.107134999707341,
+      "jvmNativeJarRasterMedianMs": 5.441076999530196
+    },
+    {
+      "scene": "tex1",
+      "size": "1280x800",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 98,
+      "coveredPixels": 1012579,
+      "distinctColours": 74692,
+      "colourFnv1a": "9aadeea5",
+      "depthFnv1a": "c7117523",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 31.799999998882413,
+        "rasterMedianMs": 32.59999999962747,
+        "rasterP90Ms": 33.59999999962747,
+        "rasterMaxMs": 33.90000000037253
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.199999999254942,
+      "jvmVerbatimRasterMedianMs": 20.377956999465823,
+      "jvmNativeJarRasterMedianMs": 20.438417000696063
+    },
+    {
+      "scene": "tex3",
+      "size": "1280x800",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 98,
+      "coveredPixels": 1020697,
+      "distinctColours": 275992,
+      "colourFnv1a": "3bb354c7",
+      "depthFnv1a": "8f6ee621",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 79.29999999888241,
+        "rasterMedianMs": 83.20000000111759,
+        "rasterP90Ms": 88.30000000074506,
+        "rasterMaxMs": 88.5
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.199999999254942,
+      "jvmVerbatimRasterMedianMs": 52.96537999995053,
+      "jvmNativeJarRasterMedianMs": 54.644181000068784
+    },
+    {
+      "scene": "mixed",
+      "size": "1280x800",
+      "triangles": 980,
+      "nullTextureFallbackTriangles": 65,
+      "coveredPixels": 1020698,
+      "distinctColours": 102130,
+      "colourFnv1a": "7cbc2928",
+      "depthFnv1a": "45b94a9b",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 9.699999999254942,
+        "rasterMedianMs": 10.0,
+        "rasterP90Ms": 10.100000001490116,
+        "rasterMaxMs": 10.100000001490116
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.199999999254942,
+      "jvmVerbatimRasterMedianMs": 6.602219000458717,
+      "jvmNativeJarRasterMedianMs": 7.143149001523852
+    }
+  ],
+  "negativeControls": [
+    {
+      "control": "shaded-palette-control",
+      "size": "765x503",
+      "baseScene": "shaded",
+      "referenceFnv1a": "dd4fb87f",
+      "variantFnv1a": "f855511d",
+      "match": "native-jar == jvm-verbatim == wasmgc, and differs from the reference"
+    },
+    {
+      "control": "tex1-texel-control",
+      "size": "765x503",
+      "baseScene": "tex1",
+      "referenceFnv1a": "4d9a14b2",
+      "variantFnv1a": "a9fb8636",
+      "match": "native-jar == jvm-verbatim == wasmgc, and differs from the reference"
+    },
+    {
+      "control": "tex3-texel-control",
+      "size": "765x503",
+      "baseScene": "tex3",
+      "referenceFnv1a": "2b9122d0",
+      "variantFnv1a": "bfadf2a",
+      "match": "native-jar == jvm-verbatim == wasmgc, and differs from the reference"
+    },
+    {
+      "control": "shaded-palette-control",
+      "size": "1280x800",
+      "baseScene": "shaded",
+      "referenceFnv1a": "af7fae8c",
+      "variantFnv1a": "3bb70561",
+      "match": "native-jar == jvm-verbatim == wasmgc, and differs from the reference"
+    },
+    {
+      "control": "tex1-texel-control",
+      "size": "1280x800",
+      "baseScene": "tex1",
+      "referenceFnv1a": "9aadeea5",
+      "variantFnv1a": "40146e52",
+      "match": "native-jar == jvm-verbatim == wasmgc, and differs from the reference"
+    },
+    {
+      "control": "tex3-texel-control",
+      "size": "1280x800",
+      "baseScene": "tex3",
+      "referenceFnv1a": "3bb354c7",
+      "variantFnv1a": "cb5adbd3",
+      "match": "native-jar == jvm-verbatim == wasmgc, and differs from the reference"
+    }
+  ],
+  "presentation": [
+    {
+      "size": "765x503",
+      "presentedFnv1a": "3d66b7ce",
+      "canvasReadbackFnv1a": "3d66b7ce"
+    },
+    {
+      "size": "1280x800",
+      "presentedFnv1a": "4501f209",
+      "canvasReadbackFnv1a": "4501f209"
+    }
+  ]
+}

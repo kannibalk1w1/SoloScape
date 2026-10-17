@@ -1,0 +1,549 @@
+{
+  "date": "2026-10-17",
+  "scope": "draft-only original old-format decoded-array to flat-face bridge",
+  "provenance": {
+    "checker": {
+      "bypassDiffersFromCulledFrame": [
+        "cam0-765x503",
+        "cam0-1280x800"
+      ],
+      "bypassEqualToCulledFrame": [
+        "cam1-765x503",
+        "cam1-1280x800"
+      ],
+      "canvasReadbackFnv1a": "a0bf99a6",
+      "cases": 12,
+      "mutation": "none",
+      "palette": "5fcbf201",
+      "presentedRgbaFnv1a": "a0bf99a6",
+      "runtimes": [
+        "native-jar",
+        "extracted-jvm",
+        "teavm-0.16.0-wasmgc"
+      ]
+    },
+    "closures": {
+      "decode": {
+        "report": {
+          "adapters": [
+            "/* ADAPTER: native method1106 (new format, footer ends -1,-1) is not extracted. Calling it fails loudly. */",
+            "/* ADAPTER: native writeBytes (bad-magic path) is not extracted. Calling it fails loudly. */",
+            "/* ADAPTER: native writeByteAdd (bad-magic path) is not extracted. Calling it fails loudly. */"
+          ],
+          "budgets": {
+            "bodyLines": 283,
+            "fields": 32,
+            "maxBodyLines": 350,
+            "maxFields": 40
+          },
+          "fields": {
+            "Class124.java": [
+              {
+                "name": "anInt1817",
+                "nativeLine": 10
+              },
+              {
+                "name": "anInt1818",
+                "nativeLine": 11
+              },
+              {
+                "name": "aByteArray1820",
+                "nativeLine": 13
+              },
+              {
+                "name": "anInt1821",
+                "nativeLine": 14
+              },
+              {
+                "name": "aShortArray1822",
+                "nativeLine": 15
+              },
+              {
+                "name": "aByteArray1823",
+                "nativeLine": 16
+              },
+              {
+                "name": "anIntArray1824",
+                "nativeLine": 17
+              },
+              {
+                "name": "aShortArray1825",
+                "nativeLine": 18
+              },
+              {
+                "name": "aShortArray1829",
+                "nativeLine": 22
+              },
+              {
+                "name": "anInt1831",
+                "nativeLine": 24
+              },
+              {
+                "name": "aByteArray1834",
+                "nativeLine": 27
+              },
+              {
+                "name": "aShortArray1835",
+                "nativeLine": 28
+              },
+              {
+                "name": "anInt1836",
+                "nativeLine": 29
+              },
+              {
+                "name": "aByteArray1839",
+                "nativeLine": 32
+              },
+              {
+                "name": "anIntArray1841",
+                "nativeLine": 34
+              },
+              {
+                "name": "aByteArray1843",
+                "nativeLine": 36
+              },
+              {
+                "name": "anIntArray1847",
+                "nativeLine": 40
+              },
+              {
+                "name": "aShortArray1849",
+                "nativeLine": 42
+              },
+              {
+                "name": "aByte1851",
+                "nativeLine": 44
+              },
+              {
+                "name": "anIntArray1852",
+                "nativeLine": 45
+              },
+              {
+                "name": "aShortArray1855",
+                "nativeLine": 48
+              },
+              {
+                "name": "aShortArray1862",
+                "nativeLine": 55
+              },
+              {
+                "name": "aShortArray1863",
+                "nativeLine": 56
+              },
+              {
+                "name": "anIntArray1868",
+                "nativeLine": 61
+              }
+            ],
+            "Packet.java": [
+              {
+                "name": "anInt7143",
+                "nativeLine": 14
+              },
+              {
+                "name": "anInt7153",
+                "nativeLine": 24
+              },
+              {
+                "name": "data",
+                "nativeLine": 25
+              },
+              {
+                "name": "anInt7155",
+                "nativeLine": 26
+              },
+              {
+                "name": "anInt7186",
+                "nativeLine": 57
+              },
+              {
+                "name": "pos",
+                "nativeLine": 68
+              }
+            ]
+          },
+          "generated": {
+            "Class124.java": "35fb7fe9356d7c09e86f24c5a6cf61d8f6457b9909e0181fc66d90115b69de4a",
+            "Class348_Sub21.java": "1e6fff63881e9de58a5d5c2f8622adcf3ff5fe8da5060678d40df8c69f3cfdce",
+            "Packet.java": "192f7f1563ad214b6c6a979f76b0ca70e2ae49c06c3da5031f50cb51246dcca5"
+          },
+          "sources": {
+            "Class124.java": "26284febbb937e5afbe22f0fb3ebdad74557ffe9010ece3437fc2b4c00e94d3e",
+            "Class348_Sub21.java": "2b9ab115d669baafe7163786c03c902895e327016cb74dd809a3530c7f9b7d7c",
+            "Packet.java": "3e217a1d08e82e2f8b329f0a0f8d9bdc67c71ab267405dfb88449c97e987960d"
+          },
+          "spans": {
+            "Class124.java": [
+              {
+                "lines": [
+                  226,
+                  423
+                ],
+                "sha256": "5db81d86c36006c0dd96df584792070409095485a13d4f0176efa1e269635a71"
+              },
+              {
+                "lines": [
+                  830,
+                  837
+                ],
+                "sha256": "e8482b4371b5708aec4d685d9f506eb1970e4462f79a3d9e852a12846d0204eb"
+              }
+            ],
+            "Class348_Sub21.java": [
+              {
+                "lines": [
+                  69,
+                  71
+                ],
+                "sha256": "48a7a2ca4d0baa9d6ba337f8a9677417cd1fac8fdc07a23461bee6daf503a48d"
+              }
+            ],
+            "Packet.java": [
+              {
+                "lines": [
+                  757,
+                  760
+                ],
+                "sha256": "44ed041f77d7971a1354d98db9972228accebf73c752874160a38f648f3f3b43"
+              },
+              {
+                "lines": [
+                  88,
+                  93
+                ],
+                "sha256": "d30966a36ec17fbf83487d6e11d1be688e19e5aed5b13494cf266b41e0608482"
+              },
+              {
+                "lines": [
+                  356,
+                  362
+                ],
+                "sha256": "74a28719e25ee8c8fc47db3458e8213c284a9639b1384a8f538d5c1cdeaed1d2"
+              },
+              {
+                "lines": [
+                  643,
+                  647
+                ],
+                "sha256": "a54228103ac948cf69fc9258258aeac0fb84441eae566aee4eeaabde2f5176fd"
+              },
+              {
+                "lines": [
+                  649,
+                  653
+                ],
+                "sha256": "7a4d993f8f0c51966dbbd7309cfe0328c19dd124e11d0ed103ab76361e40d2b4"
+              }
+            ]
+          }
+        },
+        "sha256": "27a7c3e4fa585b416feeff263b61c74161f134f1c6c538e8eeba7a84ccc71be0"
+      },
+      "face": {
+        "report": {
+          "adapter_line_budget": 20,
+          "adapter_lines": 10,
+          "callees_found": [
+            "method1018",
+            "method1022",
+            "method1023",
+            "method1024",
+            "method3720",
+            "method3724",
+            "method629",
+            "method632",
+            "method634",
+            "method635",
+            "method638",
+            "method643",
+            "method646",
+            "method650",
+            "method654",
+            "method655",
+            "method657",
+            "method658"
+          ],
+          "class109_methods_verbatim": [
+            "method1018",
+            "method1023",
+            "method1026"
+          ],
+          "class109_non_verbatim_lines": 0,
+          "class109_non_verbatim_note": "none",
+          "class109_stubbed": [
+            "method1022",
+            "method1024"
+          ],
+          "class109_verbatim_lines": 512,
+          "class167_members": [
+            "aBoolean2195",
+            "aBoolean2201",
+            "aBoolean2202",
+            "aClass109_2220",
+            "anInt2192",
+            "anInt2210",
+            "anInt2215",
+            "anInt2221",
+            "anInt2229",
+            "anIntArray2213",
+            "anIntArray2214",
+            "anIntArray2216",
+            "anIntArray2218",
+            "anIntArray2222",
+            "anIntArray2230",
+            "anIntArray2234",
+            "anIntArray2235",
+            "anIntArray2236",
+            "anIntArray2237",
+            "anIntArray2238",
+            "anIntArray2240",
+            "anIntArray2241",
+            "anIntArray2242",
+            "anIntArray2244",
+            "anIntArray2245",
+            "anIntArray2247"
+          ],
+          "class64_sub1_field_budget": 65,
+          "class64_sub1_fields": [
+            "aBoolean5323",
+            "aBoolean5357",
+            "aBoolean5382",
+            "aByteArray5325",
+            "aByteArray5358",
+            "aByteArray5386",
+            "aClass101_Sub1_5320",
+            "aClass109_5383",
+            "aClass129Array5322",
+            "aClass167_5367",
+            "aClass342Array5335",
+            "aClass350Array5363",
+            "aClass6Array5361",
+            "aFloatArrayArray5314",
+            "aFloatArrayArray5345",
+            "aHa_Sub1_5353",
+            "aShort5324",
+            "aShort5329",
+            "aShort5331",
+            "aShort5348",
+            "aShort5352",
+            "aShort5365",
+            "aShort5393",
+            "aShort5395",
+            "aShortArray5311",
+            "aShortArray5317",
+            "aShortArray5327",
+            "aShortArray5364",
+            "aShortArray5388",
+            "aShortArray5394",
+            "anInt5316",
+            "anInt5340",
+            "anInt5351",
+            "anInt5354",
+            "anInt5387",
+            "anInt5389",
+            "anIntArray5312",
+            "anIntArray5315",
+            "anIntArray5318",
+            "anIntArray5321",
+            "anIntArray5326",
+            "anIntArray5332",
+            "anIntArray5337",
+            "anIntArray5343",
+            "anIntArray5355",
+            "anIntArray5356",
+            "anIntArray5359",
+            "anIntArray5362",
+            "anIntArray5366",
+            "anIntArray5368",
+            "anIntArray5371",
+            "anIntArray5373",
+            "anIntArray5377",
+            "anIntArray5381",
+            "anIntArray5384",
+            "anIntArray5392",
+            "anIntArray5398",
+            "anIntArray5399",
+            "anIntArray5400"
+          ],
+          "class64_sub1_line_budget": 450,
+          "class64_sub1_methods_verbatim": [
+            "method654",
+            "method650",
+            "method643",
+            "method635",
+            "method634",
+            "method632",
+            "method655",
+            "method629",
+            "method638"
+          ],
+          "class64_sub1_native_instance_fields_kept": 59,
+          "class64_sub1_non_verbatim_lines": 0,
+          "class64_sub1_per_method_lines": {
+            "method629": 4,
+            "method632": 24,
+            "method634": 7,
+            "method635": 21,
+            "method638": 4,
+            "method643": 45,
+            "method650": 34,
+            "method654": 266,
+            "method655": 36
+          },
+          "class64_sub1_verbatim_lines": 441,
+          "clip_mode": false,
+          "ha_Sub1_members": [
+            "aClass101_Sub1_7492",
+            "aFloatArray7511",
+            "anInt7477",
+            "anInt7482",
+            "anInt7485",
+            "anInt7490",
+            "anInt7491",
+            "anInt7494",
+            "anInt7497",
+            "anInt7504",
+            "anInt7506",
+            "anInt7508",
+            "anInt7509",
+            "anInt7510",
+            "anIntArray7483",
+            "method3645",
+            "method3720",
+            "method3724"
+          ],
+          "inputs_sha256": {
+            "Class101_Sub1.java": "24caf77c838feddd325482fcbc60ef5cfb46e0418fcb3d76637a46acf1938601",
+            "Class109.java": "058b9ffd636007796f75dd50f25a422e173e820f7dcee135b6b71989d874308a",
+            "Class126.java": "32e88d03cc4d973f3c65d1b9fbd859ec9164a585887acba5f3921abedcd89a39",
+            "Class167.java": "d76c65b840aaca9bf042581c68c6e5c4b5bcd037f00c19a72f82edacbd1a5975",
+            "Class318_Sub3.java": "a5bc0dbf7f25acd94934291bb3f630b95e0c05b20f1c33eec06420297b97d1ed",
+            "Class350.java": "aba20b09440182879ae51846842971929ac92fa383e4bfd4b40962cf552f07b1",
+            "Class6.java": "824995b61329c462d5c6a3a0f124130185d0ef910bc73e7035a6555cf8c1f77e",
+            "Class64_Sub1.java": "e02518708ff51fc07c42e1f3fa587810c40c715948054c344b90484afda91398",
+            "ha.java": "f50efd45125feb64dfee81a3dcbe6b25324550b1a8d5701f6121d0b91a8d2a6b",
+            "ha_Sub1.java": "f3f01437c28ad160ca356311ab021d9d4cfbc4759cb367435f0209eba4b0bae7"
+          },
+          "stubs": [
+            "Class64_Sub1.method646",
+            "Class64_Sub1.method658",
+            "ha_Sub1.method3720",
+            "ha.method3645",
+            "Class109.method1022",
+            "Class109.method1024"
+          ],
+          "type_stubs": [
+            "Class6",
+            "Class350",
+            "Class318_Sub3",
+            "Class129",
+            "Class342",
+            "Class101",
+            "Class101_Sub1",
+            "Class126"
+          ]
+        },
+        "sha256": "e024c82a53ce7b163d1502ed2c2ad82c0490402a67874892b48ab9cfa02f6e0e"
+      }
+    },
+    "fixtures": [
+      {
+        "bytes": 64,
+        "name": "tetra",
+        "sha256": "5dc5e7b0446ca9c73c58469057b853ecaab66b775b79227721692a7f030f548f"
+      },
+      {
+        "bytes": 66,
+        "name": "tetra_vertex",
+        "sha256": "925aa82fd42e6b6b4642517395c035697477dd755ea14365e35c28dbf9064f2e"
+      },
+      {
+        "bytes": 64,
+        "name": "tetra_colour",
+        "sha256": "36e395436ba71b937a3632dfa47a908161ad4ead6064354814fa848deb856979"
+      }
+    ],
+    "inputs": {
+      "Class101_Sub1.java": "24caf77c838feddd325482fcbc60ef5cfb46e0418fcb3d76637a46acf1938601",
+      "Class109.java": "058b9ffd636007796f75dd50f25a422e173e820f7dcee135b6b71989d874308a",
+      "Class124.java": "26284febbb937e5afbe22f0fb3ebdad74557ffe9010ece3437fc2b4c00e94d3e",
+      "Class126.java": "32e88d03cc4d973f3c65d1b9fbd859ec9164a585887acba5f3921abedcd89a39",
+      "Class167.java": "d76c65b840aaca9bf042581c68c6e5c4b5bcd037f00c19a72f82edacbd1a5975",
+      "Class318_Sub3.java": "a5bc0dbf7f25acd94934291bb3f630b95e0c05b20f1c33eec06420297b97d1ed",
+      "Class348_Sub21.java": "2b9ab115d669baafe7163786c03c902895e327016cb74dd809a3530c7f9b7d7c",
+      "Class350.java": "aba20b09440182879ae51846842971929ac92fa383e4bfd4b40962cf552f07b1",
+      "Class6.java": "824995b61329c462d5c6a3a0f124130185d0ef910bc73e7035a6555cf8c1f77e",
+      "Class64_Sub1.java": "e02518708ff51fc07c42e1f3fa587810c40c715948054c344b90484afda91398",
+      "Packet.java": "3e217a1d08e82e2f8b329f0a0f8d9bdc67c71ab267405dfb88449c97e987960d",
+      "client_jar": "ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918",
+      "ha.java": "f50efd45125feb64dfee81a3dcbe6b25324550b1a8d5701f6121d0b91a8d2a6b",
+      "ha_Sub1.java": "f3f01437c28ad160ca356311ab021d9d4cfbc4759cb367435f0209eba4b0bae7"
+    },
+    "moduleSizes": {
+      "bridge.wasm": {
+        "gzip9": 36674,
+        "raw": 107301,
+        "sha256": "5f48b1d13a4a22bdce32139ef99301c60c1ca43571ace69c2aaf00bc00f72426"
+      },
+      "bridge.wasm-runtime.js": {
+        "gzip9": 6091,
+        "raw": 17268,
+        "sha256": "4fa1e0e0d686cc6e0a0d111e606cb876f7168bd695d9e3d639e7d5684453089b"
+      }
+    },
+    "reusedTools": {
+      "wasm-face/src/jvm/java/NativeFace.java": "214e320f9e7cdb3598dd1f852c099fb2606ffb92c1e5d1d5292039c2523db6ee",
+      "wasm-face/src/shared/java/ClipScene.java": "21911607e295e2e18312a3a0cd4b97059ab25d7081644da9593893cc2bca798d",
+      "wasm-face/src/shared/java/ExtractedRig.java": "3b03a7c7e513d85ad7edd96610b1ed035026d867659a1102ad235ff96f077456",
+      "wasm-face/src/shared/java/FaceCounters.java": "b85fab98645f0cb25e9cc886969725481621c82e77818973c1e93dd890c8ff1f",
+      "wasm-face/src/shared/java/FaceMesh.java": "c66265799316992ea8bc175dd8006866dbd8dfb93a572a1eba65758d746da9e1",
+      "wasm-face/src/shared/java/FaceRig.java": "ad863b1b3a4f56b71818b64b3ed197c2eaded5453e6dfd1430b7863bc6159b4f",
+      "wasm-face/src/shared/java/FaceScene.java": "4aade0690b084870c7d2190facd7a2cf3498c782d3e819ce766e2bc5dee47bdb",
+      "wasm-face/tools/browser_probe.mjs": "b109aeeed10593f3afa87fb83216ef50d246e5137252c45525ce11a097456ce5",
+      "wasm-face/tools/extract_face_closure.py": "0d763f043aceed23bcdc68d97290b210c1704674c53663a6cbf5ca0301776590",
+      "wasm-face/tools/serve_loopback.py": "142897e02f7ab486f903644869f053a4a63ae13345d0eeae7ac50c64ab5eccd8",
+      "wasm-model-decode/tools/encode_decode_fixtures.py": "2215e2ddbd7090e97a5e081463a78e31c82b5261f92d501fd7c703567fa9936e",
+      "wasm-model-decode/tools/extract_decode_closure.py": "c27a28be35aa872484813b021ada009c38f18c4e736defffabfb2a81e410cc1f",
+      "wasm-triangle/tools/extract_triangle_closure.py": "fdd8e6431e7de3e0f1e3e0ba656f7c27f85993dee8e621e0f663c4a425d058e8"
+    },
+    "sources": {
+      ".gitignore": "d7bfa9d1404f30876e789d8e89cedc0ad54d06c478d9a20cc60f16b06bd8bec4",
+      "README.md": "17ccace3c635ad3516e421f0a1f6441ca6482449dded306f98b45cb6c9e1d5c1",
+      "build.gradle": "ff72aca29e20e58ae7756626c46a8ee539d6cb7067c209c92aaad2135af8a4fb",
+      "run.sh": "905ea1d693aaa700761d73a0b0e04bee1c98dbeba52672623d63a97e305245e3",
+      "settings.gradle": "524de11f0f3d594936a24312da0360e9438f8311adc6759ccb12438f89e638df",
+      "src/browser/java/BridgeProbe.java": "3029cf560cd8fd47285be07a6831a629e431db90d69f06b87f7b0d0c87e5c142",
+      "src/jvm/java/ExtractedBridgeJvm.java": "31e65ba94b96237868fb7a900ab388246ad75dce96450b4f67e879c6f0fbea41",
+      "src/jvm/java/NativeBridge.java": "b778f2febb6e9b09607c3f79f14c2087a819061fb6120e4759207eac5759b7bf",
+      "src/shared/java/BridgeRun.java": "830c49b025cd3581a6c561f876e528fda47b6a5452b9b0d78a375162a71a1b05",
+      "src/shared/java/BridgeScene.java": "088f2c09614aaa9ced5ca1d18e67e04dcb9a019a764b6e6d9430593ea8e88d46",
+      "src/shared/java/DecodeMesh.java": "45182667282048f69f49addd311e7b6c55c7183604421e533f9a052cb43bd4a6",
+      "tools/check_bridge_evidence.py": "9487cf6d5e9406138b070f632bbd51d4a8441b75d0e5d16a3afbf16b9368286f",
+      "tools/encode_bridge_fixtures.py": "420d63ce4602d09f9fbf1322201c3961b2d916bdcb26d8fdd58b2e5f1ce67807",
+      "tools/record_bridge_provenance.py": "14bcaa727e4e87251fb34d967c20fd08df4fcc5e0bd19a9376e220579b0ebe6b",
+      "tools/serve_bridge.py": "25bb8310282b7f117e1c3daec5933a6841b154d2a4c0d2e8588a47dade8deeb9",
+      "web/index.html": "314bfe9efe9cba9372293b47a19ee31357aec51d01ec0f123b4523215ad6d13b"
+    },
+    "tools": {
+      "chromium": "Chromium 153.0.8010.52 Arch Linux",
+      "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS",
+      "javac": "javac 21.0.12.1",
+      "node": "v26.11.1",
+      "teavm": "0.16.0 (org.teavm plugin and teavm-jso, offline Gradle cache)"
+    }
+  },
+  "negative_controls": {
+    "decoded-array": "FAIL native decoded-array/design comparison",
+    "browser-projected": "FAIL cross-runtime projection",
+    "browser-frame": "FAIL direct re-render comparison",
+    "palette": "FAIL original palette comparison"
+  },
+  "claims_excluded": [
+    "full Class64_Sub1 constructor",
+    "lighting/material/texture/animation",
+    "new-format decode and optional old streams",
+    "cache import",
+    "full scene/client/network/storage",
+    "FPS or physical Deck acceptance"
+  ]
+}

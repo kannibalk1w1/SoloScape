@@ -537,6 +537,62 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "SLAYER_TASK_BLOCKS_20261018.md",
       "note": "53 selected native cases pass, including 17 new cases. All five block/unblock slots survive native disk restore and full account spawn; paid/refused UI actions, account isolation and empty-task streak preservation pass. Supplied stats/tasks/points; earned journey and physical controller acceptance remain open."
+    },
+    {
+      "id": "wasm-triangle",
+      "scope": "Native flat-colour WASM triangle fill and original synthetic mesh; no full game scene",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_RENDERER_INVESTIGATION.md",
+      "note": "Six colour/depth hash comparisons independently reproduced; textures/model projection/UI remain unproven"
+    },
+    {
+      "id": "wasm-material",
+      "scope": "Isolated native shaded, Gouraud and textured WASM raster fills",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_MATERIAL_INVESTIGATION.md",
+      "note": "Ten synthetic scene/size cases and six palette/texel controls match native jar/JVM/WASM; texture-heavy cost is significant. Real model/texture decoding, projection, full scene and device performance unproven."
+    },
+    {
+      "id": "wasm-face",
+      "scope": "Isolated native model vertex projection, face selection and flat fill through TeaVM WasmGC",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_FACE_PROOF_20261017.md",
+      "note": "Ten original synthetic cases match native jar, extracted JVM and WASM, including back-face sensitivity and 18 independent rejection controls; real cache decoding, clipping, lighting and a playable browser client remain unproven. Draft PR27 stays separate from native main."
+    },
+    {
+      "id": "wasm-clipping",
+      "scope": "Draft-only synthetic flat near-plane projection, clipping and fill dispatch",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_CLIPPING_PROOF_20261017.md",
+      "note": "18 camera-0/mask0 clip cases agree across native JVM, extracted JVM and WasmGC with actual extracted fill counts; default10 retained. No model/scene/client or hardware/performance acceptance."
+    },
+    {
+      "id": "wasm-model-decode",
+      "scope": "Draft-only original old-format model decoder equality across native jar, JVM and WasmGC",
+      "delivery": "DEFERRED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_MODEL_DECODE_PROOF_20261017.md",
+      "note": "Five synthetic models and four corruption controls pass the decoder-only proof; the separate decoded-face row records rendering integration. No native feature, new-format decoder, asset import or browser client."
+    },
+    {
+      "id": "wasm-decoded-face",
+      "scope": "Draft-only original decoded model arrays to flat-face browser framebuffer",
+      "delivery": "DEFERRED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_DECODED_FACE_PROOF_20261017.md",
+      "note": "12 cases across native jar/extracted JVM/WasmGC, four corruption controls and Canvas hash pass. Full model constructor/lighting, real cache, scene/client and performance remain unproven; draft27 only."
+    },
+    {
+      "id": "wasm-webkit",
+      "scope": "Draft-only host WebKitGTK compatibility for the original decoded-face WasmGC fixture",
+      "delivery": "DEFERRED",
+      "acceptance": "DEFERRED",
+      "evidence": "TAURI_WASM_INVESTIGATION_20261017.md",
+      "note": "WebKitGTK2.54.1 passes12 cases/Canvas hash and four corruption controls on software Xvfb. No Tauri binary, speedup, game/controller/Deck or deployment claim."
     }
   ]
 }

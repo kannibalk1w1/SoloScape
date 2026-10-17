@@ -1,0 +1,14 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>SoloScape WASM triangle probe</title>
+<body style="background:#000;color:#ddd;font:14px monospace;margin:16px">
+<pre id="result" style="display:none">WAIT</pre>
+<canvas id="frame"></canvas>
+<script src="triangle.wasm-runtime.js"></script>
+<script>
+TeaVM.wasmGC.load('triangle.wasm').then(runtime => {
+  runtime.exports.main([]);
+}).catch(error => {
+  document.getElementById('result').textContent = 'FAIL: ' + error;
+});
+</script>

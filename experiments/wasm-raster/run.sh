@@ -28,11 +28,12 @@ case "$NATIVE_JAR" in /*) ;; *) echo "jar path must be absolute" >&2; exit 2 ;; 
 
 rm -rf "$BUILD"
 mkdir -p "$BUILD"
-python3 -I - "$NATIVE_SRC" "$NATIVE_JAR" "$BUILD/inputs.json" <<'PY'
+python3 -I - "$NATIVE_SRC" "$NATIVE_JAR" "$BUILD/inputs.json" "${RASTER_ENTRY:-RasterProbe}" <<'PY'
 import hashlib, json, pathlib, sys
 names = ('source_sha256', 'client_jar_sha256')
 inputs = {name: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
           for name, path in zip(names, sys.argv[1:3])}
+inputs['entry_point'] = sys.argv[4]
 pathlib.Path(sys.argv[3]).write_text(json.dumps(inputs, indent=2) + '\n')
 PY
 python3 -I "$HERE/tools/extract_face_kernel.py" --src "$NATIVE_SRC" --out "$BUILD/generated-src"
@@ -53,9 +54,9 @@ cat "$BUILD/jvm-native.jsonl"
 
 echo "== TeaVM 0.16.0 WasmGC build"
 if [ -f "$UPSTREAM_GRADLEW" ]; then
-  JAVA_HOME="$JDK" bash "$UPSTREAM_GRADLEW" -p "$HERE" buildWasmGC --no-daemon -q
+  JAVA_HOME="$JDK" bash "$UPSTREAM_GRADLEW" -p "$HERE" -PprobeMain="${RASTER_ENTRY:-RasterProbe}" buildWasmGC --no-daemon -q
 elif command -v gradle >/dev/null 2>&1; then
-  JAVA_HOME="$JDK" gradle -p "$HERE" buildWasmGC --no-daemon -q
+  JAVA_HOME="$JDK" gradle -p "$HERE" -PprobeMain="${RASTER_ENTRY:-RasterProbe}" buildWasmGC --no-daemon -q
 else
   echo "neither the upstream gradlew nor an installed gradle is available" >&2
   exit 1

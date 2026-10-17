@@ -11,6 +11,6 @@ dependencies {
 }
 sourceSets.main.java.srcDirs = ['src/shared/java', 'src/browser/java', 'build/generated-src']
 teavm {
-    all { mainClass = 'RasterProbe' }
+    all { mainClass = providers.gradleProperty('probeMain').getOrElse('RasterProbe') }
     wasmGC { targetFileName = 'raster.wasm' }
 }

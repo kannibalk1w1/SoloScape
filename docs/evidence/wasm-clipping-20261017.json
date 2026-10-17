@@ -1,0 +1,2446 @@
+{
+  "schema": "soloscape.wasm-face.clip-evidence/1",
+  "closure": {
+    "class64_sub1_verbatim_lines": 574,
+    "class64_sub1_line_budget": 580,
+    "class64_sub1_non_verbatim_lines": 1,
+    "class109_non_verbatim_lines": 1,
+    "class64_sub1_native_instance_fields_kept": 59,
+    "class64_sub1_field_budget": 65,
+    "stubs": [
+      "Class64_Sub1.method658",
+      "ha_Sub1.method3720",
+      "ha.method3645",
+      "Class109.method1022",
+      "Class109.method1024"
+    ]
+  },
+  "clipOutTotalsExtracted": {
+    "0": 2,
+    "3": 2,
+    "4": 4
+  },
+  "cases": [
+    {
+      "case": "one-behind-quad-765x503",
+      "vertices": [
+        [
+          -40,
+          -928,
+          -1304
+        ],
+        [
+          40,
+          -928,
+          -1304
+        ],
+        [
+          0,
+          -1417,
+          -1881
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          1,
+          2
+        ]
+      ],
+      "eligibleFaces": [
+        {
+          "face": 0,
+          "frontVertices": 2,
+          "dot": 399680
+        }
+      ],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "rejected": false,
+      "boundI636": -332,
+      "derivedFills": 2,
+      "normalFills": 0,
+      "clipFills": 2,
+      "flatFillEntriesExtracted": 2,
+      "flatFillEntriesWasm": 2,
+      "flatFillEntriesNative": null,
+      "boundI637": 3724,
+      "covered": 1930,
+      "fnv1a": "df6e3f29",
+      "depthFnv1a": "559d5241",
+      "projX": [
+        357,
+        407,
+        -5000
+      ],
+      "projY": [
+        276,
+        276,
+        0
+      ],
+      "projZ": [
+        799,
+        799,
+        45
+      ],
+      "camX": [
+        -40,
+        40,
+        0
+      ],
+      "camY": [
+        40,
+        40,
+        -4
+      ],
+      "camD": [
+        799,
+        799,
+        45
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "case": "one-behind-quad-reversed-765x503",
+      "vertices": [
+        [
+          -40,
+          -928,
+          -1304
+        ],
+        [
+          40,
+          -928,
+          -1304
+        ],
+        [
+          0,
+          -1417,
+          -1881
+        ]
+      ],
+      "faces": [
+        [
+          1,
+          0,
+          2
+        ]
+      ],
+      "eligibleFaces": [],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rejected": false,
+      "boundI636": -332,
+      "derivedFills": 0,
+      "normalFills": 0,
+      "clipFills": 0,
+      "flatFillEntriesExtracted": 0,
+      "flatFillEntriesWasm": 0,
+      "flatFillEntriesNative": null,
+      "boundI637": 3724,
+      "covered": 0,
+      "fnv1a": "df0e1ea7",
+      "depthFnv1a": "8d4bec3c",
+      "projX": [
+        357,
+        407,
+        -5000
+      ],
+      "projY": [
+        276,
+        276,
+        0
+      ],
+      "projZ": [
+        799,
+        799,
+        45
+      ],
+      "camX": [
+        -40,
+        40,
+        0
+      ],
+      "camY": [
+        40,
+        40,
+        -4
+      ],
+      "camD": [
+        799,
+        799,
+        45
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "two-behind-triangle-765x503",
+      "vertices": [
+        [
+          0,
+          -928,
+          -1304
+        ],
+        [
+          -20,
+          -1417,
+          -1881
+        ],
+        [
+          20,
+          -1417,
+          -1881
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          2,
+          1
+        ]
+      ],
+      "eligibleFaces": [
+        {
+          "face": 0,
+          "frontVertices": 1,
+          "dot": 199840
+        }
+      ],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "rejected": false,
+      "boundI636": -333,
+      "derivedFills": 1,
+      "normalFills": 0,
+      "clipFills": 1,
+      "flatFillEntriesExtracted": 1,
+      "flatFillEntriesWasm": 1,
+      "flatFillEntriesNative": null,
+      "boundI637": 3725,
+      "covered": 12936,
+      "fnv1a": "f6779277",
+      "depthFnv1a": "faeecec9",
+      "projX": [
+        382,
+        -5000,
+        -5000
+      ],
+      "projY": [
+        276,
+        0,
+        0
+      ],
+      "projZ": [
+        799,
+        45,
+        45
+      ],
+      "camX": [
+        0,
+        -20,
+        20
+      ],
+      "camY": [
+        40,
+        -4,
+        -4
+      ],
+      "camD": [
+        799,
+        45,
+        45
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "case": "two-behind-triangle-reversed-765x503",
+      "vertices": [
+        [
+          0,
+          -928,
+          -1304
+        ],
+        [
+          -20,
+          -1417,
+          -1881
+        ],
+        [
+          20,
+          -1417,
+          -1881
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          1,
+          2
+        ]
+      ],
+      "eligibleFaces": [],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rejected": false,
+      "boundI636": -333,
+      "derivedFills": 0,
+      "normalFills": 0,
+      "clipFills": 0,
+      "flatFillEntriesExtracted": 0,
+      "flatFillEntriesWasm": 0,
+      "flatFillEntriesNative": null,
+      "boundI637": 3725,
+      "covered": 0,
+      "fnv1a": "df0e1ea7",
+      "depthFnv1a": "8d4bec3c",
+      "projX": [
+        382,
+        -5000,
+        -5000
+      ],
+      "projY": [
+        276,
+        0,
+        0
+      ],
+      "projZ": [
+        799,
+        45,
+        45
+      ],
+      "camX": [
+        0,
+        -20,
+        20
+      ],
+      "camY": [
+        40,
+        -4,
+        -4
+      ],
+      "camD": [
+        799,
+        45,
+        45
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "exact-near-50-765x503",
+      "vertices": [
+        [
+          -40,
+          -928,
+          -1304
+        ],
+        [
+          40,
+          -928,
+          -1304
+        ],
+        [
+          0,
+          -1382,
+          -1901
+        ]
+      ],
+      "faces": [
+        [
+          1,
+          0,
+          2
+        ]
+      ],
+      "eligibleFaces": [],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rejected": false,
+      "boundI636": -331,
+      "derivedFills": 1,
+      "normalFills": 1,
+      "clipFills": 0,
+      "flatFillEntriesExtracted": 1,
+      "flatFillEntriesWasm": 1,
+      "flatFillEntriesNative": null,
+      "boundI637": 3744,
+      "covered": 7428,
+      "fnv1a": "7bbcc997",
+      "depthFnv1a": "3743f0b8",
+      "projX": [
+        357,
+        407,
+        382
+      ],
+      "projY": [
+        276,
+        276,
+        603
+      ],
+      "projZ": [
+        799,
+        799,
+        50
+      ],
+      "camX": [
+        -40,
+        40,
+        0
+      ],
+      "camY": [
+        40,
+        40,
+        35
+      ],
+      "camD": [
+        799,
+        799,
+        50
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "crossing-49.8-behind-765x503",
+      "vertices": [
+        [
+          -40,
+          -928,
+          -1304
+        ],
+        [
+          40,
+          -928,
+          -1304
+        ],
+        [
+          0,
+          -1377,
+          -1905
+        ]
+      ],
+      "faces": [
+        [
+          1,
+          0,
+          2
+        ]
+      ],
+      "eligibleFaces": [
+        {
+          "face": 0,
+          "frontVertices": 2,
+          "dot": 2463920
+        }
+      ],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "rejected": false,
+      "boundI636": -332,
+      "derivedFills": 2,
+      "normalFills": 0,
+      "clipFills": 2,
+      "flatFillEntriesExtracted": 2,
+      "flatFillEntriesWasm": 2,
+      "flatFillEntriesNative": null,
+      "boundI637": 3748,
+      "covered": 8630,
+      "fnv1a": "d8f36311",
+      "depthFnv1a": "9177ecf4",
+      "projX": [
+        357,
+        407,
+        -5000
+      ],
+      "projY": [
+        276,
+        276,
+        0
+      ],
+      "projZ": [
+        799,
+        799,
+        49
+      ],
+      "camX": [
+        -40,
+        40,
+        0
+      ],
+      "camY": [
+        40,
+        40,
+        41
+      ],
+      "camD": [
+        799,
+        799,
+        49
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "case": "crossing-50.2-front-765x503",
+      "vertices": [
+        [
+          -40,
+          -928,
+          -1304
+        ],
+        [
+          40,
+          -928,
+          -1304
+        ],
+        [
+          0,
+          -1379,
+          -1903
+        ]
+      ],
+      "faces": [
+        [
+          1,
+          0,
+          2
+        ]
+      ],
+      "eligibleFaces": [],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rejected": false,
+      "boundI636": -331,
+      "derivedFills": 1,
+      "normalFills": 1,
+      "clipFills": 0,
+      "flatFillEntriesExtracted": 1,
+      "flatFillEntriesWasm": 1,
+      "flatFillEntriesNative": null,
+      "boundI637": 3746,
+      "covered": 7794,
+      "fnv1a": "d8b564cb",
+      "depthFnv1a": "bc095feb",
+      "projX": [
+        357,
+        407,
+        382
+      ],
+      "projY": [
+        276,
+        276,
+        637
+      ],
+      "projZ": [
+        799,
+        799,
+        50
+      ],
+      "camX": [
+        -40,
+        40,
+        0
+      ],
+      "camY": [
+        40,
+        40,
+        38
+      ],
+      "camD": [
+        799,
+        799,
+        50
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "model-all-behind-765x503",
+      "vertices": [
+        [
+          -40,
+          -5000,
+          -200
+        ],
+        [
+          40,
+          -5000,
+          -200
+        ],
+        [
+          0,
+          -5000,
+          200
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          1,
+          2
+        ]
+      ],
+      "eligibleFaces": [],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rejected": true,
+      "boundI636": -804,
+      "derivedFills": 0,
+      "normalFills": 0,
+      "clipFills": 0,
+      "flatFillEntriesExtracted": 0,
+      "flatFillEntriesWasm": 0,
+      "flatFillEntriesNative": null,
+      "boundI637": -396,
+      "covered": 0,
+      "fnv1a": "df0e1ea7",
+      "depthFnv1a": "8d4bec3c",
+      "projX": [
+        0,
+        0,
+        0
+      ],
+      "projY": [
+        0,
+        0,
+        0
+      ],
+      "projZ": [
+        0,
+        0,
+        0
+      ],
+      "camX": [
+        0,
+        0,
+        0
+      ],
+      "camY": [
+        0,
+        0,
+        0
+      ],
+      "camD": [
+        0,
+        0,
+        0
+      ],
+      "extractedCounters": {
+        "adapterEntries": 0,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 0,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "face-all-behind-companion-765x503",
+      "vertices": [
+        [
+          40,
+          -928,
+          -1304
+        ],
+        [
+          -40,
+          -928,
+          -1304
+        ],
+        [
+          0,
+          -1382,
+          -1901
+        ],
+        [
+          -20,
+          -1417,
+          -1881
+        ],
+        [
+          0,
+          -1409,
+          -1887
+        ],
+        [
+          20,
+          -1417,
+          -1881
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          3,
+          4,
+          5
+        ]
+      ],
+      "eligibleFaces": [
+        {
+          "face": 1,
+          "frontVertices": 0,
+          "dot": 16200
+        }
+      ],
+      "derivedClipOut": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rejected": false,
+      "boundI636": -352,
+      "derivedFills": 1,
+      "normalFills": 1,
+      "clipFills": 0,
+      "flatFillEntriesExtracted": 1,
+      "flatFillEntriesWasm": 1,
+      "flatFillEntriesNative": null,
+      "boundI637": 3744,
+      "covered": 7428,
+      "fnv1a": "7bbcc997",
+      "depthFnv1a": "3743f0b8",
+      "projX": [
+        407,
+        357,
+        382,
+        -5000,
+        -5000,
+        -5000
+      ],
+      "projY": [
+        276,
+        276,
+        603,
+        0,
+        0,
+        0
+      ],
+      "projZ": [
+        799,
+        799,
+        50,
+        45,
+        45,
+        45
+      ],
+      "camX": [
+        40,
+        -40,
+        0,
+        -20,
+        0,
+        20
+      ],
+      "camY": [
+        40,
+        40,
+        35,
+        -4,
+        5,
+        -4
+      ],
+      "camD": [
+        799,
+        799,
+        50,
+        45,
+        45,
+        45
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "one-behind-quad-1280x800",
+      "vertices": [
+        [
+          -40,
+          -928,
+          -1304
+        ],
+        [
+          40,
+          -928,
+          -1304
+        ],
+        [
+          0,
+          -1417,
+          -1881
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          1,
+          2
+        ]
+      ],
+      "eligibleFaces": [
+        {
+          "face": 0,
+          "frontVertices": 2,
+          "dot": 399680
+        }
+      ],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "rejected": false,
+      "boundI636": -332,
+      "derivedFills": 2,
+      "normalFills": 0,
+      "clipFills": 2,
+      "flatFillEntriesExtracted": 2,
+      "flatFillEntriesWasm": 2,
+      "flatFillEntriesNative": null,
+      "boundI637": 3724,
+      "covered": 4967,
+      "fnv1a": "b77b1c38",
+      "depthFnv1a": "1b8fce58",
+      "projX": [
+        600,
+        680,
+        -5000
+      ],
+      "projY": [
+        440,
+        440,
+        0
+      ],
+      "projZ": [
+        799,
+        799,
+        45
+      ],
+      "camX": [
+        -40,
+        40,
+        0
+      ],
+      "camY": [
+        40,
+        40,
+        -4
+      ],
+      "camD": [
+        799,
+        799,
+        45
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "case": "one-behind-quad-reversed-1280x800",
+      "vertices": [
+        [
+          -40,
+          -928,
+          -1304
+        ],
+        [
+          40,
+          -928,
+          -1304
+        ],
+        [
+          0,
+          -1417,
+          -1881
+        ]
+      ],
+      "faces": [
+        [
+          1,
+          0,
+          2
+        ]
+      ],
+      "eligibleFaces": [],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rejected": false,
+      "boundI636": -332,
+      "derivedFills": 0,
+      "normalFills": 0,
+      "clipFills": 0,
+      "flatFillEntriesExtracted": 0,
+      "flatFillEntriesWasm": 0,
+      "flatFillEntriesNative": null,
+      "boundI637": 3724,
+      "covered": 0,
+      "fnv1a": "3e691dc5",
+      "depthFnv1a": "55af7dc5",
+      "projX": [
+        600,
+        680,
+        -5000
+      ],
+      "projY": [
+        440,
+        440,
+        0
+      ],
+      "projZ": [
+        799,
+        799,
+        45
+      ],
+      "camX": [
+        -40,
+        40,
+        0
+      ],
+      "camY": [
+        40,
+        40,
+        -4
+      ],
+      "camD": [
+        799,
+        799,
+        45
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "two-behind-triangle-1280x800",
+      "vertices": [
+        [
+          0,
+          -928,
+          -1304
+        ],
+        [
+          -20,
+          -1417,
+          -1881
+        ],
+        [
+          20,
+          -1417,
+          -1881
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          2,
+          1
+        ]
+      ],
+      "eligibleFaces": [
+        {
+          "face": 0,
+          "frontVertices": 1,
+          "dot": 199840
+        }
+      ],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "rejected": false,
+      "boundI636": -333,
+      "derivedFills": 1,
+      "normalFills": 0,
+      "clipFills": 1,
+      "flatFillEntriesExtracted": 1,
+      "flatFillEntriesWasm": 1,
+      "flatFillEntriesNative": null,
+      "boundI637": 3725,
+      "covered": 32753,
+      "fnv1a": "fd8571e8",
+      "depthFnv1a": "4a38af23",
+      "projX": [
+        640,
+        -5000,
+        -5000
+      ],
+      "projY": [
+        440,
+        0,
+        0
+      ],
+      "projZ": [
+        799,
+        45,
+        45
+      ],
+      "camX": [
+        0,
+        -20,
+        20
+      ],
+      "camY": [
+        40,
+        -4,
+        -4
+      ],
+      "camD": [
+        799,
+        45,
+        45
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "case": "two-behind-triangle-reversed-1280x800",
+      "vertices": [
+        [
+          0,
+          -928,
+          -1304
+        ],
+        [
+          -20,
+          -1417,
+          -1881
+        ],
+        [
+          20,
+          -1417,
+          -1881
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          1,
+          2
+        ]
+      ],
+      "eligibleFaces": [],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rejected": false,
+      "boundI636": -333,
+      "derivedFills": 0,
+      "normalFills": 0,
+      "clipFills": 0,
+      "flatFillEntriesExtracted": 0,
+      "flatFillEntriesWasm": 0,
+      "flatFillEntriesNative": null,
+      "boundI637": 3725,
+      "covered": 0,
+      "fnv1a": "3e691dc5",
+      "depthFnv1a": "55af7dc5",
+      "projX": [
+        640,
+        -5000,
+        -5000
+      ],
+      "projY": [
+        440,
+        0,
+        0
+      ],
+      "projZ": [
+        799,
+        45,
+        45
+      ],
+      "camX": [
+        0,
+        -20,
+        20
+      ],
+      "camY": [
+        40,
+        -4,
+        -4
+      ],
+      "camD": [
+        799,
+        45,
+        45
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "exact-near-50-1280x800",
+      "vertices": [
+        [
+          -40,
+          -928,
+          -1304
+        ],
+        [
+          40,
+          -928,
+          -1304
+        ],
+        [
+          0,
+          -1382,
+          -1901
+        ]
+      ],
+      "faces": [
+        [
+          1,
+          0,
+          2
+        ]
+      ],
+      "eligibleFaces": [],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rejected": false,
+      "boundI636": -331,
+      "derivedFills": 1,
+      "normalFills": 1,
+      "clipFills": 0,
+      "flatFillEntriesExtracted": 1,
+      "flatFillEntriesWasm": 1,
+      "flatFillEntriesNative": null,
+      "boundI637": 3744,
+      "covered": 18883,
+      "fnv1a": "b75f3c18",
+      "depthFnv1a": "15f9cd70",
+      "projX": [
+        600,
+        680,
+        640
+      ],
+      "projY": [
+        440,
+        440,
+        960
+      ],
+      "projZ": [
+        799,
+        799,
+        50
+      ],
+      "camX": [
+        -40,
+        40,
+        0
+      ],
+      "camY": [
+        40,
+        40,
+        35
+      ],
+      "camD": [
+        799,
+        799,
+        50
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "crossing-49.8-behind-1280x800",
+      "vertices": [
+        [
+          -40,
+          -928,
+          -1304
+        ],
+        [
+          40,
+          -928,
+          -1304
+        ],
+        [
+          0,
+          -1377,
+          -1905
+        ]
+      ],
+      "faces": [
+        [
+          1,
+          0,
+          2
+        ]
+      ],
+      "eligibleFaces": [
+        {
+          "face": 0,
+          "frontVertices": 2,
+          "dot": 2463920
+        }
+      ],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "rejected": false,
+      "boundI636": -332,
+      "derivedFills": 2,
+      "normalFills": 0,
+      "clipFills": 2,
+      "flatFillEntriesExtracted": 2,
+      "flatFillEntriesWasm": 2,
+      "flatFillEntriesNative": null,
+      "boundI637": 3748,
+      "covered": 21923,
+      "fnv1a": "a0fef178",
+      "depthFnv1a": "a38251d3",
+      "projX": [
+        600,
+        680,
+        -5000
+      ],
+      "projY": [
+        440,
+        440,
+        0
+      ],
+      "projZ": [
+        799,
+        799,
+        49
+      ],
+      "camX": [
+        -40,
+        40,
+        0
+      ],
+      "camY": [
+        40,
+        40,
+        41
+      ],
+      "camD": [
+        799,
+        799,
+        49
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "case": "crossing-50.2-front-1280x800",
+      "vertices": [
+        [
+          -40,
+          -928,
+          -1304
+        ],
+        [
+          40,
+          -928,
+          -1304
+        ],
+        [
+          0,
+          -1379,
+          -1903
+        ]
+      ],
+      "faces": [
+        [
+          1,
+          0,
+          2
+        ]
+      ],
+      "eligibleFaces": [],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rejected": false,
+      "boundI636": -331,
+      "derivedFills": 1,
+      "normalFills": 1,
+      "clipFills": 0,
+      "flatFillEntriesExtracted": 1,
+      "flatFillEntriesWasm": 1,
+      "flatFillEntriesNative": null,
+      "boundI637": 3746,
+      "covered": 19807,
+      "fnv1a": "8840a710",
+      "depthFnv1a": "681b2328",
+      "projX": [
+        600,
+        680,
+        640
+      ],
+      "projY": [
+        440,
+        440,
+        1015
+      ],
+      "projZ": [
+        799,
+        799,
+        50
+      ],
+      "camX": [
+        -40,
+        40,
+        0
+      ],
+      "camY": [
+        40,
+        40,
+        38
+      ],
+      "camD": [
+        799,
+        799,
+        50
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "model-all-behind-1280x800",
+      "vertices": [
+        [
+          -40,
+          -5000,
+          -200
+        ],
+        [
+          40,
+          -5000,
+          -200
+        ],
+        [
+          0,
+          -5000,
+          200
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          1,
+          2
+        ]
+      ],
+      "eligibleFaces": [],
+      "derivedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rejected": true,
+      "boundI636": -804,
+      "derivedFills": 0,
+      "normalFills": 0,
+      "clipFills": 0,
+      "flatFillEntriesExtracted": 0,
+      "flatFillEntriesWasm": 0,
+      "flatFillEntriesNative": null,
+      "boundI637": -396,
+      "covered": 0,
+      "fnv1a": "3e691dc5",
+      "depthFnv1a": "55af7dc5",
+      "projX": [
+        0,
+        0,
+        0
+      ],
+      "projY": [
+        0,
+        0,
+        0
+      ],
+      "projZ": [
+        0,
+        0,
+        0
+      ],
+      "camX": [
+        0,
+        0,
+        0
+      ],
+      "camY": [
+        0,
+        0,
+        0
+      ],
+      "camD": [
+        0,
+        0,
+        0
+      ],
+      "extractedCounters": {
+        "adapterEntries": 0,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 0,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "case": "face-all-behind-companion-1280x800",
+      "vertices": [
+        [
+          40,
+          -928,
+          -1304
+        ],
+        [
+          -40,
+          -928,
+          -1304
+        ],
+        [
+          0,
+          -1382,
+          -1901
+        ],
+        [
+          -20,
+          -1417,
+          -1881
+        ],
+        [
+          0,
+          -1409,
+          -1887
+        ],
+        [
+          20,
+          -1417,
+          -1881
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          3,
+          4,
+          5
+        ]
+      ],
+      "eligibleFaces": [
+        {
+          "face": 1,
+          "frontVertices": 0,
+          "dot": 16200
+        }
+      ],
+      "derivedClipOut": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rejected": false,
+      "boundI636": -352,
+      "derivedFills": 1,
+      "normalFills": 1,
+      "clipFills": 0,
+      "flatFillEntriesExtracted": 1,
+      "flatFillEntriesWasm": 1,
+      "flatFillEntriesNative": null,
+      "boundI637": 3744,
+      "covered": 18883,
+      "fnv1a": "b75f3c18",
+      "depthFnv1a": "15f9cd70",
+      "projX": [
+        680,
+        600,
+        640,
+        -5000,
+        -5000,
+        -5000
+      ],
+      "projY": [
+        440,
+        440,
+        960,
+        0,
+        0,
+        0
+      ],
+      "projZ": [
+        799,
+        799,
+        50,
+        45,
+        45,
+        45
+      ],
+      "camX": [
+        40,
+        -40,
+        0,
+        -20,
+        0,
+        20
+      ],
+      "camY": [
+        40,
+        40,
+        35,
+        -4,
+        5,
+        -4
+      ],
+      "camD": [
+        799,
+        799,
+        50,
+        45,
+        45,
+        45
+      ],
+      "extractedCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "extractedClipOut": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "wasmCounters": {
+        "adapterEntries": 1,
+        "adapterIllegal": 0,
+        "method646": 0,
+        "method658": 0,
+        "method3720": 0,
+        "method3645": 0,
+        "method1022": 0,
+        "method1024": 0
+      },
+      "wasmClipOut": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "inputsSha256": {
+    "client_jar": "ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918",
+    "Class64_Sub1.java": "e02518708ff51fc07c42e1f3fa587810c40c715948054c344b90484afda91398",
+    "Class109.java": "058b9ffd636007796f75dd50f25a422e173e820f7dcee135b6b71989d874308a",
+    "Class167.java": "d76c65b840aaca9bf042581c68c6e5c4b5bcd037f00c19a72f82edacbd1a5975",
+    "ha_Sub1.java": "f3f01437c28ad160ca356311ab021d9d4cfbc4759cb367435f0209eba4b0bae7",
+    "ha.java": "f50efd45125feb64dfee81a3dcbe6b25324550b1a8d5701f6121d0b91a8d2a6b",
+    "Class101_Sub1.java": "24caf77c838feddd325482fcbc60ef5cfb46e0418fcb3d76637a46acf1938601",
+    "Class6.java": "824995b61329c462d5c6a3a0f124130185d0ef910bc73e7035a6555cf8c1f77e",
+    "Class350.java": "aba20b09440182879ae51846842971929ac92fa383e4bfd4b40962cf552f07b1",
+    "Class318_Sub3.java": "a5bc0dbf7f25acd94934291bb3f630b95e0c05b20f1c33eec06420297b97d1ed",
+    "Class126.java": "32e88d03cc4d973f3c65d1b9fbd859ec9164a585887acba5f3921abedcd89a39"
+  },
+  "toolchain": {
+    "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS",
+    "teavm": "0.16.0 (org.teavm plugin and teavm-jso)",
+    "outputSha256": {
+      "face.wasm": "6161c806767b71e56534552718a29499c9f79aa4ec2bb38618b4f77ac21928f4",
+      "face.wasm-runtime.js": "4fa1e0e0d686cc6e0a0d111e606cb876f7168bd695d9e3d639e7d5684453089b"
+    },
+    "outputBytes": {
+      "face.wasm": 85449,
+      "face.wasm-runtime.js": 17268
+    },
+    "experimentSourceSha256": {
+      ".gitignore": "814bbf71a7a9b5d318ec208b7560da4f65ef3c67e3cb1c5fedaeed221e3af96a",
+      "README.md": "dc18314a2fea738df102a29d8fc5a5d37f24c52e1454e64f4810ecedc23c0abd",
+      "build.gradle": "7c8f0525c8f3b4603a685f853ad5f0c7b61f9a99d7ab42bddd750236983d293b",
+      "run.sh": "b32771ad7a4ac80a9f5bc1ba30344cc9fff043d372da213a60c7682225bc714e",
+      "settings.gradle": "3744cb7680f777ffe09a32da5f10f7d188cf8caa1e8d96d1b9180c8bbae2880c",
+      "src/browser/java/ClipProbe.java": "6067ad61a24bc799460c33a4eae7b43b840dd04cc9c33367c82ca2fb4fa59ad2",
+      "src/browser/java/FaceProbe.java": "806c36b4182fdf4b5d8f8b28d34ee2f14b42239fa8cd92107c4b5950f8c3155b",
+      "src/jvm/java/NativeFace.java": "214e320f9e7cdb3598dd1f852c099fb2606ffb92c1e5d1d5292039c2523db6ee",
+      "src/jvm/java/VerbatimFaceJvm.java": "f5594c6ba90cbb35cc25fd2dea397c64e04c84d1c91c9efc3589a5971657aa57",
+      "src/shared/java/ClipScene.java": "adfc39b54595b51ba133e1cc69acaf3c29eb9dea6990120eb04a8bcc59510ac0",
+      "src/shared/java/ExtractedRig.java": "3b03a7c7e513d85ad7edd96610b1ed035026d867659a1102ad235ff96f077456",
+      "src/shared/java/FaceCounters.java": "b85fab98645f0cb25e9cc886969725481621c82e77818973c1e93dd890c8ff1f",
+      "src/shared/java/FaceMesh.java": "c66265799316992ea8bc175dd8006866dbd8dfb93a572a1eba65758d746da9e1",
+      "src/shared/java/FaceRig.java": "ad863b1b3a4f56b71818b64b3ed197c2eaded5453e6dfd1430b7863bc6159b4f",
+      "src/shared/java/FaceScene.java": "4aade0690b084870c7d2190facd7a2cf3498c782d3e819ce766e2bc5dee47bdb",
+      "tools/browser_probe.mjs": "b109aeeed10593f3afa87fb83216ef50d246e5137252c45525ce11a097456ce5",
+      "tools/check_clip_evidence.py": "b426a5cd87baba1670e8b2e41c1aad279afa7d375624b988e3035e8f95f1ff47",
+      "tools/check_evidence.py": "2872d65ad57da966a2b4db2faf0e1670698e8479845b84b707de0fd898ba4cbe",
+      "tools/extract_face_closure.py": "0d763f043aceed23bcdc68d97290b210c1704674c53663a6cbf5ca0301776590",
+      "tools/serve_loopback.py": "142897e02f7ab486f903644869f053a4a63ae13345d0eeae7ac50c64ab5eccd8",
+      "web/index.html": "b9e5b8a0679dfc78887d7ad7ece99d864b491e837ceaaa304a1877e60c4e84bd"
+    },
+    "generatedSourceSha256": {
+      "Class101.java": "0cdd14c2256ecb2d5bd75b65d01cdb0849cae25c22fd5b67894fe20ae97fa415",
+      "Class101_Sub1.java": "e7855385a0ed465425e06312074edbb53f27915f1d561e56835abec8ad240cba",
+      "Class109.java": "2fdb322e516d45f02ba9de550d75058d8d4f8437abcc5fb0d19b70fbb910e278",
+      "Class126.java": "ab19a15c43a444bda151c1a7597ec738b2400dfbf3a12a309f5774163e655ada",
+      "Class129.java": "6860500dc681c094fcc06b85d3538d645d45b9195256a7178a76ce1a492132cc",
+      "Class167.java": "7fcab9ca28d868792686cce55e0061ff516b41e929c1a7d7c0fd54950261062f",
+      "Class318_Sub3.java": "8df54d7ccc8407045ec0d4ede29b986a7ab92a77f0fa6d36698308e20905c45c",
+      "Class342.java": "999e33393a8c4960a1d4479c82429a8e6772972b80a54209f075b164f2fe7447",
+      "Class350.java": "58df72b9d3b64e80a430cc9e4fbd67957cd631150d548c17b0b87a2ecf5b6c40",
+      "Class6.java": "413c5595ae161fb1ccec9c37f723b64814138078c600b3bf5c535aac130d10ea",
+      "Class64_Sub1.java": "ad284c3f3fcffc31ea7e74c84fe8a6725fbb456d23f2ff0867d17518d7407364",
+      "ha_Sub1.java": "84830925f03413a266c141108b0ac25b5fb81122d2ab63a3ba0c609538f08e73"
+    },
+    "closure": {
+      "inputs_sha256": {
+        "Class64_Sub1.java": "e02518708ff51fc07c42e1f3fa587810c40c715948054c344b90484afda91398",
+        "Class109.java": "058b9ffd636007796f75dd50f25a422e173e820f7dcee135b6b71989d874308a",
+        "Class167.java": "d76c65b840aaca9bf042581c68c6e5c4b5bcd037f00c19a72f82edacbd1a5975",
+        "ha_Sub1.java": "f3f01437c28ad160ca356311ab021d9d4cfbc4759cb367435f0209eba4b0bae7",
+        "ha.java": "f50efd45125feb64dfee81a3dcbe6b25324550b1a8d5701f6121d0b91a8d2a6b",
+        "Class101_Sub1.java": "24caf77c838feddd325482fcbc60ef5cfb46e0418fcb3d76637a46acf1938601",
+        "Class6.java": "824995b61329c462d5c6a3a0f124130185d0ef910bc73e7035a6555cf8c1f77e",
+        "Class350.java": "aba20b09440182879ae51846842971929ac92fa383e4bfd4b40962cf552f07b1",
+        "Class318_Sub3.java": "a5bc0dbf7f25acd94934291bb3f630b95e0c05b20f1c33eec06420297b97d1ed",
+        "Class126.java": "32e88d03cc4d973f3c65d1b9fbd859ec9164a585887acba5f3921abedcd89a39"
+      },
+      "clip_mode": true,
+      "class64_sub1_methods_verbatim": [
+        "method654",
+        "method650",
+        "method643",
+        "method635",
+        "method634",
+        "method632",
+        "method655",
+        "method629",
+        "method638",
+        "method646"
+      ],
+      "class64_sub1_verbatim_lines": 574,
+      "class64_sub1_line_budget": 580,
+      "class64_sub1_non_verbatim_lines": 1,
+      "class109_non_verbatim_lines": 1,
+      "class109_non_verbatim_note": "FaceCounters.flatFillEntries++ at the top of method1018",
+      "class64_sub1_per_method_lines": {
+        "method654": 266,
+        "method650": 34,
+        "method643": 45,
+        "method635": 21,
+        "method634": 7,
+        "method632": 24,
+        "method655": 36,
+        "method629": 4,
+        "method638": 4,
+        "method646": 133
+      },
+      "class64_sub1_native_instance_fields_kept": 59,
+      "class64_sub1_field_budget": 65,
+      "class64_sub1_fields": [
+        "aBoolean5323",
+        "aBoolean5357",
+        "aBoolean5382",
+        "aByteArray5325",
+        "aByteArray5358",
+        "aByteArray5386",
+        "aClass101_Sub1_5320",
+        "aClass109_5383",
+        "aClass129Array5322",
+        "aClass167_5367",
+        "aClass342Array5335",
+        "aClass350Array5363",
+        "aClass6Array5361",
+        "aFloatArrayArray5314",
+        "aFloatArrayArray5345",
+        "aHa_Sub1_5353",
+        "aShort5324",
+        "aShort5329",
+        "aShort5331",
+        "aShort5348",
+        "aShort5352",
+        "aShort5365",
+        "aShort5393",
+        "aShort5395",
+        "aShortArray5311",
+        "aShortArray5317",
+        "aShortArray5327",
+        "aShortArray5364",
+        "aShortArray5388",
+        "aShortArray5394",
+        "anInt5316",
+        "anInt5340",
+        "anInt5351",
+        "anInt5354",
+        "anInt5387",
+        "anInt5389",
+        "anIntArray5312",
+        "anIntArray5315",
+        "anIntArray5318",
+        "anIntArray5321",
+        "anIntArray5326",
+        "anIntArray5332",
+        "anIntArray5337",
+        "anIntArray5343",
+        "anIntArray5355",
+        "anIntArray5356",
+        "anIntArray5359",
+        "anIntArray5362",
+        "anIntArray5366",
+        "anIntArray5368",
+        "anIntArray5371",
+        "anIntArray5373",
+        "anIntArray5377",
+        "anIntArray5381",
+        "anIntArray5384",
+        "anIntArray5392",
+        "anIntArray5398",
+        "anIntArray5399",
+        "anIntArray5400"
+      ],
+      "adapter_lines": 10,
+      "adapter_line_budget": 20,
+      "class109_methods_verbatim": [
+        "method1018",
+        "method1023",
+        "method1026"
+      ],
+      "class109_verbatim_lines": 512,
+      "class109_stubbed": [
+        "method1022",
+        "method1024"
+      ],
+      "stubs": [
+        "Class64_Sub1.method658",
+        "ha_Sub1.method3720",
+        "ha.method3645",
+        "Class109.method1022",
+        "Class109.method1024"
+      ],
+      "callees_found": [
+        "method1018",
+        "method1022",
+        "method1023",
+        "method1024",
+        "method3720",
+        "method3724",
+        "method629",
+        "method632",
+        "method634",
+        "method635",
+        "method638",
+        "method643",
+        "method646",
+        "method650",
+        "method654",
+        "method655",
+        "method657",
+        "method658"
+      ],
+      "ha_Sub1_members": [
+        "aClass101_Sub1_7492",
+        "aFloatArray7511",
+        "anInt7477",
+        "anInt7482",
+        "anInt7485",
+        "anInt7490",
+        "anInt7491",
+        "anInt7494",
+        "anInt7497",
+        "anInt7504",
+        "anInt7506",
+        "anInt7508",
+        "anInt7509",
+        "anInt7510",
+        "anIntArray7483",
+        "method3645",
+        "method3720",
+        "method3724"
+      ],
+      "class167_members": [
+        "aBoolean2195",
+        "aBoolean2201",
+        "aBoolean2202",
+        "aClass109_2220",
+        "anInt2192",
+        "anInt2210",
+        "anInt2215",
+        "anInt2221",
+        "anInt2229",
+        "anIntArray2213",
+        "anIntArray2214",
+        "anIntArray2216",
+        "anIntArray2218",
+        "anIntArray2222",
+        "anIntArray2230",
+        "anIntArray2234",
+        "anIntArray2235",
+        "anIntArray2236",
+        "anIntArray2237",
+        "anIntArray2238",
+        "anIntArray2240",
+        "anIntArray2241",
+        "anIntArray2242",
+        "anIntArray2244",
+        "anIntArray2245",
+        "anIntArray2247"
+      ],
+      "type_stubs": [
+        "Class6",
+        "Class350",
+        "Class318_Sub3",
+        "Class129",
+        "Class342",
+        "Class101",
+        "Class101_Sub1",
+        "Class126"
+      ]
+    }
+  },
+  "browser": {
+    "clock": "performance.now with real time; no virtual-time budget",
+    "browser": "Chromium 153.0.8010.52 Arch Linux",
+    "node": "v26.11.1",
+    "presentation": "headless Chromium software Canvas; host only"
+  },
+  "coordinator_controls": [
+    {
+      "control": "clip-count",
+      "exit": 1,
+      "reason": "FAIL: jvm-verbatim one-behind-quad 765x503: clipOut [0, 0, 0, 0, 2] != derived [0, 0, 0, 0, 1]"
+    },
+    {
+      "control": "clip-visible",
+      "exit": 1,
+      "reason": "FAIL: 765x503: native output does not change across the near-plane crossing (49.8 behind vs 50.2 front)"
+    },
+    {
+      "control": "clip-browser-element",
+      "exit": 1,
+      "reason": "FAIL: browser two-behind-triangle 1280x800: projX differs from the native jar reference"
+    },
+    {
+      "control": "clip-fill-count",
+      "exit": 1,
+      "reason": "FAIL: jvm-verbatim one-behind-quad 765x503: flatFillEntries 3 != derived 2"
+    }
+  ],
+  "default_case_count": 10,
+  "clip_case_count": 18,
+  "source_fingerprints_match_final_files": true,
+  "private_clip_log": ".runtime/wasm-clip-20261017/coordinator-publish-clip.log",
+  "private_default_log": ".runtime/wasm-clip-20261017/coordinator-publish-default.log"
+}
