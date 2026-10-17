@@ -1,0 +1,52 @@
+name: Human playtest finding
+description: Record a controller, gameplay or lifecycle finding from a real session.
+title: "[Playtest] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "See docs/PLAYTEST_DIRECTION.md. For suspected save loss, stop playing and preserve the world. Do not attach saves, credentials, tokens or private logs. Unknown build information is acceptable; report the problem anyway."
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - P0 — save/data loss, security or serious lifecycle failure
+        - P1 — blocks controller-only play or progression
+        - P2 — recurring usability/friction
+        - P3 — polish/nice-to-have
+    validations:
+      required: true
+  - type: input
+    id: build
+    attributes:
+      label: Build / commit
+      description: Private Deck build name and source commit if known, otherwise unknown.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and input
+      description: Device/OS, controller model, Steam Input layout, mouse/trackpad use, remaps and relevant native/custom toggles.
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Session mode
+      options: [Steam Gaming Mode, Desktop, Other or unknown]
+    validations:
+      required: true
+  - type: textarea
+    id: activity
+    attributes:
+      label: Location / activity and reproduction steps
+      description: Starting state, location, actions/buttons in order, expected behaviour, actual behaviour, frequency and whether restarting changes it.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots / redacted logs and impact
+      description: Optional screenshot/video, timestamps, last successful Save & Quit, and whether the current world is safely stopped. Keep private saves and authentication off GitHub.

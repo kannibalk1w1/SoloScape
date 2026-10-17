@@ -1,0 +1,86 @@
+{
+  "reviewed_on": "2026-10-17",
+  "reviewed_base": "502df960241d2dbc7eae4d0985273a7db9dcef28",
+  "entries": [
+    {
+      "id": "controls",
+      "scope": "Controller/world/UI adapters, source targeting, quick slots, text ownership",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "CONTROLLER_INTERACTION_ACCEPTANCE.md",
+      "note": "Representative contracts; earlier owner approval covers basic movement/camera only"
+    },
+    {
+      "id": "shop",
+      "scope": "Native shop stock click-box metadata and buy/sell persistence",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "DECK_CONTROLLER_VALIDATION_20261014.md",
+      "note": "r30 real Deck hardware with scripted input; not human button acceptance"
+    },
+    {
+      "id": "settings",
+      "scope": "Settings lifetime, B ancestry and exact save comparison",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "DECK_CONTROLLER_VALIDATION_20261014.md",
+      "note": "Two strict reruns pass; earlier one-tile difference remains unexplained"
+    },
+    {
+      "id": "profiles",
+      "scope": "Profiles, generations, checksummed backups and owned-session recovery",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "DECK_CONTROLLER_VALIDATION_20261014.md",
+      "note": "Ended owner records archived; valid current saves preserved, clean closure not inferred"
+    },
+    {
+      "id": "graphics",
+      "scope": "Steam Gaming Mode route and loading-phase instrumentation",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "DECK_STALL_DIAGNOSIS_20261014.md",
+      "note": "36-minute r29 average 59.04 FPS misses tails; r32 mixed-power ~30 FPS is diagnostic"
+    },
+    {
+      "id": "suspend",
+      "scope": "Reliable suspend/resume, low-battery exit and reconnect campaign",
+      "delivery": "NOT IMPLEMENTED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "CONSOLE_SESSION_ACCEPTANCE.md",
+      "note": "Campaign/policy incomplete; input-gap reset is not world pause"
+    },
+    {
+      "id": "content",
+      "scope": "Representative early quests and production routes",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "CONTENT_COVERAGE.md",
+      "note": "Partial coverage only; Druidic earned route partial, not all quests audited"
+    },
+    {
+      "id": "m6",
+      "scope": "Complete M6 existing-content, Summoning/Dungeoneering and solo audit",
+      "delivery": "NOT IMPLEMENTED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "ROADMAP.md",
+      "note": "Some route coverage exists; a complete working-content inventory does not"
+    },
+    {
+      "id": "pause",
+      "scope": "True solo simulation pause",
+      "delivery": "DEFERRED",
+      "acceptance": "DEFERRED",
+      "evidence": "ROADMAP.md",
+      "note": "Menus currently do not freeze the world"
+    },
+    {
+      "id": "future",
+      "scope": "Later-content compatibility runtime, AI/economy expansion and web port",
+      "delivery": "NOT IMPLEMENTED",
+      "acceptance": "DEFERRED",
+      "evidence": "ROADMAP.md",
+      "note": "Research/planning does not implement gameplay or authorize a port"
+    }
+  ]
+}

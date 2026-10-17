@@ -1,5 +1,15 @@
 # Minimum-change architecture
 
+## Current boundary review — 17 October 2026
+
+Merged main is authoritative; [CURRENT_STATUS](CURRENT_STATUS.md) indexes implementation/evidence. The native product currently has a Java 8 client, Java 21 Kotlin server, Swing launcher/Python ownership backend, semantic server definitions, revision-specific native UI bridges and ordered 0053/0022 patch stacks. Loopback binding, profiles, build stamps, negotiated direct movement and verified recovery were added after the original bootstrap design below.
+
+Retain pure controller states plus native adapters and server authority; do not rewrite the coordinator on style grounds. [Playtest/architecture risks](PLAYTEST_DIRECTION.md) rank ownership, stale native identities, text, same-type cancellation and lifecycle uncertainty. Native menus are not world pause. [Backports](BACKPORT_ARCHITECTURE.md) extend existing semantic definitions through proposed authoring manifests; [browser research](WASM_FEASIBILITY.md) does not add a production transport/runtime.
+
+## Original bootstrap design (historical)
+
+The following records the initial plan, not current deployment or binding/acceptance status.
+
 SoloScape is an orchestration/documentation root with separately pinned,
 upstream checkouts with tracked SoloScape patch stacks in `upstream/`. These are ignored so proprietary
 caches, saves and upstream binary resources cannot accidentally enter the root

@@ -15,6 +15,8 @@ jobs:
           python-version: '3.12'
       - name: Root tooling tests
         run: python3 -m unittest discover -s scripts -p 'test_*.py'
+      - name: Current status evidence index
+        run: python3 scripts/current_status.py --check
       - name: Shell syntax
         run: |
           for script in scripts/*.sh; do bash -n "$script"; done

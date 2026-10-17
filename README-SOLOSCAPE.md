@@ -2,11 +2,11 @@
 
 Development source build for a local RuneScape revision-634 experience with native controller support and eventual Steam Deck delivery. The controller build includes reversible direct movement, target/movement feedback, native UI navigation, Home and quick-action radials, optional custom inventory/equipment/bank/shop screens, shared menu back navigation, active-pane right-stick scrolling, remapped physical hints, exclusive in-game text ownership and a reversible classic controller UI theme.
 
-The graphical launcher provides controller character naming, independent local worlds, verified backups/restore, explicit backup management and ownership-checked Recover Session. [Combined completion report](docs/MORNING_REPORT.md), [setup/update instructions](docs/CONSOLE_SETUP_UPDATE.md) and [physical acceptance checklist](docs/CONSOLE_SESSION_ACCEPTANCE.md) record evidence and remaining limits. No packaged release or completed Deck acceptance is claimed.
+The graphical launcher provides controller character naming, independent local worlds, verified backups/restore, explicit backup management and ownership-checked Recover Session. [Historical 10 October completion report](docs/MORNING_REPORT.md), [setup/update instructions](docs/CONSOLE_SETUP_UPDATE.md) and [physical acceptance checklist](docs/CONSOLE_SESSION_ACCEPTANCE.md) record evidence and remaining limits. No packaged release or completed Deck acceptance is claimed.
 
-The [proposed roadmap](docs/ROADMAP.md) is the working task list.
+Start at [current status and evidence](docs/CURRENT_STATUS.md), then [playtest direction](docs/PLAYTEST_DIRECTION.md). The [roadmap](docs/ROADMAP.md) is the proposed working task list; its 17 October review keeps native 2010–2011/Deck acceptance first. [Backport architecture](docs/BACKPORT_ARCHITECTURE.md) and [WASM feasibility](docs/WASM_FEASIBILITY.md) are research tracks, not a cache replacement or web port.
 The [Steam Deck player guide](docs/SOLOSCAPE_STEAM_DECK_PLAYER_GUIDE.md) is standalone Markdown for first-time play and Obsidian.
-The [current-state handoff](docs/PROJECT_HANDOFF.md) can be taken into ChatGPT for discussion.
+The [10 October handoff](docs/PROJECT_HANDOFF.md) is a historical discussion snapshot; branch/build/test-count claims there are superseded by the current status index.
 
 The completed controller/Deck work is integrated into the GitHub default branch `main`. Source checkouts under `upstream/` are
 ignored; tracked SoloScape patches reproduce the client changes and the server
@@ -67,7 +67,7 @@ The cache was downloaded with explicit user authorization from upstream's linked
 MEGA folder. See [cache provenance](docs/CACHE_SETUP.md). Cache and archive remain
 ignored by Git.
 
-The owner confirms launch, camera, improved walking/aiming and optional direct movement. The latest menu/art/recovery milestone has 151 client cases (one optional SDL skip), 44 root tooling cases, 11 selected native game cases and isolated graphical New/Continue/cancellation evidence. These are not physical controller/Deck acceptance. Runtime/dependency licence review remains required before a distributable package.
+The owner has confirmed basic launch/camera/movement in earlier sessions. Newer scripted Deck, save/recovery and performance evidence is indexed in [CURRENT_STATUS](docs/CURRENT_STATUS.md); it does not establish full physical controller acceptance. Runtime/dependency licence review remains required before distribution.
 
 Tooling validation: Python tests/compilation, ShellCheck and patch/whitespace checks pass. Run `python3 -m unittest discover -s scripts -p 'test_*.py'`. See [validation results](docs/VALIDATION.md) and the combined report for the limits of those checks.
 
@@ -79,18 +79,15 @@ if desired. With server features off, the controller uses ordinary walking and
 same-tile Walk cancellation. See [protocol extensions](docs/PROTOCOL_EXTENSIONS.md).
 
 
-After changing source, export the patch stack and run `python3 scripts/verify_patches.py client` and `python3 scripts/verify_patches.py server`. These compare every modified/untracked source file with the reproduced stack, including native hooks. The root tests exercise missing files and changed contents. See `docs/MORNING_REPORT.md` for the current verified batch and acceptance steps.
+After changing source, export the patch stack and run `python3 scripts/verify_patches.py client` and `python3 scripts/verify_patches.py server`. These compare every modified/untracked source file with the reproduced stack, including native hooks. The root tests exercise missing files and changed contents. See [CURRENT_STATUS](docs/CURRENT_STATUS.md) for the reviewed evidence index and acceptance limits.
 
-Steam Deck checkpoint: private Desktop deployment/native save and recovery probes now pass. See [combined report](docs/MORNING_REPORT.md), [Deck setup](docs/DECK_SETUP.md) and [evidence/limits](docs/DECK_VALIDATION.md). Launcher keyboard ownership is implemented after physical feedback; Gaming Mode and in-game keyboard ownership remain acceptance/follow-up work.
+## Current player and contributor entry points
 
-Playtest follow-up candidate (12 October 2026): [changes and validation limits](docs/PLAYTEST_FOLLOWUP.md) cover left-stick menu navigation, item Use/consumables, native Map/logout/completion panels, one-time setup prompting, direct-movement sliding/exhaustion, separate backup/cache sizes, and developer tile painting. [Manual cross-device save transfer](docs/SAVE_SYNC.md) is available through verified provider-managed bundles. Sustained Deck FPS and automatic sync remain open; the installed Deck shortcut remains r10.
+- [Physical acceptance](docs/CONSOLE_SESSION_ACCEPTANCE.md), [human playtest workflow](docs/PLAYTEST_DIRECTION.md) and the GitHub **Human playtest finding** issue form.
+- [Latest recorded Deck validation and diagnostic screenshots](docs/DECK_CONTROLLER_VALIDATION_20261014.md). Installed build claims are dated evidence, not live device discovery.
+- [Controller input and in-game Save & Quit](docs/LAUNCHER_INPUT_AND_QUIT.md): Home → Settings → Finish → Save & Quit, then fresh A to confirm.
+- F11 toggles fullscreen; configure Fullscreen Toggle Key in RuneLite Window settings or map a Deck rear button. Returning restores window bounds/size lock.
+- [Text ownership](docs/IN_GAME_TEXT_INPUT.md), [representative content coverage](docs/CONTENT_COVERAGE.md), [manual verified save transfer](docs/SAVE_SYNC.md) and [controller acceptance contracts](docs/CONTROLLER_INTERACTION_ACCEPTANCE.md).
+- Historical [playtest 2](docs/PLAYTEST_2.md), [classic UI/art pass](docs/JAGEX_UI_OVERHAUL.md) and [UI Deck release](docs/UI_DECK_RELEASE.md) retain their own scope and dates. They do not replace current acceptance status.
 
-Fullscreen candidate: press **F11** in game to enter or leave fullscreen. Change **Fullscreen Toggle Key** in RuneLite Window settings, or bind a Deck rear button to F11 in Steam Input. Returning to windowed mode restores the previous bounds and size lock.
-
-Playtest 2 candidate (13 October 2026): [changes, server approach and validation](docs/PLAYTEST_2.md) cover occupied-slot inventory navigation, reversed horizontal camera input, unobstructed target prompts, full-pile loot menus, per-world XP/drop/run settings, player-lit fire Use and the original brazier launcher scene. This is a local matched candidate; the installed Deck shortcut is unchanged.
-
-Jagex-style UI candidate (13 October 2026): [overhaul, previews and validation](docs/JAGEX_UI_OVERHAUL.md). The launcher and every SoloScape controller surface now use the RuneScape bitmap fonts, stone frames, classic menu colours and the "Choose Option" menu (client patch 0042). D-pad left/right focuses the native tab bar from world input; a fresh A opens the highlighted tab and B returns to the world (client patch 0043). Classic controller UI off restores the modern palette. Native item artwork and all 25 skill icons/levels are included (client patch 0044). [Deck release, screenshots and performance](docs/UI_DECK_RELEASE.md).
-
-Launcher input follow-up: [Steam-mapped navigation and controller Save & Quit](docs/LAUNCHER_INPUT_AND_QUIT.md) (client patch 0045). Exit through Home > Settings > Finish > Save & Quit, then press A again to confirm.
-
-Broader content coverage: [early quest and production matrix](docs/CONTENT_COVERAGE.md), with repeatable isolated server and native-client probes, readable quest requirements/rewards, and a mixed-inventory pottery fix.
+Generate the evidence index with `python3 scripts/current_status.py`; CI checks it with `--check`. Edit `docs/current-status.json` when reviewed evidence changes. Historical reports stay unchanged.
