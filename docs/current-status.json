@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "a97df79",
+  "reviewed_base": "7f64a36",
   "entries": [
     {
       "id": "controls",
@@ -31,8 +31,8 @@
       "scope": "Settings lifetime, B ancestry and exact save comparison",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
-      "evidence": "DECK_CONTROLLER_VALIDATION_20261014.md",
-      "note": "Two strict reruns pass; earlier one-tile difference remains unexplained"
+      "evidence": "SETTINGS_SAVE_FOLLOWUP_20261017.md",
+      "note": "Host 51/56 default/direct-configured Settings fixtures preserve four save fields; ten backups verify. Historical r30 Deck one-tile difference remains unexplained, not fixed. Physical input/Gaming Mode remain open."
     },
     {
       "id": "profiles",

@@ -1,0 +1,370 @@
+{
+  "date": "2026-10-17",
+  "reviewed_base": "7f64a36",
+  "native_stack": {
+    "server": 51,
+    "client": 56
+  },
+  "direct_tooling_source_commit": "e5364653958f54f1aedf415dc80968e757d4b749",
+  "source_sha256": {
+    "scripts/smoke_profile.py": "5658b42341eb9069a198c2d288cc49983ab6b15f21b64fd977e4392705fbcf4f",
+    "scripts/harness/NativeAdventureProbe.java": "327b4d942c437dac8f655417d7610cfdaa22f7790311170032a38ebc887f0d06",
+    "scripts/profile_session.py": "c8108ae13b74d773500ebe6c268a278d9775e6a16f6adeba48237a7a53c44325"
+  },
+  "jars_sha256": {
+    "server": "d5c5143031c38ea0b344d75660597eb2ea003d6642f62735b9356849071e991e",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+  },
+  "verified_snapshot_entries": {
+    "default": 10888,
+    "direct": 10896
+  },
+  "sessions": {
+    "default": {
+      "summary": {
+        "new_session_seconds": 44.289,
+        "continue_session_seconds": 43.396,
+        "native_save_failure": null,
+        "native_startup_cancel_preserved": true,
+        "original_mutable_paths_unchanged": true,
+        "session_environment": {
+          "XDG_SESSION_DESKTOP": "KDE",
+          "XDG_CURRENT_DESKTOP": "KDE",
+          "DISPLAY": ":1",
+          "SteamAppId": null,
+          "SteamGameId": null
+        },
+        "text_focused": false,
+        "playable_journey": false,
+        "playtest_two": false,
+        "fullscreen_probe": false,
+        "fullscreen_renderers": null,
+        "sidebar_probe": false,
+        "sidebar_baseline": false,
+        "display": "private-xvfb",
+        "precondition": "Owned private display.",
+        "screenshots": "Private evidence only; desktop overlays may appear or Wayland capture may be unavailable. Review before publishing.",
+        "note": "Native session totals and overlay-render intervals; not physical controller or Gaming Mode acceptance."
+      },
+      "adventure": {
+        "new": {
+          "result": {
+            "tile_change_1792276769375": "step=0 tile=3221,3219,0",
+            "input_at_tile_change_1792276769375": {
+              "connected": false,
+              "leftX": 0.0,
+              "leftY": 0.0,
+              "buttonsHeld": 0,
+              "buttonsPressed": 0,
+              "buttonsReleased": 0,
+              "virtualPadActive": false,
+              "step": 0
+            },
+            "environment": "Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.",
+            "heap_at_ready": 137310088,
+            "settings_only": true,
+            "settings_probe_pad": "virtual connected-neutral rawState; SDL polling paused for the Settings steps only",
+            "settings_gateway_two_tick_adoption": true,
+            "settings_config_round_trip": true,
+            "keyboard_classic_settings_round_trip": true,
+            "settings_plugin_ticks_before_back": 150,
+            "settings_back_to_home": true,
+            "sdl_polling_restored": true,
+            "controller_logout_gateway": true,
+            "tile_change_1792276782373": "step=13 tile=8,8,0",
+            "input_at_tile_change_1792276782373": {
+              "connected": false,
+              "leftX": 0.0,
+              "leftY": 0.0,
+              "buttonsHeld": 0,
+              "buttonsPressed": 0,
+              "buttonsReleased": 0,
+              "virtualPadActive": false,
+              "step": 13
+            },
+            "logout_settle_ms": 4011,
+            "tile_change_1792276787760": "step=14 tile=3221,3219,0",
+            "input_at_tile_change_1792276787760": {
+              "connected": false,
+              "leftX": 0.0,
+              "leftY": 0.0,
+              "buttonsHeld": 0,
+              "buttonsPressed": 0,
+              "buttonsReleased": 0,
+              "virtualPadActive": false,
+              "step": 14
+            },
+            "same_client_relogin": true,
+            "fresh_capabilities_after_relogin": true,
+            "heap_after_ui": 219213392,
+            "unexpected_desktop_mouse_clicks": 0,
+            "client_rss": "1250608 kB",
+            "probe_seconds": 19.492
+          },
+          "sha256": "36a5c610cd07ae7fd3a40853aafb0945bd1fc8aeadc3b151e3df139b9db247b7"
+        },
+        "continue": {
+          "result": {
+            "tile_change_1792276812700": "step=0 tile=3221,3219,0",
+            "input_at_tile_change_1792276812700": {
+              "connected": false,
+              "leftX": 0.0,
+              "leftY": 0.0,
+              "buttonsHeld": 0,
+              "buttonsPressed": 0,
+              "buttonsReleased": 0,
+              "virtualPadActive": false,
+              "step": 0
+            },
+            "environment": "Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.",
+            "heap_at_ready": 144656632,
+            "settings_only": true,
+            "settings_probe_pad": "virtual connected-neutral rawState; SDL polling paused for the Settings steps only",
+            "settings_gateway_two_tick_adoption": true,
+            "settings_config_round_trip": true,
+            "keyboard_classic_settings_round_trip": true,
+            "settings_plugin_ticks_before_back": 150,
+            "settings_back_to_home": true,
+            "sdl_polling_restored": true,
+            "controller_logout_gateway": true,
+            "tile_change_1792276825690": "step=13 tile=8,8,0",
+            "input_at_tile_change_1792276825690": {
+              "connected": false,
+              "leftX": 0.0,
+              "leftY": 0.0,
+              "buttonsHeld": 0,
+              "buttonsPressed": 0,
+              "buttonsReleased": 0,
+              "virtualPadActive": false,
+              "step": 13
+            },
+            "logout_settle_ms": 4011,
+            "tile_change_1792276831127": "step=14 tile=3221,3219,0",
+            "input_at_tile_change_1792276831127": {
+              "connected": false,
+              "leftX": 0.0,
+              "leftY": 0.0,
+              "buttonsHeld": 0,
+              "buttonsPressed": 0,
+              "buttonsReleased": 0,
+              "virtualPadActive": false,
+              "step": 14
+            },
+            "same_client_relogin": true,
+            "fresh_capabilities_after_relogin": true,
+            "heap_after_ui": 218541008,
+            "unexpected_desktop_mouse_clicks": 0,
+            "client_rss": "1253336 kB",
+            "probe_seconds": 19.495
+          },
+          "sha256": "f01b3923720418bf4bfd4472417aea6be371d1a3219366184e669e11791c6cca"
+        }
+      },
+      "summary_sha256": "44baac4d8fa57982f3c65e429c2d08e7c0961b96db72db8ec3da3c5276e00987"
+    },
+    "direct": {
+      "summary": {
+        "new_session_seconds": 44.623,
+        "continue_session_seconds": 42.676,
+        "native_save_failure": null,
+        "native_startup_cancel_preserved": true,
+        "original_mutable_paths_unchanged": true,
+        "session_environment": {
+          "XDG_SESSION_DESKTOP": "KDE",
+          "XDG_CURRENT_DESKTOP": "KDE",
+          "DISPLAY": ":1",
+          "SteamAppId": null,
+          "SteamGameId": null
+        },
+        "settings_direct_fixture": true,
+        "text_focused": false,
+        "playable_journey": false,
+        "playtest_two": false,
+        "fullscreen_probe": false,
+        "fullscreen_renderers": null,
+        "sidebar_probe": false,
+        "sidebar_baseline": false,
+        "display": "private-xvfb",
+        "precondition": "Owned private display.",
+        "screenshots": "Private evidence only; desktop overlays may appear or Wayland capture may be unavailable. Review before publishing.",
+        "note": "Native session totals and overlay-render intervals; not physical controller or Gaming Mode acceptance."
+      },
+      "adventure": {
+        "new": {
+          "result": {
+            "tile_change_1792277269494": "step=0 tile=3221,3219,0",
+            "input_at_tile_change_1792277269494": {
+              "connected": false,
+              "leftX": 0.0,
+              "leftY": 0.0,
+              "buttonsHeld": 0,
+              "buttonsPressed": 0,
+              "buttonsReleased": 0,
+              "virtualPadActive": false,
+              "step": 0
+            },
+            "environment": "Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.",
+            "heap_at_ready": 139482448,
+            "settings_initial_direct_movement": false,
+            "settings_initial_server_features": false,
+            "settings_only": true,
+            "settings_probe_pad": "virtual connected-neutral rawState; SDL polling paused for the Settings steps only",
+            "settings_gateway_two_tick_adoption": true,
+            "settings_direct_configured": true,
+            "settings_server_features_configured": true,
+            "settings_capabilities_verified": true,
+            "settings_config_round_trip": true,
+            "keyboard_classic_settings_round_trip": true,
+            "settings_plugin_ticks_before_back": 150,
+            "settings_back_to_home": true,
+            "sdl_polling_restored": true,
+            "controller_logout_gateway": true,
+            "tile_change_1792277282491": "step=13 tile=8,8,0",
+            "input_at_tile_change_1792277282491": {
+              "connected": false,
+              "leftX": 0.0,
+              "leftY": 0.0,
+              "buttonsHeld": 0,
+              "buttonsPressed": 0,
+              "buttonsReleased": 0,
+              "virtualPadActive": false,
+              "step": 13
+            },
+            "logout_settle_ms": 4493,
+            "tile_change_1792277288487": "step=14 tile=3221,3219,0",
+            "input_at_tile_change_1792277288487": {
+              "connected": false,
+              "leftX": 0.0,
+              "leftY": 0.0,
+              "buttonsHeld": 0,
+              "buttonsPressed": 0,
+              "buttonsReleased": 0,
+              "virtualPadActive": false,
+              "step": 14
+            },
+            "same_client_relogin": true,
+            "fresh_capabilities_after_relogin": true,
+            "settings_direct_after_relogin": true,
+            "heap_after_ui": 215940832,
+            "unexpected_desktop_mouse_clicks": 0,
+            "client_rss": "1000544 kB",
+            "probe_seconds": 20.013
+          },
+          "sha256": "fce182fac407d0bd50e810b4ed5cb17c2077c5d832d26434ef9d5bd46f017b52"
+        },
+        "continue": {
+          "result": {
+            "tile_change_1792277312793": "step=0 tile=3221,3219,0",
+            "input_at_tile_change_1792277312793": {
+              "connected": false,
+              "leftX": 0.0,
+              "leftY": 0.0,
+              "buttonsHeld": 0,
+              "buttonsPressed": 0,
+              "buttonsReleased": 0,
+              "virtualPadActive": false,
+              "step": 0
+            },
+            "environment": "Private owned Xvfb/software rendering; native overlay-render intervals, real Gateway/synthetic UI input and native Robot mouse logout. No GPU/Deck/controller acceptance.",
+            "heap_at_ready": 127536832,
+            "settings_initial_direct_movement": true,
+            "settings_initial_server_features": true,
+            "settings_only": true,
+            "settings_probe_pad": "virtual connected-neutral rawState; SDL polling paused for the Settings steps only",
+            "settings_gateway_two_tick_adoption": true,
+            "settings_direct_configured": true,
+            "settings_server_features_configured": true,
+            "settings_capabilities_verified": true,
+            "settings_config_round_trip": true,
+            "keyboard_classic_settings_round_trip": true,
+            "settings_plugin_ticks_before_back": 149,
+            "settings_back_to_home": true,
+            "sdl_polling_restored": true,
+            "controller_logout_gateway": true,
+            "tile_change_1792277326297": "step=13 tile=8,8,0",
+            "input_at_tile_change_1792277326297": {
+              "connected": false,
+              "leftX": 0.0,
+              "leftY": 0.0,
+              "buttonsHeld": 0,
+              "buttonsPressed": 0,
+              "buttonsReleased": 0,
+              "virtualPadActive": false,
+              "step": 13
+            },
+            "logout_settle_ms": 4013,
+            "tile_change_1792277330924": "step=14 tile=3221,3219,0",
+            "input_at_tile_change_1792277330924": {
+              "connected": false,
+              "leftX": 0.0,
+              "leftY": 0.0,
+              "buttonsHeld": 0,
+              "buttonsPressed": 0,
+              "buttonsReleased": 0,
+              "virtualPadActive": false,
+              "step": 14
+            },
+            "same_client_relogin": true,
+            "fresh_capabilities_after_relogin": true,
+            "settings_direct_after_relogin": true,
+            "heap_after_ui": 222608184,
+            "unexpected_desktop_mouse_clicks": 0,
+            "client_rss": "1324488 kB",
+            "probe_seconds": 19.506
+          },
+          "sha256": "87c03a1e70509518c26906251b46751612431ed828a56bd0e74be0f1b9765330"
+        }
+      },
+      "summary_sha256": "a2f847d9fe677989019383c7b37e0034d898a9a943ff426bc6e3adee4c6f50a0"
+    }
+  },
+  "backup_verification": {
+    "legacy": {
+      "backups_validated": 5,
+      "backups_containing_character": 4,
+      "tested_field_hashes": {
+        "accountName": "dda5e3b4bc86afc74f7540d30ee7ce215c1aea488017c1b3d596836914e7fb12",
+        "experience": "3c3567af87e5bccaf567899ca75d07685eaaf4e8219dacb9443f53d5aa2794c3",
+        "inventories": "93fe7419cfe62a4e335fa7cbaff9e3bd7269620ca5c6754a7e2bf205c5a4ecf6",
+        "tile": "2b1bc6dbb82547cd93e2e4ae64aa9809da4c0dabb2433c2433122524a67f30dd"
+      },
+      "final_tile": {
+        "x": 3221,
+        "y": 3219
+      }
+    },
+    "direct": {
+      "backups_validated": 5,
+      "backups_containing_character": 4,
+      "tested_field_hashes": {
+        "accountName": "dda5e3b4bc86afc74f7540d30ee7ce215c1aea488017c1b3d596836914e7fb12",
+        "experience": "3c3567af87e5bccaf567899ca75d07685eaaf4e8219dacb9443f53d5aa2794c3",
+        "inventories": "93fe7419cfe62a4e335fa7cbaff9e3bd7269620ca5c6754a7e2bf205c5a4ecf6",
+        "tile": "2b1bc6dbb82547cd93e2e4ae64aa9809da4c0dabb2433c2433122524a67f30dd"
+      },
+      "final_tile": {
+        "x": 3221,
+        "y": 3219
+      }
+    }
+  },
+  "root_tooling": {
+    "tests": 276,
+    "existing_optional_skips": 1
+  },
+  "screenshot": {
+    "path": "docs/images/settings-direct-20261017.png",
+    "sha256": "72131de5be537d72fb52731dcb0b1f5708668cbb7fd714e8d12edf79967ab9c5",
+    "size": [
+      892,
+      529
+    ]
+  },
+  "limits": [
+    "Default mode flags were observed in a reviewed native Settings screenshot; old harness did not serialize them.",
+    "Neutral virtual-pad fixture, scoped SDL polling pause/restoration, owned Xvfb/software/private empty ALSA; no physical controller/Deck/Gaming Mode acceptance.",
+    "Direct flag checks configured preferences and verified capabilities, not held-direction movement or emitted directional packets.",
+    "Historical r30 Deck-only one-tile difference remains unexplained; current host passes do not establish its cause or a product fix.",
+    "Source client home is explicitly private per disposable profile via -Duser.home; owner configuration/saves/Deck/release unchanged."
+  ]
+}
