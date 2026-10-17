@@ -64,7 +64,7 @@ No packer writes the installed cache, profile cache or a running world's files. 
 
 ## Backport Lab acceptance sequence
 
-The tracked [lab directory](../backport/README.md) contains design/example manifests and narrowly scoped original inspection tools. Private inputs, keys, converted binaries and test cache copies live under ignored `.runtime/backport-lab/`. The [occupancy catalogue](BACKPORT_CATALOGUE_20261017.md) and [original codec probe](BACKPORT_ITEM_CODEC_20261017.md) supply partial inspection/definition evidence. Neither allocates an ID or patches a cache. **The ten complete cache-import gates below remain open.** They are observable gates for a later bounded implementation.
+The tracked [lab directory](../backport/README.md) contains design/example manifests and narrowly scoped original inspection tools. Private inputs, keys, converted binaries and test cache copies live under ignored `.runtime/backport-lab/`. The [occupancy catalogue](BACKPORT_CATALOGUE_20261017.md) and [original codec probe](BACKPORT_ITEM_CODEC_20261017.md) supply partial inspection/definition evidence. Those two inspectors do not allocate an ID or patch a cache. The [original Lab token proof](BACKPORT_LAB_TOKEN_20261017.md) now adds one temporary definition to two disposable cache copies with deterministic output, integrity checks and an allowlisted change. It does not reserve a shipped ID, convert assets or enable gameplay. **The ten complete gates below remain open for an actual later-content import.** They are observable gates for a later bounded implementation.
 
 | Gate | Smallest experiment / evidence |
 | --- | --- |
