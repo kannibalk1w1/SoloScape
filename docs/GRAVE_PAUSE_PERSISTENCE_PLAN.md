@@ -27,9 +27,11 @@ Save a normalized, valid destination for instance deaths using the existing deat
 
 Restoration must recreate each record once per world and reattach UI on login. Same-JVM relogin must not spawn a second NPC/pile. Multiple graves, offline owners, empty/partly recovered graves, public loot, repair/bless/demolish and a second death must all update the same authoritative records.
 
-## Smallest next experiment
+## Next integration decision
 
-Prove a crash-consistent transaction with **two original account snapshots and one original grave/pile ledger**, outside live saves. Inject failure before and after each publication step. Recovery must select one coherent state: exact item quantities across both inventories and remaining floor loot, with no loss/duplication. Include an already completed guest pickup even when the item was later banked, merged or consumed.
+The [isolated checkpoint experiment](GRAVE_CHECKPOINT_PROCESS_EXIT_20261017.md) now proves coherent publication across forced JVM exits with two actual native account files and an original pile ledger. It does not prove power-loss durability or integrate the running game/profile layout. Compare the production coupling with a durable receipt protocol before choosing either.
+
+The next integration experiment must prove a crash-consistent transaction with **two original account snapshots and one original grave/pile ledger**, outside live saves. Inject failure before and after each publication step. Recovery must select one coherent state: exact item quantities across both inventories and remaining floor loot, with no loss/duplication. Include an already completed guest pickup even when the item was later banked, merged or consumed.
 
 A per-account record is attractive for owner-only pickups, because inventory and record can share one atomic file. It is insufficient on its own for a guest taking public loot. Do not implement the initial audit's proposed inventory scan for a `claimId`: native items lack that durable provenance, and a collected item can move or disappear legitimately. A replayable transaction journal or coherent world-generation commit needs its own bounded proof. Compare them against existing generation/backups before selecting one; neither is implemented here.
 
