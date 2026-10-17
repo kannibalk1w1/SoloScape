@@ -163,7 +163,8 @@ class Profile:
         if identifier(self.manifest.get('id')) != self.directory.name:
             raise ValueError('Profile identity does not match its directory.')
         identifier(self.manifest.get('generation'))
-        if not ACCOUNT.fullmatch(self.manifest.get('account', '')):
+        account = self.manifest.get('account')
+        if not isinstance(account, str) or not account.strip() or not ACCOUNT.fullmatch(account):
             raise ValueError('Invalid profile account.')
         world_settings(self.manifest.get('world'))
         if not self.state.is_dir() or self.state.is_symlink():

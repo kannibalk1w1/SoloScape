@@ -110,6 +110,33 @@ class ProfileTests(unittest.TestCase):
         manifest.unlink();profiles.restore_profile(uid,backup.name)
         self.assertTrue(profiles.load(uid).metadata()['saved'])
 
+    def test_invalid_account_metadata_isolated_and_recoverable_without_data_loss(self):
+        healthy = profiles.create('Healthy character', 'Healthy')
+        healthy_bytes = (healthy.directory / 'profile.json').read_bytes()
+        backup = self.profile.backup()
+        uid = self.profile.manifest['id']
+        original_state = self.profile.state
+        manifest_path = self.profile.directory / 'profile.json'
+        valid_manifest = dict(self.profile.manifest)
+        for account in (None, 42, [], {}, True, '   '):
+            with self.subTest(account=account):
+                manifest_path.write_text(json.dumps(dict(valid_manifest, account=account)))
+                damaged_bytes = manifest_path.read_bytes()
+                listed = {row['id']: row for row in profiles.list_profiles()}
+                self.assertTrue(listed[uid]['error'])
+                self.assertFalse(listed[uid]['saved'])
+                self.assertIsNone(listed[healthy.manifest['id']]['error'])
+                self.assertEqual(manifest_path.read_bytes(), damaged_bytes)
+                self.assertTrue(profiles.list_backups(uid)[0]['valid'])
+                profiles.restore_profile(uid, backup.name)
+                restored = profiles.load(uid)
+                self.assertEqual(restored.manifest['account'], 'Tester')
+                self.assertEqual((restored.state / 'saves/tester.toml').read_bytes(), native_save())
+                preserved = restored.directory / restored.manifest['recovered_from_manifest']
+                self.assertEqual(preserved.read_bytes(), damaged_bytes)
+                self.assertEqual((original_state / 'saves/tester.toml').read_bytes(), native_save())
+                self.assertEqual((healthy.directory / 'profile.json').read_bytes(), healthy_bytes)
+
     def test_recovery_refuses_active_profile_and_tampered_archive(self):
         backup=self.profile.backup();uid=self.profile.manifest['id']
         with self.profile.lock():
