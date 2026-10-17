@@ -2,6 +2,8 @@
 
 Reviewed 17 October 2026 against `main` `502df96`. **Backport content, not an entire revision.** No cache replacement, imported gameplay, converter or compatibility runtime is delivered by this research. Native 2010–2011 SoloScape remains the product. [Research source inventory](RESEARCH_SOURCES_20261017.md) pins the inspected external code; source licences do not grant rights to game assets.
 
+Follow-up: the [read-only occupancy catalogue](BACKPORT_CATALOGUE_20261017.md) now inventories four supplied-cache definition namespaces. Conversion, safe allocation, dependency closure and cache patching below remain designs.
+
 ## What the precedents establish
 
 | Inspected project/code | Useful lesson | Boundary for SoloScape |
