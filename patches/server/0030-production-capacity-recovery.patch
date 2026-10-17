@@ -1,0 +1,93 @@
+diff --git a/game/src/test/kotlin/content/soloscape/ProductionCapacityRecoveryTest.kt b/game/src/test/kotlin/content/soloscape/ProductionCapacityRecoveryTest.kt
+new file mode 100644
+index 0000000..7f3faca
+--- /dev/null
++++ b/game/src/test/kotlin/content/soloscape/ProductionCapacityRecoveryTest.kt
+@@ -0,0 +1,87 @@
++package content.soloscape
++
++import WorldTest
++import containsMessage
++import dialogueOption
++import itemOnItem
++import itemOption
++import npcOption
++import org.junit.jupiter.api.Assertions.assertArrayEquals
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertFalse
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.Test
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.inventory
++
++/** Supplied inventories and NPC placement isolate capacity/retry contracts, not an earned journey. */
++class ProductionCapacityRecoveryTest : WorldTest() {
++    @Test
++    fun `Full fishing inventory gives no catch or XP and resumes after native Drop`() {
++        val player = createPlayer(emptyTile)
++        val spot = createNPC("fishing_spot_small_net_bait_lumbridge", emptyTile.addY(1))
++        player.inventory.add("small_fishing_net")
++        player.inventory.add("raw_shrimps", 27)
++        assertEquals(0, player.inventory.spaces)
++        val before = player.inventory.items.copyOf()
++        val xp = player.experience.get(Skill.Fishing)
++
++        player.npcOption(spot, "Net")
++        tick(12)
++        assertTrue(player.containsMessage("Your inventory is too full to hold any more fish."))
++        assertArrayEquals(before, player.inventory.items)
++        assertEquals(xp, player.experience.get(Skill.Fishing))
++        assertFalse(player.softTimers.contains("fishing"))
++
++        player.itemOption("Drop", "raw_shrimps")
++        tick()
++        assertEquals(1, player.inventory.spaces)
++        assertEquals(26, player.inventory.count("raw_shrimps"))
++        player.npcOption(spot, "Net")
++        tickIf(40) { player.inventory.spaces != 0 }
++        tick(12)
++        assertEquals(27, player.inventory.count("raw_shrimps"))
++        assertEquals(xp + 10.0, player.experience.get(Skill.Fishing))
++        assertFalse(player.softTimers.contains("fishing"))
++        val resumed = player.inventory.items.copyOf()
++        tick(12)
++        assertArrayEquals(resumed, player.inventory.items)
++        assertEquals(xp + 10.0, player.experience.get(Skill.Fishing))
++    }
++
++    @Test
++    fun `Dough requiring an extra output slot preserves inputs until space is freed`() {
++        val player = createPlayer(emptyTile)
++        player.inventory.add("pot_of_flour")
++        player.inventory.add("bowl_of_water")
++        player.inventory.add("logs", 26)
++        assertEquals(0, player.inventory.spaces)
++        val before = player.inventory.items.copyOf()
++        val xp = player.experience.get(Skill.Cooking)
++
++        player.itemOnItem(0, 1)
++        tick()
++        player.dialogueOption(id = "dialogue_skill_creation", component = "choice1")
++        tick(8)
++        assertArrayEquals(before, player.inventory.items, "Rejected three-output recipe must preserve both inputs")
++        assertEquals(xp, player.experience.get(Skill.Cooking))
++        assertFalse(player.softTimers.contains("item_on_item"))
++
++        player.itemOption("Drop", "logs")
++        tick()
++        assertEquals(1, player.inventory.spaces)
++        player.itemOnItem(0, 1)
++        tick()
++        player.dialogueOption(id = "dialogue_skill_creation", component = "choice1")
++        tick(8)
++        assertEquals(0, player.inventory.count("pot_of_flour"))
++        assertEquals(0, player.inventory.count("bowl_of_water"))
++        assertEquals(1, player.inventory.count("bread_dough"))
++        assertEquals(1, player.inventory.count("bowl"))
++        assertEquals(1, player.inventory.count("empty_pot"))
++        assertEquals(25, player.inventory.count("logs"))
++        assertEquals(0, player.inventory.spaces)
++        assertFalse(player.softTimers.contains("item_on_item"))
++    }
++}

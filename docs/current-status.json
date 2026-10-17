@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "7cf8c1f7bc1b25d9fde2eca9b95e8afddb73e2a1",
+  "reviewed_base": "60e6cb580026f69d92d900e6c3796576473d6f1f",
   "entries": [
     {
       "id": "controls",
@@ -137,6 +137,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "PROFILE_METADATA_RECOVERY_20261017.md",
       "note": "Six malformed metadata values recover on disposable profiles while preserving damaged bytes, previous save and healthy profile; no owner/device test"
+    },
+    {
+      "id": "production-capacity",
+      "scope": "Fishing full-inventory rejection and three-output cooking transaction retry",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "PRODUCTION_CAPACITY_RECOVERY_20261017.md",
+      "note": "7 selected native cases pass; supplied items and empty-tile fixtures, native Drop/retry; earned journey, death and process restart remain separate evidence"
     }
   ]
 }
