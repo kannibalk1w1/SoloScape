@@ -259,6 +259,16 @@ profile_session.run(profile,threading.Event(),lambda *args:None,checked=False)
         self.assertFalse((self.profile.directory / 'session.json').exists())
         self.assertEqual(list((self.profile.directory / 'backups').glob('*.zip')), [])
 
+    def test_late_hotspot_options_do_not_reach_an_owned_game_child(self):
+        cancelled=threading.Event();events=[]
+        def notify(stage,message):
+            events.append((stage,message))
+            if stage=='playing':cancelled.set()
+        with patch.dict(os.environ, {'_JAVA_OPTIONS':'-Duser.home=/foreign-home -Dsoloscape.cache.root=/foreign-cache'}):
+            profile_session.run(self.profile,cancelled,notify,client_enabled=False,checked=False)
+        self.assertEqual((self.root/'server.late-jvm-options').read_text(),'')
+        self.assertIn('saved and verified',events[-1][1])
+
     def test_stdio_returns_exactly_one_json_response_per_request_and_hides_secrets(self):
         source=io.StringIO('not-json\n'+json.dumps({'id':1,'action':'list'})+'\n'+json.dumps({'id':2,'action':'create','label':'Other','account':'Other'})+'\n')
         destination=io.StringIO();launcher_backend.serve(source,destination)

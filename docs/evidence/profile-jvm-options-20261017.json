@@ -1,0 +1,33 @@
+{
+  "cases": {
+    "actual_owned_environment": {
+      "exit": 0,
+      "late_options_present": false,
+      "properties": {
+        "soloscape.cache.root": "owned-cache",
+        "user.home": "owned-home"
+      }
+    },
+    "unsafe_control": {
+      "exit": 0,
+      "late_options_present": true,
+      "properties": {
+        "soloscape.cache.root": "foreign-cache",
+        "user.home": "foreign-home"
+      }
+    }
+  },
+  "fixture_directories_not_created": true,
+  "harness_sha256": "e9e8cf64316282288c9f6ce9c4b5ae899923dbd494396352cd0525c567627470",
+  "java_version": "openjdk version \"1.8.0_504\"",
+  "passed": true,
+  "probe_sha256": "69181831ee71466e6a9b3c5267a5f0d1c53d0b47a50b1a2c8840afd12099165a",
+  "profile_session_sha256": "c8108ae13b74d773500ebe6c268a278d9775e6a16f6adeba48237a7a53c44325",
+  "scope": "Actual Java8 properties only; no game/cache/profile content or hardware acceptance.",
+  "base_commit": "4570ced",
+  "private_report": ".runtime/jvm-profile-options/1792265469848828648/summary.json",
+  "previous_actual_api_red": ".runtime/jvm-profile-options-20261017/before.json",
+  "root_tooling_tests": 242,
+  "root_tooling_optional_skips": 1,
+  "before_profile_session_sha256": "e9b63da7fbff7e4a6c27cff21e816a7ec6611f86e431affacc5307660ef0a8b3"
+}
