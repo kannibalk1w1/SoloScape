@@ -1,7 +1,29 @@
 diff --git a/game/src/main/kotlin/content/skill/slayer/Slayer.kt b/game/src/main/kotlin/content/skill/slayer/Slayer.kt
 --- a/game/src/main/kotlin/content/skill/slayer/Slayer.kt
 +++ b/game/src/main/kotlin/content/skill/slayer/Slayer.kt
-@@ -113,6 +113,9 @@
+@@ -75,8 +75,10 @@
+     return target.categories.contains(slayerTask)
+ }
+ 
++internal class NoSlayerTaskAvailable(master: String) : IllegalStateException("No task found for $master")
++
+ fun assignTask(player: Player, master: String): Pair<String, Int> {
+-    val pair = rollTask(player, master) ?: error("No task found for $master")
++    val pair = rollTask(player, master) ?: throw NoSlayerTaskAvailable(master)
+     player.slayerTasks++
+     player.slayerMaster = master
+     player.slayerTask = pair.first
+@@ -93,6 +95,9 @@
+             continue
+         }
+         total += weight
++    }
++    if (total <= 0) {
++        return null
+     }
+     val roll = random.nextInt(total)
+     var count = 0
+@@ -113,6 +118,9 @@
  
  private fun hasRequirements(player: Player, table: TableDefinition, row: Int): Boolean {
      val category = Rows.get(row).rowId
@@ -38,16 +60,94 @@ diff --git a/data/skill/slayer/slayer.vars.toml b/data/skill/slayer/slayer.vars.
 +[blocked_task_4]
 +persist = true
 +format = "string"
+diff --git a/game/src/main/kotlin/content/skill/slayer/master/SlayerMaster.kt b/game/src/main/kotlin/content/skill/slayer/master/SlayerMaster.kt
+--- a/game/src/main/kotlin/content/skill/slayer/master/SlayerMaster.kt
++++ b/game/src/main/kotlin/content/skill/slayer/master/SlayerMaster.kt
+@@ -166,17 +166,24 @@
+     }
+     choice {
+         option<Neutral>("Yes, please.") {
+-            if (slayerMaster != "turael") {
+-                slayerStreak = 0
+-            }
+-            roll(master)
++            roll(master, resetStreak = slayerMaster != "turael")
+         }
+         option<Neutral>("No, thanks.")
+     }
+ }
+ 
+-private suspend fun Player.roll(master: String) {
+-    val (type, amount) = assignTask(this, master)
++private suspend fun Player.nextAssignment(master: String): Pair<String, Int>? = try {
++    assignTask(this, master)
++} catch (_: NoSlayerTaskAvailable) {
++    npc<Neutral>("I don't have a suitable assignment for you right now. Try another master or unblock a task.")
++    null
++}
++
++private suspend fun Player.roll(master: String, resetStreak: Boolean = false) {
++    val (type, amount) = nextAssignment(master) ?: return
++    if (resetStreak) {
++        slayerStreak = 0
++    }
+     npc<Happy>("Excellent, you're doing great. Your new task is to kill $amount ${type.toSentenceCase()}.")
+     choice {
+         option<Quiz>("Got any tips for me?") {
+@@ -194,7 +201,7 @@
+             player<Neutral>("Pleeeaasssse!")
+             npc<Neutral>("Oh okay then, you twisted my arm. You'll have to train against specific groups of creatures.")
+             player<Quiz>("Okay, what's first?")
+-            val (type, amount) = assignTask(this, master)
++            val (type, amount) = nextAssignment(master) ?: return@option
+             npc<Neutral>("We'll start you off hunting ${type.toSentenceCase()}, you'll need to kill $amount of them.")
+             npc<Neutral>("You'll also need this enchanted gem, it allows Slayer Masters like myself to contact you and update you on your progress. Don't worry if you lose it, you can buy another from any Slayer Master.")
+             inventory.add("enchanted_gem")
+diff --git a/game/src/main/kotlin/content/skill/slayer/SlayerAssignment.kt b/game/src/main/kotlin/content/skill/slayer/SlayerAssignment.kt
+--- a/game/src/main/kotlin/content/skill/slayer/SlayerAssignment.kt
++++ b/game/src/main/kotlin/content/skill/slayer/SlayerAssignment.kt
+@@ -40,6 +40,15 @@
+             //    npc<Happy>(player["slayer_npc", ""], "") TODO proper message and save npc id on interface open
+         }
+ 
++        interfaceOption(id = "slayer_rewards_assignment:cancel_*") {
++            val slot = it.component.substringAfterLast('_').toIntOrNull()?.minus(1) ?: return@interfaceOption
++            if (slot !in 0 until 5) {
++                return@interfaceOption
++            }
++            clear("blocked_task_$slot")
++            refresh(this, it.id)
++        }
++
+         interfaceOption(id = "slayer_rewards_assignment:block_*") {
+             if (!it.option.startsWith("Permanently")) {
+                 return@interfaceOption
+@@ -65,6 +74,8 @@
+ 
+             if (!blocked) {
+                 message("You don't have any free block slots.") // TODO proper message
++            } else {
++                refresh(this, it.id)
+             }
+         }
+     }
 diff --git a/game/src/test/kotlin/content/skill/slayer/SlayerBlockedTaskTest.kt b/game/src/test/kotlin/content/skill/slayer/SlayerBlockedTaskTest.kt
 new file mode 100644
 --- /dev/null
 +++ b/game/src/test/kotlin/content/skill/slayer/SlayerBlockedTaskTest.kt
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,248 @@
 +package content.skill.slayer
 +
 +import FakeRandom
 +import WorldTest
 +import interfaceOption
++import npcOption
++import skipDialogues
++import dialogueOption
++import world.gregs.voidps.engine.client.ui.dialogue
++import kotlin.test.assertNotNull
++import kotlin.test.assertNull
++import dialogueContinue
 +import org.junit.jupiter.api.DynamicTest.dynamicTest
 +import org.junit.jupiter.api.Test
 +import org.junit.jupiter.api.TestFactory
@@ -55,6 +155,12 @@ new file mode 100644
 +import world.gregs.voidps.engine.client.ui.open
 +import kotlinx.coroutines.runBlocking
 +import world.gregs.voidps.engine.data.SaveQueue
++import world.gregs.voidps.engine.data.AccountManager
++import world.gregs.voidps.engine.entity.Despawn
++import world.gregs.voidps.engine.entity.character.player.Players
++import world.gregs.voidps.engine.entity.character.player.combatLevel
++import world.gregs.voidps.engine.get
++import org.junit.jupiter.api.Assertions.assertArrayEquals
 +import world.gregs.voidps.engine.data.PlayerSave
 +import world.gregs.voidps.engine.data.definition.InterfaceDefinitions
 +import world.gregs.voidps.engine.data.file.FileStorage
@@ -136,6 +242,105 @@ new file mode 100644
 +        assertEquals("banshees", assignTask(player, "mazchna").first)
 +    }
 +
++    @TestFactory
++    fun `Unblocking each native slot restores that task without changing another block`() = (0 until 5).map { slot ->
++        dynamicTest("unblock slot $slot") {
++            val player = suppliedPlayer("unblock$slot")
++            val other = (slot + 1) % 5
++            player["blocked_task_$slot"] = "banshees"
++            player["blocked_task_$other"] = "bears"
++            player.slayerPoints = 50
++            player.open("slayer_rewards_assignment")
++            val component = "cancel_${slot + 1}"
++            val option = InterfaceDefinitions.getComponent("slayer_rewards_assignment", component)!!.options!!.filterNotNull().first()
++            repeat(2) { player.interfaceOption("slayer_rewards_assignment", component, option) }
++            assertTrue(!player.contains("blocked_task_$slot"))
++            assertEquals("bears", player["blocked_task_$other", ""])
++            assertEquals(50, player.slayerPoints, "Unblocking does not refund or charge points")
++            val fresh = saveAndLoad(player)
++            assertTrue(!fresh.contains("blocked_task_$slot"))
++            assertEquals("bears", fresh["blocked_task_$other", ""])
++            setRandom(FakeRandom())
++            assertEquals("banshees", assignTask(fresh, "mazchna").first)
++        }
++    }
++
++    @Test
++    fun `Exhausted novice choices respond without drawing or changing task state`() {
++        val player = noviceWithEveryTaskBlocked()
++        val master = createNPC("turael", player.tile.addY(1))
++        player.npcOption(master, "Get-task")
++        tick(2)
++        assertNotNull(player.dialogue, "A blocked-out player needs a native explanation")
++        assertTrue(player.dialogue!!.startsWith("dialogue_npc_chat"))
++        player.skipDialogues()
++        assertNull(player.dialogue)
++        assertEquals("nothing", player.slayerTask)
++        assertEquals(0, player.slayerTasks)
++        assertEquals(0, player.slayerTaskRemaining)
++        assertEquals(50, player.slayerPoints)
++    }
++
++    @Test
++    fun `Exhausted Turael replacement preserves the old assignment and streak`() {
++        val player = noviceWithEveryTaskBlocked()
++        player.slayerMaster = "duradel"
++        player.slayerTask = "abyssal_demons"
++        player.slayerTaskRemaining = 11
++        player.slayerStreak = 9
++        player.slayerTasks = 17
++        val master = createNPC("turael", player.tile.addY(1))
++        player.npcOption(master, "Get-task")
++        tick(2)
++        player.skipDialogues()
++        player.dialogueOption("line1")
++        player.dialogueContinue() // The selected Yes is repeated as player chat before its callback.
++        assertNotNull(player.dialogue, "Failed replacement needs a native explanation")
++        assertTrue(player.dialogue!!.startsWith("dialogue_npc_chat"))
++        player.skipDialogues()
++        assertNull(player.dialogue)
++        assertEquals("duradel", player.slayerMaster)
++        assertEquals("abyssal_demons", player.slayerTask)
++        assertEquals(11, player.slayerTaskRemaining)
++        assertEquals(9, player.slayerStreak)
++        assertEquals(17, player.slayerTasks)
++        assertEquals(50, player.slayerPoints)
++    }
++
++    @Test
++    fun `Successful Turael replacement still resets the streak only after assignment`() {
++        val player = suppliedPlayer("blockconfirm")
++        player.slayerMaster = "duradel"
++        player.slayerTask = "abyssal_demons"
++        player.slayerTaskRemaining = 11
++        player.slayerStreak = 9
++        player.slayerTasks = 17
++        player.slayerPoints = 50
++        val master = createNPC("turael", player.tile.addY(1))
++        setRandom(FakeRandom())
++        player.npcOption(master, "Get-task")
++        tick(2)
++        player.skipDialogues()
++        player.dialogueOption("line1")
++        player.dialogueContinue() // Acknowledge Yes before the native assignment callback.
++        assertEquals("turael", player.slayerMaster)
++        assertEquals("banshees", player.slayerTask)
++        assertTrue(player.slayerTaskRemaining > 0)
++        assertEquals(0, player.slayerStreak)
++        assertEquals(18, player.slayerTasks)
++        assertEquals(50, player.slayerPoints)
++    }
++
++    private fun noviceWithEveryTaskBlocked(): Player {
++        val player = createPlayer(Tile(3200, 3200), "blocknovice")
++        for ((slot, category) in listOf("birds", "goblin", "monkeys", "rats", "spiders").withIndex()) {
++            player["blocked_task_$slot"] = category
++        }
++        player.slayerPoints = 50 // Supplied boundary fixture, not earned points at level three.
++        setRandom(FakeRandom())
++        return player
++    }
++
 +    private fun saveAndLoad(player: Player): Player {
 +        val dir = Files.createTempDirectory(Path.of(System.getenv("SOLOSCAPE_TEST_ROOT")), "slayer-block-")
 +        try {
@@ -143,7 +348,21 @@ new file mode 100644
 +            var primarySaved = false
 +            runBlocking { SaveQueue(storage, storage).direct { primarySaved = it }.join() }
 +            assertTrue(primarySaved, "The real primary save must succeed")
-+            return PlayerSave.load(dir.resolve("${player.accountName.lowercase()}.toml").toFile()).toPlayer()
++            val saved = PlayerSave.load(dir.resolve("${player.accountName.lowercase()}.toml").toFile())
++            val expectedCombat = player.combatLevel
++            val expectedXp = player.experience.experience.copyOf()
++            Despawn.player(player)
++            Players.remove(player)
++            tick()
++            val fresh = saved.toPlayer()
++            val accounts = get<AccountManager>()
++            accounts.setup(fresh, null, 0, viewport = true)
++            assertTrue(accounts.index(fresh))
++            accounts.spawn(fresh, null)
++            tick(3)
++            assertEquals(expectedCombat, fresh.combatLevel, "Disk reload must restore the same task eligibility")
++            assertArrayEquals(expectedXp, fresh.experience.experience)
++            return fresh
 +        } finally {
 +            dir.toFile().deleteRecursively()
 +        }
