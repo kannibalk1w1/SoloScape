@@ -49,7 +49,8 @@ local_dev.SERVER=root/'upstream/game-server';local_dev.CLIENT=root/'upstream/run
 profiles.PROFILES=root/'profiles'
 profile_session.run(profiles.Profile(Path(sys.argv[3])),threading.Event(),lambda *args:None,checked=False)
 '''
-        launcher=subprocess.Popen([sys.executable,'-c',harness,str(Path(__file__).parent),str(self.root),str(self.profile.directory)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        launcher=subprocess.Popen([sys.executable,'-c',harness,str(Path(__file__).parent),str(self.root),str(self.profile.directory)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
+                                  env=dict(os.environ, SOLOSCAPE_PROFILE_HOME=str(profiles.PROFILES)))
         children = []
         def remember_children():
             record = session_recovery.read(self.profile)
@@ -250,6 +251,29 @@ profile_session.run(profiles.Profile(Path(sys.argv[3])),threading.Event(),lambda
         with self.assertRaisesRegex(ValueError,'unsafe'):
             session_recovery.read(self.profile)
 
+    def test_another_code_root_cannot_recover_or_archive_the_live_earlier_world(self):
+        self.orphan()
+        record_path = self.profile.directory / session_recovery.RECORD
+        before = record_path.read_bytes()
+        other_runtime = self.root / 'other-version/.runtime'
+        other_runtime.mkdir(parents=True)
+        with patch.object(local_dev, 'RUNTIME', other_runtime):
+            with local_dev.build_lock(shared=True):
+                pass
+            self.assertFalse(session_recovery.inspect(self.profile)['recoverable'])
+            with patch.object(signal, 'pidfd_send_signal') as send_signal:
+                with self.assertRaisesRegex(RuntimeError, 'identity changed'):
+                    session_recovery.recover(self.profile, threading.Event(), lambda *args: None)
+                with self.assertRaises(RuntimeError):
+                    session_recovery.archive_ended(self.profile)
+                send_signal.assert_not_called()
+            self.assertEqual(record_path.read_bytes(), before)
+            for role in ('client', 'server'):
+                self.assertFalse((self.root / (role + '.stopped')).exists())
+        # Returning to the original build context retains a usable recovery route.
+        session_recovery.recover(self.profile, threading.Event(), lambda *args: None)
+        self.assertIsNone(session_recovery.read(self.profile))
+
     def test_stale_record_from_finished_worker_in_this_backend_is_recoverable(self):
         record=self.orphan();record['owner']=session_recovery.identity(os.getpid());session_recovery.write(self.profile,record)
         self.assertTrue(session_recovery.inspect(self.profile,owner_active=lambda:False)['recoverable'])
@@ -294,7 +318,8 @@ local_dev.SERVER=root/'upstream/game-server';local_dev.CLIENT=root/'upstream/run
 profiles.PROFILES=root/'profiles';local_dev.doctor=lambda **kwargs:True
 runpy.run_path(str(Path(sys.argv[1])/'launcher_backend.py'),run_name='__main__')
 """
-        backend=subprocess.Popen([sys.executable,'-c',harness,str(Path(__file__).parent),str(self.root)],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True)
+        backend=subprocess.Popen([sys.executable,'-c',harness,str(Path(__file__).parent),str(self.root)],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True,
+                                 env=dict(os.environ, SOLOSCAPE_PROFILE_HOME=str(profiles.PROFILES)))
         try:
             backend.stdin.write(json.dumps({'id':1,'action':'start','profile':self.profile.manifest['id']})+'\n');backend.stdin.flush()
             self.assertTrue(json.loads(backend.stdout.readline())['ok'])

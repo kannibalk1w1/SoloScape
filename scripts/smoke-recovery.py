@@ -42,7 +42,8 @@ signal.signal(signal.SIGTERM,lambda *args:cancelled.set())
 profile_session.run(profiles.load(sys.argv[3]),cancelled,lambda *args:None,port=43596,client_enabled=sys.argv[4]=='client')
 '''
     with (root/'parent.log').open('w') as log:
-        parent=subprocess.Popen([sys.executable,'-c',code,str(local_dev.ROOT/'scripts'),str(profiles.PROFILES),profile.manifest['id'],'client' if options.client else 'server'],stdout=log,stderr=subprocess.STDOUT)
+        parent=subprocess.Popen([sys.executable,'-c',code,str(local_dev.ROOT/'scripts'),str(profiles.PROFILES),profile.manifest['id'],'client' if options.client else 'server'],stdout=log,stderr=subprocess.STDOUT,
+                                env=dict(os.environ, SOLOSCAPE_PROFILE_HOME=str(profiles.PROFILES)))
         try:
             deadline=time.monotonic()+local_dev.READY_TIMEOUT+20
             while True:

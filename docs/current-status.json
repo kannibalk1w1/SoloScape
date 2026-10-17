@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "1d02850",
+  "reviewed_base": "d795deb",
   "entries": [
     {
       "id": "controls",
@@ -281,6 +281,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "GITHUB_UPDATE_DISCOVERY_20261017.md",
       "note": "159 tooling cases (one optional skip), actual no-public-release check and real Swing/controller-adapter plus existing launcher probes pass. Download/apply/rollback and installed release identity remain unimplemented; no Deck deployment."
+    },
+    {
+      "id": "external-profile-home",
+      "scope": "Optional stable profile directory across launcher code roots",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "PROFILE_LOCATION_20261017.md",
+      "note": "Five external-home cases, cross-build recovery refusal and165 tooling cases (one optional skip) pass. Real private Swing probe preserves inherited-home canary. Default unchanged; no migration, managed install or version rollback."
     }
   ]
 }

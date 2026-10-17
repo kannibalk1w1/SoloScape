@@ -18,7 +18,8 @@ import session_recovery
 
 def owned_environment(profile, port):
     # Dotted properties inherited from another launcher must not change ownership.
-    environment = {key: value for key, value in os.environ.items() if '.' not in key}
+    environment = {key: value for key, value in os.environ.items()
+                   if '.' not in key and key != profiles.PROFILE_HOME_ENV}
     environment.update(profile.environment(port))
     return environment
 

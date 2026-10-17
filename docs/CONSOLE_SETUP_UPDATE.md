@@ -38,3 +38,5 @@ python3 scripts/verify_patches.py server
 Native gameplay smoke requires Xvfb and the matched local cache/build: `./scripts/smoke-profile.sh`. It uses a separate display, port and disposable world; it preserves the existing game and compares original mutable paths. Native client/server suites require the pinned checkouts and project-local Java toolchains; the repository CI runs the asset-free root checks, shell/patch syntax and whitespace only.
 
 See CONSOLE_SESSION_ACCEPTANCE.md for physical controller/Deck checks and reproducible performance records. A desktop source build remains the supported development delivery; installer/distributable licences and Steam Gaming Mode release packaging are future work.
+
+Managed-install preparation can opt into an [external profile directory](PROFILE_LOCATION_20261017.md) with `SOLOSCAPE_PROFILE_HOME`. Defaults remain unchanged; this does not perform migration or install an update. Settle owned sessions in their original build context before switching versions.

@@ -22,7 +22,7 @@ A normal build stamp proves matched local pins, patches and jar bytes. It is not
 
 ## Next implementation order
 
-1. **Stable saved-state location:** allow managed installs to point at one explicit external profile directory, keeping existing defaults and all current generations/backups. Do not migrate an owner's directory implicitly.
+1. **Stable saved-state location:** [optional external profile storage](PROFILE_LOCATION_20261017.md) is implemented and tested without moving existing defaults. The managed installer must select/preserve that location and settle earlier session records before changing versions. Other mutable/shared paths still need their own contract.
 2. **Asset-separated package contract:** a manifest identifies exact source commit, supported platform, both client/server builds, pins/patches, save-format compatibility and required separately supplied cache identity. Public package contents and dependency/runtime notices need distribution review. Never bundle private cache, art, credentials, configuration or saves.
 3. **Stage a candidate:** download only declared assets from the fixed release repository, verify size/hash and manifest, reject traversal/links/unlisted files, and unpack to a new version directory. Interrupted/invalid staging leaves the active version untouched. First prove this with original fixture files.
 4. **Explicit stopped-world apply:** a persistent updater outside replaceable versions takes its install lock and verifies all owned sessions/recovery records are resolved before switching a version pointer. Revalidate the candidate and prepare verified pre-update backups. No background overwrite of a running launcher, client or server.
@@ -34,3 +34,5 @@ No automatic release publishing, paid service, cache redistribution or owner dep
 ## Verification
 
 Seven asset-free tests cover valid/null metadata, malformed or oversized input, alternate repository URLs/tags, redirects, no-release/offline/rate-limit/server responses, an active-world check followed by Stop, and rejected apply/custom-feed requests. The full root suite passes159 cases with one optional skip. The real API check returns no public release. Native Swing evidence and screenshots are recorded in the dated [discovery report](GITHUB_UPDATE_DISCOVERY_20261017.md).
+
+Account backups currently do not retain unrecovered grave/floor state. The [cold-JVM grave probe](GRAVE_COLD_JVM_PROBE_20261017.md) reproduces that gap. Resolve persistence or an explicitly accepted local-world policy before describing a full update as preserving all world progress.
