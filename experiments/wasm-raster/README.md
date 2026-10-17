@@ -4,11 +4,15 @@ Isolated experiment for [docs/WASM_RASTER_POC.md](../../docs/WASM_RASTER_POC.md)
 
 Inputs are read from absolute local paths and nothing native is committed: `tools/extract_face_kernel.py` writes the verbatim `ha_Sub1.method3636` body into the ignored `build/` directory at build time.
 
+Run from the repository root with `JAVA_HOME` set to a JDK 21 directory (this is required; there is no default path):
+
 ```bash
-bash experiments/wasm-raster/run.sh \
+JAVA_HOME=/path/to/jdk21 bash experiments/wasm-raster/run.sh \
   /absolute/path/to/upstream/runelite-client/client/src/ha_Sub1.java \
   /absolute/path/to/upstream/runelite-client/client/build/libs/void-client-0.2.0_a2.jar
 ```
+
+Build tool: the wrapper uses `upstream/runelite-client/gradlew`, run through `bash` because that checkout does not mark it executable. If that file is missing, it falls back to an installed `gradle` invoked directly. Neither is a `bash gradle` call. Set `UPSTREAM_GRADLEW` to point elsewhere if needed.
 
 The wrapper runs, in order:
 
@@ -16,8 +20,11 @@ The wrapper runs, in order:
 2. **JVM verbatim**: runs the generated kernel on the JVM.
 3. **JVM native reference**: runs the real `ha_Sub1.method3636` bytecode from the client jar, via reflection and `Unsafe.allocateInstance`, with no constructor (its renderer needs a live `Canvas`).
 4. **TeaVM 0.16.0 WasmGC**: compiles the verbatim kernel, the original-geometry scene and the Canvas `ImageData` adapter.
-5. **Headless Chromium**: serves only the generated output directory on `127.0.0.1` and reports hashes and timings from the page.
+5. **Headless Chromium**: an ephemeral loopback server (`tools/serve_loopback.py`, port chosen by the OS, positive readiness probe on the page marker) serves only the generated output directory. The wrapper fails if Chromium exits nonzero, times out (`BROWSER_TIMEOUT`, default 180 s), or the DOM has no result.
+6. **Validation**: `tools/check_evidence.py` requires both 765×503 and 1280×800 from all three sources (native jar bytecode, extracted JVM, browser) to match exactly, and writes `build/evidence.json` with hashes, timings and input digests. Any missing or mismatched result exits nonzero.
 
 Scene: a triangular span mask and 6000 fixed-seed edges with opaque, alpha-blend and additive modes, at 765×503 and 1280×800. Geometry comes from an integer LCG. No cache data, assets or network are used.
+
+Self-test for the rejection path: `RASTER_SELFTEST_MUTATE=browser-hash` or `missing-browser` must make the run fail. Forcing `CHROMIUM=/bin/false` or `/bin/true` exercises the browser-failure and no-result paths.
 
 Known caveats: the hash is FNV-1a over 32-bit words, not a cryptographic digest. The browser timings come from a headless run with a virtual-time budget, and the reflection-based native reference is for correctness, not timing.
