@@ -203,6 +203,8 @@ First audit batch: [source findings and 273 representative native cases](SOLO_CO
 
 Follow-up evidence: [the bounded solo dungeon lifecycle](DUNGEONEERING_TARGETED_PASS_20261017.md), [spirit-wolf lifecycle](SUMMONING_TARGETED_PASS_20261017.md), and [connected earned Lumbridge slice](EARNED_LUMBRIDGE_SLICE_20261017.md) extend native validation. The Lumbridge slice uses the real starter kit, gathering, player-lit cooking, combat, banking and a fresh-player disk restore. Human controller completion, whole-process restart, inventory-full/death boundaries, a completed dungeon floor and earned Summoning supplies remain open. These are shared-contract checks, not a request to automate every quest.
 
+The [permanent Slayer block repair](SLAYER_TASK_BLOCKS_20261018.md) now preserves purchased blocks through native saves, honours them during assignment, supports the existing unblock buttons and preserves progress when no task is eligible. This remains supplied native-contract coverage; an earned master/rewards journey and physical controller acceptance are open.
+
 Deliverables: `SOLO_CONTENT_AUDIT.md`, `DUNGEONEERING_AUDIT.md`, `SUMMONING_AUDIT.md`,
 `MMO_DEPENDENCY_AUDIT.md` and `AI_ADVENTURERS.md`.
 
