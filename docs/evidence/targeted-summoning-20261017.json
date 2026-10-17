@@ -94,8 +94,14 @@
   "production_changes": [],
   "gaps": [
     "Earned route: charm, shard and tertiary acquisition are not proven from native sources in this pass",
-    "Howl scroll and Wolf Whistle are not implemented or tested",
-    "Expiry while online and owner death are not covered by this test",
-    "Patch number 0025 is absent from patches/server; 0026 is numbered as the brief requires"
-  ]
+    "Howl scroll and Wolf Whistle are not exercised",
+    "Expiry while online and owner death are not covered by this test"
+  ],
+  "isolation_guard": "Suite requires SOLOSCAPE_TEST_ROOT; skipped when absent to protect default mutable paths.",
+  "coordinator_review": {
+    "suite_timestamp": "2026-10-17T13:04:26.524Z",
+    "tests": 2,
+    "isolation_guard_added": true,
+    "reproducer": "Run the two selected classes with explicit JDK21 and SOLOSCAPE_TEST_ROOT; see report."
+  }
 }

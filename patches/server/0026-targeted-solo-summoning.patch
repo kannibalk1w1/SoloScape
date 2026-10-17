@@ -1,9 +1,8 @@
 diff --git a/game/src/test/kotlin/content/skill/summoning/SoloSpiritWolfLifecycleTest.kt b/game/src/test/kotlin/content/skill/summoning/SoloSpiritWolfLifecycleTest.kt
 new file mode 100644
-index 0000000..f2e23b0
 --- /dev/null
 +++ b/game/src/test/kotlin/content/skill/summoning/SoloSpiritWolfLifecycleTest.kt
-@@ -0,0 +1,182 @@
+@@ -0,0 +1,184 @@
 +package content.skill.summoning
 +
 +import WorldTest
@@ -19,6 +18,7 @@ index 0000000..f2e23b0
 +import org.junit.jupiter.api.Assertions.assertNull
 +import org.junit.jupiter.api.Assertions.assertTrue
 +import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 +import world.gregs.voidps.engine.data.AccountManager
 +import world.gregs.voidps.engine.data.Settings
 +import world.gregs.voidps.engine.data.PlayerSave
@@ -55,6 +55,7 @@ index 0000000..f2e23b0
 + * native [SaveQueue] into the isolated test saves folder. Test storage is disabled, so the save is taken
 + * explicitly here rather than by autosave.
 + */
++@EnabledIfEnvironmentVariable(named = "SOLOSCAPE_TEST_ROOT", matches = ".+")
 +class SoloSpiritWolfLifecycleTest : WorldTest() {
 +
 +    private val obeliskTile = Tile(2521, 3055)

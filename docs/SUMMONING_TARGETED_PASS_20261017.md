@@ -4,7 +4,7 @@ Baseline: `e44af90`, with server patches through 0024 applied. Patch: `patches/s
 
 ## What is covered
 
-- **Infuse** a spirit wolf pouch at the obelisk from supplied materials. The recipe is read at test time from the same cache parameters `SummoningCrafting` uses, so the test does not hard-code it and this doc does not name it (cache content stays out of Git). Asserted: every recipe ingredient is consumed, one pouch is made, and the pouch's `infuse_experience` is awarded.
+- **Infuse** a spirit wolf pouch at the obelisk from supplied materials. The recipe is read at test time from the same cache parameters `SummoningCrafting` uses, so the test does not hard-code ingredient IDs. No cache binaries are committed. Asserted: every recipe ingredient is consumed, one pouch is made, and the pouch's `infuse_experience` is awarded.
 - **Summon** from the pouch at real beginner level. Asserted: the pouch is consumed, summoning points drop by the pouch's `summon_points`, the special pool is 60, summon xp is awarded, the lifetime is 6 minutes, and exactly one owner-matching spirit wolf is live.
 - **Dismiss** through the native `familiar_details` "Dismiss Familiar" → "Yes." confirmation. Asserted: no follower, no owner-matching NPC left in the world, pouch not returned, persisted lifetime cleared.
 - **Recovery boundary (logout then relog from disk).** Summon, save through the native `SaveQueue`/`FileStorage` into the isolated test saves folder, read the TOML back with `PlayerSave.load`, log out, then load into a fresh `Player` via `PlayerSave.toPlayer()` and log it in through `AccountManager`. Asserted: exactly one owner-matching spirit wolf after relog, no pouch returned or duplicated, summoning points and xp unchanged, and the saved lifetime restored rather than reset.
@@ -16,14 +16,17 @@ Baseline: `e44af90`, with server patches through 0024 applied. Patch: `patches/s
 - Owner: new account at `Tile(2523, 3056)`, real Summoning level 1 with empty xp, full points pool of 1.
 - Materials: the recipe ingredients are added straight into the inventory.
 - Obelisk: `GameObjects.find(Tile(2521, 3055), "obelisk")`, then `Infuse-pouch` and the `Infuse` interface option.
-- The disk save is taken explicitly, because test storage is disabled.
+- The disk save is taken explicitly, because test storage is disabled. The suite requires `SOLOSCAPE_TEST_ROOT`; without it, JUnit skips the suite rather than writing beneath the default save path.
 
-Nothing is granted. There is no quest progress, teleport, or NPC kill/spawn beyond the native summon and infuse calls.
+Only the listed recipe materials are supplied. No quest progress, travel or combat is injected; the familiar is spawned through the native summon action.
 
 ## Commands and results
 
 ```
-flock .runtime/build.lock ./gradlew --offline :game:test \
+JAVA_HOME=/absolute/path/to/jdk21 \
+SOLOSCAPE_TEST_ROOT="$PWD/.runtime/summoning-targeted-20261017/test-root" \
+GRADLE_USER_HOME="$PWD/.gradle" \
+flock .runtime/build.lock bash upstream/game-server/gradlew -p upstream/game-server --offline :game:test \
   --tests content.skill.summoning.SoloSpiritWolfLifecycleTest \
   --tests content.skill.summoning.SummoningLevelGateTest
 ```
