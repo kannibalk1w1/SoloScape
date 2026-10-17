@@ -35,3 +35,22 @@ Tauri documents Linux graphics failures and possible slow WebGL/Canvas paths. A 
 After one representative real scene is available, compare the same scene, camera, resolution and workloads on native Java, Chromium and the target WebKit/Tauri shell. Record cold/warm startup, scene/raster time, RGBA conversion, presentation, frame tails, RSS and actual Deck power/input behaviour separately. Keep pixel data inside the frontend; avoid copying every frame through Rust IPC. Use a release build and record engine/toolchain versions.
 
 Proceed with a small Tauri executable only when its packaging/custom-protocol and lifecycle behaviour is the next uncertainty, or when a real-scene benchmark justifies the platform cost. Do not pitch Tauri/WASM as a native performance fix based on this fixture. No public package, proprietary asset redistribution or owner deployment is added.
+
+## Bounded follow-up — 18 October 2026
+
+Reran the existing isolated engine probe, without changing the frontend or native game.
+WebKitGTK 2.54.1 passed all 12 decoded-model/camera/resolution cases against the
+existing native-jar and extracted-JVM references. Canvas presentation and readback
+both returned `a0bf99a6`. All four deliberately corrupted evidence variants were
+rejected with exit 1; the positive check returned 0. All seven fixture/reference
+input files retained their before/after SHA-256 values.
+[Fresh evidence](evidence/wasm-webkit-20261018.json).
+
+This is a fresh WebKit execution against existing native reference outputs, not a
+fresh native benchmark. It uses owned Xvfb and software GL. No Tauri executable,
+Deck deployment, save access or speed comparison was attempted. The result supports
+keeping Tauri as a packaging option. It supplies no evidence of better FPS, memory,
+power consumption or startup than the current Java app. For a small next performance
+lab, use one fixed representative scene in both native Java and this same WebKit
+engine, separating raster, framebuffer transfer and presentation time before adding
+a shell. Do not extrapolate original-fixture timings to gameplay.
