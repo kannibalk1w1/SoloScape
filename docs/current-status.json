@@ -505,6 +505,14 @@
       "acceptance": "DEFERRED",
       "evidence": "WASM_DECODED_FACE_PROOF_20261017.md",
       "note": "12 cases across native jar/extracted JVM/WasmGC, four corruption controls and Canvas hash pass. Full model constructor/lighting, real cache, scene/client and performance remain unproven; draft27 only."
+    },
+    {
+      "id": "wasm-webkit",
+      "scope": "Draft-only host WebKitGTK compatibility for the original decoded-face WasmGC fixture",
+      "delivery": "DEFERRED",
+      "acceptance": "DEFERRED",
+      "evidence": "TAURI_WASM_INVESTIGATION_20261017.md",
+      "note": "WebKitGTK2.54.1 passes12 cases/Canvas hash and four corruption controls on software Xvfb. No Tauri binary, speedup, game/controller/Deck or deployment claim."
     }
   ]
 }

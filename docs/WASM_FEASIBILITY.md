@@ -139,3 +139,7 @@ A public web deployment must not silently distribute cache/model/sprite/audio/in
 Code/runtime/bundled-library licences and game-asset permissions are separate unresolved distribution questions. OpenRS2 availability and upstream BSD headers are not blanket asset permission. CheerpJ self-host/offline terms need separate review; source-readable libraries without a clear licence need permission before reuse. No legal conclusion about a public RuneScape-derived service is made here.
 
 **Decision:** native physical acceptance and lifecycle/performance fixes first. Retain the successful tiny-kernel and failed-presenter evidence; later fund the [single framebuffer spike](WASM_SPIKE_PLAN.md). Prefer the existing Java server if that succeeds. Defer local WASM server, integrated protocol-free runtime, new renderer and public/offline packaging until separate measured gates pass.
+
+## Tauri follow-up — 17 October 2026
+
+The [Tauri investigation](TAURI_WASM_INVESTIGATION_20261017.md) and [WebKitGTK compatibility probe](../experiments/wasm-webkit/README.md) now pass the existing12-case original decoded-model fixture plus four controls in host WebKitGTK2.54.1. This is engine compatibility, not a Tauri build or performance advantage. A wrapper can aid desktop deployment later; it does not remove full-client/scene, protocol, ownership, target-device or distribution gates. Native Deck remains primary.

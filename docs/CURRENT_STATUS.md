@@ -88,6 +88,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 | Draft-only synthetic flat near-plane projection, clipping and fill dispatch | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [18 camera-0/mask0 clip cases agree across native JVM, extracted JVM and WasmGC with actual extracted fill counts; default10 retained. No model/scene/client or hardware/performance acceptance.](WASM_CLIPPING_PROOF_20261017.md) |
 | Draft-only original old-format model decoder equality across native jar, JVM and WasmGC | DEFERRED | DEFERRED | [Five synthetic models and four corruption controls pass the scoped proof; no native feature, new-format decoder, asset import, render bridge or browser client](WASM_MODEL_DECODE_PROOF_20261017.md) |
 | Draft-only original decoded model arrays to flat-face browser framebuffer | DEFERRED | DEFERRED | [12 cases across native jar/extracted JVM/WasmGC, four corruption controls and Canvas hash pass. Full model constructor/lighting, real cache, scene/client and performance remain unproven; draft27 only.](WASM_DECODED_FACE_PROOF_20261017.md) |
+| Draft-only host WebKitGTK compatibility for the original decoded-face WasmGC fixture | DEFERRED | DEFERRED | [WebKitGTK2.54.1 passes12 cases/Canvas hash and four corruption controls on software Xvfb. No Tauri binary, speedup, game/controller/Deck or deployment claim.](TAURI_WASM_INVESTIGATION_20261017.md) |
 
 ## Decisions and maintenance
 
