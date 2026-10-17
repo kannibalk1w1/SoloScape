@@ -249,6 +249,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "SLAYER_KILL_OWNERSHIP_20261017.md",
       "note": "36 selected native cases pass independently, including two ownership/save cases. Explicit tasks/stats/spawns and in-process fresh-player reload; contested kills, earned assignment and later-content mechanics remain separate."
+    },
+    {
+      "id": "native-two-client",
+      "scope": "Two native clients on one loopback world: visibility, movement, separate inventories and restart",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "NATIVE_TWO_CLIENT_COMPATIBILITY_20261017.md",
+      "note": "Two actual client JVMs and a server restart preserve both accounts exactly; injected validation failure closes all owned native processes. Private Xvfb only; hosting UI, guest-session recovery, trade/loot and physical controls remain open."
     }
   ]
 }
