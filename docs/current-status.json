@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "0507ad4",
+  "reviewed_base": "8230733",
   "entries": [
     {
       "id": "controls",
@@ -305,6 +305,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "FAMILIAR_DISMISSAL_IDENTITY_20261017.md",
       "note": "Two native red-before/green-after cases;52 targeted and20 selected Summoning cases pass. Forced NPC-slot reuse cannot alias an unrelated rat. Supplied materials; no earned journey or hardware acceptance."
+    },
+    {
+      "id": "ground-loot-transaction",
+      "scope": "Failed full-pile pickup preserves floor loot and rolls back stale references",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "GROUND_LOOT_TRANSACTION_20261017.md",
+      "note": "Two native reds before fix; five Take, one death recovery, four Telekinetic Grab and15 official death-group cases pass. Supplied capacity/piles; grave restart persistence remains open."
     }
   ]
 }
