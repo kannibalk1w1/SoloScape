@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "2c19226",
+  "reviewed_base": "a5d93aa",
   "entries": [
     {
       "id": "controls",
@@ -505,6 +505,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "DEATH_DROP_CHARGES_20261017.md",
       "note": "Reproduced floor charges0 instead of12,345; same charged floor loot survives refused Take, then recovers once.29 death/40 related cases pass (five overlap). No disk/Deck or grave persistence claim."
+    },
+    {
+      "id": "gravestone-timer",
+      "scope": "Native grave phase ordering and cancellation at expired lifetime",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "GRAVESTONE_TIMER_20261017.md",
+      "note": "Reproduced collapse->broken regression and immortal expired NPC.31 native death/loot cases pass, including real scheduled stop cleanup. Fixture clocks; no restart/Deck or suspend claim."
     }
   ]
 }

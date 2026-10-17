@@ -1,0 +1,158 @@
+{
+  "date": "2026-10-17",
+  "reviewed_base": "a5d93aa",
+  "native_stack": {
+    "server": 51,
+    "client": 56
+  },
+  "scope": "native grave phase ordering and cancellation on expired lifetime",
+  "before_source_sha256": "6044eb1e375967eafe4a82aa2e12da55fc425da9c2240108cb2a90982c424d7a",
+  "source_sha256": {
+    "patches/server/0051-gravestone-degrade-phase-and-expiry.patch": "d8c21c64d0ffac7b1cc1d09a557716d18aa4d81d38845dee94d7631cfc2106b4",
+    "scripts/content_coverage.py": "a4af1d09b4a73ce5492f75974686dba86f77e1157fc4a0b513096306742639cc",
+    "upstream/game-server/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt": "fa883bb14d5dc12c867b0219cc846cc4d9aca60be687c89d0d34257be748d820",
+    "upstream/game-server/game/src/test/kotlin/content/area/misthalin/lumbridge/church/GravestoneDegradePhaseTest.kt": "19a679cc6cf8325cd3f8ba5206bf2cee35cb144518c06cbb3911d2cadab62988"
+  },
+  "before_fix": [
+    {
+      "label": "baseline-cadence",
+      "counts": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failure": "org.opentest4j.AssertionFailedError: Collapsed grave must not regress to broken ==> expected: <gravestone_memorial_plaque_collapse> but was: <gravestone_memorial_plaque_broken>",
+      "xml_sha256": "1e7012f10e4ce3b8ee5ad2bd26dc17487bb0a54d9e14003bdfc4e8fcffe65fe6"
+    },
+    {
+      "label": "baseline-expiry",
+      "counts": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failure": "org.opentest4j.AssertionFailedError: Expired grave must be removed by its scheduled timer ==> expected: <false> but was: <true>",
+      "xml_sha256": "45dc854425f894003818e310bc20d0bd426f2f570a08d1bf1f5a7e10c940e4cd"
+    }
+  ],
+  "fixed_death_suites": [
+    {
+      "suite": "content.entity.player.inv.TakeTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.DeathLootRecoveryTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.KeptItemChargePreservationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.IdenticalItemsKeptOnDeathTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.DeathDropChargeRecoveryTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.GravestonesTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.GravestoneDegradePhaseTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.GravestoneShopAuthorityTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.RepeatedGraveIdentityTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "fixed_death_cases": 31,
+  "root_tooling": {
+    "tests": 276,
+    "existing_optional_skips": 1
+  },
+  "source_exports": {
+    "server": 100,
+    "client": 140
+  },
+  "limits": [
+    "Shortened first-case lifetime, advanced clock and explicit native handler calls are fixtures.",
+    "Expiry case advances fixture wallclock beyond five minutes, then native scheduled world ticks trigger existing stop handler; no direct stop call.",
+    "Unrecovered grave/floor restart persistence and physical Deck acceptance remain open."
+  ],
+  "jars_sha256": {
+    "server": "d5c5143031c38ea0b344d75660597eb2ea003d6642f62735b9356849071e991e",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+  },
+  "packaged_classes": [
+    {
+      "name": "content/area/misthalin/lumbridge/church/Gravestones$2.class",
+      "sha256": "ed526090c8add1a2ce110ee447d8753b182a031d988486b07caaa50a8e91daf3"
+    },
+    {
+      "name": "content/area/misthalin/lumbridge/church/Gravestones$3.class",
+      "sha256": "4052f5100b3663ac9d634b66fee529fc0e1fa7a209c92a5a74a5a09b6f1575eb"
+    },
+    {
+      "name": "content/area/misthalin/lumbridge/church/Gravestones$4.class",
+      "sha256": "b14a94cc48d7a4a62a88ab21e84eb3e9a1baa41e7f6675495bb0d91737a56d30"
+    },
+    {
+      "name": "content/area/misthalin/lumbridge/church/Gravestones$6.class",
+      "sha256": "3aff451471a70ae855ab2ea7f16dd3bfe686dda0cb4eb697b46800c1d3f4b1b7"
+    },
+    {
+      "name": "content/area/misthalin/lumbridge/church/Gravestones$7.class",
+      "sha256": "b53291f21bdcbb81f087501d94d86b7adb445e267d50a601c56c7b9d8c266b66"
+    },
+    {
+      "name": "content/area/misthalin/lumbridge/church/Gravestones$8.class",
+      "sha256": "8cfedf6d8295ba7570ded4017b0de2367f7511d9596a5cf454099d53b211da2c"
+    },
+    {
+      "name": "content/area/misthalin/lumbridge/church/Gravestones$9.class",
+      "sha256": "1ab198c4065fca968e7cb6f95a5dff783bf8c5ad4299e4162e8e88c4bc113cc6"
+    },
+    {
+      "name": "content/area/misthalin/lumbridge/church/Gravestones.class",
+      "sha256": "139f66a549caa259f631fd0913d7ece887d66c9af6f99ddc1c1b4692dce326fd"
+    }
+  ],
+  "matched_prepare_passed": true
+}
