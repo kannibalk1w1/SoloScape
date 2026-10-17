@@ -1,0 +1,118 @@
+{
+  "date": "2026-10-17",
+  "reviewed_base": "10f11d8",
+  "native_stack": {
+    "server": 47,
+    "client": 56
+  },
+  "scope": "one connected native members-world spirit wolf supply/infuse/summon case",
+  "source_sha256": {
+    "patches/server/0047-connected-summoning-supply-chain.patch": "248ca797631ae56ff36d96157da7065362c030e77e90a56158b63abd4570e94f",
+    "scripts/content_coverage.py": "0c4a4eb3c0aa794a33cd53fe2b6b0054cb00728f07d8981c49486ec6c0f05db3",
+    "upstream/game-server/game/src/test/kotlin/content/skill/summoning/ConnectedSpiritWolfSupplyTest.kt": "60f8b948a4af11921ea869438702ac95687c3abbed34621e2b815ab16bc272ae"
+  },
+  "jars_sha256": {
+    "server": "9a873520a9b55f27fe30efdfbc41c77b1c2c15d982f03fd206b31710d6c87682",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+  },
+  "selected_native_suites": [
+    {
+      "suite": "content.area.asgarnia.taverley.PikkupstixTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.summoning.SummoningSupplyAcquisitionTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.summoning.SummoningLootDeliveryTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.summoning.ConnectedSpiritWolfSupplyTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.summoning.SoloSpiritWolfLifecycleTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.summoning.FamiliarOwnerIdentityTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.summoning.FamiliarDismissalIdentityTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.summoning.SummoningLevelGateTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.summoning.SummoningObeliskTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "tests": {
+    "selected_native": 23,
+    "selected_failures": 0,
+    "selected_errors": 0,
+    "selected_skips": 0,
+    "new_connected_case": 1,
+    "root": 276,
+    "root_optional_skip": 1
+  },
+  "fixtures": [
+    "created Stronghold wolf at configured1873,5239",
+    "fatal native hit equal to observed hitpoints and controlled lowest drop roll",
+    "members world",
+    "same level1 player/inventory throughout",
+    "supplied1000coins",
+    "teleports to Pikkupstix and obelisk",
+    "native interface-close API for shop"
+  ],
+  "observed": [
+    "native death publishes charm/bones and native Take removes both floor records",
+    "native recipe1gold charm/1wolf bones/7spirit shards/1blank pouch",
+    "Pikkupstix second dialogue choice opens summoning_supplies",
+    "native Buy-1 charges Price.of and updates shop/inventory exactly",
+    "infuse consumes all acquired ingredients and creates one pouch with exact cached XP",
+    "Summon consumes actual pouch and spends native points with exact cached summon XP",
+    "native familiarOwner returns same player; exactly one spirit wolf remains after20moreticks",
+    "no duplicated materials/pouch or floor ingredients"
+  ],
+  "limits": [
+    "not an earned fight, coin source, travel or probability sample",
+    "no save/reload extension in this connected case; separate lifecycle tests retain their own fixtures",
+    "no loaded spawn file, client/controller/Deck/Gaming Mode acceptance",
+    "Wolf Whistle and full Summoning progression remain unimplemented/unproven",
+    "no new production Kotlin/data, rate rebalance, owner state or deployment"
+  ]
+}

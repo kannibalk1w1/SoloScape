@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "c7c6161",
+  "reviewed_base": "10f11d8",
   "entries": [
     {
       "id": "controls",
@@ -473,6 +473,14 @@
       "acceptance": "DEFERRED",
       "evidence": "BACKPORT_LAB_TOKEN_20261017.md",
       "note": "Both39-file candidates are byte-identical;20,178 original items/101,204 unrelated archives remain exact. CRC/occupied controls refuse. Temporary mapping only; no appearance, gameplay, safe general allocator or live cache delivery."
+    },
+    {
+      "id": "connected-summoning-supplies",
+      "scope": "Connected native wolf loot/Take, supplies purchase, pouch infusion and familiar ownership",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "CONNECTED_SUMMONING_SUPPLIES_20261017.md",
+      "note": "One joined level1/members case;23 selected native cases pass. Fatal hit/RNG/coins/teleports are fixtures; no earned journey, connected save/reload, client/Deck or grave persistence claim."
     }
   ]
 }
