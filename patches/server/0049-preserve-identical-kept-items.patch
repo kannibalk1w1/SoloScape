@@ -1,0 +1,107 @@
+diff --git a/game/src/main/kotlin/content/entity/player/kept/ItemsKeptOnDeath.kt b/game/src/main/kotlin/content/entity/player/kept/ItemsKeptOnDeath.kt
+--- a/game/src/main/kotlin/content/entity/player/kept/ItemsKeptOnDeath.kt
++++ b/game/src/main/kotlin/content/entity/player/kept/ItemsKeptOnDeath.kt
+@@ -15,7 +15,8 @@
+ object ItemsKeptOnDeath {
+ 
+     fun getAllOrdered(player: Player): List<Item> = player.inventory.items
+-        .union(player.equipment.items.toList())
++        // Keep every physical item; identical copies each use a protection slot.
++        .plus(player.equipment.items)
+         .filter { it.isNotEmpty() }
+         .sortedByDescending { it.def.cost }
+ 
+diff --git a/game/src/test/kotlin/content/area/misthalin/lumbridge/church/IdenticalItemsKeptOnDeathTest.kt b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/IdenticalItemsKeptOnDeathTest.kt
+new file mode 100644
+index 0000000..d83f8ab
+--- /dev/null
++++ b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/IdenticalItemsKeptOnDeathTest.kt
+@@ -0,0 +1,88 @@
++package content.area.misthalin.lumbridge.church
++
++import WorldTest
++import content.entity.combat.dead
++import content.entity.combat.hit.damage
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertFalse
++import org.junit.jupiter.api.Assertions.assertNotNull
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.BeforeEach
++import org.junit.jupiter.api.Test
++import world.gregs.voidps.engine.entity.character.npc.NPCs
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.entity.item.floor.FloorItems
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.equipment
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.engine.timer.setCurrentTime
++import world.gregs.voidps.network.login.protocol.visual.update.player.EquipSlot
++import world.gregs.voidps.type.Tile
++
++/**
++ * Reproducer for identical nonstackable items collapsing before keep-three selection. Swords are supplied as
++ * explicit fixtures (not earned progression). ItemsKeptOnDeath.getAllOrdered builds its list with
++ * `inventory.items.union(equipment.items.toList())`, and `Item` equality is id plus raw value, so physically
++ * distinct identical swords may be deduplicated before ItemsKeptOnDeath.kept applies the keep-three rule.
++ */
++class IdenticalItemsKeptOnDeathTest : WorldTest() {
++
++    @BeforeEach
++    fun setup() {
++        setCurrentTime { 0 }
++    }
++
++    @Test
++    fun fourIdenticalSwordsKeepThree() {
++        val deathTile = Tile(3235, 3220)
++        val player = createPlayer(deathTile)
++        // Fixture: four physical swords supplied directly
++        repeat(4) { player.inventory.add(SWORD) }
++        tick()
++        assertEquals(4, swordSlots(player), "Precondition: four physical swords in inventory slots")
++        assertTrue(player.inventory.items.filter { it.isNotEmpty() }.all { it.amount == 1 }, "Each sword must be a single nonstackable item")
++
++        player.damage(player.levels.get(Skill.Constitution))
++        tick(9)
++        assertEquals(Tile(3221, 3219), player.tile, "native death finishes at the respawn tile")
++        assertFalse(player.dead, "the native death queue has finished")
++
++        assertNotNull(NPCs.firstOrNull(deathTile) { it.id.startsWith("gravestone") })
++        assertEquals(4, swordSlots(player) + floorSwords(deathTile), "Total sword quantity must be conserved")
++        assertEquals(3, swordSlots(player), "Three of four identical swords must be kept")
++        assertEquals(1, floorSwords(deathTile), "Exactly one identical sword must drop to the floor")
++    }
++
++    @Test
++    fun identicalInventoryAndEquippedSwordsAllKept() {
++        val deathTile = Tile(3235, 3220)
++        val player = createPlayer(deathTile)
++        // Fixture: one sword equipped and two in inventory, supplied directly
++        player.equipment.set(EquipSlot.Weapon.index, SWORD)
++        repeat(2) { player.inventory.add(SWORD) }
++        tick()
++        assertEquals(SWORD, player.equipment[EquipSlot.Weapon.index].id, "Precondition: sword fixture is equipped")
++        assertEquals(2, swordSlots(player), "Precondition: two swords in inventory slots")
++
++        player.damage(player.levels.get(Skill.Constitution))
++        tick(9)
++        assertEquals(Tile(3221, 3219), player.tile, "native death finishes at the respawn tile")
++        assertFalse(player.dead, "the native death queue has finished")
++
++        assertEquals(3, swordSlots(player) + floorSwords(deathTile) + equippedSwords(player), "Total sword quantity must be conserved")
++        assertEquals(0, floorSwords(deathTile), "No identical sword may drop to the floor")
++        assertEquals(0, equippedSwords(player), "Post-death the equipped sword must be returned to inventory")
++        assertEquals(3, swordSlots(player), "All three identical swords must be kept")
++    }
++
++    private fun swordSlots(player: Player) = player.inventory.items.count { it.id == SWORD }
++
++    private fun equippedSwords(player: Player) = player.equipment.items.count { it.id == SWORD }
++
++    private fun floorSwords(tile: Tile) = FloorItems.at(tile).filter { it.id == SWORD }.sumOf { it.amount }
++
++    private companion object {
++        const val SWORD = "bronze_sword"
++    }
++}
