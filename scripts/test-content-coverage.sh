@@ -5,4 +5,4 @@ if [[ -f "$root/config/local.env" ]]; then
   source "$root/config/local.env"
 fi
 export SERVER_JAVA=${SERVER_JAVA:-java}
-exec python3 "$root/scripts/content_coverage.py"
+exec python3 "$root/scripts/content_coverage.py" "$@"
