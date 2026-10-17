@@ -17,7 +17,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
 | client | 56 | `0056-external-launcher-home.patch` | `60fa4f727ababa7d532ac495c62055ed38cbd83c07abc70c66a068cf24c7bc5a` |
-| server | 44 | `0044-save-variable-list-snapshots.patch` | `21019abbd44491fa22d9a657d8f84ddf8f4402c4f9c91bbbe24da932c5f08325` |
+| server | 45 | `0045-gravestone-shop-server-availability.patch` | `4ef8a0268c95634e43f654bfbea0ca0f0636d09e9e7a72deb69b191206a2bed6` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
 
@@ -77,6 +77,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 | Native pending NPC allocation, removal/reset identity and spawn lookup retirement | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Seven original engine reds plus an independent lookup red; final 14 NPC and 24 related engine controls pass. Native Summoning 20/death 19/dungeon 28 pass (105 total), patch reproduction and matched jars pass. No owner deployment or physical/long-uptime acceptance.](NPC_QUEUE_LIFECYCLE_20261017.md) |
 | Owned client home/cache properties protected from inherited late HotSpot options | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Actual supported Java 8 override reproduced before filtering; actual owned environment and unsafe control verify the fix without creating home/cache directories. Simulated owned-child lifecycle regression; no game/Deck or arbitrary-agent sandbox claim.](PROFILE_JVM_OPTIONS_20261017.md) |
 | Native mutable persisted list ownership at queued account-save capture | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Three actual native snapshot/codec reds, two controls; final snapshot 5/engine save 15/journeys 3 pass without skips. Flat list containers isolated; no recursive graph, DB, whole-world or hardware acceptance.](SAVE_VARIABLE_SNAPSHOTS_20261017.md) |
+| Server-side quest availability check before gravestone selection/payment | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [24 selected death/gravestone cases; supplied-input shop controls, no purchase-ownership model or stopped-world grave persistence added](GRAVESTONE_SHOP_AUTHORITY_20261017.md) |
 
 ## Decisions and maintenance
 

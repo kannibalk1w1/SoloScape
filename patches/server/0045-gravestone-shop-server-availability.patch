@@ -1,0 +1,153 @@
+diff --git a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/GravestoneShop.kt b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/GravestoneShop.kt
+index 5c602c4..0d8e605 100644
+--- a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/GravestoneShop.kt
++++ b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/GravestoneShop.kt
+@@ -3,6 +3,7 @@ package content.area.misthalin.lumbridge.church
+ import content.quest.questCompleted
+ import world.gregs.voidps.engine.Script
+ import world.gregs.voidps.engine.data.definition.EnumDefinitions
++import world.gregs.voidps.engine.client.message
+ import world.gregs.voidps.engine.entity.character.player.chat.notEnough
+ import world.gregs.voidps.engine.inv.inventory
+ import world.gregs.voidps.engine.inv.remove
+@@ -41,11 +42,19 @@ class GravestoneShop : Script {
+         }
+ 
+         interfaceOption(id = "gravestone_shop:button") { (_, itemSlot) ->
+-            val name = EnumDefinitions.get("gravestone_names").string(itemSlot)
++            val names = EnumDefinitions.get("gravestone_names")
++            if (names.map?.containsKey(itemSlot) != true) {
++                return@interfaceOption
++            }
++            val name = names.string(itemSlot)
+             val id = name.replace(" ", "_").lowercase()
+             if (get("gravestone_current", "memorial_plaque") == id) {
+                 return@interfaceOption
+             }
++            if (id != "memorial_plaque" && !containsVarbit("unlocked_gravestones", id)) {
++                message("You have not unlocked this gravestone yet.")
++                return@interfaceOption
++            }
+             val cost = EnumDefinitions.get("gravestone_price").int(itemSlot)
+             if (cost > 0 && !inventory.remove("coins", cost)) {
+                 notEnough("coins")
+diff --git a/game/src/test/kotlin/content/area/misthalin/lumbridge/church/GravestoneShopAuthorityTest.kt b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/GravestoneShopAuthorityTest.kt
+new file mode 100644
+index 0000000..6ca0b3d
+--- /dev/null
++++ b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/GravestoneShopAuthorityTest.kt
+@@ -0,0 +1,114 @@
++package content.area.misthalin.lumbridge.church
++
++import WorldTest
++import interfaceOption
++import org.junit.jupiter.api.Test
++import world.gregs.voidps.engine.client.ui.open
++import world.gregs.voidps.engine.data.definition.EnumDefinitions
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.type.Tile
++import kotlin.test.assertEquals
++import kotlin.test.assertFalse
++
++/**
++ * Server authority for gravestone purchases in the `gravestone_shop` interface.
++ * Uses the native shop open and interface option instructions only.
++ */
++class GravestoneShopAuthorityTest : WorldTest() {
++
++    private val royalSlot: Int by lazy { EnumDefinitions.get("gravestone_names").map!!.entries.first { it.value == "Royal dwarven gravestone" }.key }
++    private val royalPrice: Int by lazy { EnumDefinitions.get("gravestone_price").int(royalSlot) }
++
++    private fun Player.confirm(slot: Int) = interfaceOption("gravestone_shop", "button", "Confirm", slot = slot)
++
++    @Test
++    fun `Buy a quest-unlocked royal dwarven gravestone and pay its cache price`() {
++        val player = createPlayer(Tile(3235, 3220))
++        player["the_restless_ghost"] = "completed"
++        player["king_of_the_dwarves"] = "completed"
++        player.inventory.add("coins", royalPrice)
++        tick()
++
++        player.open("gravestone_shop")
++        tick()
++        player.confirm(royalSlot)
++        tick()
++
++        assertEquals("royal_dwarven_gravestone", player["gravestone_current", "memorial_plaque"])
++        assertEquals(0, player.inventory.count("coins"))
++    }
++
++    @Test
++    fun `Quest-locked royal dwarven gravestone is not bought and costs nothing`() {
++        val player = createPlayer(Tile(3235, 3220))
++        player["the_restless_ghost"] = "completed"
++        player.inventory.add("coins", royalPrice)
++        tick()
++
++        player.open("gravestone_shop")
++        tick()
++        assertFalse(player.containsVarbit("unlocked_gravestones", "royal_dwarven_gravestone"))
++
++        player.confirm(royalSlot)
++        tick()
++
++        assertEquals("memorial_plaque", player["gravestone_current", "memorial_plaque"])
++        assertEquals(royalPrice, player.inventory.count("coins"))
++    }
++
++    @Test
++    fun `Re-selecting the current grave does not charge again`() {
++        val player = createPlayer(Tile(3235, 3220))
++        player["the_restless_ghost"] = "completed"
++        player["king_of_the_dwarves"] = "completed"
++        player.inventory.add("coins", royalPrice * 2)
++        tick()
++
++        player.open("gravestone_shop")
++        tick()
++        player.confirm(royalSlot)
++        tick()
++        assertEquals(royalPrice, player.inventory.count("coins"))
++
++        player.confirm(royalSlot)
++        tick()
++
++        assertEquals("royal_dwarven_gravestone", player["gravestone_current", "memorial_plaque"])
++        assertEquals(royalPrice, player.inventory.count("coins"))
++    }
++    @Test
++    fun `Returning to the free plaque works without an unlock bit`() {
++        val player = createPlayer(Tile(3235, 3220))
++        player["the_restless_ghost"] = "completed"
++        player["gravestone_current"] = "flag"
++        player.inventory.add("coins", 100)
++        tick()
++        player.open("gravestone_shop")
++        tick()
++        assertFalse(player.containsVarbit("unlocked_gravestones", "memorial_plaque"))
++        val plaqueSlot = EnumDefinitions.get("gravestone_names").map!!.entries.first { it.value == "Memorial plaque" }.key
++        player.confirm(plaqueSlot)
++        tick()
++        assertEquals("memorial_plaque", player["gravestone_current", "memorial_plaque"])
++        assertEquals(100, player.inventory.count("coins"))
++    }
++
++    @Test
++    fun `Malformed selection does not change the grave or coins`() {
++        val player = createPlayer(Tile(3235, 3220))
++        player["the_restless_ghost"] = "completed"
++        player.inventory.add("coins", royalPrice)
++        tick()
++        player.open("gravestone_shop")
++        tick()
++        for (slot in listOf(-1, 32767)) {
++            player.confirm(slot)
++            tick()
++            assertEquals("memorial_plaque", player["gravestone_current", "memorial_plaque"])
++            assertEquals(royalPrice, player.inventory.count("coins"))
++        }
++    }
++
++}

@@ -1,0 +1,97 @@
+{
+  "date": "2026-10-17",
+  "scope": "Native gravestone shop instruction authority; supplied quest and coin fixtures, not earned progression",
+  "passed": true,
+  "patch": "0045-gravestone-shop-server-availability.patch",
+  "patch_sha256": "0822709ecab48c579b018409802bb1048e4da4378fce9ff70bb4965752db7657",
+  "red_cases": [
+    {
+      "case": "unlocked royal purchase",
+      "tests": 1,
+      "failures": 0,
+      "xml_sha256": "717289579d285ab798a6aecf6b745eeaf428b40b7cdfcaad707b406dd398de29"
+    },
+    {
+      "case": "locked royal rejection",
+      "tests": 1,
+      "failures": 1,
+      "xml_sha256": "6cbf0c55f7ee3cde28cf1407e7350f1dfca2003192ea904a685fe48e761d656d"
+    },
+    {
+      "case": "repeat current selection",
+      "tests": 1,
+      "failures": 0,
+      "xml_sha256": "a767e84d5479c21fcc9599f7fd5feb75b8ee35e3351fe0d4068e2727582fca23"
+    }
+  ],
+  "native_final": {
+    "group": "death",
+    "suites": [
+      {
+        "suite": "content.entity.player.inv.TakeTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.DeathLootRecoveryTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.GravestonesTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.GravestoneShopAuthorityTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.RepeatedGraveIdentityTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "exit_code": 0,
+    "summary_sha256": "84ce69621bdbdd04a93ceb91f03d3235c852e9455547067f795aece53caffac2"
+  },
+  "root_tooling": {
+    "tests": 242,
+    "optional_skipped": 1,
+    "passed": true
+  },
+  "matched_build": {
+    "pins": {
+      "game-server": "9f9113559eb686abd917893b5dca16404be07f93",
+      "634-client": "b39d45f49a0480f3f200fe3e31ad0798faf163ab",
+      "runelite-client": "297bc8a4861755b676855664d32859054779c067"
+    },
+    "jars": {
+      "server": "9a873520a9b55f27fe30efdfbc41c77b1c2c15d982f03fd206b31710d6c87682",
+      "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+    },
+    "server_patch_count": 45,
+    "client_patch_count": 56
+  },
+  "exported_source_files": {
+    "server": 92,
+    "client": 140
+  },
+  "limits": [
+    "No physical input or Deck acceptance",
+    "No new purchased-ownership collection or save migration",
+    "Visible slot-13 click settings not validated",
+    "Stopped-world grave actors and floor loot persistence remain unimplemented"
+  ]
+}
