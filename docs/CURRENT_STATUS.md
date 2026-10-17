@@ -81,6 +81,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 | Private native A/B profile lock, original-context orphan recovery and code rollback retaining new progress | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Specific server42/45 client56 builds, 10 valid backups, actual ground-click tile change survives rollback; no installer/apply/public package/audio/Deck acceptance](PREBUILT_VERSION_LIFECYCLE_20261017.md) |
 | Offline resolved runtime artifact, notice candidate and embedded-native metadata inventory | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [55 server /24 client artifacts; 3 unattributed local jars; metadata only, M13-02 distribution review remains open](RUNTIME_NOTICE_INVENTORY_20261017.md) |
 | Native wolf death through queued loot publication and ingredient Take delivery | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [22 selected Summoning cases; controlled fatal damage/drop roll, members-only final item filter; earned route and physical input still open](SUMMONING_LOOT_DELIVERY_20261017.md) |
+| Original-fixture stopped-world activation lock, marker and code rollback lab | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [14 lab cases pass; unsafe shared-lock control fails four assertions. No real installer/session registry/health check, native integration, power-loss proof or owner deployment.](UPDATE_ACTIVATION_LAB_20261017.md) |
 
 ## Decisions and maintenance
 
