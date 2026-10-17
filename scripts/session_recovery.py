@@ -52,8 +52,26 @@ def read(profile):
     if (not isinstance(record, dict) or record.get('format') != 1
             or record.get('profile') != profile.manifest['id']
             or record.get('generation') != profile.manifest['generation']
-            or not re.fullmatch('[0-9a-f]{32}', str(record.get('session', '')))):
+            or not isinstance(record.get('session'), str)
+            or not re.fullmatch('[0-9a-f]{32}', record['session'])):
         raise ValueError('Session record does not match this world; preserve it for manual recovery.')
+    children = record.get('children')
+    jars = record.get('jars')
+    locks = record.get('locks')
+    if (not isinstance(children, dict) or set(children) - {'server', 'client'}
+            or not isinstance(record.get('boot'), str) or not record['boot']
+            or not isinstance(record.get('phase'), str)
+            or not isinstance(jars, dict)
+            or any(not isinstance(jars.get(role), str) or not jars[role] for role in ('server', 'client'))
+            or not isinstance(locks, dict) or set(locks) != {'profile', 'build'}
+            or any(not isinstance(value, list) or len(value) != 2
+                   or any(type(part) is not int or part < 0 for part in value) for value in locks.values())):
+        raise ValueError('Session record metadata is damaged; preserve it for manual recovery.')
+    for process in [record.get('owner'), *children.values()]:
+        if (not isinstance(process, dict)
+                or type(process.get('pid')) is not int or process['pid'] < 1
+                or type(process.get('start')) is not int or process['start'] < 0):
+            raise ValueError('Session record process identity is damaged; preserve it for manual recovery.')
     return record
 
 

@@ -47,6 +47,44 @@ profile_session.run(profiles.Profile(Path(sys.argv[3])),threading.Event(),lambda
         launcher.kill();launcher.wait(timeout=5)
         return session_recovery.read(self.profile)
 
+    def test_malformed_record_does_not_hide_other_profiles_or_authorize_recovery(self):
+        healthy = profiles.create('Healthy', 'Healthy')
+        healthy_manifest = (healthy.directory / 'profile.json').read_bytes()
+        with local_dev.build_lock(shared=True), self.profile.lock():
+            record = session_recovery.begin(self.profile, 43594, '/fixture/server.jar', '/fixture/client.jar')
+        path = self.profile.directory / session_recovery.RECORD
+        malformed = [
+            dict(record, children=[]),
+            dict(record, children=None),
+            dict(record, children={'server': []}),
+            dict(record, children={'other': record['owner']}),
+            dict(record, owner=[]),
+            dict(record, owner=dict(record['owner'], pid=True)),
+            dict(record, owner=dict(record['owner'], start='unknown')),
+            dict(record, session=12345678901234567890123456789012),
+            dict(record, jars={'server': 42, 'client': '/fixture/client.jar'}),
+            dict(record, locks=[]),
+            dict(record, locks={'profile': ['bad', 1], 'build': [1, 2]}),
+        ]
+        backend = launcher_backend.Backend()
+        self.addCleanup(backend.close)
+        for index, invalid in enumerate(malformed):
+            with self.subTest(index=index):
+                session_recovery.write(self.profile, invalid)
+                before = path.read_bytes()
+                rows = {row['id']: row for row in backend.dispatch({'action': 'list'})['profiles']}
+                self.assertFalse(rows[self.profile.manifest['id']]['recovery']['recoverable'])
+                self.assertIsNone(rows[healthy.manifest['id']]['recovery'])
+                with patch.object(signal, 'pidfd_send_signal') as send_signal:
+                    with self.assertRaises(ValueError):
+                        session_recovery.recover(self.profile, threading.Event(), lambda *args: None)
+                    with self.assertRaises(ValueError):
+                        session_recovery.archive_ended(self.profile)
+                    send_signal.assert_not_called()
+                self.assertEqual(path.read_bytes(), before)
+                self.assertEqual((healthy.directory / 'profile.json').read_bytes(), healthy_manifest)
+                self.assertEqual(list((self.profile.directory / 'backups').glob('*.zip')), [])
+
     def test_orphan_recovery_checks_ownership_and_preserves_uncertain_backup_truth(self):
         self.orphan()
         status=session_recovery.inspect(self.profile)
