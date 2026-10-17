@@ -40,7 +40,17 @@ public final class NativeAdventureProbe {
     },java.awt.AWTEvent.MOUSE_EVENT_MASK);
     if(Boolean.getBoolean("soloscape.settings.probe")){ // Home Settings ownership only: no tabs, journal or text stages
      for(net.runelite.client.plugins.Plugin candidate:RuneLite.getInjector().getInstance(net.runelite.client.plugins.PluginManager.class).getPlugins())if(candidate instanceof SoloScapeControllerPlugin)plugin=(SoloScapeControllerPlugin)candidate;
-     require(plugin!=null,"Managed controller plugin missing");results.put("settings_only",true);step=8;lastStep=started-2000;
+     require(plugin!=null,"Managed controller plugin missing");
+     ConfigManager configuration=RuneLite.getInjector().getInstance(ConfigManager.class);
+     SoloScapeControllerConfig preferences=configuration.getConfig(SoloScapeControllerConfig.class);
+     results.put("settings_initial_direct_movement",preferences.directMovement());
+     results.put("settings_initial_server_features",preferences.serverFeatures());
+     if(Boolean.getBoolean("soloscape.settings.direct")){
+      // Explicit fixture preferences belong only to this disposable profile's private client home.
+      configuration.setConfiguration("soloscapecontroller","directMovement",true);
+      configuration.setConfiguration("soloscapecontroller","serverFeatures",true);
+     }
+     results.put("settings_only",true);step=8;lastStep=started-2000;
     }
     if(Boolean.getBoolean("soloscape.text.probe.fast")){
      for(net.runelite.client.plugins.Plugin candidate:RuneLite.getInjector().getInstance(net.runelite.client.plugins.PluginManager.class).getPlugins())if(candidate instanceof SoloScapeControllerPlugin)plugin=(SoloScapeControllerPlugin)candidate;
@@ -93,8 +103,15 @@ public final class NativeAdventureProbe {
     if(padTicks<padMark+2){require(now-lastStep<10000,"No plugin input ticks ran");return false;} // two more real ticks, with the pad held neutral
     require(checkedSettings&&settingsOpen.getBoolean(plugin),"Local settings failed across ticks");
     require(ui.focusedPanel()!=null&&ui.focusedPanel().id==ControllerSettingsModel.ID,"Settings disappeared on second tick: settingsOpen="+settingsOpen.getBoolean(plugin)+" focusedPanel="+(ui.focusedPanel()==null?"none":String.valueOf(ui.focusedPanel().id))+" native="+(ControllerUi.snapshot(false).panel==null?"none":ControllerUi.snapshot(false).panel.id+"/modal="+ControllerUi.snapshot(false).panel.modal)+" uiActive="+ui.active()+" padTicks="+padTicks);
+    if(Boolean.getBoolean("soloscape.settings.direct")&&!SoloScapeConnection.verified()){
+     require(now-lastStep<10000,"Direct Settings fixture server verification timed out");return false;
+    }
     display=ui.state();selected=ui.focus();capture(marker+".live-settings.png");results.put("settings_gateway_two_tick_adoption",true);
     ConfigManager config=RuneLite.getInjector().getInstance(ConfigManager.class);SoloScapeControllerConfig preferences=config.getConfig(SoloScapeControllerConfig.class);
+    results.put("settings_direct_configured",preferences.directMovement());
+    results.put("settings_server_features_configured",preferences.serverFeatures());
+    results.put("settings_capabilities_verified",SoloScapeConnection.verified());
+    if(Boolean.getBoolean("soloscape.settings.direct"))require(preferences.directMovement()&&preferences.serverFeatures()&&SoloScapeConnection.verified(),"Direct Settings fixture is not configured and verified");
     Field modelField=SoloScapeControllerPlugin.class.getDeclaredField("settings");modelField.setAccessible(true);ControllerSettingsModel model=(ControllerSettingsModel)modelField.get(plugin);
     int before=preferences.deadzone();UiState.Widget row=model.snapshot(true).panes[0].widgets[1];
     require(model.invoke(row,row.actions[0],true)==0,"Local preference change rejected");require(preferences.deadzone()!=before,"Config proxy did not receive local change");
@@ -153,6 +170,11 @@ public final class NativeAdventureProbe {
    if(step==14){
     if(!ControllerWorld.ready()||ControllerUi.availableTabs()==0||!SoloScapeConnection.verified()){require(now-lastStep<45000,"Native relog did not become ready/verified");return false;}
     require(!oldNonce.equals(nonce()),"Relog reused the earlier session nonce");results.put("same_client_relogin",true);results.put("fresh_capabilities_after_relogin",true);
+    if(Boolean.getBoolean("soloscape.settings.direct")){
+     SoloScapeControllerConfig preferences=RuneLite.getInjector().getInstance(ConfigManager.class).getConfig(SoloScapeControllerConfig.class);
+     require(preferences.directMovement()&&preferences.serverFeatures(),"Direct Settings fixture mode changed across relog");
+     results.put("settings_direct_after_relogin",true);
+    }
 
     results.put("heap_after_ui",ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed());
     results.put("unexpected_desktop_mouse_clicks",unexpectedMouseClicks);
