@@ -473,6 +473,14 @@
       "acceptance": "DEFERRED",
       "evidence": "WASM_CLIPPING_PROOF_20261017.md",
       "note": "18 camera-0/mask0 clip cases agree across native JVM, extracted JVM and WasmGC with actual extracted fill counts; default10 retained. No model/scene/client or hardware/performance acceptance."
+    },
+    {
+      "id": "wasm-model-decode",
+      "scope": "Draft-only original old-format model decoder equality across native jar, JVM and WasmGC",
+      "delivery": "DEFERRED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_MODEL_DECODE_PROOF_20261017.md",
+      "note": "Five synthetic models and four corruption controls pass the scoped proof; no native feature, new-format decoder, asset import, render bridge or browser client"
     }
   ]
 }

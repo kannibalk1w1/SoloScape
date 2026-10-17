@@ -1,0 +1,433 @@
+{
+  "cases": {
+    "extracted": [
+      {
+        "adapter_calls": 0,
+        "arrays_sha256": "65e4c9e253e375e4f2c104ea53158b08bee7928941bdf80f1a1f877af5873dfa",
+        "face_count": 1,
+        "max_vertex_plus_one": 3,
+        "name": "triangle",
+        "vertex_count": 3
+      },
+      {
+        "adapter_calls": 0,
+        "arrays_sha256": "3ce6a18d36ef97f6e5e2ec33abe71a14bb6b2af1d2229fc6e494e21e25f91f0c",
+        "face_count": 5,
+        "max_vertex_plus_one": 6,
+        "name": "strip_types_1_4",
+        "vertex_count": 6
+      },
+      {
+        "adapter_calls": 0,
+        "arrays_sha256": "b2cf20771ff17107965fa4f77be94d7935de08f68b16fafa10f17570a88764e6",
+        "face_count": 7,
+        "max_vertex_plus_one": 132,
+        "name": "signed_smart_boundaries",
+        "vertex_count": 200
+      },
+      {
+        "adapter_calls": 0,
+        "arrays_sha256": "54643c506b6f1d73f33719948c212d0e952c65ef45f995240fc40803cf62d50e",
+        "face_count": 1,
+        "max_vertex_plus_one": 3,
+        "name": "vertex_perturbed",
+        "vertex_count": 3
+      },
+      {
+        "adapter_calls": 0,
+        "arrays_sha256": "2e34d5b877734ef3d67beedb4829db7742e2c9d16970066dff92105ab07a9210",
+        "face_count": 5,
+        "max_vertex_plus_one": 6,
+        "name": "colour_index_perturbed",
+        "vertex_count": 6
+      }
+    ],
+    "native": [
+      {
+        "adapter_calls": null,
+        "arrays_sha256": "65e4c9e253e375e4f2c104ea53158b08bee7928941bdf80f1a1f877af5873dfa",
+        "face_count": 1,
+        "max_vertex_plus_one": 3,
+        "name": "triangle",
+        "vertex_count": 3
+      },
+      {
+        "adapter_calls": null,
+        "arrays_sha256": "3ce6a18d36ef97f6e5e2ec33abe71a14bb6b2af1d2229fc6e494e21e25f91f0c",
+        "face_count": 5,
+        "max_vertex_plus_one": 6,
+        "name": "strip_types_1_4",
+        "vertex_count": 6
+      },
+      {
+        "adapter_calls": null,
+        "arrays_sha256": "b2cf20771ff17107965fa4f77be94d7935de08f68b16fafa10f17570a88764e6",
+        "face_count": 7,
+        "max_vertex_plus_one": 132,
+        "name": "signed_smart_boundaries",
+        "vertex_count": 200
+      },
+      {
+        "adapter_calls": null,
+        "arrays_sha256": "54643c506b6f1d73f33719948c212d0e952c65ef45f995240fc40803cf62d50e",
+        "face_count": 1,
+        "max_vertex_plus_one": 3,
+        "name": "vertex_perturbed",
+        "vertex_count": 3
+      },
+      {
+        "adapter_calls": null,
+        "arrays_sha256": "2e34d5b877734ef3d67beedb4829db7742e2c9d16970066dff92105ab07a9210",
+        "face_count": 5,
+        "max_vertex_plus_one": 6,
+        "name": "colour_index_perturbed",
+        "vertex_count": 6
+      }
+    ],
+    "wasmgc": [
+      {
+        "adapter_calls": 0,
+        "arrays_sha256": "65e4c9e253e375e4f2c104ea53158b08bee7928941bdf80f1a1f877af5873dfa",
+        "face_count": 1,
+        "max_vertex_plus_one": 3,
+        "name": "triangle",
+        "vertex_count": 3
+      },
+      {
+        "adapter_calls": 0,
+        "arrays_sha256": "3ce6a18d36ef97f6e5e2ec33abe71a14bb6b2af1d2229fc6e494e21e25f91f0c",
+        "face_count": 5,
+        "max_vertex_plus_one": 6,
+        "name": "strip_types_1_4",
+        "vertex_count": 6
+      },
+      {
+        "adapter_calls": 0,
+        "arrays_sha256": "b2cf20771ff17107965fa4f77be94d7935de08f68b16fafa10f17570a88764e6",
+        "face_count": 7,
+        "max_vertex_plus_one": 132,
+        "name": "signed_smart_boundaries",
+        "vertex_count": 200
+      },
+      {
+        "adapter_calls": 0,
+        "arrays_sha256": "54643c506b6f1d73f33719948c212d0e952c65ef45f995240fc40803cf62d50e",
+        "face_count": 1,
+        "max_vertex_plus_one": 3,
+        "name": "vertex_perturbed",
+        "vertex_count": 3
+      },
+      {
+        "adapter_calls": 0,
+        "arrays_sha256": "2e34d5b877734ef3d67beedb4829db7742e2c9d16970066dff92105ab07a9210",
+        "face_count": 5,
+        "max_vertex_plus_one": 6,
+        "name": "colour_index_perturbed",
+        "vertex_count": 6
+      }
+    ]
+  },
+  "corruption_controls": [
+    {
+      "exit_code": 1,
+      "name": "native-design",
+      "output": "mutation native-design: native-jar triangle x[0] changed in memory\nFAIL: native-jar triangle: x differs from the design at index 0: 1 != 0\ndecode checker: 1 failure(s)\n"
+    },
+    {
+      "exit_code": 1,
+      "name": "extracted-vertex",
+      "output": "mutation extracted-vertex: extracted-jvm strip_types_1_4 y[1] changed in memory\nFAIL: extracted-jvm strip_types_1_4: y differs from the design at index 1: 1 != 0\ndecode checker: 1 failure(s)\n"
+    },
+    {
+      "exit_code": 1,
+      "name": "browser-face",
+      "output": "mutation browser-face: teavm-0.16.0-wasmgc signed_smart_boundaries a[0] changed in memory\nFAIL: teavm-0.16.0-wasmgc signed_smart_boundaries: a differs from the design at index 0: 1 != 0\ndecode checker: 1 failure(s)\n"
+    },
+    {
+      "exit_code": 1,
+      "name": "browser-colour",
+      "output": "mutation browser-colour: teavm-0.16.0-wasmgc strip_types_1_4 colour[0] changed in memory\nFAIL: teavm-0.16.0-wasmgc strip_types_1_4: colour differs from the design at index 0: 259 != 258\ndecode checker: 1 failure(s)\n"
+    }
+  ],
+  "date": "2026-10-17",
+  "limits": [
+    "Five original synthetic fixtures, no user cache/model import",
+    "New-format/optional streams unsupported, explicit throwing adapters",
+    "No hostile input validation or renderer/client equivalence",
+    "Native counters absent; original static initialization differs",
+    "Module sizes are fixture sizes, not full client cost or FPS"
+  ],
+  "passed": true,
+  "provenance": {
+    "artifacts": {
+      "decode.wasm": {
+        "bytes": 36749,
+        "gzip_bytes": 13636,
+        "gzip_sha256": "b4e12813a7fd363ba8b8d32b46e566241b13c0e3ace934bd5c942a9baf0d0cc0",
+        "sha256": "fa68f4f2ed873c6e601c236247820ff0f189ecbff5af37ffbd9df30373046f35"
+      },
+      "decode.wasm-runtime.js": {
+        "bytes": 17268,
+        "gzip_bytes": 6091,
+        "gzip_sha256": "944b20f7cd324c37b4022a5e78dc44753997708c1215b79cd916219cff7a5d88",
+        "sha256": "4fa1e0e0d686cc6e0a0d111e606cb876f7168bd695d9e3d639e7d5684453089b"
+      }
+    },
+    "closure": {
+      "adapters": [
+        "/* ADAPTER: native method1106 (new format, footer ends -1,-1) is not extracted. Calling it fails loudly. */",
+        "/* ADAPTER: native writeBytes (bad-magic path) is not extracted. Calling it fails loudly. */",
+        "/* ADAPTER: native writeByteAdd (bad-magic path) is not extracted. Calling it fails loudly. */"
+      ],
+      "budgets": {
+        "bodyLines": 283,
+        "fields": 32,
+        "maxBodyLines": 350,
+        "maxFields": 40
+      },
+      "fields": {
+        "Class124.java": [
+          {
+            "name": "anInt1817",
+            "nativeLine": 10
+          },
+          {
+            "name": "anInt1818",
+            "nativeLine": 11
+          },
+          {
+            "name": "aByteArray1820",
+            "nativeLine": 13
+          },
+          {
+            "name": "anInt1821",
+            "nativeLine": 14
+          },
+          {
+            "name": "aShortArray1822",
+            "nativeLine": 15
+          },
+          {
+            "name": "aByteArray1823",
+            "nativeLine": 16
+          },
+          {
+            "name": "anIntArray1824",
+            "nativeLine": 17
+          },
+          {
+            "name": "aShortArray1825",
+            "nativeLine": 18
+          },
+          {
+            "name": "aShortArray1829",
+            "nativeLine": 22
+          },
+          {
+            "name": "anInt1831",
+            "nativeLine": 24
+          },
+          {
+            "name": "aByteArray1834",
+            "nativeLine": 27
+          },
+          {
+            "name": "aShortArray1835",
+            "nativeLine": 28
+          },
+          {
+            "name": "anInt1836",
+            "nativeLine": 29
+          },
+          {
+            "name": "aByteArray1839",
+            "nativeLine": 32
+          },
+          {
+            "name": "anIntArray1841",
+            "nativeLine": 34
+          },
+          {
+            "name": "aByteArray1843",
+            "nativeLine": 36
+          },
+          {
+            "name": "anIntArray1847",
+            "nativeLine": 40
+          },
+          {
+            "name": "aShortArray1849",
+            "nativeLine": 42
+          },
+          {
+            "name": "aByte1851",
+            "nativeLine": 44
+          },
+          {
+            "name": "anIntArray1852",
+            "nativeLine": 45
+          },
+          {
+            "name": "aShortArray1855",
+            "nativeLine": 48
+          },
+          {
+            "name": "aShortArray1862",
+            "nativeLine": 55
+          },
+          {
+            "name": "aShortArray1863",
+            "nativeLine": 56
+          },
+          {
+            "name": "anIntArray1868",
+            "nativeLine": 61
+          }
+        ],
+        "Packet.java": [
+          {
+            "name": "anInt7143",
+            "nativeLine": 14
+          },
+          {
+            "name": "anInt7153",
+            "nativeLine": 24
+          },
+          {
+            "name": "data",
+            "nativeLine": 25
+          },
+          {
+            "name": "anInt7155",
+            "nativeLine": 26
+          },
+          {
+            "name": "anInt7186",
+            "nativeLine": 57
+          },
+          {
+            "name": "pos",
+            "nativeLine": 68
+          }
+        ]
+      },
+      "generated": {
+        "Class124.java": "35fb7fe9356d7c09e86f24c5a6cf61d8f6457b9909e0181fc66d90115b69de4a",
+        "Class348_Sub21.java": "1e6fff63881e9de58a5d5c2f8622adcf3ff5fe8da5060678d40df8c69f3cfdce",
+        "Packet.java": "192f7f1563ad214b6c6a979f76b0ca70e2ae49c06c3da5031f50cb51246dcca5"
+      },
+      "sources": {
+        "Class124.java": "26284febbb937e5afbe22f0fb3ebdad74557ffe9010ece3437fc2b4c00e94d3e",
+        "Class348_Sub21.java": "2b9ab115d669baafe7163786c03c902895e327016cb74dd809a3530c7f9b7d7c",
+        "Packet.java": "3e217a1d08e82e2f8b329f0a0f8d9bdc67c71ab267405dfb88449c97e987960d"
+      },
+      "spans": {
+        "Class124.java": [
+          {
+            "lines": [
+              226,
+              423
+            ],
+            "sha256": "5db81d86c36006c0dd96df584792070409095485a13d4f0176efa1e269635a71"
+          },
+          {
+            "lines": [
+              830,
+              837
+            ],
+            "sha256": "e8482b4371b5708aec4d685d9f506eb1970e4462f79a3d9e852a12846d0204eb"
+          }
+        ],
+        "Class348_Sub21.java": [
+          {
+            "lines": [
+              69,
+              71
+            ],
+            "sha256": "48a7a2ca4d0baa9d6ba337f8a9677417cd1fac8fdc07a23461bee6daf503a48d"
+          }
+        ],
+        "Packet.java": [
+          {
+            "lines": [
+              757,
+              760
+            ],
+            "sha256": "44ed041f77d7971a1354d98db9972228accebf73c752874160a38f648f3f3b43"
+          },
+          {
+            "lines": [
+              88,
+              93
+            ],
+            "sha256": "d30966a36ec17fbf83487d6e11d1be688e19e5aed5b13494cf266b41e0608482"
+          },
+          {
+            "lines": [
+              356,
+              362
+            ],
+            "sha256": "74a28719e25ee8c8fc47db3458e8213c284a9639b1384a8f538d5c1cdeaed1d2"
+          },
+          {
+            "lines": [
+              643,
+              647
+            ],
+            "sha256": "a54228103ac948cf69fc9258258aeac0fb84441eae566aee4eeaabde2f5176fd"
+          },
+          {
+            "lines": [
+              649,
+              653
+            ],
+            "sha256": "7a4d993f8f0c51966dbbd7309cfe0328c19dd124e11d0ed103ab76361e40d2b4"
+          }
+        ]
+      }
+    },
+    "evidence_sha256": "65704fe0b121e5dd3c635cc884d5da95b59af5fbef6b64086752eb54f70d4259",
+    "experimentSourceSha256": {
+      ".gitignore": "d7bfa9d1404f30876e789d8e89cedc0ad54d06c478d9a20cc60f16b06bd8bec4",
+      "README.md": "78acaa16f08c91d1f01b3793f220ea7a5202eafaa907b894b894269611786d97",
+      "build.gradle": "832e0640bd398fb033d51a875f4b35fe4c36b5ac37eb5e97553fcc2c2508aba4",
+      "run.sh": "d211ca0f0545e0eabb669c8cefffd5f8b78979958ee9165697e6881da3a34b95",
+      "settings.gradle": "27ed1ca4f4dc31a3d9ff3a0c6ce58b432ffc5ff267520fea2afb106efa529d80",
+      "src/browser/java/DecodeProbe.java": "bf48cd2ef2768e9d1a10d0e0a89866fd1c31dc8ecc57fb70a4826dae6b26549d",
+      "src/jvm/java/ExtractedDecodeJvm.java": "92abccf57a233c8423441c36fb5f1a6657a62bdd7d715b2e2752d1b203cb109b",
+      "src/jvm/java/NativeDecode.java": "8b02bfaaa53954bf0bd858cb40eecd33517b78c207dde664306f75b92009098f",
+      "src/shared/java/DecodeJson.java": "37d34427322c1c0c0959e2332527e0765f0eb5e25d9c3dce49f963fdafca341e",
+      "tools/check_decode_evidence.py": "3e6224466c6f72883deff732ac2d0905454539f11ec9def3b1556c9eb59b2263",
+      "tools/encode_decode_fixtures.py": "2215e2ddbd7090e97a5e081463a78e31c82b5261f92d501fd7c703567fa9936e",
+      "tools/extract_decode_closure.py": "c27a28be35aa872484813b021ada009c38f18c4e736defffabfb2a81e410cc1f",
+      "tools/record_decode_provenance.py": "549d5f223876712d041fd303edee0f30796d6155345908025377accb5a40dd12",
+      "tools/serve_decode.py": "50e78f2cf7f151e68ee453a549eff833b26fe66ebb4143e662bdde798a0e3a33",
+      "web/index.html": "37b353cf70f21cb686ae82ac4338b5f0ee62193117de1892c9d242f9c1bf529a"
+    },
+    "fixture_bytes": {
+      "colour_index_perturbed": 55,
+      "signed_smart_boundaries": 288,
+      "strip_types_1_4": 55,
+      "triangle": 33,
+      "vertex_perturbed": 33
+    },
+    "gzip_format": "gzip level9, mtime0, no filename header; size is not a full client estimate",
+    "inputs": {
+      "Class124.java": "26284febbb937e5afbe22f0fb3ebdad74557ffe9010ece3437fc2b4c00e94d3e",
+      "Class348_Sub21.java": "2b9ab115d669baafe7163786c03c902895e327016cb74dd809a3530c7f9b7d7c",
+      "Packet.java": "3e217a1d08e82e2f8b329f0a0f8d9bdc67c71ab267405dfb88449c97e987960d",
+      "client_jar": "ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918"
+    },
+    "reusedToolsSha256": {
+      "browser_probe.mjs": "b109aeeed10593f3afa87fb83216ef50d246e5137252c45525ce11a097456ce5",
+      "serve_loopback.py": "142897e02f7ab486f903644869f053a4a63ae13345d0eeae7ac50c64ab5eccd8"
+    },
+    "toolchain": {
+      "chromium": "Chromium 153.0.8010.52 Arch Linux",
+      "java": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)",
+      "node": "v26.11.1",
+      "teavm": "0.16.0 (offline pinned Gradle plugin/dependency)"
+    }
+  },
+  "scope": "Original old-format untextured models, decode only; draft experiment not native feature or browser game"
+}

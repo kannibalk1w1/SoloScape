@@ -1,0 +1,15 @@
+// Isolated TeaVM 0.16.0 WasmGC build of the extracted old-format Class124 decode closure.
+// Generated sources come from tools/extract_decode_closure.py and tools/encode_decode_fixtures.py under build/.
+plugins {
+    id 'java'
+    id 'org.teavm' version '0.16.0'
+}
+repositories { mavenCentral() }
+dependencies {
+    implementation 'org.teavm:teavm-jso:0.16.0'
+}
+sourceSets.main.java.srcDirs = ['src/shared/java', 'src/browser/java', 'build/generated-src']
+teavm {
+    all { mainClass = 'DecodeProbe' }
+    wasmGC { targetFileName = 'decode.wasm' }
+}
