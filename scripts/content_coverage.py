@@ -67,9 +67,10 @@ def read_results(report_directory, suites, archive):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--group', choices=('early', 'm6', 'journeys', 'summoning', 'capacity', 'dungeon', 'death', 'slayer', 'save'), default='early')
+    parser.add_argument('--group', choices=('early', 'm6', 'journeys', 'summoning', 'capacity', 'dungeon', 'death', 'slayer', 'save', 'snapshot'), default='early')
     options = parser.parse_args()
     suites = {
+        'snapshot': ('content.entity.player.SaveVariableSnapshotTest',),
         'save': (
             'world.gregs.voidps.engine.data.SaveQueueTest',
             'world.gregs.voidps.engine.data.PlayerSaveTest',
