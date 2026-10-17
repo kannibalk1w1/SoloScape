@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "79e5b3e",
+  "reviewed_base": "a97df79",
   "entries": [
     {
       "id": "controls",
@@ -513,6 +513,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "GRAVESTONE_TIMER_20261017.md",
       "note": "Reproduced collapse->broken regression and immortal expired NPC.31 native death/loot cases pass, including real scheduled stop cleanup. Fixture clocks; no restart/Deck or suspend claim."
+    },
+    {
+      "id": "grave-record-codec",
+      "scope": "Original immutable subset grave/pile records through native save/load",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "GRAVE_RECORD_CODEC_20261017.md",
+      "note": "12 scenarios / 22 JVMs; 53 named checks. Separate piles, provenance, charges and counters survive supplied native roundtrip; file guards refuse after linked-parent fix. No live capture, layout, restart persistence or owner-state change."
     }
   ]
 }
