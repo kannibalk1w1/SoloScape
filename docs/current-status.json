@@ -459,12 +459,12 @@
       "note": "14 lab cases pass; unsafe shared-lock control fails four assertions. No real installer/session registry/health check, native integration, power-loss proof or owner deployment."
     },
     {
-      "id": "native-test-build-46-56",
-      "scope": "Prepared private native46/56 snapshot and exported New/Save & Quit/Continue",
+      "id": "native-test-build",
+      "scope": "Current prepared private native build and New/Save & Quit/Continue",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
-      "evidence": "NATIVE_TEST_BUILD_20261017.md",
-      "note": "10,853 snapshot entries and five fixture backups verify. Fresh software/Xvfb sessions and startup cancellation pass; audio, physical pad/Deck, FPS and owner installation remain unaccepted."
+      "evidence": "NATIVE_TEST_BUILD_48_20261017.md",
+      "note": "10,870 entries and five fixture backups verify. Actual exported New/Save & Quit/Continue/cancellation pass on software Xvfb without audio. No physical pad/Deck/FPS or owner installation claim."
     },
     {
       "id": "backport-lab-token",
@@ -489,14 +489,6 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "KEPT_ITEM_CHARGES_20261017.md",
       "note": "Reproduced12,345->1 charge loss; fixed without changing quantity/coin splits.26 death and37 charge-related cases pass (two overlap); packaged classes match. No general dropped-charge, disk/Deck or grave persistence claim."
-    },
-    {
-      "id": "native-test-build-48-56",
-      "scope": "Prepared private native48/56 snapshot with protected-charge correction",
-      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
-      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
-      "evidence": "NATIVE_TEST_BUILD_48_20261017.md",
-      "note": "10,870 entries and five fixture backups verify. Actual exported New/Save & Quit/Continue/cancellation pass on software Xvfb without audio. No physical pad/Deck/FPS or owner installation claim."
     }
   ]
 }
