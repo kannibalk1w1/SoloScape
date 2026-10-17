@@ -9,3 +9,11 @@ Seven additional tooling cases cover selection/no writes, invalid configuration,
 The real `profile_session.run` path was also exercised with doctor enabled, a new disposable profile, client disabled and the private cache copy from the prebuilt-server probe. An intentionally unavailable inherited cache property was overridden. The native server reached ready, confirmed its fresh primary-save receipt, produced two verified fixture backups and closed normally in 5.041 seconds overall. All 39 cache file hashes stayed unchanged. No account logged in or was saved; this does not establish character, GUI, controller or Deck acceptance.
 
 [Sanitized evidence](evidence/cache-location-20261017.json). No owner installation/accounts were accessed, and no cache bytes or binaries are committed. Profile storage and original-version recovery/build locks keep their existing contracts. Public package construction, shared art/settings and update activation remain separate work.
+
+Follow-up: the seven shell entrypoints now export explicit cache/profile selectors
+after sourcing `config/local.env`. Plain assignments in that file reach child
+processes, including the graphical launcher/backend. Unset selectors stay absent;
+explicit empty values remain visible to validation. Four original disposable
+wrapper tests execute all seven entrypoints with inert child programs. The root
+suite passes 211 cases with one optional skip. The native probe above used an
+exported process environment; it was not a test of the shell-config path.
