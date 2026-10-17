@@ -88,6 +88,7 @@ def main():
         'death': (
             'content.entity.player.inv.TakeTest',
             'content.area.misthalin.lumbridge.church.DeathLootRecoveryTest',
+            'content.area.misthalin.lumbridge.church.KeptItemChargePreservationTest',
             'content.area.misthalin.lumbridge.church.GravestonesTest',
             'content.area.misthalin.lumbridge.church.GravestoneShopAuthorityTest',
             'content.area.misthalin.lumbridge.church.RepeatedGraveIdentityTest',
