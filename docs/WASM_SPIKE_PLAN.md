@@ -4,7 +4,7 @@ Status: **flat-colour triangle, shaded/Gouraud/textured fill, original synthetic
 
 ## Current next gate — 17 October 2026
 
-The [flat-face proof](WASM_FACE_PROOF_20261017.md) covers ordinary front-only geometry. The [bounded clipping proof](WASM_CLIPPING_PROOF_20261017.md) now adds 18 synthetic camera-0/mask0 cases, independently derived facing/output expectations and actual extracted fill counts. General cameras, other adapter variants and complete model/scene paths remain unproven. Audit one such narrow boundary before cache/model imports or a browser client. The original gate design below remains context, not a claim that all later gates passed.
+The [flat-face proof](WASM_FACE_PROOF_20261017.md) covers ordinary front-only geometry. The [bounded clipping proof](WASM_CLIPPING_PROOF_20261017.md) added 18 camera-0 cases. The [general-matrix/adapter extension](WASM_GENERAL_CLIPPING_20261017.md) now checks 28 total rows with explicit binary32 input matrices, independent camera/projection expectations and actual extracted fill counts. Arbitrary matrices/flags and complete model/scene paths remain unproven. Audit one narrow decode/model boundary before cache imports or a browser client. The original gate design below remains context, not a claim that all later gates passed.
 
 ## Decision and uncertainty
 

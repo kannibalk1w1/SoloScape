@@ -11,7 +11,8 @@
 #   FACE_SELFTEST=browser-hash|browser-element|missing-browser|zero-coverage|counter-stub|counter-adapter|duplicate-case|control-equal|no-backface|missing-present|culling-equal
 #                                                 corrupts the collected evidence before the checker (checker-only; set FACE_REUSE=1 to reuse an existing build/)
 # FACE_CLIP=1 runs the opt-in near-plane clip mode (method646 verbatim, build-clip/, tools/check_clip_evidence.py).
-# Clip self-tests (checker-only, each must exit nonzero): clip-count|clip-visible|clip-browser-element|clip-fill-count.
+# Clip self-tests (checker-only, each must exit nonzero): clip-count|clip-visible|clip-browser-element|clip-fill-count|
+#   clip-camera1-projection (a camera-1 browser projection element) | clip-variant-state (a maskbit row claims mask0 state).
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -53,7 +54,7 @@ SELFTEST="${FACE_SELFTEST:-}"
 JVM_OPTS=(); BROWSER_QUERY=""; MUTATE_ARGS=()
 if [ "$CLIP" = 1 ]; then
   case "$SELFTEST" in
-    ""|illegal-state0|illegal-texture|illegal-lit|clip-count|clip-visible|clip-browser-element|clip-fill-count) ;;
+    ""|illegal-state0|illegal-texture|illegal-lit|clip-count|clip-visible|clip-browser-element|clip-fill-count|clip-camera1-projection|clip-variant-state) ;;
     illegal-clip) die "illegal-clip is the default-build stub control; clip mode runs method646 legally" ;;
     *) die "FACE_SELFTEST=$SELFTEST is not defined in clip mode (FACE_CLIP=1)" ;;
   esac
@@ -66,7 +67,7 @@ case "$SELFTEST" in
   illegal-texture) JVM_OPTS=(-Dface.illegal=2) ;;
   illegal-lit) JVM_OPTS=(-Dface.illegal=3) ;;
   illegal-clip) JVM_OPTS=(-Dface.illegal=4) ;;
-  clip-count|clip-visible|clip-browser-element|clip-fill-count) MUTATE_ARGS=(--mutate "$SELFTEST") ;;
+  clip-count|clip-visible|clip-browser-element|clip-fill-count|clip-camera1-projection|clip-variant-state) MUTATE_ARGS=(--mutate "$SELFTEST") ;;
   browser-hash|browser-element|missing-browser|zero-coverage|counter-stub|counter-adapter|duplicate-case|control-equal|no-backface|missing-present|culling-equal)
     MUTATE_ARGS=(--mutate "$SELFTEST") ;;
   *) die "unknown FACE_SELFTEST=$SELFTEST" ;;
