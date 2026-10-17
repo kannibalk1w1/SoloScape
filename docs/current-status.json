@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "ff8e296",
+  "reviewed_base": "ba8b1ad",
   "entries": [
     {
       "id": "controls",
@@ -257,6 +257,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "NATIVE_TWO_CLIENT_COMPATIBILITY_20261017.md",
       "note": "Two actual client JVMs and a server restart preserve both accounts exactly; injected validation failure closes all owned native processes. Private Xvfb only; hosting UI, guest-session recovery, trade/loot and physical controls remain open."
+    },
+    {
+      "id": "backport-original-codec",
+      "scope": "Original-item raw codec probe and item-ID consumer source audit",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "BACKPORT_ITEM_CODEC_20261017.md",
+      "note": "Six native encoder/three-reader cases, six malformed controls and deterministic fresh reports. High note references disagree; allocation, linked cache loading, asset conversion and gameplay remain blocked."
     }
   ]
 }
