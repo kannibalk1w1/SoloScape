@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "61fa990",
+  "reviewed_base": "4f2a4c2",
   "entries": [
     {
       "id": "controls",
@@ -239,8 +239,8 @@
       "scope": "Unrecovered grave/floor loot through a full local-world restart",
       "delivery": "NOT IMPLEMENTED",
       "acceptance": "DEFERRED",
-      "evidence": "GRAVE_COLD_JVM_PROBE_20261017.md",
-      "note": "Two cold native WorldTest JVMs on one private storage root reproduce absent unexpired grave/drop while kept account state survives. Native shutdown/primary save pass; no network Main or physical acceptance. Recovery policy, persistence and no-duplication implementation remain open."
+      "evidence": "GRAVE_PAUSE_PERSISTENCE_PLAN.md",
+      "note": "Cold native JVM restart loses unexpired grave/drop. Owner selected pause while closed; live pickup/grave lifecycle prerequisites are fixed. Cross-account/offline-owner recovery, codec, backup closure and no-duplication persistence remain unimplemented."
     },
     {
       "id": "slayer-kill-ownership",
@@ -321,6 +321,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "GRAVE_LIFECYCLE_IDENTITY_20261017.md",
       "note": "Four independent native reds;14 targeted and19 official death-group cases pass. Supplied grave spawn/timer state and native Demolish. Runtime identity only; paused closed-world grave persistence remains unimplemented."
+    },
+    {
+      "id": "native-save-batch-boundary",
+      "scope": "Native account batch partial-commit diagnostic and agreed grave persistence gates",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "NATIVE_SAVE_BATCH_BOUNDARY_20261017.md",
+      "note": "Two fresh actual FileStorage/PlayerSave JVM runs show the first account advances when the second write is refused. Original fixtures only; no SaveQueue/world/power-cut test. Shared-ledger transaction/recovery remains unimplemented."
     }
   ]
 }
