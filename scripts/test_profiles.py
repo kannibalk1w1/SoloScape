@@ -71,6 +71,40 @@ class ProfileTests(unittest.TestCase):
         other=profiles.create('Other','Other')
         with self.assertRaises(ValueError):other.validate_backup(self.profile.backup())
 
+    def test_checksums_do_not_make_a_wrong_primary_account_restorable(self):
+        backup = self.profile.backup()
+        before_manifest = (self.profile.directory / 'profile.json').read_bytes()
+        before_state = self.profile.state
+        with zipfile.ZipFile(backup) as archive:
+            contents = {entry.filename: archive.read(entry) for entry in archive.infolist()}
+        wrong_account = native_save('Other')
+        contents['state/saves/tester.toml'] = wrong_account
+        metadata = json.loads(contents['backup.json'])
+        metadata['files']['saves/tester.toml'] = {
+            'size': len(wrong_account), 'sha256': profiles.hash_bytes(wrong_account),
+        }
+        contents['backup.json'] = json.dumps(metadata).encode()
+        with zipfile.ZipFile(backup, 'w') as archive:
+            for name, data in contents.items():
+                archive.writestr(name, data)
+        archive_bytes = backup.read_bytes()
+        self.assertFalse(profiles.list_backups(self.profile.manifest['id'])[0]['valid'])
+        with self.assertRaisesRegex(ValueError, 'different account'):
+            self.profile.restore(backup.name)
+        self.assertEqual(self.profile.state, before_state)
+        self.assertEqual((self.profile.directory / 'profile.json').read_bytes(), before_manifest)
+        self.assertEqual(self.save.read_bytes(), native_save())
+        self.assertEqual(backup.read_bytes(), archive_bytes)
+        self.assertEqual(len(list((self.profile.directory / 'states').iterdir())), 1)
+
+    def test_backup_refuses_wrong_primary_account_without_publishing_an_archive(self):
+        self.save.write_bytes(native_save('Other'))
+        before = self.save.read_bytes()
+        with self.assertRaisesRegex(ValueError, 'different account'):
+            self.profile.backup()
+        self.assertEqual(self.save.read_bytes(), before)
+        self.assertEqual(list((self.profile.directory / 'backups').iterdir()), [])
+
     def test_unsafe_zip_paths_duplicates_and_symbolic_links_are_rejected(self):
         backup=self.profile.backup();old=self.profile.state
         for member in ('../escape','/absolute','saves\\escape'):

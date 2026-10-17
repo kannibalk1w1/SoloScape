@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "8bf0e23",
+  "reviewed_base": "898847c",
   "entries": [
     {
       "id": "controls",
@@ -153,6 +153,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "SESSION_RECORD_VALIDATION_20261017.md",
       "note": "11 malformed forms preserve records and healthy-profile listing without signals; 16 recovery harness tests pass; native save and suspend acceptance separate"
+    },
+    {
+      "id": "backup-primary-account",
+      "scope": "Primary character identity in verified backups and restore",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "BACKUP_ACCOUNT_VALIDATION_20261017.md",
+      "note": "Wrong primary account is rejected even with matching checksums; archive, manifest and current save preserved; multi-account copies remain supported"
     }
   ]
 }
