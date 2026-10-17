@@ -121,14 +121,15 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
                 notify('saving', 'Saving and closing your local world…')
                 local_dev.stop(client, output=shutdown_output)
                 local_dev.stop(server, output=shutdown_output)
-                # An unexpected process failure must not be represented as a clean save.
-                if ready and server is not None and server.returncode in (0, 143, -15) and failed is None:
+                dirty = session_recovery.save_artifacts_need_inspection(profile)
+                # Exit status and a readable old save cannot hide a failed write.
+                if ready and server is not None and server.returncode in (0, 143, -15) and failed is None and not dirty:
                     notify('backup', 'Verifying the saved-world backup…')
                     profile._backup('after-clean-shutdown')
                     (profile.directory / session_recovery.RECORD).unlink()
                     profiles.fsync_directory(profile.directory)
                     notify('stopped', 'World saved and verified. You can continue later.')
-                elif server is None or (not ready and failed is None and server.returncode in (0, 143, -15)):
+                elif not dirty and (server is None or (not ready and failed is None and server.returncode in (0, 143, -15))):
                     (profile.directory / session_recovery.RECORD).unlink()
                     profiles.fsync_directory(profile.directory)
                     notify('stopped', 'Startup cancelled before readiness. Previous verified backup retained.')
@@ -136,3 +137,5 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
                     record['phase'] = 'unverified'
                     session_recovery.write(profile, record)
                     notify('stopped', 'World closed. Previous verified backup retained; check logs after an error.')
+                    if dirty and failed is None:
+                        raise RuntimeError('World closed, but save errors or unfinished temporary files need inspection. Previous verified backup and session record retained.')

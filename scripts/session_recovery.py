@@ -198,6 +198,11 @@ def archive_ended(profile, owner_active=None):
         return {'message': 'Ended session record archived. Current world closure remains unverified; restore a verified backup before trusting a damaged save.'}
 
 
+def save_artifacts_need_inspection(profile):
+    """A readable previous save cannot prove this shutdown's write succeeded."""
+    return any((profile.state / 'errors').rglob('*')) or any(profile.state.rglob('.save-*.tmp'))
+
+
 def recover(profile, cancelled, notify, owner_active=None):
     if not hasattr(os, 'pidfd_open') or not hasattr(signal, 'pidfd_send_signal'):
         raise RuntimeError('Safe session recovery needs Linux pidfd support; no process was signalled.')
@@ -242,7 +247,7 @@ def recover(profile, cancelled, notify, owner_active=None):
             with profile.lock():
                 if read(profile)['session'] != record['session']:
                     raise RuntimeError('Session record changed during recovery.')
-                dirty = any((profile.state/'errors').rglob('*')) or any(profile.state.rglob('.save-*.tmp'))
+                dirty = save_artifacts_need_inspection(profile)
                 if dirty:
                     raise RuntimeError('Recovered processes closed, but save errors/temporary files need inspection. Previous backups and session record retained.')
                 profile._backup('after-recovered-shutdown', recovered_from_session=record['session'])

@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "aa266a3",
+  "reviewed_base": "efc5ea075b995cf231d5116ca39a1d46e5a992d4",
   "entries": [
     {
       "id": "controls",
@@ -177,6 +177,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "DUNGEON_ROOM_ROTATION_20261017.md",
       "note": "Fix uses original coordinates for rotated Y; 26 selected cases pass, including all 256 tiles at each orientation; boss combat/keys/full-floor and Deck acceptance remain open"
+    },
+    {
+      "id": "save-artifact-closure",
+      "scope": "Normal shutdown refuses clean status when save-error or atomic-write artifacts remain",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "SAVE_ARTIFACT_CLOSURE_20261017.md",
+      "note": "Two failing lifecycle reproductions fixed; 136 tooling cases pass (one optional skip); explicit native save-success receipt and real-process smoke still required"
     }
   ]
 }
