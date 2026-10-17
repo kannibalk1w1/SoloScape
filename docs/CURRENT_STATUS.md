@@ -17,7 +17,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
 | client | 54 | `0054-controller-precision-walking.patch` | `edbbcc303e2cb43d7622116de70639453586b10021b4c6dfd12d22a8cd65e7d1` |
-| server | 26 | `0026-targeted-solo-summoning.patch` | `62ff8d036f9e2f957a132a13b915aeb9f00c4f305c5774a73c8b1ebab2dce457` |
+| server | 27 | `0027-earned-lumbridge-progression.patch` | `a21673b65d29979675ecd9309ba1a008ae721be031b0ee5db5e8e4c7bb3f3736` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
 
@@ -39,6 +39,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 | Isolated WASM masked-edge kernel; no triangle/model/game client | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [JVM/browser hashes agree at two sizes; real-clock host measurements only](WASM_RASTER_POC.md) |
 | Solo small-c1 floor-1 entry handlers, binding, leaving and logout save | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Direct registered entrance-handler fixture; packet entry, doors/boss/rewards and full floor remain unproven](DUNGEONEERING_TARGETED_PASS_20261017.md) |
 | Level-1 spirit wolf native infusion, summon, dismissal and fresh-player disk restore | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Recipe materials supplied; same-JVM fresh-player restore, not server restart; controller and earned materials not exercised](SUMMONING_TARGETED_PASS_20261017.md) |
+| Connected native Cook, gathering, player-lit cooking, combat, bank and fresh-player disk restore | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Actual starter kit and native resources; bounded ordinary-input retries handle roaming NPCs. Same-JVM restore, not launcher restart; inventory-full/death and physical controller acceptance remain open.](EARNED_LUMBRIDGE_SLICE_20261017.md) |
 | Native flat-colour WASM triangle fill and original synthetic mesh; no full game scene | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [Six colour/depth hash comparisons independently reproduced; textures/model projection/UI remain unproven](WASM_RENDERER_INVESTIGATION.md) |
 | Isolated native shaded, Gouraud and textured WASM raster fills | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [Ten synthetic scene/size cases and six palette/texel controls match native jar/JVM/WASM; texture-heavy cost is significant. Real model/texture decoding, projection, full scene and device performance unproven.](WASM_MATERIAL_INVESTIGATION.md) |
 
