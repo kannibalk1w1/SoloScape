@@ -22,7 +22,25 @@ import zipfile
 import zlib
 
 ROOT = Path(__file__).resolve().parent.parent
-PROFILES = ROOT / '.runtime/profiles'
+PROFILE_HOME_ENV = 'SOLOSCAPE_PROFILE_HOME'
+
+
+def configured_profile_home(environ=None):
+    """Select the directory holding profile folders; invalid explicit configuration never falls back."""
+    value = (os.environ if environ is None else environ).get(PROFILE_HOME_ENV)
+    if value is None:
+        return ROOT / '.runtime/profiles'
+    if not value or '\0' in value or not Path(value).is_absolute():
+        raise ValueError(PROFILE_HOME_ENV + ' must be a nonempty absolute directory path.')
+    home = Path(value)
+    if home.is_symlink():
+        raise ValueError('Profile storage cannot be a symbolic link.')
+    if home.exists() and not home.is_dir():
+        raise ValueError(PROFILE_HOME_ENV + ' must name a directory.')
+    return home
+
+
+PROFILES = configured_profile_home()
 FORMAT = 1
 MAX_FILE = 32 * 1024 * 1024
 MAX_BACKUP = 512 * 1024 * 1024

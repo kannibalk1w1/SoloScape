@@ -53,6 +53,7 @@ def main():
                 number=os.read(read_fd,64).decode().strip()
                 if not number.isdigit() or display.poll() is not None:raise RuntimeError('No owned display; refusing fallback.')
                 environment=dict(os.environ,DISPLAY=':'+number)
+            environment['SOLOSCAPE_PROFILE_HOME'] = str(root/'.runtime/profiles')
             subprocess.run([str(java),'-Duser.home='+str(root/'home'),'-cp',str(jar)+':'+str(classes),'net.runelite.client.soloscape.launcher.'+probe,str(root)],env=environment,pass_fds=(guard.fileno(),),check=True,timeout=90)
             print('Private launcher evidence:',root)
         finally:
