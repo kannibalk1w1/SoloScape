@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "semantic_name": "SUPERIOR_CRAWLING_HAND",
+  "status": "proposal",
+  "buildable": false,
+  "feature_key": "soloscape.superior_slayer",
+  "default_enabled": false,
+  "source": {
+    "game": "OSRS",
+    "source_revision": null,
+    "source_item_id": null,
+    "source_npc_id": null,
+    "source_object_id": null,
+    "cache_sha256": null,
+    "mode": "behaviour-reference-only; no source assets imported",
+    "mechanics_reference": "Superior Slayer-style optional enhanced task monster; pin a primary reference before implementation",
+    "attribution": "Design proposal only; no upstream code or binary assets included",
+    "permission_review": "required before importing any code or asset"
+  },
+  "target": {
+    "revision": 634,
+    "server_base": "9f9113559eb686abd917893b5dca16404be07f93",
+    "cache_sha256": null,
+    "registry_key": "soloscape_superior_crawling_hand",
+    "kind": "npc",
+    "base_definition": "crawling_hand",
+    "target_definition_id": null,
+    "allocation_lock": null,
+    "allocation_policy": "append-only audited namespace; never infer free IDs from max-name-only scans"
+  },
+  "dependencies": {
+    "required_models": [{"mode":"reuse-634", "from_definition":"crawling_hand", "resolved_ids":null}],
+    "required_animations": [{"mode":"reuse-634", "from_definition":"crawling_hand", "resolved_ids":null}],
+    "required_sprites": [],
+    "textures": "transitive dependencies of the reused models; catalogue before build",
+    "map_dependencies": [],
+    "interface_dependencies": [],
+    "sounds_music": "reuse baseline NPC sounds if compatible; no new audio",
+    "mechanics": ["native_slayer_task", "native_npc_death", "native_drop_ownership", "native_pre_eoc_combat"]
+  },
+  "behaviour": {
+    "eligibility": "optional feature enabled; owner has matching task; eligible base NPC killed normally",
+    "spawn_roll": "proposed local tuning 1/200, not a claim of canonical OSRS balance",
+    "spawn_limit": "one pending/active enhanced spawn per eligible player; no recursive rolls",
+    "placement": "server chooses a reachable collision-valid tile; skip spawn if none exists",
+    "appearance": "reuse 634 model and animation; subtle scale/recolour only after visual checks",
+    "combat": "native pre-EoC rules; inspect full NPC combat/bas/sound dependencies before cloning",
+    "drops": "existing 634 low-value loot only for first proof; no OSRS unique items",
+    "task_credit": "proposed exactly one eligible task credit on kill; no second credit on spawn",
+    "solo_deviations": ["no unlock shop or new currency in the first proof", "no world-map import", "drop ownership remains server-authoritative"],
+    "persistence": "no new persistent item IDs initially; default disabled is not a save migration",
+    "multiplayer_policy": "per-player eligibility and spawn ownership; retain other players' normal actions"
+  },
+  "asset_conversion": {
+    "operation": "none initially; reuse existing 634 dependencies",
+    "codec_versions": null,
+    "unknown_opcode_policy": "fail, do not silently skip",
+    "dependency_report": null
+  },
+  "verification": {
+    "expected_changed_entries": "one audited NPC definition only if a distinct native ID is required; decide after baseline audit",
+    "original_entries_unchanged": "require decoded entry hashes and cache integrity, not sector byte equality",
+    "controller": ["target and inspect", "combat and cancel", "loot and owner restrictions", "disabled feature baseline"],
+    "rollback": "disable new spawns; retain registry tombstones and compatibility definitions for affected saves; restore baseline only with compatible profile copy",
+    "blockers": ["baseline catalogues absent", "target ID unallocated", "source mechanics reference unpinned", "native Slayer audit incomplete", "physical session gate incomplete"]
+  }
+}
