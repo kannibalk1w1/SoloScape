@@ -23,6 +23,7 @@ MUTATIONS = ("browser-hash", "missing-browser", "zero-timing", "flat-standin", "
              "control-equal")
 # A flat-colour stand-in produces a few hundred values at most; real interpolation produces tens of thousands.
 MIN_DISTINCT = {"shaded": 10000, "gouraud": 10000, "tex1": 10000, "tex3": 50000, "mixed": 10000}
+EXPECTED_SAMPLES = 15
 TIMING_FIELDS = ("rasterMinMs", "rasterMedianMs", "rasterP90Ms", "rasterMaxMs")
 
 
@@ -108,6 +109,12 @@ def main():
             if scene in ("tex1", "tex3", "mixed") and ref["fallbackTriangles"] <= 0:
                 raise SystemExit(f"{scene} {size}: the null-texture fallback path was not exercised")
             b = browser[key]
+            for name, rows in (("jvm-native", native), ("jvm-verbatim", verbatim), ("browser", browser)):
+                n = rows[key]["samples"]
+                if not isinstance(n, int) or n != EXPECTED_SAMPLES:
+                    raise SystemExit(f"{name} {scene} {size}: sample count {n!r} != {EXPECTED_SAMPLES}")
+            if not b["rasterMinMs"] <= b["rasterMedianMs"] <= b["rasterP90Ms"] <= b["rasterMaxMs"]:
+                raise SystemExit(f"browser {scene} {size}: timing statistics are not ordered")
             for field in TIMING_FIELDS + ("clearMedianMs",):
                 value = b[field]
                 # The clear can fall under Chromium's 0.1 ms timer step; raster work must be measurable.

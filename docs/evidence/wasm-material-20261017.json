@@ -24,6 +24,7 @@
     },
     "experimentSourceSha256": {
       ".gitignore": "d7bfa9d1404f30876e789d8e89cedc0ad54d06c478d9a20cc60f16b06bd8bec4",
+      "README.md": "929526092aba4571138bd8138945dc18606c703c5695a93029f787886200bbe4",
       "build.gradle": "e671f8c7f5ce30371a8e268bfe8734b6317919637933746ec0dc65e92077d382",
       "run.sh": "00cbada760e9b37d0c362846dd301299278a5d7791d516451c0a279c065f4f09",
       "settings.gradle": "a51a9f81efbf69a52abe8bedac8f5ff5b5ee3e9a053604c594beff6cd6db2b8d",
@@ -36,7 +37,7 @@
       "src/shared/java/SynthAssets.java": "cb3b28f3bec31b0f8572a2f3dccc65adc95ce29d5f5b53987d8a77545c8ed3e6",
       "src/shared/java/VerbatimFill.java": "71b9bd601ea7836e3a0262625fa9f42cb998a11a5af2013eed640ad7ef57176a",
       "tools/browser_probe.mjs": "4a4ef0e4e38c58693355adb941b5eb113ae8b0b3124a3b584a1e4edbb0a899f1",
-      "tools/check_evidence.py": "e59b9ac95554df9d67f51bb3bc6854b1678989fbc55d8daf2d63067760284a61",
+      "tools/check_evidence.py": "3a779f486cb0902dbc9c2d8c74debd4a7e7e6b7748be0328d78d0d2d5ae99b91",
       "tools/extract_material_closure.py": "a22e047998173b781913ff680919cf6e79baafd8ffc486a7c6073fb88b1afbe4",
       "tools/serve_loopback.py": "1364485dccb7acbadab1d2cc2e1f66c3059902c546d695f1acf30d937a143fd6",
       "web/index.html": "7fb3dc54e9f0ab809bb18c3df861aab212c592a7cf2d92e578381f516be57cd6"
@@ -220,15 +221,15 @@
       "depthFnv1a": "9ada52e7",
       "match": "native-jar == jvm-verbatim == wasmgc",
       "wasmRasterMs": {
-        "rasterMinMs": 4.5,
-        "rasterMedianMs": 5.800000000745058,
-        "rasterP90Ms": 7.800000000745058,
-        "rasterMaxMs": 8.5
+        "rasterMinMs": 3.0,
+        "rasterMedianMs": 3.199999999254942,
+        "rasterP90Ms": 3.400000000372529,
+        "rasterMaxMs": 3.400000000372529
       },
       "samples": 15,
-      "wasmClearMedianMs": 2.800000000745058,
-      "jvmVerbatimRasterMedianMs": 1.640014000236988,
-      "jvmNativeJarRasterMedianMs": 3.279059000313282
+      "wasmClearMedianMs": 1.5,
+      "jvmVerbatimRasterMedianMs": 2.2965580001473427,
+      "jvmNativeJarRasterMedianMs": 2.954286001622677
     },
     {
       "scene": "gouraud",
@@ -241,15 +242,15 @@
       "depthFnv1a": "9ada52e7",
       "match": "native-jar == jvm-verbatim == wasmgc",
       "wasmRasterMs": {
-        "rasterMinMs": 7.400000000372529,
-        "rasterMedianMs": 10.400000000372529,
-        "rasterP90Ms": 16.59999999962747,
-        "rasterMaxMs": 34.600000001490116
+        "rasterMinMs": 3.399999998509884,
+        "rasterMedianMs": 3.599999999627471,
+        "rasterP90Ms": 6.0,
+        "rasterMaxMs": 6.400000000372529
       },
       "samples": 15,
-      "wasmClearMedianMs": 1.0,
-      "jvmVerbatimRasterMedianMs": 1.6283500008285046,
-      "jvmNativeJarRasterMedianMs": 1.8007180001586676
+      "wasmClearMedianMs": 0.6999999992549419,
+      "jvmVerbatimRasterMedianMs": 2.671499000862241,
+      "jvmNativeJarRasterMedianMs": 1.9627930000424385
     },
     {
       "scene": "tex1",
@@ -262,15 +263,15 @@
       "depthFnv1a": "2797c522",
       "match": "native-jar == jvm-verbatim == wasmgc",
       "wasmRasterMs": {
-        "rasterMinMs": 23.600000001490116,
-        "rasterMedianMs": 25.90000000037253,
-        "rasterP90Ms": 30.299999998882413,
-        "rasterMaxMs": 33.0
+        "rasterMinMs": 15.200000001117587,
+        "rasterMedianMs": 15.799999998882413,
+        "rasterP90Ms": 16.299999998882413,
+        "rasterMaxMs": 16.300000000745058
       },
       "samples": 15,
-      "wasmClearMedianMs": 1.0,
-      "jvmVerbatimRasterMedianMs": 7.386483000591397,
-      "jvmNativeJarRasterMedianMs": 7.991169000044465
+      "wasmClearMedianMs": 0.5,
+      "jvmVerbatimRasterMedianMs": 7.940828999504447,
+      "jvmNativeJarRasterMedianMs": 8.368824999779463
     },
     {
       "scene": "tex3",
@@ -283,15 +284,15 @@
       "depthFnv1a": "290e90c",
       "match": "native-jar == jvm-verbatim == wasmgc",
       "wasmRasterMs": {
-        "rasterMinMs": 40.30000000074506,
-        "rasterMedianMs": 42.40000000037253,
-        "rasterP90Ms": 50.70000000111759,
-        "rasterMaxMs": 52.09999999962747
+        "rasterMinMs": 30.09999999962747,
+        "rasterMedianMs": 31.199999999254942,
+        "rasterP90Ms": 32.19999999925494,
+        "rasterMaxMs": 33.0
       },
       "samples": 15,
-      "wasmClearMedianMs": 0.599999999627471,
-      "jvmVerbatimRasterMedianMs": 17.462456999346614,
-      "jvmNativeJarRasterMedianMs": 20.267868999391794
+      "wasmClearMedianMs": 0.40000000037252903,
+      "jvmVerbatimRasterMedianMs": 18.430435998365283,
+      "jvmNativeJarRasterMedianMs": 19.779735000804067
     },
     {
       "scene": "mixed",
@@ -304,15 +305,15 @@
       "depthFnv1a": "2fdbf9f6",
       "match": "native-jar == jvm-verbatim == wasmgc",
       "wasmRasterMs": {
-        "rasterMinMs": 5.399999998509884,
-        "rasterMedianMs": 5.599999999627471,
-        "rasterP90Ms": 6.0,
-        "rasterMaxMs": 6.099999999627471
+        "rasterMinMs": 4.399999998509884,
+        "rasterMedianMs": 4.5,
+        "rasterP90Ms": 4.5,
+        "rasterMaxMs": 4.599999999627471
       },
       "samples": 15,
-      "wasmClearMedianMs": 0.6000000014901161,
-      "jvmVerbatimRasterMedianMs": 2.0538749992847443,
-      "jvmNativeJarRasterMedianMs": 2.1810159999877214
+      "wasmClearMedianMs": 0.5,
+      "jvmVerbatimRasterMedianMs": 1.9958030004054308,
+      "jvmNativeJarRasterMedianMs": 2.3420749995857477
     },
     {
       "scene": "shaded",
@@ -325,15 +326,15 @@
       "depthFnv1a": "10f34170",
       "match": "native-jar == jvm-verbatim == wasmgc",
       "wasmRasterMs": {
-        "rasterMinMs": 6.699999999254942,
+        "rasterMinMs": 6.799999998882413,
         "rasterMedianMs": 7.099999999627471,
-        "rasterP90Ms": 7.399999998509884,
-        "rasterMaxMs": 7.400000000372529
+        "rasterP90Ms": 7.700000001117587,
+        "rasterMaxMs": 7.800000000745058
       },
       "samples": 15,
       "wasmClearMedianMs": 1.700000001117587,
-      "jvmVerbatimRasterMedianMs": 4.287064999341965,
-      "jvmNativeJarRasterMedianMs": 4.442772001028061
+      "jvmVerbatimRasterMedianMs": 4.381539000198245,
+      "jvmNativeJarRasterMedianMs": 4.422352999448776
     },
     {
       "scene": "gouraud",
@@ -346,15 +347,15 @@
       "depthFnv1a": "10f34170",
       "match": "native-jar == jvm-verbatim == wasmgc",
       "wasmRasterMs": {
-        "rasterMinMs": 7.599999999627471,
-        "rasterMedianMs": 7.900000000372529,
-        "rasterP90Ms": 8.199999999254942,
-        "rasterMaxMs": 9.099999999627471
+        "rasterMinMs": 8.799999998882413,
+        "rasterMedianMs": 9.099999999627471,
+        "rasterP90Ms": 9.299999998882413,
+        "rasterMaxMs": 9.300000000745058
       },
       "samples": 15,
-      "wasmClearMedianMs": 1.599999999627471,
-      "jvmVerbatimRasterMedianMs": 4.357254000380635,
-      "jvmNativeJarRasterMedianMs": 4.849032999947667
+      "wasmClearMedianMs": 1.900000000372529,
+      "jvmVerbatimRasterMedianMs": 4.6020599994808435,
+      "jvmNativeJarRasterMedianMs": 4.4424630012363195
     },
     {
       "scene": "tex1",
@@ -367,15 +368,15 @@
       "depthFnv1a": "c7117523",
       "match": "native-jar == jvm-verbatim == wasmgc",
       "wasmRasterMs": {
-        "rasterMinMs": 35.399999998509884,
-        "rasterMedianMs": 40.90000000037253,
-        "rasterP90Ms": 46.20000000111759,
-        "rasterMaxMs": 46.80000000074506
+        "rasterMinMs": 37.59999999962747,
+        "rasterMedianMs": 43.30000000074506,
+        "rasterP90Ms": 45.40000000037253,
+        "rasterMaxMs": 46.5
       },
       "samples": 15,
-      "wasmClearMedianMs": 1.5,
-      "jvmVerbatimRasterMedianMs": 17.841901000589132,
-      "jvmNativeJarRasterMedianMs": 17.8332940004766
+      "wasmClearMedianMs": 1.599999999627471,
+      "jvmVerbatimRasterMedianMs": 16.979327999055386,
+      "jvmNativeJarRasterMedianMs": 18.776611000299454
     },
     {
       "scene": "tex3",
@@ -388,15 +389,15 @@
       "depthFnv1a": "8f6ee621",
       "match": "native-jar == jvm-verbatim == wasmgc",
       "wasmRasterMs": {
-        "rasterMinMs": 75.90000000037253,
-        "rasterMedianMs": 82.0,
-        "rasterP90Ms": 92.19999999925494,
-        "rasterMaxMs": 94.80000000074506
+        "rasterMinMs": 78.69999999925494,
+        "rasterMedianMs": 83.59999999962747,
+        "rasterP90Ms": 95.59999999962747,
+        "rasterMaxMs": 95.69999999925494
       },
       "samples": 15,
-      "wasmClearMedianMs": 1.299999998882413,
-      "jvmVerbatimRasterMedianMs": 42.756431998685,
-      "jvmNativeJarRasterMedianMs": 46.47058399952948
+      "wasmClearMedianMs": 1.200000001117587,
+      "jvmVerbatimRasterMedianMs": 45.23808799870312,
+      "jvmNativeJarRasterMedianMs": 46.86636799946427
     },
     {
       "scene": "mixed",
@@ -409,15 +410,15 @@
       "depthFnv1a": "45b94a9b",
       "match": "native-jar == jvm-verbatim == wasmgc",
       "wasmRasterMs": {
-        "rasterMinMs": 11.0,
-        "rasterMedianMs": 11.099999999627471,
-        "rasterP90Ms": 11.900000000372529,
-        "rasterMaxMs": 13.099999999627471
+        "rasterMinMs": 10.299999998882413,
+        "rasterMedianMs": 10.400000000372529,
+        "rasterP90Ms": 10.699999999254942,
+        "rasterMaxMs": 10.700000001117587
       },
       "samples": 15,
-      "wasmClearMedianMs": 1.300000000745058,
-      "jvmVerbatimRasterMedianMs": 5.484834000468254,
-      "jvmNativeJarRasterMedianMs": 6.204032000154257
+      "wasmClearMedianMs": 1.200000001117587,
+      "jvmVerbatimRasterMedianMs": 5.7023479994386435,
+      "jvmNativeJarRasterMedianMs": 6.029851999133825
     }
   ],
   "negativeControls": [

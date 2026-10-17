@@ -4,7 +4,7 @@ Status: **the raster-fill gate passes for all four non-flat Class109 triangle fi
 
 ![Original synthetic mixed frame (shaded, Gouraud, textured, fog, translucency, clipping), rendered by the native fills in WasmGC at 1280×800; not a game scene](evidence/wasm-material-20261017-mixed.png)
 
-Code: [experiments/wasm-material](../experiments/wasm-material/README.md). Evidence: [wasm-material-20261017.json](evidence/wasm-material-20261017.json) (final run, with toolchain and closure block) and [the first run](evidence/wasm-material-20261017-first-run.json).
+Code: [experiments/wasm-material](../experiments/wasm-material/README.md). Evidence: [wasm-material-20261017.json](evidence/wasm-material-20261017.json) (final run 3, with toolchain and closure block), [run 2](evidence/wasm-material-20261017-second-run.json) and [run 1](evidence/wasm-material-20261017-first-run.json) (earlier checker versions; no toolchain block).
 
 ## Closure audit (what the real methods depend on)
 
@@ -37,6 +37,8 @@ This closure did **not** pull in a large renderer surface: the texture dependenc
 **Excluded, and the consequence:** wireframe lines; the real texture cache and material decoding (`ha_Sub1.aClass60_7498`, `d`, `Class12`, `Class348_Sub25`, including its 3×3 box blur for non-alpha-test materials, so the browser sees whatever the stand-in supplies); real palette generation; vertex transform, projection and the face loop in `Class64_Sub1`/`s_Sub1` that decides which fill to call and derives the arguments (UV, fog, tint, weights); lighting; `Class167` threading; the AWT presenter, sprite and UI paths. Each needs its own audit.
 
 ## Inputs and digests
+
+Texture/provider adapters are explicit: the stand-in `ha_Sub1` provider and the jar-side stub material source both return the same `SynthAssets` texels and flags, and no UV, palette or shading arithmetic is substituted; every texture variant (modes 0/1/2, large/small, missing) was exercised against the jar.
 
 Source and jar SHA-256 for every audited file are in the evidence JSON (`inputsSha256`); generated-source, wasm, runtime JS and every committed experiment file digest are in `toolchain`. Key values: `client/src/Class109.java` `058b9ffd…74308a`, `Class6.java` `824995b6…f8c1f77e`, `Class126.java` `32e88d03…89a39`, jar `ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918`, `material.wasm` `0bb29e2e670a2b69cbe49b6ad35a07c5ecd1e26ef4b7c3d3fc6c5c1e4969e8ed`. Toolchain: OpenJDK 21.0.12.1, TeaVM 0.16.0, Chromium 153.0.8010.52, Node 26.11.1.
 
@@ -78,22 +80,22 @@ Presentation: the canvas readback hash of the mixed frame after `putImageData` e
 
 ## Measurements (real clock, repeated samples)
 
-TeaVM WasmGC, headless Chromium 153, Intel i7-14700HX, software canvas, uncontrolled power/thermal/other load, `performance.now()` with no virtual time (0.1 ms quantisation). Raster = triangle submissions plus context bind excluded; 3 warm-up frames then 15 samples per case. **Two complete runs are reported because they differ by up to 2×** (other host load was not controlled); run 2 is the final evidence file and the JVM columns come from it.
+TeaVM WasmGC, headless Chromium 153, Intel i7-14700HX, software canvas, uncontrolled power/thermal/other load, `performance.now()` with no virtual time (0.1 ms quantisation). Raster = triangle submissions plus context bind excluded; 3 warm-up frames then 15 samples per case. **Three complete runs are reported because they differ by up to 2×.** Native journey tests were running on the same host at the same time, so every timing here is **load-contaminated and cannot establish a device frame budget**; the hashes are unaffected (identical in all three runs). Run 3 is the final evidence file and the JVM columns come from it. Only raster/clear timings are reported (no presentation timing in this experiment: the readback hash check replaces it); the validator requires exactly 15 samples per case on every runtime, finite positive ordered raster statistics and finite non-negative clear times. `build/` is deleted at the start of every run, so a stale DOM result cannot pass.
 
-| Scene | Size | WasmGC median ms, run 1 / run 2 | JVM extracted | JVM native jar |
+| Scene | Size | WasmGC median ms, run 1 / 2 / 3 | JVM extracted (run 3) | JVM native jar (run 3) |
 | --- | --- | --- | --- | --- |
-| shaded | 765×503 | 3.0 / 5.8 | 1.6 | 3.3 |
-| gouraud | 765×503 | 2.9 / 10.4 | 1.6 | 1.8 |
-| tex1 | 765×503 | 13.6 / 25.9 | 7.4 | 8.0 |
-| tex3 | 765×503 | 28.7 / 42.4 | 17.5 | 20.3 |
-| mixed | 765×503 | 4.0 / 5.6 | 2.1 | 2.2 |
-| shaded | 1280×800 | 5.0 / 7.1 | 4.3 | 4.4 |
-| gouraud | 1280×800 | 5.6 / 7.9 | 4.4 | 4.8 |
-| tex1 | 1280×800 | 32.6 / 40.9 | 17.8 | 17.8 |
-| tex3 | 1280×800 | 83.2 / 82.0 | 42.8 | 46.5 |
-| mixed | 1280×800 | 10.0 / 11.1 | 5.5 | 6.2 |
+| shaded | 765x503 | 3.0 / 5.8 / 3.2 | 2.3 | 3.0 |
+| gouraud | 765x503 | 2.9 / 10.4 / 3.6 | 2.7 | 2.0 |
+| tex1 | 765x503 | 13.6 / 25.9 / 15.8 | 7.9 | 8.4 |
+| tex3 | 765x503 | 28.7 / 42.4 / 31.2 | 18.4 | 19.8 |
+| mixed | 765x503 | 4.0 / 5.6 / 4.5 | 2.0 | 2.3 |
+| shaded | 1280x800 | 5.0 / 7.1 / 7.1 | 4.4 | 4.4 |
+| gouraud | 1280x800 | 5.6 / 7.9 / 9.1 | 4.6 | 4.4 |
+| tex1 | 1280x800 | 32.6 / 40.9 / 43.3 | 17.0 | 18.8 |
+| tex3 | 1280x800 | 83.2 / 82.0 / 83.6 | 45.2 | 46.9 |
+| mixed | 1280x800 | 10.0 / 11.1 / 10.4 | 5.7 | 6.0 |
 
-Reading: WasmGC is roughly 1.5–2× slower than warm HotSpot on the textured fills in these runs and about equal on shaded/Gouraud at 1280×800 in run 1. The cause was not investigated. The scenes cover about 98% of the frame with 980 triangles, so `tex1` at 1280×800 (about 33–41 ms) and especially the three-layer `tex3` (about 80 ms) are heavy-fill figures on a desktop CPU, **over a 16.7 ms frame budget when a frame is full-screen textured**; typical scenes cover less and mix fill kinds (`mixed`: 10–11 ms). This says nothing about a real scene, Deck or Chromebook. Module payload: `material.wasm` 107,234 bytes raw, 39,826 gzip -9; TeaVM runtime JS 17,268 bytes.
+Reading (the run-1 vs run-3 spread shows the contamination): WasmGC is roughly 1.5–3× slower than warm HotSpot on the textured fills in these runs and about equal on shaded/Gouraud at 1280×800 in run 1. The cause was not investigated. The scenes cover about 98% of the frame with 980 triangles, so `tex1` at 1280×800 (about 33–43 ms) and especially the three-layer `tex3` (about 80 ms) are heavy-fill figures on a desktop CPU, **over a 16.7 ms frame budget when a frame is full-screen textured (valuable negative performance evidence, not a reason to widen scope)**; typical scenes cover less and mix fill kinds (`mixed`: 10–11 ms). This says nothing about a real scene, Deck or Chromebook. Module payload: `material.wasm` 107,234 bytes raw, 39,826 gzip -9; TeaVM runtime JS 17,268 bytes.
 
 ## Gates
 
