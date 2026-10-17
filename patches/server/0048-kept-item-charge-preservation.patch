@@ -1,0 +1,132 @@
+diff --git a/game/src/main/kotlin/content/entity/death/PlayerDeath.kt b/game/src/main/kotlin/content/entity/death/PlayerDeath.kt
+--- a/game/src/main/kotlin/content/entity/death/PlayerDeath.kt
++++ b/game/src/main/kotlin/content/entity/death/PlayerDeath.kt
+@@ -39,6 +39,7 @@
+ import world.gregs.voidps.engine.entity.item.floor.FloorItems
+ import world.gregs.voidps.engine.event.AuditLog
+ import world.gregs.voidps.engine.inv.*
++import world.gregs.voidps.engine.inv.transact.operation.AddItem.add
+ import world.gregs.voidps.engine.map.Spiral
+ import world.gregs.voidps.engine.queue.strongQueue
+ import world.gregs.voidps.engine.timer.toTicks
+@@ -142,7 +143,13 @@
+         // Return kept items
+         for (item in kept) {
+             AuditLog.event(player, "kept", item)
+-            player.inventory.add(item.id, item.amount)
++            player.inventory.transaction {
++                val slot = add(item.id, item.amount)
++                // Charged items count as one item; retain their stored value after adding that quantity.
++                if (slot != -1 && item.rawValue() != item.amount) {
++                    set(slot, item)
++                }
++            }
+         }
+     }
+ 
+diff --git a/game/src/test/kotlin/content/area/misthalin/lumbridge/church/KeptItemChargePreservationTest.kt b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/KeptItemChargePreservationTest.kt
+new file mode 100644
+index 0000000..bb8875d
+--- /dev/null
++++ b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/KeptItemChargePreservationTest.kt
+@@ -0,0 +1,100 @@
++package content.area.misthalin.lumbridge.church
++
++import WorldTest
++import content.entity.combat.dead
++import content.entity.combat.hit.damage
++import content.entity.player.kept.ItemsKeptOnDeath
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertFalse
++import org.junit.jupiter.api.Assertions.assertNotNull
++import org.junit.jupiter.api.Assertions.assertNull
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.BeforeEach
++import org.junit.jupiter.api.Test
++import world.gregs.voidps.engine.data.definition.ItemDefinitions
++import world.gregs.voidps.engine.entity.character.npc.NPCs
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.entity.item.floor.FloorItems
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.engine.inv.transact.operation.SetCharge.setCharge
++import world.gregs.voidps.engine.timer.setCurrentTime
++import world.gregs.voidps.type.Tile
++
++/**
++ * Reproducer for kept-on-death charge loss. The weapon is an explicit inventory fixture whose partial charge is
++ * set through the native SetCharge transaction. Death uses the normal damage path, and [ItemsKeptOnDeath]
++ * selects the weapon before death, so the only expected difference is the weapon's raw charge value.
++ */
++class KeptItemChargePreservationTest : WorldTest() {
++
++    @BeforeEach
++    fun setup() {
++        setCurrentTime { 0 }
++    }
++
++    @Test
++    fun chargedWeaponKeepsRawCharge() {
++        val deathTile = Tile(3235, 3220)
++        val player = createPlayer(deathTile)
++        player.inventory.add("chaotic_rapier")
++        assertTrue(player.inventory.transaction { setCharge(0, CHARGES) }, "Setting the fixture charge must succeed")
++        tick()
++
++        val rapier = player.inventory[0]
++        assertTrue(rapier.def.contains("charges"), "Chaotic rapier must have per-item charges")
++        assertFalse(rapier.def.contains("charge"), "Chaotic rapier must not use a shared charge variable")
++        assertEquals(1, rapier.amount)
++        assertEquals(CHARGES, rapier.rawValue())
++        assertEquals(listOf(rapier), ItemsKeptOnDeath.kept(player, ItemsKeptOnDeath.getAllOrdered(player)))
++
++        player.damage(player.levels.get(Skill.Constitution))
++        tick(9)
++        assertEquals(Tile(3221, 3219), player.tile, "native death finishes at the respawn tile")
++        assertFalse(player.dead, "the native death queue has finished")
++
++        assertNotNull(NPCs.firstOrNull(deathTile) { it.id.startsWith("gravestone") })
++        val weapons = player.inventory.items.filter { it.id == "chaotic_rapier" }
++        assertEquals(1, weapons.size, "Exactly one kept weapon")
++        assertEquals(1, weapons[0].amount, "charges must not become an item quantity")
++        assertNull(FloorItems.firstOrNull(deathTile, "chaotic_rapier"), "The kept weapon must not also drop")
++        assertEquals(CHARGES, weapons[0].rawValue(), "Kept weapon must keep its raw charge")
++    }
++
++    @Test
++    fun chargedWeaponWithCoinsSplitsCoinStack() {
++        val deathTile = Tile(3235, 3220)
++        val rapierCost = ItemDefinitions.get("chaotic_rapier").cost
++        val coinCost = ItemDefinitions.get("coins").cost
++        assertTrue(rapierCost > coinCost, "Weapon must outrank coins by cost: $rapierCost vs $coinCost")
++        val player = createPlayer(deathTile)
++        player.inventory.add("chaotic_rapier")
++        assertTrue(player.inventory.transaction { setCharge(0, CHARGES) }, "Setting the fixture charge must succeed")
++        player.inventory.add("coins", 1000)
++        tick()
++
++        val kept = ItemsKeptOnDeath.kept(player, ItemsKeptOnDeath.getAllOrdered(player))
++        assertEquals(listOf("chaotic_rapier", "coins", "coins"), kept.map { it.id })
++        assertEquals(CHARGES, kept[0].rawValue())
++        assertEquals(listOf(1, 1), kept.drop(1).map { it.amount })
++
++        player.damage(player.levels.get(Skill.Constitution))
++        tick(9)
++        assertEquals(Tile(3221, 3219), player.tile, "native death finishes at the respawn tile")
++        assertFalse(player.dead, "the native death queue has finished")
++
++        val weapons = player.inventory.items.filter { it.id == "chaotic_rapier" }
++        assertEquals(1, weapons.size, "Exactly one kept weapon")
++        assertEquals(1, weapons[0].amount, "charges must not become an item quantity")
++        assertEquals(CHARGES, weapons[0].rawValue(), "Kept weapon must keep its raw charge")
++        assertEquals(2, player.inventory.count("coins"), "Exactly two coins are protected")
++        val floorCoins = FloorItems.firstOrNull(deathTile, "coins")
++        assertNotNull(floorCoins)
++        assertEquals(998, floorCoins!!.amount, "The remaining coins must drop as one floor stack")
++        assertEquals(1000, player.inventory.count("coins") + floorCoins.amount)
++    }
++
++    private companion object {
++        const val CHARGES = 12345
++    }
++}

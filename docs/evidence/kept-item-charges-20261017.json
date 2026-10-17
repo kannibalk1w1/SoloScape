@@ -1,0 +1,167 @@
+{
+  "date": "2026-10-17",
+  "reviewed_base": "00e1514",
+  "scope": "protected per-item charge preservation through native player death",
+  "native_stack": {
+    "server": 48,
+    "client": 56
+  },
+  "source_sha256": {
+    "patches/server/0048-kept-item-charge-preservation.patch": "401a4519e0f6487cbd804af0a5ba180738b15980682ededddd33c18c7b0a719b",
+    "scripts/content_coverage.py": "4c04ae2c873cb433f0ef18132fe2480e633b34fb64f9222f6714f24f29cdfb85",
+    "upstream/game-server/game/src/main/kotlin/content/entity/death/PlayerDeath.kt": "f051e3dd1a174f4cdc5f123ce5474b4af53ad8043764184ba12149363250c5da",
+    "upstream/game-server/game/src/test/kotlin/content/area/misthalin/lumbridge/church/KeptItemChargePreservationTest.kt": "dfaa58c4ab8b11080839984630388980bf7c038154261c190611bee1b54e959f"
+  },
+  "before_fix": [
+    {
+      "file": "chargedWeaponKeepsRawCharge-attempt1.xml",
+      "counts": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failure": "org.opentest4j.AssertionFailedError: Kept weapon must keep its raw charge ==> expected: <12345> but was: <1>",
+      "xml_sha256": "6c832d772ff3e88ff2aaff51eecfdfc90d4913b624d6e3672c5142352361dbb4"
+    },
+    {
+      "file": "chargedWeaponWithCoinsSplitsCoinStack-attempt1.xml",
+      "counts": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failure": "org.opentest4j.AssertionFailedError: Kept weapon must keep its raw charge ==> expected: <12345> but was: <1>",
+      "xml_sha256": "7d496a78ee9f96599a811421fcad590499ecd211feef6c1eab13fe484579db77"
+    },
+    {
+      "file": "chargedWeaponKeepsRawCharge-coordinator-red.xml",
+      "counts": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failure": "org.opentest4j.AssertionFailedError: Kept weapon must keep its raw charge ==> expected: <12345> but was: <1>",
+      "xml_sha256": "e48194daf00faaa53cc4602de2f097a3f58d8cf3c89f5240e767fabffef83037"
+    }
+  ],
+  "fixed_charge_suites": [
+    {
+      "suite": "content.area.misthalin.lumbridge.church.KeptItemChargePreservationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.entity.player.effect.degrade.DegradeTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.entity.player.equip.DragonfireShieldTest",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.skill.melee.armour.CombatDegradeTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "fixed_death_suites": [
+    {
+      "suite": "content.entity.player.inv.TakeTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.DeathLootRecoveryTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.KeptItemChargePreservationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.GravestonesTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.GravestoneShopAuthorityTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.RepeatedGraveIdentityTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "counts": {
+    "charge_related": 37,
+    "death_and_loot": 26,
+    "overlapping_new_cases": 2,
+    "distinct_native_cases": 61,
+    "root": 276,
+    "root_optional_skip": 1
+  },
+  "packaged_code": {
+    "native_stack": {
+      "server": 48,
+      "client": 56
+    },
+    "jars_sha256": {
+      "server": "78cb090da0bc7fb3165c01423f9a0b137187ec9e85ebfe8b6443789578343c5c",
+      "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+    },
+    "tested_PlayerDeath_classes_match_fat_jar": {
+      "content/entity/death/PlayerDeath$1$1.class": "ae2a788a366f500aee97a06d778e3210c8de1ade5c292892701c198ab3b52dfe",
+      "content/entity/death/PlayerDeath.class": "f5bf64b3250508040465b439d2373a03a552913461ae716759628b5b3acf0801"
+    }
+  },
+  "observed": {
+    "protected_weapon_quantity": 1,
+    "protected_weapon_raw_charges": 12345,
+    "protected_coins": 2,
+    "floor_coins": 998,
+    "coin_total": 1000
+  },
+  "fixtures": [
+    "supplied chaotic rapier and SetCharge12345",
+    "supplied1000coins in mixed case",
+    "normal unskulled nonPvP test player",
+    "direct native fatal damage, not an earned fight",
+    "fixed clock and cached compatible world"
+  ],
+  "limits": [
+    "kept-item return path only; no general unprotected drop/charge transfer change",
+    "preserves original keep counts/order and ordinary stack merging",
+    "no new save format or world/grave persistence",
+    "native class/test validation, not physical Deck or controller acceptance",
+    "no owner state, deployment or release publishing"
+  ]
+}

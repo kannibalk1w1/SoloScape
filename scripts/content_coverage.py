@@ -43,6 +43,7 @@ SUMMONING_SUITES = (
     'content.area.asgarnia.taverley.PikkupstixTest',
     'content.skill.summoning.SummoningSupplyAcquisitionTest',
     'content.skill.summoning.SummoningLootDeliveryTest',
+    'content.skill.summoning.ConnectedSpiritWolfSupplyTest',
     'content.skill.summoning.SoloSpiritWolfLifecycleTest',
     'content.skill.summoning.FamiliarOwnerIdentityTest',
     'content.skill.summoning.FamiliarDismissalIdentityTest',
@@ -87,6 +88,7 @@ def main():
         'death': (
             'content.entity.player.inv.TakeTest',
             'content.area.misthalin.lumbridge.church.DeathLootRecoveryTest',
+            'content.area.misthalin.lumbridge.church.KeptItemChargePreservationTest',
             'content.area.misthalin.lumbridge.church.GravestonesTest',
             'content.area.misthalin.lumbridge.church.GravestoneShopAuthorityTest',
             'content.area.misthalin.lumbridge.church.RepeatedGraveIdentityTest',
