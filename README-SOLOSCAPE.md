@@ -1,6 +1,6 @@
 # SoloScape 2011+
 
-Latest prepared private native test build: [46/56 snapshot, screenshot, New/Continue and sampled resource evidence](docs/NATIVE_TEST_BUILD_20261017.md). The local payload is for owner testing; it is not a public release or an installed Deck update.
+Latest prepared private native test build: [48/56 snapshot, screenshot, New/Continue and sampled resource evidence](docs/NATIVE_TEST_BUILD_48_20261017.md). The local payload is for owner testing; it is not a public release or an installed Deck update.
 
 Development source build for a local RuneScape revision-634 experience with native controller support and eventual Steam Deck delivery. The controller build includes reversible direct movement, target/movement feedback, native UI navigation, Home and quick-action radials, optional custom inventory/equipment/bank/shop screens, shared menu back navigation, active-pane right-stick scrolling, remapped physical hints, exclusive in-game text ownership and a reversible classic controller UI theme.
 
