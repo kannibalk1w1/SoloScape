@@ -13,7 +13,15 @@ diff --git a/game/src/main/kotlin/content/skill/slayer/Slayer.kt b/game/src/main
      player.slayerTasks++
      player.slayerMaster = master
      player.slayerTask = pair.first
-@@ -93,6 +95,9 @@
+@@ -86,13 +88,16 @@
+ 
+ private fun rollTask(player: Player, master: String): Pair<String, Int>? {
+     var total = 0
+-    val table = Tables.getOrNull("${master}_slayer_tasks") ?: return null
++    val table = Tables.getOrNull("${master}_slayer_tasks") ?: error("Missing Slayer task table for $master")
+     for (row in table.rows) {
+         val weight = table.int("weight", row)
+         if (!hasRequirements(player, table, row)) {
              continue
          }
          total += weight
@@ -106,10 +114,14 @@ diff --git a/game/src/main/kotlin/content/skill/slayer/master/SlayerMaster.kt b/
 diff --git a/game/src/main/kotlin/content/skill/slayer/SlayerAssignment.kt b/game/src/main/kotlin/content/skill/slayer/SlayerAssignment.kt
 --- a/game/src/main/kotlin/content/skill/slayer/SlayerAssignment.kt
 +++ b/game/src/main/kotlin/content/skill/slayer/SlayerAssignment.kt
-@@ -40,6 +40,15 @@
+@@ -37,7 +37,17 @@
+             }
+             slayerPoints -= 30
+             slayerTask = "nothing"
++            refresh(this, it.id)
              //    npc<Happy>(player["slayer_npc", ""], "") TODO proper message and save npc id on interface open
-         }
- 
++        }
++
 +        interfaceOption(id = "slayer_rewards_assignment:cancel_*") {
 +            val slot = it.component.substringAfterLast('_').toIntOrNull()?.minus(1) ?: return@interfaceOption
 +            if (slot !in 0 until 5) {
@@ -117,12 +129,10 @@ diff --git a/game/src/main/kotlin/content/skill/slayer/SlayerAssignment.kt b/gam
 +            }
 +            clear("blocked_task_$slot")
 +            refresh(this, it.id)
-+        }
-+
+         }
+ 
          interfaceOption(id = "slayer_rewards_assignment:block_*") {
-             if (!it.option.startsWith("Permanently")) {
-                 return@interfaceOption
-@@ -65,6 +74,8 @@
+@@ -65,6 +75,8 @@
  
              if (!blocked) {
                  message("You don't have any free block slots.") // TODO proper message
@@ -135,7 +145,7 @@ diff --git a/game/src/test/kotlin/content/skill/slayer/SlayerBlockedTaskTest.kt 
 new file mode 100644
 --- /dev/null
 +++ b/game/src/test/kotlin/content/skill/slayer/SlayerBlockedTaskTest.kt
-@@ -0,0 +1,248 @@
+@@ -0,0 +1,258 @@
 +package content.skill.slayer
 +
 +import FakeRandom
@@ -172,6 +182,7 @@ new file mode 100644
 +import java.nio.file.Files
 +import java.nio.file.Path
 +import kotlin.test.assertEquals
++import kotlin.test.assertFailsWith
 +import kotlin.test.assertNotEquals
 +import kotlin.test.assertTrue
 +
@@ -329,6 +340,15 @@ new file mode 100644
 +        assertEquals(0, player.slayerStreak)
 +        assertEquals(18, player.slayerTasks)
 +        assertEquals(50, player.slayerPoints)
++    }
++
++    @Test
++    fun `A missing master table stays a configuration error instead of an exhausted assignment`() {
++        val player = suppliedPlayer("blockconfig")
++        val error = assertFailsWith<IllegalStateException> { assignTask(player, "missing_master") }
++        assertTrue(error !is NoSlayerTaskAvailable)
++        assertEquals("nothing", player.slayerTask)
++        assertEquals(0, player.slayerTasks)
 +    }
 +
 +    private fun noviceWithEveryTaskBlocked(): Player {

@@ -17,7 +17,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
 | client | 56 | `0056-external-launcher-home.patch` | `60fa4f727ababa7d532ac495c62055ed38cbd83c07abc70c66a068cf24c7bc5a` |
-| server | 52 | `0052-honor-slayer-task-blocks.patch` | `8462913e6eea8b9650cfd51d8cf26b493ec4327e85deb596ff4b84a22d5f3f8d` |
+| server | 52 | `0052-honor-slayer-task-blocks.patch` | `559a2c78c09df72dbf9d130edaf75865293a77321ee218fab2d0f7545b76c17e` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
 
