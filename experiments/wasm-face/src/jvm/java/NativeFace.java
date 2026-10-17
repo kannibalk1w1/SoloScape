@@ -148,9 +148,12 @@ public final class NativeFace {
         public Observed observe(int vertexCount) {
             try {
                 Observed o = new Observed();
-                o.x = java.util.Arrays.copyOf((int[]) field(modelClass, "anIntArray5321").get(model), vertexCount);
-                o.y = java.util.Arrays.copyOf((int[]) field(modelClass, "anIntArray5343").get(model), vertexCount);
-                o.z = java.util.Arrays.copyOf((int[]) field(modelClass, "anIntArray5355").get(model), vertexCount);
+                o.x = Observed.copy((int[]) field(modelClass, "anIntArray5321").get(model), vertexCount);
+                o.y = Observed.copy((int[]) field(modelClass, "anIntArray5343").get(model), vertexCount);
+                o.z = Observed.copy((int[]) field(modelClass, "anIntArray5355").get(model), vertexCount);
+                o.camX = Observed.copy((int[]) field(modelClass, "anIntArray5399").get(model), vertexCount);
+                o.camY = Observed.copy((int[]) field(modelClass, "anIntArray5384").get(model), vertexCount);
+                o.camD = Observed.copy((int[]) field(modelClass, "anIntArray5392").get(model), vertexCount);
                 o.shortCleared = field(modelClass, "aShortArray5311").get(model) == null;
                 o.byteCleared = field(modelClass, "aByteArray5386").get(model) == null;
                 return o;
@@ -172,6 +175,14 @@ public final class NativeFace {
     }
 
     public static void main(String[] args) {
+        if (Boolean.getBoolean("face.clip")) {
+            for (int[] s : ClipScene.SIZES) {
+                for (ClipScene.Case c : ClipScene.cases()) {
+                    System.out.println(ClipScene.run(new JarRig(), c, s[0], s[1], Integer.getInteger("face.illegal", 0)));
+                }
+            }
+            return;
+        }
         for (FaceCase c : FaceScene.cases(Integer.getInteger("face.illegal", 0))) {
             System.out.println(FaceScene.run(new JarRig(), c, false));
         }

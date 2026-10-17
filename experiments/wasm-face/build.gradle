@@ -9,8 +9,10 @@ repositories { mavenCentral() }
 dependencies {
     implementation 'org.teavm:teavm-jso:0.16.0'
 }
-sourceSets.main.java.srcDirs = ['src/shared/java', 'src/browser/java', 'build/generated-src']
+// Clip mode passes -PfaceGenDir and -PfaceMain; the default build is unchanged.
+def faceGenDir = findProperty('faceGenDir') ?: 'build/generated-src'
+sourceSets.main.java.srcDirs = ['src/shared/java', 'src/browser/java', faceGenDir]
 teavm {
-    all { mainClass = 'FaceProbe' }
+    all { mainClass = findProperty('faceMain') ?: 'FaceProbe' }
     wasmGC { targetFileName = 'face.wasm' }
 }

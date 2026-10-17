@@ -28,3 +28,19 @@ Self-tests (each must exit nonzero): `FACE_SELFTEST=` `jvm-vertex`, `browser-ver
 Outputs (all ignored): `build/evidence.json`, `build/toolchain.json`, `build/closure.json`, `build/inputs.json`, `build/synthetic-face.png`.
 
 Third-party: TeaVM 0.16.0 and `teavm-jso` (Apache-2.0), fetched by Gradle. Generated native files keep the JODE header and a provenance banner with the source SHA-256.
+
+## Opt-in near-plane clipping experiment
+
+`FACE_CLIP=1` selects a separate `build-clip/` result directory and adds only the native `Class64_Sub1.method646` body to the existing generated closure. The Class64 budget is 574 native lines (cap 580), 59 instance fields (cap 65), plus one disclosed clip-output counter line. Clip mode also adds one disclosed flat-fill entry counter to generated `Class109.method1018`; deleting each counter must restore its exact native method span. Default extraction contains neither counter and retains its earlier scope.
+
+Nine original synthetic cases at 765×503 and 1280×800 cover one-behind quads, two-behind triangles, reversed winding, exact near-plane depth 50, 49.8/50.2 threshold crossings, whole-model rejection and an all-behind face with a visible companion. Native jar, extracted JVM and WasmGC must match projected/camera arrays and framebuffer/depth hashes. An independent Python oracle derives 3D camera-space facing for clipped faces and 2D facing for ordinary faces, refuses any intermediate integer overflow and compares actual extracted/Wasm fill-entry counts. Native counters remain absent; their expectations are derived, not measured. The threshold crossing must visibly change native output.
+
+```sh
+FACE_CLIP=1 JAVA_HOME=/absolute/path/to/jdk21 \
+  UPSTREAM_GRADLEW=/absolute/path/to/upstream/gradlew \
+  bash run.sh /absolute/path/to/client/src /absolute/path/to/frozen-client.jar
+```
+
+`FACE_REUSE=1 FACE_CLIP=1 FACE_SELFTEST=clip-fill-count` deliberately corrupts a measured fill count and must fail. The other clip checker controls are `clip-count`, `clip-visible` and `clip-browser-element`. Existing default controls remain separate; `illegal-clip` is a refusal in clip mode because that mode deliberately includes clipping.
+
+Limits: camera 0 and mask0 adapter only, no 49.99 depth fixture, no independent clipped-polygon re-render, no lit/textured/material branches, no assets or real model/scene/client port. Native face-loop exceptions remain swallowed by the original method, so agreement plus positive instrumentation establishes only these fixtures. No browser/Deck FPS or hardware acceptance is claimed.

@@ -28,6 +28,16 @@ FLAT_ROOT = "method1018"
 MAX_VERBATIM_LINES = 450
 MAX_FIELDS = 65
 MAX_ADAPTER_LINES = 20
+# Clip mode (opt-in, --clip): method646 is copied verbatim and the verbatim budget becomes the audited 580 lines.
+# The only non-verbatim line is one counter inserted before the output switch, and it is verified to be the sole diff.
+CLIP_METHOD = "method646"
+MAX_VERBATIM_LINES_CLIP = 580
+STUB_646 = "    private final void method646(int i) { FaceCounters.clipBranch++; throw new IllegalStateException(\"method646 (clip branch) reached\"); }\n"
+CLIP_COUNTER_ANCHOR = "        int i_563_ = anIntArray5315[0];\n"
+CLIP_COUNTER_LINE = ("        FaceCounters.clipOut[i_540_]++; // HARNESS COUNTER (clip mode): the only non-verbatim line in method646\n")
+# Clip mode: one entry counter at the top of the generated Class109.method1018 (the flat fill every path calls).
+FILL_SIGNATURE = re.compile(r"^    final void method1018\(.*\{\s*$")
+FILL_COUNTER_LINE = ("        FaceCounters.flatFillEntries++; // HARNESS COUNTER (clip mode): the only non-verbatim line in Class109.method1018\n")
 INPUT_FILES = ("Class64_Sub1.java", "Class109.java", "Class167.java", "ha_Sub1.java", "ha.java",
                "Class101_Sub1.java", "Class6.java", "Class350.java", "Class318_Sub3.java", "Class126.java")
 # Methods the nine bodies may call: the nine themselves, the adapter, stubs, and these external ones.
@@ -93,19 +103,36 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--src-dir", required=True, type=pathlib.Path)
     parser.add_argument("--out", required=True, type=pathlib.Path)
+    parser.add_argument("--clip", action="store_true", help="opt-in: method646 verbatim, one counter line, 580-line budget")
     args = parser.parse_args()
     read = lambda n: (args.src_dir / n).read_text(encoding="utf-8")
     digests = {n: sha(args.src_dir / n) for n in INPUT_FILES}
+    methods = METHODS + ((CLIP_METHOD,) if args.clip else ())
+    budget = MAX_VERBATIM_LINES_CLIP if args.clip else MAX_VERBATIM_LINES
+    glue = GLUE
+    if args.clip:
+        if STUB_646 not in GLUE:
+            fail("method646 stub line not found in the glue; re-audit")
+        glue = GLUE.replace(STUB_646, "").replace("every branch outside the audited flat path counts and throws.",
+                                                   "every branch outside the audited flat and clip paths counts and throws.")
 
-    # ---- Class64_Sub1: nine verbatim methods -------------------------------------------------------
+    # ---- Class64_Sub1: verbatim methods (nine, plus method646 in clip mode) ------------------------
     src64 = read("Class64_Sub1.java")
     lines = src64.splitlines(keepends=True)
-    spans = {n: tri.method_span(lines, n) for n in METHODS}
+    spans = {n: tri.method_span(lines, n) for n in methods}
     verbatim = {n: "".join(lines[s:e + 1]) for n, (s, e) in spans.items()}
     verbatim_lines = sum(e - s + 1 for s, e in spans.values())
-    if verbatim_lines > MAX_VERBATIM_LINES:
-        fail(f"verbatim closure is {verbatim_lines} lines, budget {MAX_VERBATIM_LINES}; stop and re-audit")
-    bodies = "\n".join(verbatim[n] for n in METHODS)
+    if verbatim_lines > budget:
+        fail(f"verbatim closure is {verbatim_lines} lines, budget {budget}; stop and re-audit")
+    if args.clip:
+        native646 = verbatim[CLIP_METHOD]
+        if native646.count(CLIP_COUNTER_ANCHOR) != 1:
+            fail("method646 counter anchor is not unique; re-audit")
+        counted646 = native646.replace(CLIP_COUNTER_ANCHOR, CLIP_COUNTER_LINE + CLIP_COUNTER_ANCHOR)
+        if counted646.replace(CLIP_COUNTER_LINE, "") != native646:
+            fail("counter insertion is not the only change to method646")
+        verbatim[CLIP_METHOD] = counted646
+    bodies = "\n".join(verbatim[n] for n in methods)
     adapter_lines = len([l for l in ADAPTER.strip("\n").splitlines() if l.strip()])
     if adapter_lines > MAX_ADAPTER_LINES:
         fail(f"adapter is {adapter_lines} lines, budget {MAX_ADAPTER_LINES}")
@@ -123,7 +150,7 @@ def main():
 
     first_method = next(i for i, l in enumerate(lines) if re.match(r"^    (?:private |final )*[\w\[\]]+ \w+\(", l))
     fields = parse_fields(lines, first_method)
-    text_for_fields = bodies + ADAPTER + GLUE
+    text_for_fields = bodies + ADAPTER + glue
     kept = [(n, t, l) for n, t, l in fields if re.search(r"\b" + n + r"\b", text_for_fields)]
     if len(kept) > MAX_FIELDS:
         fail(f"{len(kept)} instance fields, budget {MAX_FIELDS}")
@@ -165,7 +192,19 @@ def main():
             break
     field_block = "".join(l109[:header_end]).rstrip() + "\n\n"
     ctor = "".join(l109[ctor_start:ctor_end + 1])
-    bodies109 = "\n".join("".join(l109[spans109[n][0]:spans109[n][1] + 1]) for n in sorted(wanted))
+    native109 = {n: "".join(l109[spans109[n][0]:spans109[n][1] + 1]) for n in wanted}
+    if args.clip:
+        fill = l109[spans109[FLAT_ROOT][0]:spans109[FLAT_ROOT][1] + 1]
+        sigs = [i for i, l in enumerate(fill) if FILL_SIGNATURE.match(l)]
+        if len(sigs) != 1:
+            fail("method1018 signature not unique; re-audit")
+        counted = fill[:sigs[0] + 1] + [FILL_COUNTER_LINE] + fill[sigs[0] + 1:]
+        counted_text = "".join(counted)
+        # Deleting the single counter line must restore the exact native method1018 body.
+        if counted_text.replace(FILL_COUNTER_LINE, "") != native109[FLAT_ROOT]:
+            fail("method1018 counter is not the only change to the native body")
+        native109[FLAT_ROOT] = counted_text
+    bodies109 = "\n".join(native109[n] for n in sorted(wanted))
     text109 = field_block + ctor + "\n\n" + bodies109 + "\n"
     # Stubs for the other fills Class64_Sub1.method635 can reach; signatures taken from the native source.
     stubs109 = ""
@@ -208,10 +247,10 @@ def main():
 
     members = "".join(l.replace("private ", "", 1) for _, _, l in kept)
     (out / "Class64_Sub1.java").write_text(
-        banner("Class64_Sub1.java", " (nine methods verbatim; field declarations verbatim except the private modifier)\n"
+        banner("Class64_Sub1.java", f" ({len(methods)} native method spans; disclosed harness counters in clip mode; field declarations except private modifier)\n"
                "// Hand-written parts are marked ADAPTER / HARNESS GLUE / STUBS; the class no longer extends Class64.")
-        + "\nfinal class Class64_Sub1 {\n" + members + "\n" + "\n".join(verbatim[n] for n in METHODS)
-        + ADAPTER + GLUE + "}\n", encoding="utf-8")
+        + "\nfinal class Class64_Sub1 {\n" + members + "\n" + "\n".join(verbatim[n] for n in methods)
+        + ADAPTER + glue + "}\n", encoding="utf-8")
     (out / "Class109.java").write_text(banner("Class109.java") + text109, encoding="utf-8")
 
     def cls(name, fields, source, extends=""):
@@ -248,10 +287,14 @@ def main():
 
     report = {
         "inputs_sha256": digests,
-        "class64_sub1_methods_verbatim": list(METHODS),
+        "clip_mode": args.clip,
+        "class64_sub1_methods_verbatim": list(methods),
         "class64_sub1_verbatim_lines": verbatim_lines,
-        "class64_sub1_line_budget": MAX_VERBATIM_LINES,
-        "class64_sub1_per_method_lines": {n: spans[n][1] - spans[n][0] + 1 for n in METHODS},
+        "class64_sub1_line_budget": budget,
+        "class64_sub1_non_verbatim_lines": 1 if args.clip else 0,
+        "class109_non_verbatim_lines": 1 if args.clip else 0,
+        "class109_non_verbatim_note": ("FaceCounters.flatFillEntries++ at the top of method1018" if args.clip else "none"),
+        "class64_sub1_per_method_lines": {n: spans[n][1] - spans[n][0] + 1 for n in methods},
         "class64_sub1_native_instance_fields_kept": len(kept),
         "class64_sub1_field_budget": MAX_FIELDS,
         "class64_sub1_fields": sorted(kept_names),
@@ -260,8 +303,8 @@ def main():
         "class109_methods_verbatim": sorted(wanted),
         "class109_verbatim_lines": sum(e - s + 1 for s, e in spans109.values()),
         "class109_stubbed": ["method1022", "method1024"],
-        "stubs": ["Class64_Sub1.method646", "Class64_Sub1.method658", "ha_Sub1.method3720", "ha.method3645",
-                  "Class109.method1022", "Class109.method1024"],
+        "stubs": (["Class64_Sub1.method658"] if args.clip else ["Class64_Sub1.method646", "Class64_Sub1.method658"])
+                 + ["ha_Sub1.method3720", "ha.method3645", "Class109.method1022", "Class109.method1024"],
         "callees_found": sorted(callees),
         "ha_Sub1_members": ha_fields + ha_calls,
         "class167_members": ctx_fields,

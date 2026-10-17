@@ -10,6 +10,8 @@
 #   FACE_SELFTEST=illegal-state0|illegal-texture|illegal-lit|illegal-clip   the extracted build enters the adapter/stubs illegally
 #   FACE_SELFTEST=browser-hash|browser-element|missing-browser|zero-coverage|counter-stub|counter-adapter|duplicate-case|control-equal|no-backface|missing-present|culling-equal
 #                                                 corrupts the collected evidence before the checker (checker-only; set FACE_REUSE=1 to reuse an existing build/)
+# FACE_CLIP=1 runs the opt-in near-plane clip mode (method646 verbatim, build-clip/, tools/check_clip_evidence.py).
+# Clip self-tests (checker-only, each must exit nonzero): clip-count|clip-visible|clip-browser-element|clip-fill-count.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -38,13 +40,24 @@ JDK="$JAVA_HOME"; JAVAC="$JDK/bin/javac"; JAVA="$JDK/bin/java"
 UPSTREAM_GRADLEW="${UPSTREAM_GRADLEW:-}"
 if [ -z "$UPSTREAM_GRADLEW" ] && ! command -v gradle >/dev/null 2>&1; then die "set UPSTREAM_GRADLEW to the upstream gradlew (or install gradle)"; fi
 [ -z "$UPSTREAM_GRADLEW" ] || [ -f "$UPSTREAM_GRADLEW" ] || die "UPSTREAM_GRADLEW not found: $UPSTREAM_GRADLEW"
+CLIP="${FACE_CLIP:-0}"
+case "$CLIP" in 0|1) ;; *) die "FACE_CLIP must be 0 or 1" ;; esac
 BUILD="$HERE/build"
+if [ "$CLIP" = 1 ]; then BUILD="$HERE/build-clip"; fi
+GRADLE_OUT="$HERE/build"
 OUT="$BUILD/teavm-out"
 CHROMIUM="${CHROMIUM:-/usr/bin/chromium}"
 [ -x "$CHROMIUM" ] || die "Chromium not found: $CHROMIUM (set CHROMIUM)"
 BROWSER_TIMEOUT="${BROWSER_TIMEOUT:-240}"
 SELFTEST="${FACE_SELFTEST:-}"
 JVM_OPTS=(); BROWSER_QUERY=""; MUTATE_ARGS=()
+if [ "$CLIP" = 1 ]; then
+  case "$SELFTEST" in
+    ""|illegal-state0|illegal-texture|illegal-lit|clip-count|clip-visible|clip-browser-element|clip-fill-count) ;;
+    illegal-clip) die "illegal-clip is the default-build stub control; clip mode runs method646 legally" ;;
+    *) die "FACE_SELFTEST=$SELFTEST is not defined in clip mode (FACE_CLIP=1)" ;;
+  esac
+fi
 case "$SELFTEST" in
   "") ;;
   jvm-vertex) JVM_OPTS=(-Dface.perturb=true) ;;
@@ -53,14 +66,21 @@ case "$SELFTEST" in
   illegal-texture) JVM_OPTS=(-Dface.illegal=2) ;;
   illegal-lit) JVM_OPTS=(-Dface.illegal=3) ;;
   illegal-clip) JVM_OPTS=(-Dface.illegal=4) ;;
+  clip-count|clip-visible|clip-browser-element|clip-fill-count) MUTATE_ARGS=(--mutate "$SELFTEST") ;;
   browser-hash|browser-element|missing-browser|zero-coverage|counter-stub|counter-adapter|duplicate-case|control-equal|no-backface|missing-present|culling-equal)
     MUTATE_ARGS=(--mutate "$SELFTEST") ;;
   *) die "unknown FACE_SELFTEST=$SELFTEST" ;;
 esac
+CHECKER="$HERE/tools/check_evidence.py"; GRADLE_PROPS=(); NATIVE_OPTS=(); EXTRACT_FLAGS=()
+if [ "$CLIP" = 1 ]; then
+  CHECKER="$HERE/tools/check_clip_evidence.py"
+  JVM_OPTS+=(-Dface.clip=true); NATIVE_OPTS=(-Dface.clip=true); EXTRACT_FLAGS=(--clip)
+  GRADLE_PROPS=(-PfaceGenDir="$BUILD/generated-src" -PfaceMain=ClipProbe)
+fi
 
 if [ "${FACE_REUSE:-}" = 1 ] && [ -n "${MUTATE_ARGS[*]:-}" ]; then
   [ -f "$BUILD/browser-dom.html" ] || die "FACE_REUSE=1 needs a completed build/"
-  python3 -I "$HERE/tools/check_evidence.py" --build "$BUILD" "${MUTATE_ARGS[@]}"
+  python3 -I "$CHECKER" --build "$BUILD" "${MUTATE_ARGS[@]}"
   exit $?
 fi
 
@@ -75,7 +95,7 @@ for name in ("Class64_Sub1", "Class109", "Class167", "ha_Sub1", "ha", "Class101_
     inputs[name + ".java"] = digest(pathlib.Path(src) / (name + ".java"))
 pathlib.Path(out).write_text(json.dumps(inputs, indent=2) + "\n")
 PY
-python3 -I "$HERE/tools/extract_face_closure.py" --src-dir "$SRC_DIR" --out "$BUILD/generated-src"
+python3 -I "$HERE/tools/extract_face_closure.py" --src-dir "$SRC_DIR" --out "$BUILD/generated-src" ${EXTRACT_FLAGS[@]+"${EXTRACT_FLAGS[@]}"}
 
 echo "== closure audit (extracted closure only, no jar on the classpath, -Xlint:all)"
 "$JAVAC" -Xlint:all -Xmaxwarns 1000 -d "$BUILD/audit" "$HERE/src/shared/java/FaceCounters.java" "$BUILD"/generated-src/*.java 2> "$BUILD/audit.log" || { cat "$BUILD/audit.log" >&2; exit 1; }
@@ -87,17 +107,17 @@ echo "== JVM extracted closure"
 echo "jvm-verbatim: $(wc -l < "$BUILD/jvm-verbatim.jsonl") cases"
 
 echo "== JVM reference: real jar bytecode (reflection + Unsafe)"
-"$JAVAC" -nowarn -cp "$NATIVE_JAR" -d "$BUILD/jvm-native" "$HERE"/src/shared/java/{FaceMesh,FaceRig,FaceScene}.java "$HERE/src/jvm/java/NativeFace.java" 2>/dev/null
-"$JAVA" -cp "$BUILD/jvm-native:$NATIVE_JAR" NativeFace > "$BUILD/jvm-native.jsonl"
+"$JAVAC" -nowarn -cp "$NATIVE_JAR" -d "$BUILD/jvm-native" "$HERE"/src/shared/java/{FaceMesh,FaceRig,FaceScene,ClipScene}.java "$HERE/src/jvm/java/NativeFace.java" 2>/dev/null
+"$JAVA" ${NATIVE_OPTS[@]+"${NATIVE_OPTS[@]}"} -cp "$BUILD/jvm-native:$NATIVE_JAR" NativeFace > "$BUILD/jvm-native.jsonl"
 echo "jvm-native: $(wc -l < "$BUILD/jvm-native.jsonl") cases"
 
 echo "== TeaVM 0.16.0 WasmGC build"
 if [ -n "$UPSTREAM_GRADLEW" ]; then
-  JAVA_HOME="$JDK" bash "$UPSTREAM_GRADLEW" -p "$HERE" buildWasmGC --no-daemon -q
+  JAVA_HOME="$JDK" bash "$UPSTREAM_GRADLEW" -p "$HERE" buildWasmGC --no-daemon -q ${GRADLE_PROPS[@]+"${GRADLE_PROPS[@]}"}
 else
-  JAVA_HOME="$JDK" gradle -p "$HERE" buildWasmGC --no-daemon -q
+  JAVA_HOME="$JDK" gradle -p "$HERE" buildWasmGC --no-daemon -q ${GRADLE_PROPS[@]+"${GRADLE_PROPS[@]}"}
 fi
-WASM_DIR="$(find "$BUILD" -path '*teavm*wasm-gc*' -name 'face.wasm' -printf '%h\n' | head -1)"
+WASM_DIR="$(find "$GRADLE_OUT" -path '*teavm*wasm-gc*' -name 'face.wasm' -printf '%h\n' | head -1)"
 [ -n "$WASM_DIR" ] || { echo "wasm output not found" >&2; exit 1; }
 rm -rf "$OUT" && mkdir -p "$OUT"
 cp "$WASM_DIR"/face.wasm "$WASM_DIR"/face.wasm-runtime.js "$OUT"/
@@ -120,7 +140,7 @@ python3 -I - "$HERE" "$BUILD" "$OUT" "$("$JAVA" -version 2>&1 | head -1)" <<'PY'
 import hashlib, json, pathlib, sys
 here, build, out, java = (pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), pathlib.Path(sys.argv[3]), sys.argv[4])
 digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
-committed = sorted(p for p in here.rglob("*") if p.is_file() and "build" not in p.relative_to(here).parts
+committed = sorted(p for p in here.rglob("*") if p.is_file() and not {"build", "build-clip"} & set(p.relative_to(here).parts)
                    and ".gradle" not in p.relative_to(here).parts and "__pycache__" not in p.relative_to(here).parts)
 (build / "toolchain.json").write_text(json.dumps({
     "java": java, "teavm": "0.16.0 (org.teavm plugin and teavm-jso)",
@@ -133,4 +153,4 @@ committed = sorted(p for p in here.rglob("*") if p.is_file() and "build" not in 
 PY
 
 echo "== validation (native jar vs JVM extracted vs WasmGC, both sizes, two cameras, adapter variants, vertex control)"
-python3 -I "$HERE/tools/check_evidence.py" --build "$BUILD" ${MUTATE_ARGS[@]+"${MUTATE_ARGS[@]}"}
+python3 -I "$CHECKER" --build "$BUILD" ${MUTATE_ARGS[@]+"${MUTATE_ARGS[@]}"}

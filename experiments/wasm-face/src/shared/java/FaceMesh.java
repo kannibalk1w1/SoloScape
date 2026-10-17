@@ -115,6 +115,34 @@ final class FaceMesh {
         return new FaceMesh(perturb);
     }
 
+    /** Clip mode: explicit synthetic vertices {x, y, z} and faces {a, b, c} in the given winding order. */
+    private FaceMesh(int[][] verts, int[][] tris) {
+        vertices = verts.length;
+        faces = tris.length;
+        vx = new int[vertices];
+        vy = new int[vertices];
+        vz = new int[vertices];
+        for (int i = 0; i < vertices; i++) {
+            vx[i] = verts[i][0];
+            vy[i] = verts[i][1];
+            vz[i] = verts[i][2];
+        }
+        fa = new short[faces];
+        fb = new short[faces];
+        fc = new short[faces];
+        colourIndex = new int[faces];
+        for (int f = 0; f < faces; f++) {
+            fa[f] = (short) tris[f][0];
+            fb[f] = (short) tris[f][1];
+            fc[f] = (short) tris[f][2];
+            colourIndex[f] = (f * 1237 + 91) & 0xffff;
+        }
+    }
+
+    static FaceMesh custom(int[][] verts, int[][] tris) {
+        return new FaceMesh(verts, tris);
+    }
+
     /** Original synthetic palette: 65,536 opaque colours from an integer mix of the index. */
     static int[] palette() {
         int[] p = new int[65536];

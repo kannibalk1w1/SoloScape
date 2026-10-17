@@ -111,9 +111,14 @@ final class ExtractedRig implements FaceRig {
 
     public Observed observe(int vertexCount) {
         Observed o = new Observed();
-        o.x = java.util.Arrays.copyOf(model.anIntArray5321, vertexCount);
-        o.y = java.util.Arrays.copyOf(model.anIntArray5343, vertexCount);
-        o.z = java.util.Arrays.copyOf(model.anIntArray5355, vertexCount);
+        o.x = Observed.copy(model.anIntArray5321, vertexCount);
+        o.y = Observed.copy(model.anIntArray5343, vertexCount);
+        o.z = Observed.copy(model.anIntArray5355, vertexCount);
+        o.camX = Observed.copy(model.anIntArray5399, vertexCount);
+        o.camY = Observed.copy(model.anIntArray5384, vertexCount);
+        o.camD = Observed.copy(model.anIntArray5392, vertexCount);
+        o.clipOut = FaceCounters.clipOut.clone();
+        o.flatFillEntries = FaceCounters.flatFillEntries;
         o.shortCleared = model.aShortArray5311 == null;
         o.byteCleared = model.aByteArray5386 == null;
         o.hasCounters = true;

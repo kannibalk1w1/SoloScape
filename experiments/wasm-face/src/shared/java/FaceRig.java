@@ -25,6 +25,17 @@ final class Observed {
     boolean hasCounters;
     int adapterEntries, adapterIllegal, stubHits;
     String counters = "null";
+    /** Camera-space arrays written by method654 (integer x, y and depth per vertex); clip mode validates them. */
+    int[] camX, camY, camD;
+    /** Clip mode only: the extracted build's method646 output counts; null on the native jar. */
+    int[] clipOut;
+    /** Clip mode only: flat-fill entries; -1 where the native jar is uninstrumented (never a fake count). */
+    int flatFillEntries = -1;
+
+    /** A never-allocated array (a model that method654 rejected before method632) reads as zeros. */
+    static int[] copy(int[] a, int n) {
+        return a == null ? new int[n] : java.util.Arrays.copyOf(a, n);
+    }
 }
 
 /** The seam between the scene and one implementation (native jar by reflection, or the extracted source). */
