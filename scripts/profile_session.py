@@ -17,9 +17,9 @@ import session_recovery
 
 
 def owned_environment(profile, port):
-    # Dotted properties inherited from another launcher must not change ownership.
+    # Dotted settings and HotSpot's late _JAVA_OPTIONS must not override owned paths.
     environment = {key: value for key, value in os.environ.items()
-                   if '.' not in key and key not in (profiles.PROFILE_HOME_ENV, local_dev.CACHE_HOME_ENV)}
+                   if '.' not in key and key not in (profiles.PROFILE_HOME_ENV, local_dev.CACHE_HOME_ENV, "_JAVA_OPTIONS")}
     environment.update(profile.environment(port))
     environment["storage.cache.path"] = str(local_dev.cache_directory()) + "/"
     return environment

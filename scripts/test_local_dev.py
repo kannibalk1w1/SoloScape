@@ -20,6 +20,7 @@ root = Path(os.environ["TEST_ROOT"])
 role = "server" if "void-server" in sys.argv[2] else "client"
 (root / (role + ".pid")).write_text(str(os.getpid()))
 (root / (role + ".cache")).write_text(os.environ.get("storage.cache.path", ""))
+(root / (role + ".late-jvm-options")).write_text(os.environ.get("_JAVA_OPTIONS", ""))
 def stop(*args):
     (root / (role + ".stopped")).write_text("graceful")
     if role == "server" and os.environ["TEST_CASE"] != "no-save-receipt":

@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "c26b1ca",
+  "reviewed_base": "a0aad4996578eca99f0aa49346500fb1aa290d99",
   "entries": [
     {
       "id": "controls",
@@ -393,6 +393,30 @@
       "acceptance": "DEFERRED",
       "evidence": "PREBUILT_LAUNCHER_CONTRACT_20261017.md",
       "note": "241 tooling cases (one optional skip); original manifest/bootstrap boundaries plus real GUI/native sessions 24.734/24.931s. Four backups, compared account fields and immutable inputs preserved. Software/no audio; no production package, owner deployment, native cross-version/orphan or update acceptance."
+    },
+    {
+      "id": "npc-deferred-queue-identity",
+      "scope": "Native pending NPC allocation, removal/reset identity and spawn lookup retirement",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "NPC_QUEUE_LIFECYCLE_20261017.md",
+      "note": "Seven original engine reds plus an independent lookup red; final 14 NPC and 24 related engine controls pass. Native Summoning 20/death 19/dungeon 28 pass (105 total), patch reproduction and matched jars pass. No owner deployment or physical/long-uptime acceptance."
+    },
+    {
+      "id": "profile-late-jvm-options",
+      "scope": "Owned client home/cache properties protected from inherited late HotSpot options",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "PROFILE_JVM_OPTIONS_20261017.md",
+      "note": "Actual supported Java 8 override reproduced before filtering; actual owned environment and unsafe control verify the fix without creating home/cache directories. Simulated owned-child lifecycle regression; no game/Deck or arbitrary-agent sandbox claim."
+    },
+    {
+      "id": "persisted-list-save-snapshots",
+      "scope": "Native mutable persisted list ownership at queued account-save capture",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "SAVE_VARIABLE_SNAPSHOTS_20261017.md",
+      "note": "Three actual native snapshot/codec reds, two controls; final snapshot 5/engine save 15/journeys 3 pass without skips. Flat list containers isolated; no recursive graph, DB, whole-world or hardware acceptance."
     },
     {
       "id": "wasm-triangle",

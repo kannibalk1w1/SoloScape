@@ -1,0 +1,332 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCs.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCs.kt
+index 9a3449e..e282c3b 100644
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCs.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCs.kt
+@@ -27,6 +27,8 @@ object NPCs : Runnable,
+     private val indexArray: Array<NPC?> = arrayOfNulls(MAX_NPCS)
+     private var indexer = 1
+     private val spawnQueue: Array<NPC?> = arrayOfNulls(MAX_NPCS)
++    private val spawnReservations: Array<NPC?> = arrayOfNulls(MAX_NPCS)
++    private val removalIdentities: Array<NPC?> = arrayOfNulls(MAX_NPCS)
+     private var spawnIndex = 0
+     private val removeQueue: IntArray = IntArray(MAX_NPCS)
+     private var removeIndex = 0
+@@ -42,9 +44,20 @@ object NPCs : Runnable,
+         while (i < removeIndex) {
+             val index = removeQueue[i]
+             removeQueue[i++] = -1
++            val npc = removalIdentities[index] ?: continue
++            removalIdentities[index] = null
++            if (indexArray[index] !== npc) {
++                // Cancellation before the deferred spawn has entered the live index.
++                if (spawnReservations[index] === npc) {
++                    spawnReservations[index] = null
++                    npc.index = -1
++                }
++                continue
++            }
+             size--
+-            val npc = indexArray[index] ?: continue
+             indexArray[index] = null
++            val spawnTile: Tile = npc["spawn_tile", npc.tile]
++            if (spawns[spawnTile.id] == index) spawns.remove(spawnTile.id)
+             regionMap.remove(npc.tile.regionLevel.id, npc.index)
+             zoneMap.remove(npc.tile.zone.id, npc.index)
+             Despawn.npc(npc)
+@@ -54,11 +67,17 @@ object NPCs : Runnable,
+         i = 0
+         while (i < spawnIndex) {
+             val npc = spawnQueue[i++] ?: continue
++            val index = npc.index
++            if (index < 1 || spawnReservations[index] !== npc) {
++                spawnQueue[i - 1] = null
++                continue
++            }
+             if (!spawn(npc)) {
+                 logger.warn { "Failed to spawn $npc" }
+             } else {
+                 size++
+             }
++            spawnReservations[index] = null
+             spawnQueue[i - 1] = null
+         }
+         spawnIndex = 0
+@@ -68,11 +87,11 @@ object NPCs : Runnable,
+ 
+     fun add(id: String, tile: Tile, direction: Direction = Direction.SOUTH): NPC {
+         val def = NPCDefinitions.getOrNull(id) ?: return NPC(id, tile, NPCDefinition.EMPTY)
++        if (spawnIndex >= spawnQueue.size) return NPC(id, tile, NPCDefinition.EMPTY)
+         val index = index() ?: return NPC(id, tile, NPCDefinition.EMPTY)
+         val npc = NPC(id, tile, def, index)
+-        if (spawnIndex < spawnQueue.size) {
+-            spawnQueue[spawnIndex++] = npc
+-        }
++        spawnReservations[index] = npc
++        spawnQueue[spawnIndex++] = npc
+         npc.face(direction)
+         return npc
+     }
+@@ -111,9 +130,15 @@ object NPCs : Runnable,
+             logger.warn { "Unable to remove npc $npc." }
+             return false
+         }
++        val index = npc.index
++        if (indexArray.getOrNull(index) !== npc && spawnReservations.getOrNull(index) !== npc) {
++            return false
++        }
++        if (removalIdentities[index] != null) return false
+         if (removeIndex < removeQueue.size) {
++            removalIdentities[index] = npc
+             npc.hide = true
+-            removeQueue[removeIndex++] = npc.index
++            removeQueue[removeIndex++] = index
+             return true
+         }
+         return false
+@@ -190,7 +215,7 @@ object NPCs : Runnable,
+             return indexer++
+         }
+         for (i in 1 until indexArray.size) {
+-            if (indexArray[i] == null) {
++            if (indexArray[i] == null && spawnReservations[i] == null) {
+                 return i
+             }
+         }
+@@ -226,9 +251,7 @@ object NPCs : Runnable,
+ 
+     fun clear(region: RegionLevel) {
+         regionMap.onEach(region.id) { index ->
+-            if (removeIndex < removeQueue.size) {
+-                removeQueue[removeIndex++] = index
+-            }
++            remove(indexed(index))
+         }
+     }
+ 
+@@ -236,8 +259,17 @@ object NPCs : Runnable,
+         for (npc in this) {
+             Despawn.npc(npc)
+             npc.softTimers.stopAll()
++            npc.index = -1
+         }
++        for (npc in spawnReservations) npc?.index = -1
++        spawnReservations.fill(null)
++        removalIdentities.fill(null)
++        spawnQueue.fill(null)
++        removeQueue.fill(-1)
++        spawnIndex = 0
++        removeIndex = 0
+         indexArray.fill(null)
++        spawns.clear()
+         indexer = 1
+         size = 0
+         regionMap.clear()
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCsTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCsTest.kt
+index ec5c8c8..ec5ec76 100644
+--- a/engine/src/test/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCsTest.kt
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCsTest.kt
+@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach
+ import org.junit.jupiter.api.Test
+ import world.gregs.voidps.cache.definition.data.NPCDefinition
+ import world.gregs.voidps.engine.data.definition.NPCDefinitions
++import world.gregs.voidps.engine.entity.MAX_NPCS
+ import world.gregs.voidps.type.Tile
+ 
+ class NPCsTest {
+@@ -81,4 +82,196 @@ class NPCsTest {
+         assertNull(NPCs.indexed(1))
+         assertEquals(0, NPCs.size)
+     }
++
++    // Native engine contract only: deferred NPCs queue APIs with the fake test definition.
++    // Not a network or physical reachability test.
++
++    @Test
++    fun `Duplicate queued removal does not decrement size twice`() {
++        try {
++            val npc1 = NPCs.add("test", Tile(1))
++            val npc2 = NPCs.add("test", Tile(1))
++            val index1 = npc1.index
++            NPCs.run()
++            assertEquals(2, NPCs.size)
++
++            NPCs.remove(npc1)
++            NPCs.remove(npc1)
++            NPCs.run()
++
++            assertEquals(1, NPCs.size)
++            assertNull(NPCs.indexed(index1))
++            val live = NPCs.toList()
++            assertEquals(1, live.size)
++            assertSame(npc2, live.single())
++            assertSame(npc2, NPCs.indexed(npc2.index))
++        } finally {
++            drainQueues()
++        }
++    }
++
++    @Test
++    fun `Add then remove before run never spawns a ghost`() {
++        try {
++            val npc = NPCs.add("test", Tile(1))
++            val index = npc.index
++            assertTrue(NPCs.remove(npc))
++            NPCs.run()
++
++            assertNull(NPCs.indexed(index))
++            assertTrue(NPCs.toList().isEmpty())
++            assertEquals(0, NPCs.size)
++        } finally {
++            drainQueues()
++        }
++    }
++
++    @Test
++    fun `Queued adds reserve distinct indices at the array limit`() {
++        val indexer = indexerField()
++        val original = indexer.getInt(NPCs)
++        try {
++            indexer.setInt(NPCs, MAX_NPCS)
++            val npc1 = NPCs.add("test", Tile(1))
++            val npc2 = NPCs.add("test", Tile(2))
++            assertNotEquals(npc1.index, npc2.index)
++            NPCs.run()
++
++            assertEquals(2, NPCs.size)
++            assertSame(npc1, NPCs.indexed(npc1.index))
++            assertSame(npc2, NPCs.indexed(npc2.index))
++            val live = NPCs.toList()
++            assertEquals(2, live.size)
++            assertTrue(live.any { it === npc1 })
++            assertTrue(live.any { it === npc2 })
++        } finally {
++            indexer.setInt(NPCs, original)
++            drainQueues()
++        }
++    }
++
++    @Test
++    fun `Global clear discards pending spawns and removals`() {
++        try {
++            val existing = NPCs.add("test", Tile(1))
++            NPCs.run()
++            val pending = NPCs.add("test", Tile(2))
++            NPCs.remove(existing)
++
++            NPCs.clear()
++            NPCs.run()
++
++            assertEquals(0, NPCs.size)
++            assertTrue(NPCs.toList().isEmpty())
++            assertNull(NPCs.indexed(pending.index))
++        } finally {
++            drainQueues()
++        }
++    }
++
++    @Test
++    fun `Stale NPC after global clear cannot remove replacement at reused index`() {
++        try {
++            val stale = NPCs.add("test", Tile(1))
++            NPCs.run()
++            val staleIndex = stale.index
++            NPCs.clear()
++
++            val replacement = NPCs.add("test", Tile(2))
++            NPCs.run()
++            assertEquals(staleIndex, replacement.index, "clear must reset allocation for this reuse fixture")
++
++            NPCs.remove(stale)
++            NPCs.run()
++
++            assertSame(replacement, NPCs.indexed(replacement.index))
++            assertEquals(1, NPCs.size)
++            val live = NPCs.toList()
++            assertEquals(1, live.size)
++            assertSame(replacement, live.single())
++        } finally {
++            drainQueues()
++        }
++    }
++
++    @Test
++    fun `Region clear and explicit removal share one retirement`() {
++        try {
++            val inside = NPCs.add("test", Tile(64, 64))
++            val outside = NPCs.add("test", Tile(128, 128))
++            NPCs.run()
++            NPCs.clear(inside.tile.regionLevel)
++            NPCs.remove(inside)
++            NPCs.run()
++            assertEquals(1, NPCs.size)
++            assertEquals(1, NPCs.toList().size)
++            assertSame(outside, NPCs.indexed(outside.index))
++        } finally {
++            drainQueues()
++        }
++    }
++
++    @Test
++    fun `Global clear retires old spawn tile lookup before index reuse`() {
++        try {
++            val oldTile = Tile(64, 64)
++            NPCs.add("test", oldTile)
++            NPCs.run()
++            NPCs.clear()
++            val replacement = NPCs.add("test", Tile(128, 128))
++            NPCs.run()
++            assertNull(NPCs.findBySpawnOrNull(oldTile, "test"))
++            assertSame(replacement, NPCs.findBySpawnOrNull(replacement.tile, "test"))
++        } finally {
++            drainQueues()
++        }
++    }
++
++    @Test
++    fun `Retired spawn lookup cannot resolve a different NPC after index reuse`() {
++        val indexer = indexerField()
++        val original = indexer.getInt(NPCs)
++        try {
++            val originalTile = Tile(64, 64)
++            val originalNpc = NPCs.add("test", originalTile)
++            NPCs.run()
++            val retiredIndex = originalNpc.index
++            NPCs.remove(originalNpc)
++            NPCs.run()
++            indexer.setInt(NPCs, MAX_NPCS)
++            val replacement = NPCs.add("test", Tile(128, 128))
++            NPCs.run()
++            assertEquals(retiredIndex, replacement.index, "fixture reuses the retired slot")
++            assertNull(NPCs.findBySpawnOrNull(originalTile, "test"))
++            assertSame(replacement, NPCs.findBySpawnOrNull(replacement.tile, "test"))
++        } finally {
++            indexer.setInt(NPCs, original)
++            drainQueues()
++        }
++    }
++
++    @Test
++    fun `Retiring one overlapping spawn preserves the other lookup`() {
++        try {
++            val tile = Tile(64, 64)
++            val first = NPCs.add("test", tile)
++            val second = NPCs.add("test", tile)
++            NPCs.run()
++            assertSame(second, NPCs.findBySpawnOrNull(tile, "test"))
++            NPCs.remove(first)
++            NPCs.run()
++            assertSame(second, NPCs.findBySpawnOrNull(tile, "test"))
++            assertEquals(1, NPCs.size)
++        } finally {
++            drainQueues()
++        }
++    }
++
++    private fun indexerField() = NPCs::class.java.getDeclaredField("indexer").apply { isAccessible = true }
++
++    // Also keeps the pre-fix red run isolated: the old clear() left deferred queues intact.
++    private fun drainQueues() {
++        NPCs.run()
++        NPCs.clear()
++    }
+ }
