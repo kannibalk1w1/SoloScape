@@ -1,0 +1,149 @@
+{
+  "audio_excluded": true,
+  "base_commit": "755adde",
+  "cache_file_count": 39,
+  "client_patch_count": 56,
+  "compared_account_fields_equal": true,
+  "instrumentation_sources": {
+    "NativeAdventureProbe": "dce5b1a96ec30c8ea2d3ba6e59d1edb7400a31cb1fc39b23317e9f9a16cb59fa",
+    "NativeArtworkProbe": "11ccd9d4d33c6a614fb8573693f638069cefdf3dc8d6d0a588810481ee2e0094",
+    "NativeBloodPactProbe": "9527e5b56bc348ad6be9102abb58faed8c524b174b2eda2cb11b08b764c6e960",
+    "NativeContentCoverageProbe": "b09fd70e62526f065ee93fdef10be21b9b881aafe8b66fe529f47bf7a17c35d8",
+    "NativeDeck60Probe": "e002394a2e7b83f7de7788bccdfa66a29eabc76a2252704378b17d159361fe8c",
+    "NativeDeckRouteProbe": "cbbad7eb00c7134b88d2268f869b7d458bc1eadecc77dd747fd7551c7360c316",
+    "NativeFullscreenProbe": "300eeecf84efc0945d16e4c43c0a051b04c5399218c3189844da11ffb9d4bf41",
+    "NativeMapProbe": "d36920d803dfd996d3d9665f0bd83c30b8d6f6d710646d6a749d0069626e059c",
+    "NativePerformanceProbe": "9b5556c62fe45cea86dc713888767827f86749107c608c999768ee5c07515f04",
+    "NativePlayableLoopProbe": "3dafe1ef0e1b157ad9f2d71ddc1aba3095a8c4818b225545cc52ea84c22656f7",
+    "NativePlaytestTwoProbe": "c2471854ffc358b40247b68ee35fec219df5719f9f47ec6e712b7889d590e65c",
+    "NativeQuitProbe": "6eb6e30bce8629180e0f8d176f72230fcefa4112abdd3e1cd09fa6b1b217dbd5",
+    "NativeSessionSmoke": "5aad712572eddbeddade9e45025c90c6233038c1218d8529f35e5e3d9dd9f1c0",
+    "NativeSidebarProbe": "e06211edd5c62586b396466e5c808565570a7c252ffa1c5e86a9f81954842460",
+    "NativeTabBarProbe": "a7cc707e047887def1c2c7fb7abad0f7e7048b3632f41af7236a3c99035da47b",
+    "NativeTextProbe": "881b5a5c43f00bb42feb66bd71de257fbcba44a9d372047f6dbbff44e5cec7bd"
+  },
+  "jars": {
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b",
+    "server": "43d001e80f6a4a1ceff529d3e5a25d1a6312d1da48ca34e72480474f6d2f6e30"
+  },
+  "passed": true,
+  "payload_tree_sha256": "eac7a9192822f0c4e10ff02fd56e8474809e2b88349ee4f4092041aa58368a9e",
+  "payload_unchanged": true,
+  "pins": {
+    "634-client": "b39d45f49a0480f3f200fe3e31ad0798faf163ab",
+    "game-server": "9f9113559eb686abd917893b5dca16404be07f93",
+    "runelite-client": "297bc8a4861755b676855664d32859054779c067"
+  },
+  "private_cache_unchanged": true,
+  "private_report": ".runtime/prebuilt-session/1792262812432617514/summary.json",
+  "production_source_doctor_bypassed_after_preparation_verification": true,
+  "release_package_authentication": false,
+  "rounds": [
+    {
+      "client_exit": 0,
+      "elapsed_seconds": 23.917,
+      "events": [
+        [
+          "backup",
+          "Verifying a backup before starting this world\u2026"
+        ],
+        [
+          "starting",
+          "Loading this character\u2019s local world\u2026"
+        ],
+        [
+          "connecting",
+          "Opening the game on localhost\u2026"
+        ],
+        [
+          "playing",
+          "World ready. Save & Quit waits for normal save hooks."
+        ],
+        [
+          "saving",
+          "Saving and closing your local world\u2026"
+        ],
+        [
+          "backup",
+          "Verifying the saved-world backup\u2026"
+        ],
+        [
+          "stopped",
+          "World saved and verified. You can continue later."
+        ]
+      ],
+      "native_world_marker": "state=10\nworldReady=true\nserverCapabilities=verified\nvisibleTabs=261887\nsceneX=27392\nsceneY=26368\n",
+      "processes": [
+        {
+          "cwd": "server",
+          "pid": 3465296,
+          "role": "server"
+        },
+        {
+          "cwd": "client",
+          "pid": 3465626,
+          "role": "client"
+        }
+      ],
+      "round": "new",
+      "verified_closure": true
+    },
+    {
+      "client_exit": 0,
+      "elapsed_seconds": 22.764,
+      "events": [
+        [
+          "backup",
+          "Verifying a backup before starting this world\u2026"
+        ],
+        [
+          "starting",
+          "Loading this character\u2019s local world\u2026"
+        ],
+        [
+          "connecting",
+          "Opening the game on localhost\u2026"
+        ],
+        [
+          "playing",
+          "World ready. Save & Quit waits for normal save hooks."
+        ],
+        [
+          "saving",
+          "Saving and closing your local world\u2026"
+        ],
+        [
+          "backup",
+          "Verifying the saved-world backup\u2026"
+        ],
+        [
+          "stopped",
+          "World saved and verified. You can continue later."
+        ]
+      ],
+      "native_world_marker": "state=10\nworldReady=true\nserverCapabilities=verified\nvisibleTabs=261887\nsceneX=27392\nsceneY=26368\n",
+      "processes": [
+        {
+          "cwd": "server",
+          "pid": 3467568,
+          "role": "server"
+        },
+        {
+          "cwd": "client",
+          "pid": 3467851,
+          "role": "client"
+        }
+      ],
+      "round": "continue",
+      "verified_closure": true
+    }
+  ],
+  "runner_sha256": "f81a5c4c595eaf90e0a62cc9de37856433ef4184ac134bf571070076ff9d4cc6",
+  "scope": "Private Xvfb/software/no-audio New/Continue only; no graphical launcher, update activation, controller, audio or Deck acceptance.",
+  "server_patch_count": 42,
+  "source_cache_unchanged": true,
+  "source_checkout_still_mounted": true,
+  "source_data_bytes": 8530252,
+  "source_data_files": 3843,
+  "verified_backups": 4
+}

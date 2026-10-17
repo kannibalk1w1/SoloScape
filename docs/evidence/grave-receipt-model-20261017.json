@@ -1,0 +1,1566 @@
+{
+  "all_passed": true,
+  "cases": [
+    {
+      "case": "1a-death-before-save",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 75
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 0,
+        "guest": 0,
+        "owner": 10,
+        "piles": 0,
+        "receipts": 0
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 10,
+          "name": "alpha",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 1,
+          "source_high_water": 0
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 0,
+          "name": "beta",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 1,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3274082,
+        "dump": 3274176,
+        "recover": 3274199,
+        "step-1-death": 3274108
+      },
+      "recover": {
+        "floor": 0,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 0
+        },
+        "live_piles": [],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 10
+        },
+        "receipts": []
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "1b-death-after-save",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 75
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 2,
+        "guest": 0,
+        "owner": 8,
+        "piles": 1,
+        "receipts": 0
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [
+            {
+              "base": 2,
+              "id": "original-pile-1",
+              "remaining_ticks": 1000,
+              "source_seq": 1
+            }
+          ],
+          "receipts": [],
+          "save_generation": 2,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 0,
+          "name": "beta",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 1,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3274222,
+        "dump": 3274338,
+        "recover": 3274359,
+        "step-1-death": 3274246
+      },
+      "recover": {
+        "floor": 2,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 0
+        },
+        "live_piles": [
+          {
+            "base": 2,
+            "claimed": 0,
+            "floor": 2,
+            "id": "original-pile-1",
+            "source_seq": 1
+          }
+        ],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": []
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "2a-pickup-before-save",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-pickup": 75
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 2,
+        "guest": 0,
+        "owner": 8,
+        "piles": 1,
+        "receipts": 0
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [
+            {
+              "base": 2,
+              "id": "original-pile-1",
+              "remaining_ticks": 1000,
+              "source_seq": 1
+            }
+          ],
+          "receipts": [],
+          "save_generation": 2,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 0,
+          "name": "beta",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 1,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3274381,
+        "dump": 3274500,
+        "recover": 3274521,
+        "step-1-death": 3274418,
+        "step-2-pickup": 3274479
+      },
+      "recover": {
+        "floor": 2,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 0
+        },
+        "live_piles": [
+          {
+            "base": 2,
+            "claimed": 0,
+            "floor": 2,
+            "id": "original-pile-1",
+            "source_seq": 1
+          }
+        ],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": []
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "2b-pickup-after-save",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-pickup": 75
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 0,
+        "guest": 2,
+        "owner": 8,
+        "piles": 1,
+        "receipts": 1
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [
+            {
+              "base": 2,
+              "id": "original-pile-1",
+              "remaining_ticks": 1000,
+              "source_seq": 1
+            }
+          ],
+          "receipts": [],
+          "save_generation": 2,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 2,
+          "name": "beta",
+          "piles": [],
+          "receipts": [
+            {
+              "claim_id": "claim-1",
+              "owner": "alpha",
+              "pile_id": "original-pile-1",
+              "quantity": 2,
+              "source_seq": 1
+            }
+          ],
+          "save_generation": 2,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3274542,
+        "dump": 3274713,
+        "recover": 3274736,
+        "step-1-death": 3274617,
+        "step-2-pickup": 3274640
+      },
+      "recover": {
+        "floor": 0,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 2
+        },
+        "live_piles": [
+          {
+            "base": 2,
+            "claimed": 2,
+            "floor": 0,
+            "id": "original-pile-1",
+            "source_seq": 1
+          }
+        ],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": [
+          {
+            "claim_id": "claim-1",
+            "quantity": 2,
+            "source_seq": 1,
+            "status": "applied"
+          }
+        ]
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "2c-barrier-refuses-pickup-before-death",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-pickup": 2
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 0,
+        "guest": 0,
+        "owner": 10,
+        "piles": 0,
+        "receipts": 0
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 10,
+          "name": "alpha",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 1,
+          "source_high_water": 0
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 0,
+          "name": "beta",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 1,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3274757,
+        "dump": 3274827,
+        "recover": 3274874,
+        "step-1-pickup": 3274780
+      },
+      "recover": {
+        "floor": 0,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 0
+        },
+        "live_piles": [],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 10
+        },
+        "receipts": []
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "2d-repeated-pickup-refuses-without-mutation",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-pickup": 0,
+        "step-3-pickup": 2
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 0,
+        "guest": 2,
+        "owner": 8,
+        "piles": 1,
+        "receipts": 1
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [
+            {
+              "base": 2,
+              "id": "original-pile-1",
+              "remaining_ticks": 1000,
+              "source_seq": 1
+            }
+          ],
+          "receipts": [],
+          "save_generation": 2,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 2,
+          "name": "beta",
+          "piles": [],
+          "receipts": [
+            {
+              "claim_id": "claim-1",
+              "owner": "alpha",
+              "pile_id": "original-pile-1",
+              "quantity": 2,
+              "source_seq": 1
+            }
+          ],
+          "save_generation": 2,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3274895,
+        "dump": 3275038,
+        "recover": 3275060,
+        "step-1-death": 3274919,
+        "step-2-pickup": 3274993,
+        "step-3-pickup": 3275017
+      },
+      "recover": {
+        "floor": 0,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 2
+        },
+        "live_piles": [
+          {
+            "base": 2,
+            "claimed": 2,
+            "floor": 0,
+            "id": "original-pile-1",
+            "source_seq": 1
+          }
+        ],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": [
+          {
+            "claim_id": "claim-1",
+            "quantity": 2,
+            "source_seq": 1,
+            "status": "applied"
+          }
+        ]
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "3-owner-resave-keeps-base-applies-once",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-pickup": 0,
+        "step-3-resave": 0
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 0,
+        "guest": 2,
+        "owner": 8,
+        "piles": 1,
+        "receipts": 1
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [
+            {
+              "base": 2,
+              "id": "original-pile-1",
+              "remaining_ticks": 1000,
+              "source_seq": 1
+            }
+          ],
+          "receipts": [],
+          "save_generation": 3,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 2,
+          "name": "beta",
+          "piles": [],
+          "receipts": [
+            {
+              "claim_id": "claim-1",
+              "owner": "alpha",
+              "pile_id": "original-pile-1",
+              "quantity": 2,
+              "source_seq": 1
+            }
+          ],
+          "save_generation": 2,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3275119,
+        "dump": 3275297,
+        "recover": 3275320,
+        "step-1-death": 3275154,
+        "step-2-pickup": 3275178,
+        "step-3-resave": 3275253
+      },
+      "recover": {
+        "floor": 0,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 2
+        },
+        "live_piles": [
+          {
+            "base": 2,
+            "claimed": 2,
+            "floor": 0,
+            "id": "original-pile-1",
+            "source_seq": 1
+          }
+        ],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": [
+          {
+            "claim_id": "claim-1",
+            "quantity": 2,
+            "source_seq": 1,
+            "status": "applied"
+          }
+        ]
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "4a-claimed-coins-banked",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-pickup": 0,
+        "step-3-bank": 0
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 0,
+        "guest": 2,
+        "owner": 8,
+        "piles": 1,
+        "receipts": 1
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [
+            {
+              "base": 2,
+              "id": "original-pile-1",
+              "remaining_ticks": 1000,
+              "source_seq": 1
+            }
+          ],
+          "receipts": [],
+          "save_generation": 2,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 2,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 0,
+          "name": "beta",
+          "piles": [],
+          "receipts": [
+            {
+              "claim_id": "claim-1",
+              "owner": "alpha",
+              "pile_id": "original-pile-1",
+              "quantity": 2,
+              "source_seq": 1
+            }
+          ],
+          "save_generation": 3,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3275355,
+        "dump": 3275538,
+        "recover": 3275559,
+        "step-1-death": 3275417,
+        "step-2-pickup": 3275440,
+        "step-3-bank": 3275514
+      },
+      "recover": {
+        "floor": 0,
+        "guest": {
+          "bank": 2,
+          "consumed_coins": 0,
+          "inventory": 0
+        },
+        "live_piles": [
+          {
+            "base": 2,
+            "claimed": 2,
+            "floor": 0,
+            "id": "original-pile-1",
+            "source_seq": 1
+          }
+        ],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": [
+          {
+            "claim_id": "claim-1",
+            "quantity": 2,
+            "source_seq": 1,
+            "status": "applied"
+          }
+        ]
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "4b-claimed-coins-consumed-sink",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-pickup": 0,
+        "step-3-consume": 0
+      },
+      "expected": {
+        "consumed": 2,
+        "floor": 0,
+        "guest": 0,
+        "owner": 8,
+        "piles": 1,
+        "receipts": 1
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [
+            {
+              "base": 2,
+              "id": "original-pile-1",
+              "remaining_ticks": 1000,
+              "source_seq": 1
+            }
+          ],
+          "receipts": [],
+          "save_generation": 2,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 2,
+          "death_sequence": 0,
+          "inventory": 0,
+          "name": "beta",
+          "piles": [],
+          "receipts": [
+            {
+              "claim_id": "claim-1",
+              "owner": "alpha",
+              "pile_id": "original-pile-1",
+              "quantity": 2,
+              "source_seq": 1
+            }
+          ],
+          "save_generation": 3,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3275582,
+        "dump": 3275777,
+        "recover": 3275800,
+        "step-1-death": 3275654,
+        "step-2-pickup": 3275678,
+        "step-3-consume": 3275750
+      },
+      "recover": {
+        "floor": 0,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 2,
+          "inventory": 0
+        },
+        "live_piles": [
+          {
+            "base": 2,
+            "claimed": 2,
+            "floor": 0,
+            "id": "original-pile-1",
+            "source_seq": 1
+          }
+        ],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": [
+          {
+            "claim_id": "claim-1",
+            "quantity": 2,
+            "source_seq": 1,
+            "status": "applied"
+          }
+        ]
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "5a-halt-after-owner-retirement",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-pickup": 0,
+        "step-3-gc": 75
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 0,
+        "guest": 2,
+        "owner": 8,
+        "piles": 0,
+        "receipts": 1
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 3,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 2,
+          "name": "beta",
+          "piles": [],
+          "receipts": [
+            {
+              "claim_id": "claim-1",
+              "owner": "alpha",
+              "pile_id": "original-pile-1",
+              "quantity": 2,
+              "source_seq": 1
+            }
+          ],
+          "save_generation": 2,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3275823,
+        "dump": 3276020,
+        "recover": 3276042,
+        "step-1-death": 3275897,
+        "step-2-pickup": 3275922,
+        "step-3-gc": 3275983
+      },
+      "recover": {
+        "floor": 0,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 2
+        },
+        "live_piles": [],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": [
+          {
+            "claim_id": "claim-1",
+            "quantity": 2,
+            "source_seq": 1,
+            "status": "retired"
+          }
+        ]
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "5b-halt-after-receipt-gc",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-pickup": 0,
+        "step-3-gc": 75
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 0,
+        "guest": 2,
+        "owner": 8,
+        "piles": 0,
+        "receipts": 0
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 3,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 2,
+          "name": "beta",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 3,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3276066,
+        "dump": 3276279,
+        "recover": 3276301,
+        "step-1-death": 3276140,
+        "step-2-pickup": 3276163,
+        "step-3-gc": 3276200
+      },
+      "recover": {
+        "floor": 0,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 2
+        },
+        "live_piles": [],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": []
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "5c-gc-no-fault-control",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-pickup": 0,
+        "step-3-gc": 0
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 0,
+        "guest": 2,
+        "owner": 8,
+        "piles": 0,
+        "receipts": 0
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 3,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 2,
+          "name": "beta",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 3,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3276322,
+        "dump": 3276520,
+        "recover": 3276543,
+        "step-1-death": 3276398,
+        "step-2-pickup": 3276421,
+        "step-3-gc": 3276447
+      },
+      "recover": {
+        "floor": 0,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 2
+        },
+        "live_piles": [],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": []
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "5d-repeat-gc-is-idempotent",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-pickup": 0,
+        "step-3-gc": 0,
+        "step-4-gc": 0
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 0,
+        "guest": 2,
+        "owner": 8,
+        "piles": 0,
+        "receipts": 0
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 3,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 2,
+          "name": "beta",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 3,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3276564,
+        "dump": 3276782,
+        "recover": 3276804,
+        "step-1-death": 3276636,
+        "step-2-pickup": 3276662,
+        "step-3-gc": 3276685,
+        "step-4-gc": 3276760
+      },
+      "recover": {
+        "floor": 0,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 2
+        },
+        "live_piles": [],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": []
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "5e-halt-before-receipt-gc",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-pickup": 0,
+        "step-3-gc": 75
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 0,
+        "guest": 2,
+        "owner": 8,
+        "piles": 0,
+        "receipts": 1
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 3,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 2,
+          "name": "beta",
+          "piles": [],
+          "receipts": [
+            {
+              "claim_id": "claim-1",
+              "owner": "alpha",
+              "pile_id": "original-pile-1",
+              "quantity": 2,
+              "source_seq": 1
+            }
+          ],
+          "save_generation": 2,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3276826,
+        "dump": 3277022,
+        "recover": 3277045,
+        "step-1-death": 3276900,
+        "step-2-pickup": 3276924,
+        "step-3-gc": 3276961
+      },
+      "recover": {
+        "floor": 0,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 2
+        },
+        "live_piles": [],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": [
+          {
+            "claim_id": "claim-1",
+            "quantity": 2,
+            "source_seq": 1,
+            "status": "retired"
+          }
+        ]
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "6-stale-backup-owner-refused",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 2,
+        "step-1-death": 0,
+        "step-2-pickup": 0,
+        "step-4-gc": 2
+      },
+      "expected": "refuse",
+      "failures": [],
+      "measured_total": 12,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 10,
+          "name": "alpha",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 1,
+          "source_high_water": 0
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 2,
+          "name": "beta",
+          "piles": [],
+          "receipts": [
+            {
+              "claim_id": "claim-1",
+              "owner": "alpha",
+              "pile_id": "original-pile-1",
+              "quantity": 2,
+              "source_seq": 1
+            }
+          ],
+          "save_generation": 2,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3277066,
+        "dump": 3277278,
+        "recover": 3277302,
+        "step-1-death": 3277142,
+        "step-2-pickup": 3277165,
+        "step-4-gc": 3277209
+      },
+      "recover": null,
+      "recover_refusal": "PROBE_PID 3277302\nREFUSED: missing owner record below receipt sequence; refusing"
+    },
+    {
+      "case": "7-fallback-file-not-promoted",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-fallback-pickup": 0
+      },
+      "expected": {
+        "consumed": 0,
+        "floor": 2,
+        "guest": 0,
+        "owner": 8,
+        "piles": 1,
+        "receipts": 0
+      },
+      "failures": [],
+      "measured_total": 10,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [
+            {
+              "base": 2,
+              "id": "original-pile-1",
+              "remaining_ticks": 1000,
+              "source_seq": 1
+            }
+          ],
+          "receipts": [],
+          "save_generation": 2,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 0,
+          "name": "beta",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 1,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3277323,
+        "dump": 3277451,
+        "recover": 3277473,
+        "step-1-death": 3277346,
+        "step-2-fallback-pickup": 3277429
+      },
+      "recover": {
+        "floor": 2,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "inventory": 0
+        },
+        "live_piles": [
+          {
+            "base": 2,
+            "claimed": 0,
+            "floor": 2,
+            "id": "original-pile-1",
+            "source_seq": 1
+          }
+        ],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": []
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "8a-control-bypass-source-barrier",
+      "control": true,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 2,
+        "step-1-bypass-pickup": 0
+      },
+      "expected": "refuse",
+      "failures": [],
+      "measured_total": 12,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 10,
+          "name": "alpha",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 1,
+          "source_high_water": 0
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 0,
+          "inventory": 2,
+          "name": "beta",
+          "piles": [],
+          "receipts": [
+            {
+              "claim_id": "claim-1",
+              "owner": "alpha",
+              "pile_id": "original-pile-1",
+              "quantity": 2,
+              "source_seq": 1
+            }
+          ],
+          "save_generation": 2,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "EXPECTED_BAD_STATE_DETECTED",
+      "pids": {
+        "baseline": 3277501,
+        "dump": 3277598,
+        "recover": 3277621,
+        "step-1-bypass-pickup": 3277574
+      },
+      "recover": null,
+      "recover_refusal": "PROBE_PID 3277621\nREFUSED: missing owner record below receipt sequence; refusing"
+    },
+    {
+      "case": "8b-control-erased-receipt-after-consume",
+      "control": true,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 0,
+        "recover": 0,
+        "step-1-death": 0,
+        "step-2-pickup": 0,
+        "step-3-consume": 0,
+        "step-4-erase-receipt": 0
+      },
+      "expected": {
+        "consumed": 2,
+        "floor": 2,
+        "guest": 0,
+        "owner": 8,
+        "piles": 1,
+        "receipts": 0
+      },
+      "failures": [],
+      "measured_total": 12,
+      "native_dump": {
+        "alpha": {
+          "bank": 0,
+          "consumed_coins": 0,
+          "death_sequence": 1,
+          "inventory": 8,
+          "name": "alpha",
+          "piles": [
+            {
+              "base": 2,
+              "id": "original-pile-1",
+              "remaining_ticks": 1000,
+              "source_seq": 1
+            }
+          ],
+          "receipts": [],
+          "save_generation": 2,
+          "source_high_water": 1
+        },
+        "beta": {
+          "bank": 0,
+          "consumed_coins": 2,
+          "death_sequence": 0,
+          "inventory": 0,
+          "name": "beta",
+          "piles": [],
+          "receipts": [],
+          "save_generation": 4,
+          "source_high_water": 0
+        },
+        "native_loaded_accounts": 2
+      },
+      "outcome": "EXPECTED_BAD_STATE_DETECTED",
+      "pids": {
+        "baseline": 3277690,
+        "dump": 3277897,
+        "recover": 3277932,
+        "step-1-death": 3277716,
+        "step-2-pickup": 3277739,
+        "step-3-consume": 3277813,
+        "step-4-erase-receipt": 3277837
+      },
+      "recover": {
+        "floor": 2,
+        "guest": {
+          "bank": 0,
+          "consumed_coins": 2,
+          "inventory": 0
+        },
+        "live_piles": [
+          {
+            "base": 2,
+            "claimed": 0,
+            "floor": 2,
+            "id": "original-pile-1",
+            "source_seq": 1
+          }
+        ],
+        "native_loaded_accounts": 2,
+        "owner": {
+          "bank": 0,
+          "inventory": 8
+        },
+        "receipts": []
+      },
+      "recover_refusal": null
+    },
+    {
+      "case": "9a-symlinked-guest-refused",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 2,
+        "recover": 2,
+        "step-1-death": 0,
+        "step-2-pickup": 0
+      },
+      "expected": "refuse",
+      "failures": [],
+      "measured_total": null,
+      "native_dump": null,
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3277954,
+        "dump": 3278077,
+        "recover": 3278099,
+        "step-1-death": 3277977,
+        "step-2-pickup": 3278052
+      },
+      "recover": null,
+      "recover_refusal": "PROBE_PID 3278099\nREFUSED: not a regular account file: beta.toml"
+    },
+    {
+      "case": "9b-traversal-receipt-owner-refused",
+      "control": false,
+      "exit_codes": {
+        "baseline": 0,
+        "dump": 2,
+        "recover": 2,
+        "step-1-death": 0,
+        "step-2-pickup": 0
+      },
+      "expected": "refuse",
+      "failures": [],
+      "measured_total": null,
+      "native_dump": null,
+      "outcome": "PASSED",
+      "pids": {
+        "baseline": 3278132,
+        "dump": 3278310,
+        "recover": 3278332,
+        "step-1-death": 3278195,
+        "step-2-pickup": 3278235
+      },
+      "recover": null,
+      "recover_refusal": "PROBE_PID 3278332\nREFUSED: identity is not a bounded identifier"
+    }
+  ],
+  "cases_run": 20,
+  "controls": 2,
+  "controls_detected": 2,
+  "failures": [],
+  "helper_source_sha256": {
+    "after": "21527e289225115f90b6f71cbc8ff49f9cc8cd3bc7218a4cb988051776fe58a4",
+    "before": "21527e289225115f90b6f71cbc8ff49f9cc8cd3bc7218a4cb988051776fe58a4"
+  },
+  "mode": "native-grave-receipt-whole-pile-restricted-model",
+  "protocol_cases": 18,
+  "protocol_passed": 18,
+  "run": ".runtime/native-grave-receipt/1792260876776172274",
+  "runner_sha256": {
+    "after": "b17bf9204a9c12b6c25c638b32f3c7bab7cb549f2611153f37fa2ae8bb467402",
+    "before": "b17bf9204a9c12b6c25c638b32f3c7bab7cb549f2611153f37fa2ae8bb467402"
+  },
+  "scope": "Fixture-only process-exit cuts over original TOML-sourced PlayerSave files. Not power loss, not live world, not SaveQueue, not production storage, not a save-format decision.",
+  "server_jar_sha256": "90c350b5d97ee93be4c96ba1706e912ec0d2c4355b89cab084c6478300f3d88a",
+  "server_jar_unchanged_after_run": true
+}

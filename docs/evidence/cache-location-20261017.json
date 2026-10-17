@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "elapsed_seconds": 5.041,
+  "events": [
+    {
+      "stage": "backup",
+      "message": "Verifying a backup before starting this world\u2026"
+    },
+    {
+      "stage": "starting",
+      "message": "Loading this character\u2019s local world\u2026"
+    },
+    {
+      "stage": "playing",
+      "message": "World ready. Save & Quit waits for normal save hooks."
+    },
+    {
+      "stage": "saving",
+      "message": "Saving and closing your local world\u2026"
+    },
+    {
+      "stage": "backup",
+      "message": "Verifying the saved-world backup\u2026"
+    },
+    {
+      "stage": "stopped",
+      "message": "World saved and verified. You can continue later."
+    }
+  ],
+  "error": null,
+  "cache_files": 39,
+  "cache_unchanged": true,
+  "client_enabled": false,
+  "real_profile_session": true,
+  "invalid_inherited_cache_overridden": true,
+  "account_files": 0,
+  "backups": 2,
+  "base_commit": "1425509",
+  "server_patch_count": 42,
+  "client_patch_count": 55,
+  "tooling_tests": 207,
+  "tooling_optional_skips": 1,
+  "private_report": ".runtime/cache-location-20261017/1792262084177034212/summary.json",
+  "owner_install_access": false
+}

@@ -1,0 +1,42 @@
+{
+  "base_commit": "c8ad11a",
+  "tooling_tests": 215,
+  "tooling_optional_skips": 1,
+  "native_java_suites": [
+    {
+      "suite": "net.runelite.client.soloscape.launcher.LauncherPathsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "net.runelite.client.soloscape.launcher.LauncherKeyboardTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "net.runelite.client.soloscape.launcher.LauncherControllerInputTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "native_total": 10,
+  "server_patch_count": 42,
+  "client_patch_count": 56,
+  "matched_jars": {
+    "server": "43d001e80f6a4a1ceff529d3e5a25d1a6312d1da48ca34e72480474f6d2f6e30",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+  },
+  "source_verified_client_files": 140,
+  "source_verified_server_files": 87,
+  "original_art_fixture": true,
+  "settings_across_two_disposable_code_roots": true,
+  "private_report_directory": ".runtime/launcher-location-20261017",
+  "owner_install_access": false,
+  "physical_acceptance": false
+}

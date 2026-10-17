@@ -5,6 +5,9 @@ if [[ -f "$root/config/local.env" ]]; then
   # shellcheck source=/dev/null
   source "$root/config/local.env"
 fi
+# Preserve unset defaults, but export explicit local.env selectors to child processes.
+if [[ -v SOLOSCAPE_PROFILE_HOME ]]; then export SOLOSCAPE_PROFILE_HOME; fi
+if [[ -v SOLOSCAPE_CACHE_HOME ]]; then export SOLOSCAPE_CACHE_HOME; fi
 export SERVER_JAVA=${SERVER_JAVA:-java}
 export CLIENT_JAVA=${CLIENT_JAVA:-java}
 exec python3 "$root/scripts/local_dev.py" doctor

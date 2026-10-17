@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "4f2a4c2",
+  "reviewed_base": "c26b1ca",
   "entries": [
     {
       "id": "controls",
@@ -331,6 +331,70 @@
       "note": "Two fresh actual FileStorage/PlayerSave JVM runs show the first account advances when the second write is refused. Original fixtures only; no SaveQueue/world/power-cut test. Shared-ledger transaction/recovery remains unimplemented."
     },
     {
+      "id": "grave-checkpoint-process-exit",
+      "scope": "Original-fixture native account checkpoint publication across abrupt JVM exits",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "GRAVE_CHECKPOINT_PROCESS_EXIT_20261017.md",
+      "note": "Eight halt boundaries, one normal publish and five corruption controls pass with42 distinct native JVMs. Exact inventory/pile/timer/version tuples conserve12coins. Publication mechanism only; no live grave persistence, power-loss or profile integration proof."
+    },
+    {
+      "id": "offline-save-failure-retention",
+      "scope": "Failed queued offline saves remain pending through fallback and final confirmation",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "OFFLINE_SAVE_FAILURE_RETENTION_20261017.md",
+      "note": "Three actual FileStorage/SaveQueue reds;13 queue and15 official engine save-group cases pass. Primary retry restores the snapshot; fallback never retires it. No network logout/Main receipt, target-hardware or power-cut acceptance."
+    },
+    {
+      "id": "grave-receipt-model",
+      "scope": "Original-fixture native whole-pile receipt/source-barrier comparator",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "GRAVE_RECEIPT_MODEL_20261017.md",
+      "note": "20 scenarios:18 restricted guard/exit outcomes and2 unsafe controls. Actual native inventory reloads; erased receipt is accepted by protocol and caught only by the independent oracle. No live save integration, production schema or power-loss acceptance."
+    },
+    {
+      "id": "prebuilt-native-server-closure",
+      "scope": "Private prebuilt empty-server payload without source layout and a safe runtime-data selector",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "PREBUILT_NATIVE_SERVER_20261017.md",
+      "note": "11 original selector boundary tests; actual server42 boots/closes with3843 data inputs and separate cache/state. Exact receipt and unchanged payload/caches. Host4.210s startup,1.33GiB observed high-water RSS; no client/launcher, character, Deck or distribution acceptance."
+    },
+    {
+      "id": "external-cache-location",
+      "scope": "Explicit external shared cache input for doctor and owned native launches",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "CACHE_LOCATION_20261017.md",
+      "note": "207 tooling cases with one optional skip; actual disposable profile session boots and confirms closure using an external private cache copy. No character/client/Deck acceptance; default and profile-owned client cache unchanged."
+    },
+    {
+      "id": "external-launcher-location",
+      "scope": "Optional shared launcher settings and locally supplied art outside version-owned runtime",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "LAUNCHER_LOCATION_20261017.md",
+      "note": "Disposable two-code-root backend settings round trip; original native scene-art fixture and launcher path/input cases. No migration, managed activation or owner/Deck deployment."
+    },
+    {
+      "id": "prebuilt-native-session",
+      "scope": "Private immutable-payload actual native New/Continue and verified saves",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "PREBUILT_NATIVE_SESSION_20261017.md",
+      "note": "Real fixture account/XP/inventory/tile survives fresh JVMs; four verified backups, payload/caches unchanged. Xvfb/software/no audio. Production source doctor bypassed after preparation checks; no launcher, orphan recovery, clean-machine, update or Deck acceptance."
+    },
+    {
+      "id": "prebuilt-launcher-contract",
+      "scope": "Private manifest/prebuilt preflight and real graphical native New/Continue experiment",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "PREBUILT_LAUNCHER_CONTRACT_20261017.md",
+      "note": "241 tooling cases (one optional skip); original manifest/bootstrap boundaries plus real GUI/native sessions 24.734/24.931s. Four backups, compared account fields and immutable inputs preserved. Software/no audio; no production package, owner deployment, native cross-version/orphan or update acceptance."
+    },
+    {
       "id": "wasm-triangle",
       "scope": "Native flat-colour WASM triangle fill and original synthetic mesh; no full game scene",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
@@ -353,6 +417,14 @@
       "acceptance": "DEFERRED",
       "evidence": "WASM_FACE_PROOF_20261017.md",
       "note": "Ten original synthetic cases match native jar, extracted JVM and WASM, including back-face sensitivity and 18 independent rejection controls; real cache decoding, clipping, lighting and a playable browser client remain unproven. Draft PR27 stays separate from native main."
+    },
+    {
+      "id": "wasm-clipping",
+      "scope": "Draft-only synthetic flat near-plane projection, clipping and fill dispatch",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_CLIPPING_PROOF_20261017.md",
+      "note": "18 camera-0/mask0 clip cases agree across native JVM, extracted JVM and WasmGC with actual extracted fill counts; default10 retained. No model/scene/client or hardware/performance acceptance."
     }
   ]
 }

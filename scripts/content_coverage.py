@@ -67,9 +67,13 @@ def read_results(report_directory, suites, archive):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--group', choices=('early', 'm6', 'journeys', 'summoning', 'capacity', 'dungeon', 'death', 'slayer'), default='early')
+    parser.add_argument('--group', choices=('early', 'm6', 'journeys', 'summoning', 'capacity', 'dungeon', 'death', 'slayer', 'save'), default='early')
     options = parser.parse_args()
     suites = {
+        'save': (
+            'world.gregs.voidps.engine.data.SaveQueueTest',
+            'world.gregs.voidps.engine.data.PlayerSaveTest',
+        ),
         'early': SUITES,
         'm6': M6_SUITES,
         'summoning': SUMMONING_SUITES,
@@ -108,11 +112,12 @@ def main():
         java = Path(shutil.which(str(java)) or str(java))
     env = dict(os.environ, JAVA_HOME=str(java.resolve().parent.parent),
                GRADLE_USER_HOME=str(local_dev.ROOT / '.gradle'), SOLOSCAPE_TEST_ROOT=str(directory))
-    command = ['bash', 'gradlew', '--no-daemon', ':game:test']
+    module = 'engine' if options.group == 'save' else 'game'
+    command = ['bash', 'gradlew', '--no-daemon', f':{module}:test']
     for suite in suites:
         command.extend(['--tests', suite])
     with local_dev.build_lock():
-        report_directory = local_dev.SERVER / 'game/build/test-results/test'
+        report_directory = local_dev.SERVER / module / 'build/test-results/test'
         # Missing outputs force a fresh Gradle test run. Never attribute older XML
         # to a failed compilation or a suite which did not run this invocation.
         for suite in suites:
@@ -121,7 +126,10 @@ def main():
         rows = read_results(report_directory, suites, directory)
         patches = {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
                    for path in sorted((local_dev.ROOT / 'patches/server').glob('*.patch'))}
-    summary = {'environment': 'Isolated host native server; mixed unit, supplied-input and actual-map route fixtures. No graphical or physical controller acceptance. See suite sources for setup.',
+    environment = ('Native engine unit and original disposable file-storage cases; no live world or physical acceptance.'
+                   if options.group == 'save' else
+                   'Isolated host native server; mixed unit, supplied-input and actual-map route fixtures. No graphical or physical controller acceptance. See suite sources for setup.')
+    summary = {'environment': environment, 'module': module,
                'group': options.group, 'server_patches_sha256': patches,
                'suites': rows, 'exit_code': result.returncode}
     (directory / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')

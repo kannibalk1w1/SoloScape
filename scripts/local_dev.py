@@ -27,6 +27,38 @@ PINNED = {
 }
 
 
+CACHE_HOME_ENV = "SOLOSCAPE_CACHE_HOME"
+
+
+def cache_directory(environ=None):
+    """Select shared input data without creating, migrating or modifying it."""
+    value = (os.environ if environ is None else environ).get(CACHE_HOME_ENV)
+    if value is None:
+        return SERVER / "data/cache"
+    if not value or "\0" in value or not Path(value).is_absolute():
+        raise ValueError(CACHE_HOME_ENV + " must be a nonempty absolute directory path.")
+    directory = Path(value)
+    if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
+        raise ValueError(CACHE_HOME_ENV + " must name a directory, not a file or symbolic link.")
+    return directory
+
+
+LAUNCHER_HOME_ENV = "SOLOSCAPE_LAUNCHER_HOME"
+
+
+def launcher_directory(environ=None):
+    """Shared launcher settings/art; build and recovery context remain version-local."""
+    value = (os.environ if environ is None else environ).get(LAUNCHER_HOME_ENV)
+    if value is None:
+        return RUNTIME
+    if not value or "\0" in value or not Path(value).is_absolute():
+        raise ValueError(LAUNCHER_HOME_ENV + " must be a nonempty absolute directory path.")
+    directory = Path(value)
+    if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
+        raise ValueError(LAUNCHER_HOME_ENV + " must name a directory, not a file or symbolic link.")
+    return directory
+
+
 @contextmanager
 def build_lock(shared=False):
     """Keep archives stable while any owned JVM may lazily load/save classes."""
@@ -82,10 +114,15 @@ def doctor(port=PORT, require_display=True, output=print, check_port=True):
                 errors.append(f"{variable} needs a JDK including javac, not only a JRE.")
         except (OSError, ValueError) as exc:
             errors.append(f"{variable}: {exc}. Install JDK {required} and set config/local.env.")
-    for name in ("main_file_cache.dat2", "main_file_cache.idx255"):
-        path = SERVER / "data/cache" / name
-        if not path.is_file() or path.stat().st_size == 0:
-            errors.append(f"Supply the compatible modified revision-634 cache: missing/empty {path}.")
+    try:
+        cache = cache_directory()
+    except ValueError as exc:
+        errors.append(str(exc))
+    else:
+        for name in ("main_file_cache.dat2", "main_file_cache.idx255"):
+            path = cache / name
+            if not path.is_file() or path.stat().st_size == 0:
+                errors.append(f"Supply the compatible modified revision-634 cache: missing/empty {path}.")
     for name in ("clientlibs.jar", "graphics.jar", "trident-1.5.00.jar"):
         if not (CLIENT / "libs" / name).is_file():
             errors.append(f"Missing upstream client library {name}.")
@@ -265,7 +302,10 @@ def _launch(skip_build=False, build_guard=None):
 
         with (RUNTIME / "server.log").open("w") as server_log, (RUNTIME / "client.log").open("w") as client_log:
             try:
-                server = subprocess.Popen([server_java, "-jar", str(server_jar)], cwd=SERVER, stdout=server_log, stderr=subprocess.STDOUT, start_new_session=True, pass_fds=guards)
+                server_environment = dict(os.environ)
+                server_environment.pop(CACHE_HOME_ENV, None)
+                server_environment["storage.cache.path"] = str(cache_directory()) + "/"
+                server = subprocess.Popen([server_java, "-jar", str(server_jar)], cwd=SERVER, env=server_environment, stdout=server_log, stderr=subprocess.STDOUT, start_new_session=True, pass_fds=guards)
                 deadline = time.monotonic() + READY_TIMEOUT
                 while True:
                     if server.poll() is not None:
