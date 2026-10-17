@@ -1,0 +1,92 @@
+diff --git a/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java b/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
+--- a/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
++++ b/client/src/net/runelite/client/input/controller/ControllerSettingsModel.java
+@@ -24,7 +24,7 @@
+    toggle("directMovement","Direct movement"),toggle("serverFeatures","SoloScape server features"),toggle("invertY","Invert camera Y"),
+    new Option("glyphs","Button labels","Choose the labels displayed in controller hints.","XBOX","PLAYSTATION"),toggle("showGuide","Controller guide"),
+    new Option("keyboardMode","Text keyboard","Automatic prefers Steam on Deck. System entry pauses controller actions; Enter or the on-screen controls finish.","AUTO","STEAM","CONTROLLER"),
+-   new Option("classicTheme","Classic controller UI","A switches the classic RuneScape-style stone panels and fonts or the modern presentation. Native actions are unchanged.","true","false"),new Option("serverEntryCancel","Matched-server text cancellation","Cancel releases a pending amount/name/text prompt only after a fresh SoloScape capability check. Disable for client-only cancellation.","true","false"),new Option("deck60","Deck 60 FPS target","OpenGL, full native resolution and a 60 FPS cap; animated scenery shadows off. No reduced draw distance or simulation speed changes. Turn off to restore this session's previous graphics settings.","false","true")},
++   new Option("classicTheme","Classic controller UI","A switches the classic RuneScape-style stone panels and fonts or the modern presentation. Native actions are unchanged.","true","false"),new Option("serverEntryCancel","Matched-server text cancellation","Cancel releases a pending amount/name/text prompt only after a fresh SoloScape capability check. Disable for client-only cancellation.","true","false"),new Option("deck60","Deck 60 FPS target","OpenGL, full native resolution and a 60 FPS cap; animated scenery shadows off. No reduced draw distance or simulation speed changes. Turn off to restore this session's previous graphics settings.","false","true"),new Option("precisionTrigger","RT precision walking","Hold RT to walk at full stick tilt in direct movement mode. Release RT to restore the normal run threshold.","true","false")},
+   {button("confirmButton","Confirm / interact","A"),button("cancelButton","Back / cancel","B"),button("actionsButton","Actions / assign","X"),
+    button("previousButton","Previous target / pane","LEFT_BUMPER"),button("nextButton","Next target / pane","RIGHT_BUMPER"),
+    button("inventoryButton","Inventory","Y"),button("homeButton","Home wheel","VIEW"),button("quickButton","Quick wheel","START")},
+diff --git a/client/src/net/runelite/client/input/controller/WorldControls.java b/client/src/net/runelite/client/input/controller/WorldControls.java
+--- a/client/src/net/runelite/client/input/controller/WorldControls.java
++++ b/client/src/net/runelite/client/input/controller/WorldControls.java
+@@ -31,6 +31,8 @@
+     private boolean armed, haveAim, moving, walkingPaused, directMode;
+     private long lastFind, lastWalk;
+     private double runThreshold=.9;
++    private boolean precisionTrigger=true;
++    public void precisionTrigger(boolean enabled) { precisionTrigger=enabled; }
+     public void runThreshold(double value) { runThreshold=Math.max(.5,Math.min(1,value)); }
+     private double facingX, facingY = 1, moveX, moveY;
+     private float pausedX, pausedY;
+@@ -146,7 +148,7 @@
+         {
+             if (directMode)
+             {
+-                gateway.direct(dx, dy, Math.hypot(x, y) >= runThreshold);
++                gateway.direct(dx, dy, Math.hypot(x, y) >= runThreshold && !(precisionTrigger && state.rightTrigger > .35f));
+                 moving = true;
+                 return;
+             }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerConfig.java
+@@ -102,6 +102,9 @@
+     @ConfigItem(keyName="serverEntryCancel",name="Matched-server text cancellation",description="Cancel a pending native amount/name/text action without closing its bank/shop, only after fresh entry-cancel capability negotiation. Off retains client-only close.",position=37)
+     default boolean serverEntryCancel(){return true;}
+ 
++    @ConfigItem(keyName="precisionTrigger",name="RT precision walking",description="Hold the right trigger to walk at full stick tilt in direct movement mode. Release to use the normal run threshold.",position=38)
++    default boolean precisionTrigger(){return true;}
++
+     @ConfigItem(keyName="deck60",name="Deck 60 FPS target",description="Use OpenGL, full native resolution and 60 FPS pacing, with animated scenery shadows off. Toggle off to restore this session's previous graphics settings.",position=90)
+     default boolean deck60(){return false;}
+ }
+diff --git a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+--- a/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
++++ b/client/src/net/runelite/client/plugins/soloscapecontroller/SoloScapeControllerPlugin.java
+@@ -435,6 +435,7 @@
+             }
+             actionMap.apply(rawState,state);
+             world.runThreshold(config.runThreshold()/100.0);
++            world.precisionTrigger(config.precisionTrigger());
+             client.setControllerServerFeatures(config.serverFeatures());
+             client.setControllerPanelEnabled(config.interfaceControls());
+             Canvas canvas = client.getCanvas();
+diff --git a/client/test/net/runelite/client/input/controller/WorldControlsTest.java b/client/test/net/runelite/client/input/controller/WorldControlsTest.java
+--- a/client/test/net/runelite/client/input/controller/WorldControlsTest.java
++++ b/client/test/net/runelite/client/input/controller/WorldControlsTest.java
+@@ -6,6 +6,31 @@
+ 
+ public class WorldControlsTest
+ {
++    @Test public void rightTriggerWalksAtFullTiltAndReleaseRestoresRunWithoutChangingTheThreshold()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState input = new GamepadState();
++        controls.update(input,.18f,1,true);
++        input.leftX=1; input.rightTrigger=1;
++        controls.update(input,.18f,200_000_000L,true);
++        assertEquals(1,game.directUpdates); assertFalse(game.running);
++        input.rightTrigger=0;
++        controls.update(input,.18f,400_000_000L,true);
++        assertEquals(2,game.directUpdates); assertTrue(game.running);
++    }
++
++    @Test public void precisionWalkingCanBeDisabledAndDoesNotStealAimOrInteract()
++    {
++        Fake game = new Fake(); WorldControls controls = new WorldControls(game); GamepadState input = new GamepadState();
++        controls.update(input,.18f,1,true); input.leftX=1; input.rightTrigger=1;
++        controls.precisionTrigger(false); controls.update(input,.18f,200_000_000L,true);
++        assertTrue(game.running);
++        controls.precisionTrigger(true); input.leftTrigger=1;
++        controls.update(input,.18f,400_000_000L,true);
++        assertEquals(1,game.directUpdates);
++        input.updateButtons(1); controls.update(input,.18f,600_000_000L,true);
++        assertEquals(1,game.actions); assertEquals(1,game.directUpdates);
++    }
++
+     private static final class Fake implements WorldControls.Gateway
+     {
+         boolean ready = true, valid = true, targeting;

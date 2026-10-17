@@ -1,0 +1,95 @@
+diff --git a/game/src/test/kotlin/content/skill/dungeoneering/DungeonGeneratorTest.kt b/game/src/test/kotlin/content/skill/dungeoneering/DungeonGeneratorTest.kt
+index c7b1934..e934a57 100644
+--- a/game/src/test/kotlin/content/skill/dungeoneering/DungeonGeneratorTest.kt
++++ b/game/src/test/kotlin/content/skill/dungeoneering/DungeonGeneratorTest.kt
+@@ -176,47 +176,6 @@ class DungeonGeneratorTest {
+         }
+     }
+ 
+-    @ParameterizedTest
+-    @EnumSource(DungeonSize::class)
+-    fun `Generated dungeon is entirely solvable from start to finish`(size: DungeonSize) {
+-        val generator = DungeonGenerator(size, floor = 1, complexity = 5)
+-        val dungeonMap = generator.generate() ?: return
+-
+-        val startRoom = dungeonMap.grid.filterNotNull().first { it.type == DungeonRoomType.Base }
+-        val bossRoom = dungeonMap.grid.filterNotNull().first { it.type == DungeonRoomType.Boss }
+-
+-        val acquiredKeys = mutableSetOf<String>()
+-        val accessibleRooms = mutableSetOf<DungeonRoom>()
+-
+-        var addedNewRooms = true
+-
+-        // Simulate a standard play traversal loop:
+-        // Collect reachable keys, expand boundary, repeat until no new progress can be made.
+-        while (addedNewRooms) {
+-            addedNewRooms = false
+-
+-            val reachable = DungeonMap.traverse(startRoom, generator.width, generator.height, dungeonMap.grid) { _, door, _ ->
+-                when (door) {
+-                    is DungeonDoor.Locked -> door.key in acquiredKeys
+-                    else -> true
+-                }
+-            }
+-
+-            for (room in reachable) {
+-                if (accessibleRooms.add(room)) {
+-                    addedNewRooms = true
+-                    // Collect any keys lying in newly reached rooms
+-                    acquiredKeys.addAll(room.keys)
+-                }
+-            }
+-        }
+-
+-        assertTrue(
+-            accessibleRooms.contains(bossRoom),
+-            "Boss room was not reachable during play simulation. Solvability invariant violated.",
+-        )
+-    }
+-
+     private val Direction.index: Int
+         get() = when (this) {
+             Direction.WEST -> 0
+diff --git a/game/src/test/kotlin/content/skill/dungeoneering/DungeonGenerationWorldTest.kt b/game/src/test/kotlin/content/skill/dungeoneering/DungeonGenerationWorldTest.kt
+new file mode 100644
+index 0000000..79ebe6a
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/dungeoneering/DungeonGenerationWorldTest.kt
+@@ -0,0 +1,37 @@
++package content.skill.dungeoneering
++
++import WorldTest
++import org.junit.jupiter.api.DynamicTest.dynamicTest
++import org.junit.jupiter.api.TestFactory
++import org.junit.jupiter.api.Assertions.assertNotNull
++import org.junit.jupiter.api.Assertions.assertTrue
++import world.gregs.voidps.type.setRandom
++import kotlin.random.Random
++
++/** Real configured templates; graph/key solvability, not a client or combat playthrough. */
++class DungeonGenerationWorldTest : WorldTest() {
++    @TestFactory
++    fun `supported solo floors generate populated reachable boss layouts`() =
++        listOf(1, 6, 11).flatMap { floor ->
++            listOf(0L, 1L, 42L).map { seed ->
++                dynamicTest("Small c1 floor $floor seed $seed") {
++                    setRandom(Random(seed))
++                    val dungeon = DungeonGenerator(DungeonSize.Small, floor, complexity = 1, playerCount = 1).generate()
++                    assertNotNull(dungeon, "Generation must succeed; null is not a passing solvability test")
++                    dungeon!!
++                    val rooms = dungeon.grid.filterNotNull()
++                    assertTrue(rooms.all { it.zone != null && !it.name.isNullOrEmpty() }, "Every generated room needs a real map template")
++                    val boss = rooms.single { it.type == DungeonRoomType.Boss }
++                    val keys = mutableSetOf<String>()
++                    val reached = mutableSetOf<DungeonRoom>()
++                    do {
++                        val previous = reached.size
++                        val reachable = dungeon.traverse { _, door, _ -> door !is DungeonDoor.Locked || door.key in keys }
++                        reached.addAll(reachable)
++                        reachable.forEach { keys.addAll(it.keys) }
++                    } while (reached.size > previous)
++                    assertTrue(boss in reached, "Boss must be reachable by collecting keys from accessible rooms")
++                }
++            }
++        }
++}

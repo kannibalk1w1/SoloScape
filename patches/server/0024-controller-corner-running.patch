@@ -1,0 +1,159 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementMode.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementMode.kt
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementMode.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementMode.kt
+@@ -5,6 +5,7 @@
+ import world.gregs.voidps.engine.entity.character.mode.move.target.TargetStrategy
+ import world.gregs.voidps.engine.entity.character.player.Player
+ import world.gregs.voidps.network.client.instruction.DirectMovement
++import world.gregs.voidps.engine.data.Settings
+ 
+ /** One/two local steps per ordinary game tick; no route planning or future walk queue. */
+ class DirectMovementMode(
+@@ -29,10 +30,27 @@
+         if (energy <= 0) exhausted = true
+         // Held run resumes at 5%, rather than alternating on each recovery tick.
+         if (exhausted && energy >= 500) exhausted = false
+-        return character.mode === this && input.run && energy > 0 && !exhausted && !TargetStrategy.noRun(character) && !ControllerAvoidTiles.contains(character.tile.add(stepX, stepY))
++        if (character.mode !== this || !input.run || energy <= 0 || exhausted || TargetStrategy.noRun(character)) return false
++        // Movement calls this after the first step and its movement events. Resolve
++        // the held direction again from that tile, allowing a legal turn at a corner.
++        val cornering = Settings["world.players.controllerCornerRunning", true]
++        if (!resolveStep(if (cornering) input.dx else stepX, if (cornering) input.dy else stepY)) return false
++        clearSteps()
++        character.steps.queueStep(character.tile.add(stepX, stepY))
++        return true
+     }
+ 
+     private fun canDirectStep(dx: Int, dy: Int) = !ControllerAvoidTiles.contains(character.tile.add(dx, dy)) && canStep(dx, dy)
++
++    private fun resolveStep(x: Int, y: Int): Boolean {
++        when {
++            canDirectStep(x, y) -> { stepX = x; stepY = y }
++            x != 0 && y != 0 && canDirectStep(x, 0) -> { stepX = x; stepY = 0 }
++            x != 0 && y != 0 && canDirectStep(0, y) -> { stepX = 0; stepY = y }
++            else -> return false
++        }
++        return true
++    }
+ 
+     override fun tick() {
+         clearSteps()
+@@ -40,22 +58,8 @@
+             if (character.mode === this) character.mode = EmptyMode
+             return
+         }
+-        // Resolve collision before queuing both steps. Otherwise a diagonal slide
+-        // on step one makes the absolute second destination turn back into the wall.
+-        val dx: Int
+-        val dy: Int
+-        when {
+-            canDirectStep(input.dx, input.dy) -> { dx = input.dx; dy = input.dy }
+-            input.dx != 0 && input.dy != 0 && canDirectStep(input.dx, 0) -> { dx = input.dx; dy = 0 }
+-            input.dx != 0 && input.dy != 0 && canDirectStep(0, input.dy) -> { dx = 0; dy = input.dy }
+-            else -> { super.tick(); return }
+-        }
+-        stepX = dx
+-        stepY = dy
+-        val first = character.tile.add(dx, dy)
+-        val second = first.add(dx, dy)
+-        val run = shouldRun()
+-        character.steps.queueSteps(if (run) listOf(first, second) else listOf(first), noRun = !run)
++        if (!resolveStep(input.dx, input.dy)) { super.tick(); return }
++        character.steps.queueStep(character.tile.add(stepX, stepY))
+         super.tick() // Existing delays, viewport gates, collision, animations, movement events and energy.
+         if (character.mode === this) clearSteps() // Preserve a new route if a movement event replaced this mode.
+     }
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementModeTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementModeTest.kt
+--- a/engine/src/test/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementModeTest.kt
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/entity/character/mode/move/DirectMovementModeTest.kt
+@@ -8,6 +8,7 @@
+ import org.koin.test.mock.declareMock
+ import org.rsmod.game.pathfinder.*
+ import org.rsmod.game.pathfinder.collision.CollisionStrategies
++import org.rsmod.game.pathfinder.collision.CollisionFlagMap
+ import world.gregs.voidps.engine.client.instruction.handle.DirectMovementHandler
+ import world.gregs.voidps.engine.client.variable.start
+ import world.gregs.voidps.engine.data.definition.Areas
+@@ -20,6 +21,7 @@
+ import world.gregs.voidps.engine.script.KoinMock
+ import world.gregs.voidps.network.client.instruction.DirectMovement
+ import world.gregs.voidps.type.Tile
++import world.gregs.voidps.engine.data.Settings
+ 
+ class DirectMovementModeTest : KoinMock() {
+     private lateinit var player: Player
+@@ -28,6 +30,7 @@
+     private var now = 1L
+ 
+     @BeforeEach fun setup() {
++        Settings.load(mapOf("world.players.controllerCornerRunning" to "true"))
+         player = Player(tile = Tile(64, 64))
+         player.collision = CollisionStrategies.Normal
+         player.inventories.normalStack = ItemDependentStack
+@@ -115,4 +118,66 @@
+         val mode = mode(x = 1, y = 1, run = true)
+         mode.tick(); assertEquals(Tile(66, 64), player.tile); assertTrue(player.steps.isEmpty())
+     }
++
++    @Test fun `running turns around a corner in every quadrant without cutting the diagonal`() {
++        for (x in listOf(-1, 1)) for (y in listOf(-1, 1)) {
++            val origin = Tile(64, 64)
++            player.tile = origin
++            val allowed = setOf(origin, origin.add(x, 0), origin.add(x, y))
++            val flags = CollisionFlagMap()
++            for (px in 60..68) for (py in 60..68) {
++                flags.allocateIfAbsent(px, py, 0)
++                flags[px, py, 0] = -1
++            }
++            allowed.forEach { flags[it.x, it.y, it.level] = 0 }
++            val nativeValidator = StepValidator(flags)
++            every { validator.canTravel(any(), any(), any(), any(), any(), any(), any(), any()) } answers {
++                nativeValidator.canTravel(arg(0), arg(1), arg(2), arg(3), arg(4), arg(5), arg(6), arg(7))
++            }
++            mode(x, y, run = true).tick()
++            assertEquals(origin.add(x, y), player.tile)
++            assertTrue(player.steps.isEmpty())
++            assertEquals(if (x == 1) 2 else 6, player.visuals.walkStep)
++            assertEquals(if (y == 1) 0 else 4, player.visuals.runStep)
++        }
++    }
++
++    @Test fun `blocked second step stops at first tile and cannot bypass collision`() {
++        every { validator.canTravel(any(), any(), any(), any(), any(), any(), any(), any()) } answers {
++            arg<Int>(1) == 64 && arg<Int>(3) == 1 && arg<Int>(4) == 0
++        }
++        mode(x = 1, y = 1, run = true).tick()
++        assertEquals(Tile(65, 64), player.tile)
++        assertTrue(player.steps.isEmpty())
++    }
++
++    @Test fun `first step movement event can replace mode without losing the new route`() {
++        val replacement = Movement(player, TileTargetStrategy(Tile(70, 64)))
++        val handler: (Player, Tile) -> Unit = { who, _ ->
++            who.mode = replacement
++            who.steps.queueStep(Tile(70, 64))
++        }
++        Moved.playerMoved.add(handler)
++        try {
++            mode(run = true).tick()
++            assertEquals(Tile(65, 64), player.tile)
++            assertSame(replacement, player.mode)
++            assertEquals(Tile(70, 64), player.steps.peek())
++        } finally {
++            Moved.playerMoved.remove(handler)
++        }
++    }
++
++    @Test fun `corner running can be disabled without changing the input protocol`() {
++        Settings.load(mapOf("world.players.controllerCornerRunning" to "false"))
++        try {
++            every { validator.canTravel(any(), any(), any(), any(), any(), any(), any(), any()) } answers {
++                arg<Int>(4) == 0 || arg<Int>(1) == 65
++            }
++            mode(x = 1, y = 1, run = true).tick()
++            assertEquals(Tile(66, 64), player.tile)
++        } finally {
++            Settings.load(mapOf("world.players.controllerCornerRunning" to "true"))
++        }
++    }
+ }

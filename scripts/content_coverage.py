@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Run selected quest and production regressions against isolated native-server storage."""
+import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -19,8 +21,43 @@ SUITES = (
     'content.skill.fletching.FletchingTest',
 )
 
+# Representative systems and shared contracts, not an exhaustive quest campaign.
+M6_SUITES = (
+    'content.skill.slayer.SlayerMasterTest',
+    'content.skill.slayer.SlayerTaskTest',
+    'content.skill.slayer.SlayerCombatFormulaTest',
+    'content.skill.summoning.SummoningCraftingTest',
+    'content.skill.summoning.SummoningLevelGateTest',
+    'content.skill.summoning.FamiliarUtilitySpecialEffectTest',
+    'content.skill.dungeoneering.DungeonGeneratorTest',
+    'content.skill.dungeoneering.DungeonGenerationWorldTest',
+    'content.area.wilderness.daemonheim.DungeoneeringPartyTest',
+    'content.soloscape.ActualAdventureRouteTest',
+    'content.soloscape.FullAdventureJourneyTest',
+    'content.soloscape.SessionAdventureTest',
+)
+
+
+def read_results(report_directory, suites, archive):
+    rows = []
+    for suite in suites:
+        path = report_directory / ('TEST-' + suite + '.xml')
+        if not path.is_file():
+            raise RuntimeError('Missing selected suite result: ' + suite)
+        root = ET.parse(path).getroot()
+        row = dict(suite=suite, **{key: int(root.attrib[key]) for key in ('tests', 'failures', 'errors', 'skipped')})
+        if row['tests'] < 1:
+            raise RuntimeError('Selected suite ran no tests: ' + suite)
+        (archive / path.name).write_bytes(path.read_bytes())
+        rows.append(row)
+    return rows
+
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--group', choices=('early', 'm6'), default='early')
+    options = parser.parse_args()
+    suites = M6_SUITES if options.group == 'm6' else SUITES
     directory = local_dev.RUNTIME / 'content-coverage' / str(time.time_ns())
     directory.mkdir(parents=True, mode=0o700)
     java = Path(os.environ.get('SERVER_JAVA', 'java'))
@@ -30,18 +67,20 @@ def main():
     env = dict(os.environ, JAVA_HOME=str(java.resolve().parent.parent),
                GRADLE_USER_HOME=str(local_dev.ROOT / '.gradle'), SOLOSCAPE_TEST_ROOT=str(directory))
     command = ['bash', 'gradlew', '--no-daemon', ':game:test']
-    for suite in SUITES:
+    for suite in suites:
         command.extend(['--tests', suite])
     with local_dev.build_lock():
+        report_directory = local_dev.SERVER / 'game/build/test-results/test'
+        # Missing outputs force a fresh Gradle test run. Never attribute older XML
+        # to a failed compilation or a suite which did not run this invocation.
+        for suite in suites:
+            (report_directory / ('TEST-' + suite + '.xml')).unlink(missing_ok=True)
         result = subprocess.run(command, cwd=local_dev.SERVER, env=env, check=False)
-        rows = []
-        for suite in SUITES:
-            path = local_dev.SERVER / 'game/build/test-results/test' / ('TEST-' + suite + '.xml')
-            if not path.exists():
-                raise RuntimeError('Missing selected suite result: ' + suite)
-            root = ET.parse(path).getroot()
-            rows.append(dict(suite=suite, **{key: int(root.attrib[key]) for key in ('tests', 'failures', 'errors', 'skipped')}))
-    summary = {'environment': 'Isolated native server; supplied inputs, teleport/combat fixtures in existing quest tests; no graphical or earned-route acceptance.',
+        rows = read_results(report_directory, suites, directory)
+        patches = {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+                   for path in sorted((local_dev.ROOT / 'patches/server').glob('*.patch'))}
+    summary = {'environment': 'Isolated host native server; mixed unit, supplied-input and actual-map route fixtures. No graphical or physical controller acceptance. See suite sources for setup.',
+               'group': options.group, 'server_patches_sha256': patches,
                'suites': rows, 'exit_code': result.returncode}
     (directory / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
     print('Coverage evidence:', directory / 'summary.json')

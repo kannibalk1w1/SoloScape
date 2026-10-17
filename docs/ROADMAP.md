@@ -199,6 +199,8 @@ Priority: before solo redesigns or backports. Depends on a usable M1 controller 
 - [ ] M6-06 Audit the upstream bot framework, activities, navigation, dialogue, saves and default population cost.
 - [ ] M6-07 Select a short baseline progression route and document blockers and incomplete upstream behavior.
 
+First audit batch: [source findings and 273 representative native cases](SOLO_CONTENT_AUDIT.md). Normal-player Dungeoneering is limited to small c1 floors 1–11; Summoning acquisition and the full earned progression loop remain open. [Corner movement/RT precision](CONTROLLER_CORNER_MOVEMENT.md) is the next physical combat-positioning check. These findings do not complete M6.
+
 Deliverables: `SOLO_CONTENT_AUDIT.md`, `DUNGEONEERING_AUDIT.md`, `SUMMONING_AUDIT.md`,
 `MMO_DEPENDENCY_AUDIT.md` and `AI_ADVENTURERS.md`.
 

@@ -16,8 +16,8 @@ This is the current evidence index. Dated reports remain historical. A generated
 
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
-| client | 53 | `0053-shop-stock-boxes-in-controller-panel.patch` | `b2c0da72ee4aab116e997ee55e2886c339c26fe232fd5101cbe1601885dc0c2c` |
-| server | 22 | `0022-toml-safe-save-string-escapes.patch` | `c0b44da3d8d47134a3c9b7e971f43f139fdd7b0c31b1ef4b22c060a1291c1040` |
+| client | 54 | `0054-controller-precision-walking.patch` | `edbbcc303e2cb43d7622116de70639453586b10021b4c6dfd12d22a8cd65e7d1` |
+| server | 24 | `0024-controller-corner-running.patch` | `096e5d9b19cd45e54b3cfe1e1f562f1ead304a9bb8b7bb60935f5edfcabca916` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
 
@@ -25,16 +25,18 @@ These are tracked source identities, not an installed-device inventory or proof 
 
 | Capability / scope | Delivery | Acceptance | Evidence / limit |
 | --- | --- | --- | --- |
-| Controller/world/UI adapters, source targeting, quick slots, text ownership | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Representative contracts; earlier owner approval covers basic movement/camera only](CONTROLLER_INTERACTION_ACCEPTANCE.md) |
+| Controller/world/UI adapters, source targeting, quick slots, text ownership | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Owner happy with current general Deck testing on 17 October; individual activities/build not specified](CONTROLLER_INTERACTION_ACCEPTANCE.md) |
+| L-shaped direct running and RT precision walking | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Host regressions pass; new changes not yet deployed or accepted on Deck](CONTROLLER_CORNER_MOVEMENT.md) |
 | Native shop stock click-box metadata and buy/sell persistence | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [r30 real Deck hardware with scripted input; not human button acceptance](DECK_CONTROLLER_VALIDATION_20261014.md) |
 | Settings lifetime, B ancestry and exact save comparison | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Two strict reruns pass; earlier one-tile difference remains unexplained](DECK_CONTROLLER_VALIDATION_20261014.md) |
 | Profiles, generations, checksummed backups and owned-session recovery | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Ended owner records archived; valid current saves preserved, clean closure not inferred](DECK_CONTROLLER_VALIDATION_20261014.md) |
 | Steam Gaming Mode route and loading-phase instrumentation | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [36-minute r29 average 59.04 FPS misses tails; r32 mixed-power ~30 FPS is diagnostic](DECK_STALL_DIAGNOSIS_20261014.md) |
 | Reliable suspend/resume, low-battery exit and reconnect campaign | NOT IMPLEMENTED | PHYSICAL ACCEPTANCE REQUIRED | [Campaign/policy incomplete; input-gap reset is not world pause](CONSOLE_SESSION_ACCEPTANCE.md) |
 | Representative early quests and production routes | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Partial coverage only; Druidic earned route partial, not all quests audited](CONTENT_COVERAGE.md) |
-| Complete M6 existing-content, Summoning/Dungeoneering and solo audit | NOT IMPLEMENTED | PHYSICAL ACCEPTANCE REQUIRED | [Some route coverage exists; a complete working-content inventory does not](ROADMAP.md) |
+| Complete M6 existing-content, Summoning/Dungeoneering and solo audit | NOT IMPLEMENTED | PHYSICAL ACCEPTANCE REQUIRED | [First audit batch: 273 cases; full working-content inventory and earned progression gaps remain](SOLO_CONTENT_AUDIT.md) |
 | True solo simulation pause | DEFERRED | DEFERRED | [Menus currently do not freeze the world](ROADMAP.md) |
 | Later-content compatibility runtime, AI/economy expansion and web port | NOT IMPLEMENTED | DEFERRED | [Research/planning does not implement gameplay or authorize a port](ROADMAP.md) |
+| Isolated WASM masked-edge kernel; no triangle/model/game client | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [JVM/browser hashes agree at two sizes; real-clock host measurements only](WASM_RASTER_POC.md) |
 
 ## Decisions and maintenance
 

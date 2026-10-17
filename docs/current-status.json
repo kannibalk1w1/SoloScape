@@ -8,7 +8,15 @@
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "CONTROLLER_INTERACTION_ACCEPTANCE.md",
-      "note": "Representative contracts; earlier owner approval covers basic movement/camera only"
+      "note": "Owner happy with current general Deck testing on 17 October; individual activities/build not specified"
+    },
+    {
+      "id": "corners",
+      "scope": "L-shaped direct running and RT precision walking",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "CONTROLLER_CORNER_MOVEMENT.md",
+      "note": "Host regressions pass; new changes not yet deployed or accepted on Deck"
     },
     {
       "id": "shop",
@@ -63,8 +71,8 @@
       "scope": "Complete M6 existing-content, Summoning/Dungeoneering and solo audit",
       "delivery": "NOT IMPLEMENTED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
-      "evidence": "ROADMAP.md",
-      "note": "Some route coverage exists; a complete working-content inventory does not"
+      "evidence": "SOLO_CONTENT_AUDIT.md",
+      "note": "First audit batch: 273 cases; full working-content inventory and earned progression gaps remain"
     },
     {
       "id": "pause",
@@ -81,6 +89,14 @@
       "acceptance": "DEFERRED",
       "evidence": "ROADMAP.md",
       "note": "Research/planning does not implement gameplay or authorize a port"
+    },
+    {
+      "id": "wasm-kernel",
+      "scope": "Isolated WASM masked-edge kernel; no triangle/model/game client",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_RASTER_POC.md",
+      "note": "JVM/browser hashes agree at two sizes; real-clock host measurements only"
     }
   ]
 }

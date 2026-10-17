@@ -5,6 +5,8 @@ Development source build for a local RuneScape revision-634 experience with nati
 The graphical launcher provides controller character naming, independent local worlds, verified backups/restore, explicit backup management and ownership-checked Recover Session. [Historical 10 October completion report](docs/MORNING_REPORT.md), [setup/update instructions](docs/CONSOLE_SETUP_UPDATE.md) and [physical acceptance checklist](docs/CONSOLE_SESSION_ACCEPTANCE.md) record evidence and remaining limits. No packaged release or completed Deck acceptance is claimed.
 
 Start at [current status and evidence](docs/CURRENT_STATUS.md), then [playtest direction](docs/PLAYTEST_DIRECTION.md). The [roadmap](docs/ROADMAP.md) is the proposed working task list; its 17 October review keeps native 2010–2011/Deck acceptance first. [Backport architecture](docs/BACKPORT_ARCHITECTURE.md) and [WASM feasibility](docs/WASM_FEASIBILITY.md) are research tracks, not a cache replacement or web port.
+The current work batch adds [corner running and RT precision walking](docs/CONTROLLER_CORNER_MOVEMENT.md), a [bounded solo-content audit](docs/SOLO_CONTENT_AUDIT.md), and an [isolated WASM edge-kernel result](docs/WASM_RASTER_POC.md). New movement still requires physical Deck acceptance.
+
 The [Steam Deck player guide](docs/SOLOSCAPE_STEAM_DECK_PLAYER_GUIDE.md) is standalone Markdown for first-time play and Obsidian.
 The [10 October handoff](docs/PROJECT_HANDOFF.md) is a historical discussion snapshot; branch/build/test-count claims there are superseded by the current status index.
 
