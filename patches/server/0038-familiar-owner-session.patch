@@ -1,0 +1,239 @@
+diff --git a/game/src/main/kotlin/content/entity/death/NPCDeath.kt b/game/src/main/kotlin/content/entity/death/NPCDeath.kt
+index e890a65..b5551de 100644
+--- a/game/src/main/kotlin/content/entity/death/NPCDeath.kt
++++ b/game/src/main/kotlin/content/entity/death/NPCDeath.kt
+@@ -11,6 +11,7 @@ import content.entity.effect.clearTransform
+ import content.entity.player.inv.item.tradeable
+ import content.entity.player.logEvent
+ import content.skill.slayer.*
++import content.skill.summoning.familiarOwner
+ import content.social.clan.clan
+ import world.gregs.voidps.engine.Script
+ import world.gregs.voidps.engine.client.clearHinted
+@@ -67,7 +68,7 @@ class NPCDeath(
+                 // player rather than the familiar npc.
+                 var killer = killer
+                 if (killer is NPC && killer.contains("owner_index")) {
+-                    killer = Players.indexed(killer["owner_index", -1])
++                    killer = killer.familiarOwner()
+                 }
+                 val tile = if (transformId == "wall_beast") tile.addY(-1) else tile
+                 npc["death_tile"] = tile
+diff --git a/game/src/main/kotlin/content/skill/summoning/Summoning.kt b/game/src/main/kotlin/content/skill/summoning/Summoning.kt
+index 3e529d7..7724e9a 100644
+--- a/game/src/main/kotlin/content/skill/summoning/Summoning.kt
++++ b/game/src/main/kotlin/content/skill/summoning/Summoning.kt
+@@ -42,6 +42,12 @@ import world.gregs.voidps.type.Tile
+ val Character?.isFamiliar: Boolean
+     get() = this != null && this is NPC && id.endsWith("_familiar")
+ 
++/** Resolve the original online player object; recycled player indices are not ownership. */
++fun NPC.familiarOwner(): Player? {
++    val owner: Player = this["familiar_owner_session"] ?: return null
++    return owner.takeIf { Players.indexed(it.index) === it }
++}
++
+ var Player.follower: NPC?
+     get() {
+         val index = get("follower_index", -1)
+@@ -67,11 +73,13 @@ fun Player.summonFamiliar(familiar: NPCDefinition, restart: Boolean) {
+         return
+     }
+ 
++    val owner = this
+     val familiarNpc = NPCs.add(familiar.stringId, tile)
+     familiarNpc.mode = Follow(familiarNpc, this)
+     queue("summon_familiar", 2) {
+         follower = familiarNpc
+         familiarNpc["owner_index"] = index
++        familiarNpc["familiar_owner_session"] = owner
+         familiarNpc.anim("${familiarNpc.id.removeSuffix("_familiar")}_spawn")
+         familiarNpc.gfx("summon_familiar_size_${familiarNpc.size}")
+         // Tells the cast button on familiar_details how many points this familiar's special costs.
+diff --git a/game/src/test/kotlin/content/skill/summoning/FamiliarOwnerIdentityTest.kt b/game/src/test/kotlin/content/skill/summoning/FamiliarOwnerIdentityTest.kt
+new file mode 100644
+index 0000000..c5679cf
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/summoning/FamiliarOwnerIdentityTest.kt
+@@ -0,0 +1,181 @@
++package content.skill.summoning
++
++import WorldTest
++import content.entity.combat.dead
++import content.entity.combat.hit.directHit
++import content.entity.combat.killer
++import content.skill.slayer.slayerMaster
++import content.skill.slayer.slayerTask
++import content.skill.slayer.slayerTaskRemaining
++import itemOption
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertNotNull
++import org.junit.jupiter.api.Assertions.assertSame
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
++import world.gregs.voidps.engine.data.AccountManager
++import world.gregs.voidps.engine.data.Settings
++import world.gregs.voidps.engine.data.definition.AccountDefinitions
++import world.gregs.voidps.engine.entity.Despawn
++import world.gregs.voidps.engine.entity.MAX_PLAYERS
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.Players
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.get
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.type.Tile
++import java.lang.reflect.Modifier
++
++/**
++ * Narrow familiar kill-credit ownership reproduction. A spirit wolf is summoned from a supplied pouch and
++ * lands the killing hit on a real chicken through the native damage path, so the death runs through
++ * [content.entity.death.NPCDeath] and its one-tick owner lookup.
++ *
++ * Negative case: the original owner logs out after the familiar's hit but before the death queue runs.
++ * [Players.indexer] is forced to [MAX_PLAYERS] (late-uptime index reuse) only inside this test and restored
++ * in `finally`, so a new account takes the freed index through the normal indexing path. Logout uses
++ * [Despawn.player] and [Players.remove]; the replacement is spawned without ticking so it is indexed before
++ * the queued death body reads the familiar's `owner_index`.
++ *
++ * Fixtures are explicit: birds tasks and Summoning level are supplied, not earned.
++ */
++@EnabledIfEnvironmentVariable(named = "SOLOSCAPE_TEST_ROOT", matches = ".+")
++class FamiliarOwnerIdentityTest : WorldTest() {
++
++    @Test
++    fun `Positive control - familiar kill credits the still-online owner once`() {
++        val owner = summonedOwner("fam_owner_a", Tile(2523, 3056))
++        assertNotNull(owner.follower, "precondition: familiar summoned")
++        val familiar = owner.follower!!
++        assertEquals(owner.index, familiar["owner_index", -1], "precondition: familiar owner_index is the owner")
++        val chicken = createNPC("chicken", owner.tile.addX(1))
++        val expectedXp = chicken.def["slayer_xp", 0.0] * Settings["world.experienceRate", 1.0]
++        assertTrue(expectedXp > 0)
++
++        chicken.directHit(chicken.levels.get(Skill.Constitution), source = familiar)
++        assertEquals(0, chicken.levels.get(Skill.Constitution), "the familiar's hit is a native kill")
++        assertTrue(chicken.dead, "the native death pipeline is entered")
++        assertSame(familiar, chicken.killer, "the familiar is the recorded max damage dealer")
++
++        tick(10)
++        assertEquals(1, owner.slayerTaskRemaining, "the online owner is credited once")
++        assertEquals(expectedXp, owner.experience.get(Skill.Slayer))
++
++        tick(20)
++        assertEquals(1, owner.slayerTaskRemaining, "further ticks do not credit the kill again")
++        assertEquals(expectedXp, owner.experience.get(Skill.Slayer))
++    }
++
++    @Test
++    fun `Negative - a different account reusing the freed index gets no familiar kill credit`() {
++        assertNoReplacementCredit("fam_owner_b")
++    }
++
++    @Test
++    fun `A new session of the same account does not inherit the departed familiar kill`() {
++        assertNoReplacementCredit("fam_owner_a")
++    }
++
++    private fun assertNoReplacementCredit(replacementName: String) {
++        val original = summonedOwner("fam_owner_a", Tile(2523, 3056))
++        val originalIndex = original.index
++        assertNotNull(original.follower, "precondition: familiar summoned")
++        val familiar = original.follower!!
++        val chicken = createNPC("chicken", original.tile.addX(1))
++
++        lateUptimeIndexer {
++            chicken.directHit(chicken.levels.get(Skill.Constitution), source = familiar)
++            assertEquals(0, chicken.levels.get(Skill.Constitution))
++            assertTrue(chicken.dead, "the native death pipeline is entered before the owner leaves")
++            assertSame(familiar, chicken.killer, "the familiar is the recorded max damage dealer")
++            assertSame(original, Players.indexed(originalIndex), "precondition: original owner indexed")
++
++            Despawn.player(original)
++            Players.remove(original)
++            assertEquals(null, Players.indexed(originalIndex), "the original owner's index is freed")
++
++            val replacement = loginWithoutTick(replacementName, original.tile)
++            assertEquals(originalIndex, replacement.index, "fixture: replacement reused the freed index")
++            assertSame(replacement, Players.indexed(originalIndex), "fixture: replacement occupies the index")
++            assertEquals(2, replacement.slayerTaskRemaining, "fixture: replacement holds a birds task")
++
++            tick(20)
++            assertEquals(2, replacement.slayerTaskRemaining, "the replacement is not credited for the familiar's kill")
++            assertEquals(0.0, replacement.experience.get(Skill.Slayer), "the replacement gains no Slayer xp")
++        }
++    }
++
++
++    @Test
++    fun `Dismissing after a familiar hit preserves credit for the still-online original owner`() {
++        val owner = summonedOwner("fam_owner_a", Tile(2523, 3056))
++        val familiar = owner.follower!!
++        val chicken = createNPC("chicken", owner.tile.addX(1))
++        val expectedXp = chicken.def["slayer_xp", 0.0] * Settings["world.experienceRate", 1.0]
++        assertTrue(expectedXp > 0)
++        chicken.directHit(chicken.levels.get(Skill.Constitution), source = familiar)
++        assertEquals(0, chicken.levels.get(Skill.Constitution))
++        assertSame(familiar, chicken.killer)
++        owner.dismissFamiliar()
++        tick() // NPC removal is deferred until the next native NPC stage.
++        assertEquals(null, owner.follower)
++        tick(19)
++        assertEquals(1, owner.slayerTaskRemaining)
++        assertEquals(expectedXp, owner.experience.get(Skill.Slayer))
++    }
++
++    /** Creates an online owner with a birds task, adds a supplied spirit wolf pouch and summons it natively. */
++    private fun summonedOwner(name: String, tile: Tile): Player {
++        val player = createPlayer(tile, name) { supplyTask(it) }
++        player.levels.set(Skill.Summoning, 99)
++        player.inventory.add("spirit_wolf_pouch")
++        player.itemOption("Summon", "spirit_wolf_pouch")
++        tick(3)
++        assertEquals(0, player.inventory.count("spirit_wolf_pouch"), "precondition: pouch consumed by summon")
++        return player
++    }
++
++    /**
++     * Logs a new account in through the native setup, index and spawn calls without ticking, so the new player
++     * is in [Players] before any queued death body runs. Mirrors [WorldTest.createPlayer] minus its ticks.
++     */
++    private fun loginWithoutTick(name: String, tile: Tile): Player {
++        val player = Player(tile = tile, accountName = name, passwordHash = "")
++        val accounts: AccountManager = get()
++        accounts.setup(player, null, 0, viewport = true)
++        assertTrue(accounts.index(player), "replacement indexes")
++        get<AccountDefinitions>().add(player)
++        player["creation"] = -1
++        player["skip_level_up"] = true
++        supplyTask(player)
++        accounts.spawn(player, null)
++        player.viewport?.loaded = true
++        return player
++    }
++
++    private fun supplyTask(player: Player) {
++        player.levels.set(Skill.Slayer, 99)
++        player.slayerMaster = "mazchna"
++        player.slayerTask = "birds"
++        player.slayerTaskRemaining = 2
++    }
++
++    /**
++     * Forces [Players] indexing to start from [MAX_PLAYERS] (late-uptime reuse), then restores the previous
++     * value. Only this test's fixture uses it.
++     */
++    private fun lateUptimeIndexer(block: () -> Unit) {
++        val field = Players::class.java.getDeclaredField("indexer")
++        field.isAccessible = true
++        val receiver = if (Modifier.isStatic(field.modifiers)) null else Players
++        val previous = field.getInt(receiver)
++        field.setInt(receiver, MAX_PLAYERS)
++        try {
++            block()
++        } finally {
++            field.setInt(receiver, previous)
++        }
++    }
++}
