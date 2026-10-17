@@ -1,11 +1,26 @@
 # SoloScape 2011+ — proposed project roadmap and task list
 
-Updated: 10 October 2026. Companion: [current-state handoff](PROJECT_HANDOFF.md).
+Reviewed working order: 17 October 2026. [Current evidence/status](CURRENT_STATUS.md); [historical 10 October handoff](PROJECT_HANDOFF.md).
 This is a proposal to review, reorder and use as the working backlog. Later tasks
 are not automatic authorization to build them. No dates or effort estimates are
 promised before the relevant subsystem has been inspected.
 
-## Next sprint priority — Deck 60 FPS
+## Reviewed working order — 17 October 2026
+
+Keep the existing milestone IDs and dated checkpoints below. Checkboxes record scoped implementation, not physical acceptance; [CURRENT_STATUS](CURRENT_STATUS.md) indexes newer evidence without rewriting historical reports. This research does not authorize substantial feature implementation.
+
+1. **Physical native session and P0/P1 fixes (M0–M4):** save/closure truth, controller ownership/B/neutral, Steam text input and a single representative production/commerce/combat loop. Unverified ended owner sessions and the unexplained one-tile Settings save difference remain explicit follow-ups. Do not run every quest as a substitute for human acceptance.
+2. **Bounded M6 audit alongside lifecycle/performance diagnosis:** inspect what actually works, including Slayer, Summoning/Dungeoneering and solo bottlenecks. Audit one proposed progression slice before expanding content. Continue measured region rebuild/map-renderer diagnosis; keep current 60 FPS criteria open.
+3. **One enjoyable complete solo slice (M7), with M3/M4 as concurrent gates:** freshness, readability, progression, persistence and failure recovery on real Deck. Challenge the idea that lifecycle/performance can wait until after content: fix P0/P1 and measure them now; final acceptance can accompany the slice. Do not relax performance targets or claim pause/suspend support implicitly.
+4. **Close Deck lifecycle/performance acceptance (M4) before release/expansion:** controlled comparable power/renderer traces, suspend or explicit safe fallback, reconnect and save/reload; use measured changes, not an architectural rewrite.
+5. **Backport Lab (M8-03/08 + M11 preparation):** an original synthetic definition, audited target allocation, transitive dependencies and deterministic reversible cache-copy pipeline. [Architecture](BACKPORT_ARCHITECTURE.md) and [manifest](BACKPORT_MANIFEST_EXAMPLE.md) are designs, not an implemented converter.
+6. **One tiny later-content proof (M11):** preferably Superior Slayer-style enhanced spawning for one audited existing task monster, existing 634 assets/drops, native pre-EoC rules and a default-off toggle. No full OSRS revision/cache, new continent or unique-drop economy initially.
+7. **Larger additions only from that evidence:** retain private co-op compatibility checks before global state, economy/population/pause changes (M5); do not make polished hosting a prerequisite for a solo slice.
+8. **Experimental browser track, deferred from native release:** [WASM research](WASM_FEASIBILITY.md) found a working isolated kernel and a failing AWT presenter. [The next spike](WASM_SPIKE_PLAN.md) isolates one real raster path, then decides whether to continue. Full client/server port, transport hierarchy, WebGPU and public/PWA packaging are not approved.
+
+Current deliverables: [playtest direction/issue workflow](PLAYTEST_DIRECTION.md), [backport compatibility design](BACKPORT_ARCHITECTURE.md), [WASM blocker matrix and strategy comparison](WASM_FEASIBILITY.md). Existing roadmap tasks beyond their scoped milestones remain NOT IMPLEMENTED or DEFERRED as specified; they are not completed by research documents.
+
+## Historical priority checkpoint — Deck 60 FPS (12 October 2026)
 
 The owner has set sustained 60 FPS as the Deck target (12 October 2026). Prioritise [the Deck 60 FPS sprint](DECK_60FPS_SPRINT.md): verify frame pacing and actual renderer/settings, establish a full-screen Gaming Mode route and frame-time budget, profile controller/rendering costs, implement measured fixes, then validate sustained performance and current playtest controls on hardware. M4 remains pending until these checks pass. Automatic save sync and broader content expansion follow this milestone.
 
