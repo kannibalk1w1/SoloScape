@@ -1,0 +1,545 @@
+{
+  "date": "2026-10-17",
+  "reviewed_base": "a97df79",
+  "scope": "original subset grave/pile codec through native PlayerSave/FileStorage and fresh JVM loading",
+  "native_server_patch_count": 51,
+  "server_jar_sha256": "d5c5143031c38ea0b344d75660597eb2ea003d6642f62735b9356849071e991e",
+  "source_sha256": {
+    "experiments/native-grave-codec/GraveCodecHelper.java": "9b8f114d422bea2cb423c0f6464ef465d3fe171a2b71283ca1e5ceb742de10fd",
+    "experiments/native-grave-codec/run.py": "d91f46f21030481d2d59cf49c365ae23408eb743f6992c273103fbb762cfc33b",
+    "experiments/native-grave-codec/README.md": "328aaf75d82756f691a490dc2f0c2815db0ca5d892cf85414a0b46fc543ef7ab"
+  },
+  "tool_sha256": {
+    "java": "2a207f5e7d075afa01d97f8048389a64432a44c4a5af0f5e77d6e286ec5f401d",
+    "javac": "55859b80e7a9c4c4736be19ad3addeb35112ca6d17a30c4e0e116afc0a499bdb"
+  },
+  "originals_unchanged": {
+    "helper": true,
+    "jar": true,
+    "runner": true
+  },
+  "scenarios": 12,
+  "named_checks": 53,
+  "native_jvm_count": 22,
+  "cases": [
+    {
+      "case": "valid-cold-roundtrip",
+      "exit_codes": {
+        "reader": 0,
+        "writer": 0
+      },
+      "failures": [],
+      "fixture": ".runtime/native-grave-codec/1792276351385574852/cases/valid-cold-roundtrip/root",
+      "logs": [
+        ".runtime/native-grave-codec/1792276351385574852/cases/valid-cold-roundtrip/writer.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/valid-cold-roundtrip/writer.stderr",
+        ".runtime/native-grave-codec/1792276351385574852/cases/valid-cold-roundtrip/reader.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/valid-cold-roundtrip/reader.stderr"
+      ],
+      "outcome": "PASSED",
+      "pids": {
+        "reader": 623736,
+        "writer": 623709
+      },
+      "snapshot": {
+        "inventories_empty": true,
+        "mode": "read",
+        "native_loaded_accounts": 1,
+        "snapshot": {
+          "graves": [
+            {
+              "account": "alpha",
+              "blessed": false,
+              "id": "g1",
+              "kind": "memorial_plaque",
+              "level": 0,
+              "remaining_seconds": 300,
+              "x": 3235,
+              "y": 3220
+            },
+            {
+              "account": "alpha",
+              "blessed": true,
+              "id": "g2",
+              "kind": "memorial_plaque",
+              "level": 0,
+              "remaining_seconds": 180,
+              "x": 3235,
+              "y": 3220
+            },
+            {
+              "account": "beta",
+              "blessed": false,
+              "id": "g3",
+              "kind": "memorial_plaque",
+              "level": 0,
+              "remaining_seconds": 120,
+              "x": 3240,
+              "y": 3220
+            }
+          ],
+          "latest": {
+            "alpha": "g2",
+            "beta": "g3"
+          },
+          "piles": [
+            {
+              "amount": 125,
+              "charges": 0,
+              "disappear_ticks": 60,
+              "id": "p1",
+              "item": "coins",
+              "level": 0,
+              "reveal_ticks": 300,
+              "source_account": "alpha",
+              "visible_owner": "alpha",
+              "x": 3235,
+              "y": 3220
+            },
+            {
+              "amount": 1,
+              "charges": 12345,
+              "disappear_ticks": 60,
+              "id": "p2",
+              "item": "chaotic_rapier",
+              "level": 0,
+              "reveal_ticks": 250,
+              "source_account": "alpha",
+              "visible_owner": "alpha",
+              "x": 3235,
+              "y": 3220
+            },
+            {
+              "amount": 2,
+              "charges": 0,
+              "disappear_ticks": 40,
+              "id": "p3",
+              "item": "logs",
+              "level": 0,
+              "reveal_ticks": 0,
+              "source_account": "beta",
+              "visible_owner": "",
+              "x": 3240,
+              "y": 3220
+            }
+          ],
+          "version": 1
+        }
+      },
+      "timed_out": {
+        "reader": false,
+        "writer": false
+      }
+    },
+    {
+      "case": "checks",
+      "exit_codes": {
+        "checks": 0
+      },
+      "failures": [],
+      "logs": [
+        ".runtime/native-grave-codec/1792276351385574852/cases/checks/checks.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/checks/checks.stderr"
+      ],
+      "outcome": "PASSED",
+      "outcomes": {
+        "amount_int_max_accepted": "ACCEPTED",
+        "amount_overflow_refused": "REFUSED",
+        "amount_zero_refused": "REFUSED",
+        "bool_as_number_refused": "REFUSED",
+        "caller_input_mutation_after_decode_unchanged": "UNCHANGED",
+        "caller_record_list_mutation_after_construct_unchanged": "UNCHANGED",
+        "counter_below_minus_one_refused": "REFUSED",
+        "decoded_graves_add_immutable": "IMMUTABLE_REFUSED",
+        "double_number_refused": "REFUSED",
+        "duplicate_grave_id_refused": "REFUSED",
+        "duplicate_pile_id_refused": "REFUSED",
+        "encode_null_refused": "REFUSED",
+        "encoded_grave_list_add_immutable": "IMMUTABLE_REFUSED",
+        "encoded_grave_map_put_immutable": "IMMUTABLE_REFUSED",
+        "encoded_latest_put_immutable": "IMMUTABLE_REFUSED",
+        "encoded_root_put_immutable": "IMMUTABLE_REFUSED",
+        "graves_map_container_refused": "REFUSED",
+        "graves_oversize_refused": "REFUSED",
+        "item_with_digits_accepted": "ACCEPTED",
+        "kind_with_digits_accepted": "ACCEPTED",
+        "latest_missing_grave_refused": "REFUSED",
+        "latest_null_value_refused": "REFUSED",
+        "latest_oversize_refused": "REFUSED",
+        "latest_uppercase_account_refused": "REFUSED",
+        "latest_wrong_owner_refused": "REFUSED",
+        "level_out_of_range_refused": "REFUSED",
+        "missing_latest_refused": "REFUSED",
+        "missing_pile_field_refused": "REFUSED",
+        "negative_charges_refused": "REFUSED",
+        "negative_grave_seconds_refused": "REFUSED",
+        "negative_tile_refused": "REFUSED",
+        "non_map_root_refused": "REFUSED",
+        "null_inside_piles_refused": "REFUSED",
+        "null_snapshot_refused": "REFUSED",
+        "null_visible_owner_refused": "REFUSED",
+        "oversize_grave_id_refused": "REFUSED",
+        "piles_oversize_refused": "REFUSED",
+        "piles_string_container_refused": "REFUSED",
+        "private_owner_mismatch_refused": "REFUSED",
+        "private_reveal_minus_one_accepted": "ACCEPTED",
+        "private_reveal_zero_refused": "REFUSED",
+        "public_with_reveal_refused": "REFUSED",
+        "replacement_snapshot_leaves_checkpoint_unchanged": "UNCHANGED",
+        "string_number_refused": "REFUSED",
+        "tile_x_out_of_range_refused": "REFUSED",
+        "unknown_grave_field_refused": "REFUSED",
+        "unknown_root_key_refused": "REFUSED",
+        "unsafe_item_refused": "REFUSED",
+        "unsafe_kind_refused": "REFUSED",
+        "unsupported_version_refused": "REFUSED",
+        "uppercase_grave_id_refused": "REFUSED",
+        "valid_fixture_decodes_equal": "ACCEPTED_EQUAL",
+        "version_string_refused": "REFUSED"
+      },
+      "pids": {
+        "checks": 623757
+      }
+    },
+    {
+      "case": "write-existing-refused",
+      "exit_codes": {
+        "writer": 2
+      },
+      "failures": [],
+      "logs": [
+        ".runtime/native-grave-codec/1792276351385574852/cases/write-existing-refused/writer.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/write-existing-refused/writer.stderr"
+      ],
+      "outcome": "PASSED",
+      "pids": {
+        "writer": 623781
+      }
+    },
+    {
+      "case": "corrupt-schema_version_two",
+      "exit_codes": {
+        "reader": 2,
+        "writer": 0
+      },
+      "failures": [],
+      "fixture": ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-schema_version_two/root",
+      "logs": [
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-schema_version_two/writer.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-schema_version_two/writer.stderr",
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-schema_version_two/reader.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-schema_version_two/reader.stderr"
+      ],
+      "outcome": "PASSED",
+      "pids": {
+        "reader": 623876,
+        "writer": 623815
+      },
+      "snapshot": null,
+      "timed_out": {
+        "reader": false,
+        "writer": false
+      }
+    },
+    {
+      "case": "corrupt-unknown_grave_field",
+      "exit_codes": {
+        "reader": 2,
+        "writer": 0
+      },
+      "failures": [],
+      "fixture": ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-unknown_grave_field/root",
+      "logs": [
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-unknown_grave_field/writer.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-unknown_grave_field/writer.stderr",
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-unknown_grave_field/reader.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-unknown_grave_field/reader.stderr"
+      ],
+      "outcome": "PASSED",
+      "pids": {
+        "reader": 623940,
+        "writer": 623898
+      },
+      "snapshot": null,
+      "timed_out": {
+        "reader": false,
+        "writer": false
+      }
+    },
+    {
+      "case": "corrupt-missing_latest",
+      "exit_codes": {
+        "reader": 2,
+        "writer": 0
+      },
+      "failures": [],
+      "fixture": ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-missing_latest/root",
+      "logs": [
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-missing_latest/writer.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-missing_latest/writer.stderr",
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-missing_latest/reader.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-missing_latest/reader.stderr"
+      ],
+      "outcome": "PASSED",
+      "pids": {
+        "reader": 624037,
+        "writer": 623999
+      },
+      "snapshot": null,
+      "timed_out": {
+        "reader": false,
+        "writer": false
+      }
+    },
+    {
+      "case": "corrupt-bool_as_number",
+      "exit_codes": {
+        "reader": 2,
+        "writer": 0
+      },
+      "failures": [],
+      "fixture": ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-bool_as_number/root",
+      "logs": [
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-bool_as_number/writer.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-bool_as_number/writer.stderr",
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-bool_as_number/reader.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/corrupt-bool_as_number/reader.stderr"
+      ],
+      "outcome": "PASSED",
+      "pids": {
+        "reader": 624089,
+        "writer": 624058
+      },
+      "snapshot": null,
+      "timed_out": {
+        "reader": false,
+        "writer": false
+      }
+    },
+    {
+      "case": "guard-linked-member",
+      "exit_codes": {
+        "reader": 2,
+        "writer": 0
+      },
+      "failures": [],
+      "fixture": ".runtime/native-grave-codec/1792276351385574852/cases/guard-linked-member/root",
+      "logs": [
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-linked-member/writer.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-linked-member/writer.stderr",
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-linked-member/reader.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-linked-member/reader.stderr"
+      ],
+      "outcome": "PASSED",
+      "pids": {
+        "reader": 624211,
+        "writer": 624138
+      },
+      "snapshot": null,
+      "timed_out": {
+        "reader": false,
+        "writer": false
+      }
+    },
+    {
+      "case": "guard-linked-ancestor",
+      "exit_codes": {
+        "reader": 2,
+        "writer": 0
+      },
+      "failures": [],
+      "fixture": ".runtime/native-grave-codec/1792276351385574852/cases/guard-linked-ancestor/root",
+      "logs": [
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-linked-ancestor/writer.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-linked-ancestor/writer.stderr",
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-linked-ancestor/reader.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-linked-ancestor/reader.stderr"
+      ],
+      "outcome": "PASSED",
+      "pids": {
+        "reader": 624272,
+        "writer": 624235
+      },
+      "snapshot": null,
+      "timed_out": {
+        "reader": false,
+        "writer": false
+      }
+    },
+    {
+      "case": "guard-oversize-member",
+      "exit_codes": {
+        "reader": 2,
+        "writer": 0
+      },
+      "failures": [],
+      "fixture": ".runtime/native-grave-codec/1792276351385574852/cases/guard-oversize-member/root",
+      "logs": [
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-oversize-member/writer.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-oversize-member/writer.stderr",
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-oversize-member/reader.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-oversize-member/reader.stderr"
+      ],
+      "outcome": "PASSED",
+      "pids": {
+        "reader": 624371,
+        "writer": 624309
+      },
+      "snapshot": null,
+      "timed_out": {
+        "reader": false,
+        "writer": false
+      }
+    },
+    {
+      "case": "guard-fifo-member",
+      "exit_codes": {
+        "reader": 2,
+        "writer": 0
+      },
+      "failures": [],
+      "fixture": ".runtime/native-grave-codec/1792276351385574852/cases/guard-fifo-member/root",
+      "logs": [
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-fifo-member/writer.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-fifo-member/writer.stderr",
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-fifo-member/reader.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/guard-fifo-member/reader.stderr"
+      ],
+      "outcome": "PASSED",
+      "pids": {
+        "reader": 624416,
+        "writer": 624392
+      },
+      "snapshot": null,
+      "timed_out": {
+        "reader": false,
+        "writer": false
+      }
+    },
+    {
+      "case": "control-charge-loss-detected",
+      "exit_codes": {
+        "reader": 0,
+        "writer": 0
+      },
+      "failures": [],
+      "fixture": ".runtime/native-grave-codec/1792276351385574852/cases/control-charge-loss-detected/root",
+      "logs": [
+        ".runtime/native-grave-codec/1792276351385574852/cases/control-charge-loss-detected/writer.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/control-charge-loss-detected/writer.stderr",
+        ".runtime/native-grave-codec/1792276351385574852/cases/control-charge-loss-detected/reader.stdout",
+        ".runtime/native-grave-codec/1792276351385574852/cases/control-charge-loss-detected/reader.stderr"
+      ],
+      "outcome": "PASSED",
+      "pids": {
+        "reader": 624513,
+        "writer": 624438
+      },
+      "snapshot": {
+        "inventories_empty": true,
+        "mode": "read",
+        "native_loaded_accounts": 1,
+        "snapshot": {
+          "graves": [
+            {
+              "account": "alpha",
+              "blessed": false,
+              "id": "g1",
+              "kind": "memorial_plaque",
+              "level": 0,
+              "remaining_seconds": 300,
+              "x": 3235,
+              "y": 3220
+            },
+            {
+              "account": "alpha",
+              "blessed": true,
+              "id": "g2",
+              "kind": "memorial_plaque",
+              "level": 0,
+              "remaining_seconds": 180,
+              "x": 3235,
+              "y": 3220
+            },
+            {
+              "account": "beta",
+              "blessed": false,
+              "id": "g3",
+              "kind": "memorial_plaque",
+              "level": 0,
+              "remaining_seconds": 120,
+              "x": 3240,
+              "y": 3220
+            }
+          ],
+          "latest": {
+            "alpha": "g2",
+            "beta": "g3"
+          },
+          "piles": [
+            {
+              "amount": 125,
+              "charges": 0,
+              "disappear_ticks": 60,
+              "id": "p1",
+              "item": "coins",
+              "level": 0,
+              "reveal_ticks": 300,
+              "source_account": "alpha",
+              "visible_owner": "alpha",
+              "x": 3235,
+              "y": 3220
+            },
+            {
+              "amount": 1,
+              "charges": 0,
+              "disappear_ticks": 60,
+              "id": "p2",
+              "item": "chaotic_rapier",
+              "level": 0,
+              "reveal_ticks": 250,
+              "source_account": "alpha",
+              "visible_owner": "alpha",
+              "x": 3235,
+              "y": 3220
+            },
+            {
+              "amount": 2,
+              "charges": 0,
+              "disappear_ticks": 40,
+              "id": "p3",
+              "item": "logs",
+              "level": 0,
+              "reveal_ticks": 0,
+              "source_account": "beta",
+              "visible_owner": "",
+              "x": 3240,
+              "y": 3220
+            }
+          ],
+          "version": 1
+        }
+      },
+      "timed_out": {
+        "reader": false,
+        "writer": false
+      }
+    }
+  ],
+  "linked_parent_before_fix": {
+    "failures": [
+      "reader not refused: exit 0"
+    ],
+    "exit_codes": {
+      "reader": 0,
+      "writer": 0
+    },
+    "helper_sha256": "cc46b2644b20369dd2c8e2bb8e48035e35829e4303c1d16d0dcb3fb6d1d3bf79"
+  },
+  "limits": [
+    "Supplied original records in one fixture carrier, empty native inventories; not actual death/live capture.",
+    "No storage layout selection, registered persistent variable, Player.copy/SaveQueue, multiplayer publication, restart restoration, backup integration or power-loss proof.",
+    "Prototype omits NPC direction/transform/player gender/display name and instance normalization; account pattern is fixture subset.",
+    "Charge-loss control is schema-valid and accepted; independent expected-record comparison detects it."
+  ]
+}
