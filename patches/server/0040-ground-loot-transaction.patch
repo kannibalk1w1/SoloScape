@@ -1,0 +1,115 @@
+diff --git a/game/src/main/kotlin/content/entity/player/inv/item/take/ItemTake.kt b/game/src/main/kotlin/content/entity/player/inv/item/take/ItemTake.kt
+--- a/game/src/main/kotlin/content/entity/player/inv/item/take/ItemTake.kt
++++ b/game/src/main/kotlin/content/entity/player/inv/item/take/ItemTake.kt
+@@ -55,15 +55,22 @@
+                 player.inventoryFull()
+                 return false
+             }
+-            if (!FloorItems.remove(target)) {
+-                player.message("Too late - it's gone!")
+-                return false
+-            }
++            var missing = false
+             player.inventory.transaction {
+                 val index = add(item, target.amount)
+                 if (target.charges > 0 && index != -1) {
+                     setCharge(index, target.charges)
+                 }
++                // Keep floor loot until the inventory accepts the entire pile. A stale
++                // floor reference must also roll back the tentative inventory changes.
++                if (!failed && !FloorItems.remove(target)) {
++                    missing = true
++                    error = TransactionError.Invalid
++                }
++            }
++            if (missing) {
++                player.message("Too late - it's gone!")
++                return false
+             }
+             when (player.inventory.transaction.error) {
+                 TransactionError.None -> {
+diff --git a/game/src/test/kotlin/content/entity/player/inv/TakeTest.kt b/game/src/test/kotlin/content/entity/player/inv/TakeTest.kt
+--- a/game/src/test/kotlin/content/entity/player/inv/TakeTest.kt
++++ b/game/src/test/kotlin/content/entity/player/inv/TakeTest.kt
+@@ -1,11 +1,15 @@
+ package content.entity.player.inv
+ 
+ import WorldTest
++import content.entity.player.inv.item.take.ItemTake
++import kotlinx.coroutines.runBlocking
+ import floorItemOption
+ import org.junit.jupiter.api.Assertions.assertEquals
+ import org.junit.jupiter.api.Assertions.assertTrue
+ import org.junit.jupiter.api.Test
+ import world.gregs.voidps.engine.entity.item.floor.FloorItems
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.remove
+ import world.gregs.voidps.engine.inv.inventory
+ import world.gregs.voidps.type.Tile
+ 
+@@ -37,4 +41,65 @@
+         assertTrue(FloorItems.at(tile.add(1, 0)).isEmpty())
+         assertEquals(tile, player.tile)
+     }
++
++    @Test
++    fun `Take refuses a coin stack overflow without destroying floor loot`() {
++        val player = createPlayer(emptyTile)
++        player.inventory.add("coins", Int.MAX_VALUE - 1)
++        val item = FloorItems.add(player.tile, "coins", 2, owner = player)
++        tick()
++
++        player.floorItemOption(item, "Take")
++        tick(2)
++
++        assertEquals(Int.MAX_VALUE - 1, player.inventory.count("coins"))
++        assertTrue(FloorItems.at(item.tile).any { it === item }, "Rejected coins remain on the floor")
++        assertEquals(2, item.amount)
++
++        // Supplied-capacity fixture: make room in the stack, then use native Take again.
++        player.inventory.remove("coins", 1)
++        player.floorItemOption(item, "Take")
++        tick(2)
++        assertEquals(Int.MAX_VALUE, player.inventory.count("coins"))
++        assertTrue(FloorItems.at(item.tile).none { it === item })
++        assertTrue(!runBlocking { ItemTake.take(player, item) }, "A stale retry must fail")
++        assertEquals(Int.MAX_VALUE, player.inventory.count("coins"))
++    }
++
++    @Test
++    fun `Take refuses a nonstackable pile that exceeds free slots without partial loss`() {
++        val player = createPlayer(emptyTile)
++        player.inventory.add("raw_shrimps", 27)
++        val item = FloorItems.add(player.tile, "bronze_sword", 2, owner = player)
++        tick()
++        assertEquals(1, player.inventory.spaces)
++
++        player.floorItemOption(item, "Take")
++        tick(2)
++
++        assertEquals(0, player.inventory.count("bronze_sword"))
++        assertEquals(27, player.inventory.count("raw_shrimps"))
++        assertTrue(FloorItems.at(item.tile).any { it === item }, "Rejected swords remain on the floor")
++        assertEquals(2, item.amount)
++
++        player.inventory.remove("raw_shrimps", 1)
++        player.floorItemOption(item, "Take")
++        tick(2)
++        assertEquals(2, player.inventory.count("bronze_sword"))
++        assertEquals(26, player.inventory.count("raw_shrimps"))
++        assertTrue(FloorItems.at(item.tile).none { it === item })
++    }
++
++    @Test
++    fun `A stale floor reference rolls back a tentative inventory addition`() {
++        val player = createPlayer(emptyTile)
++        val item = FloorItems.add(player.tile, "coins", 2, owner = player)
++        tick()
++        assertTrue(FloorItems.remove(item))
++        tick()
++
++        assertTrue(!runBlocking { ItemTake.take(player, item) })
++        assertEquals(0, player.inventory.count("coins"))
++        assertTrue(FloorItems.at(item.tile).isEmpty())
++    }
+ }
