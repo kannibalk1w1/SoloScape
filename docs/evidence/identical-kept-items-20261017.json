@@ -1,0 +1,182 @@
+{
+  "date": "2026-10-17",
+  "reviewed_base": "640fef8",
+  "scope": "retain identical physical items during native keep-on-death selection",
+  "native_stack": {
+    "server": 49,
+    "client": 56
+  },
+  "before_source_sha256": "1774c0bac1e03e50c08581a9c87904c20b9bd01bbd0e431960dcdf3f0f2cf5dd",
+  "source_sha256": {
+    "patches/server/0049-preserve-identical-kept-items.patch": "01f0275c5654c9d1b63e4391e0f5ae5d4b6cab2dd64081f3534b855cc0ea521b",
+    "scripts/content_coverage.py": "eef03a166672fe1f5c3271757afd034914284bbd61f478770425f5cebee7ef58",
+    "upstream/game-server/game/src/main/kotlin/content/entity/player/kept/ItemsKeptOnDeath.kt": "fa457f3044a6ed66723750724e03f8c0fb680b1fd120754c5b8028536d50e3bc",
+    "upstream/game-server/game/src/test/kotlin/content/area/misthalin/lumbridge/church/IdenticalItemsKeptOnDeathTest.kt": "fe389a04f60c6476625c34abf3af396606b49847f9e576ea9c5e2bcd5a417697"
+  },
+  "before_fix": [
+    {
+      "file": ".runtime/identical-kept-items-20261017/xml/fourIdenticalSwordsKeepThree-final1.xml",
+      "counts": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failure": "org.opentest4j.AssertionFailedError: Three of four identical swords must be kept ==> expected: <3> but was: <1>",
+      "xml_sha256": "dfe1511140d802fe798a2eee033ba29cbffba6bca4bfbd91a92a9c8fdd419967"
+    },
+    {
+      "file": ".runtime/identical-kept-items-20261017/xml/identicalInventoryAndEquippedSwordsAllKept-final1.xml",
+      "counts": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failure": "org.opentest4j.AssertionFailedError: No identical sword may drop to the floor ==> expected: <0> but was: <2>",
+      "xml_sha256": "b1d6c713f68693272cf27534988181ea56f798401b308ab9e208f15861f3d5be"
+    },
+    {
+      "file": ".runtime/identical-kept-review-20261017/coordinator-red/TEST-content.area.misthalin.lumbridge.church.IdenticalItemsKeptOnDeathTest.xml",
+      "counts": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "failure": "org.opentest4j.AssertionFailedError: Three of four identical swords must be kept ==> expected: <3> but was: <1>",
+      "xml_sha256": "97a0b9097e698eb3bd59208a80ffb25da6cec640d169f6120818ee5d1a3561b1"
+    }
+  ],
+  "fixed_related_suites": [
+    {
+      "suite": "content.area.misthalin.lumbridge.church.IdenticalItemsKeptOnDeathTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failures_detail": []
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.KeptItemChargePreservationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failures_detail": []
+    },
+    {
+      "suite": "content.entity.player.effect.degrade.DegradeTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failures_detail": []
+    },
+    {
+      "suite": "content.entity.player.equip.DragonfireShieldTest",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failures_detail": []
+    },
+    {
+      "suite": "content.skill.melee.armour.CombatDegradeTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failures_detail": []
+    }
+  ],
+  "fixed_death_suites": [
+    {
+      "suite": "content.entity.player.inv.TakeTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.DeathLootRecoveryTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.KeptItemChargePreservationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.IdenticalItemsKeptOnDeathTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.GravestonesTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.GravestoneShopAuthorityTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.RepeatedGraveIdentityTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "distinct_native_cases": 63,
+  "overlap_cases": 4,
+  "root_tooling": {
+    "tests": 276,
+    "existing_optional_skips": 1
+  },
+  "source_exports": {
+    "server": 98,
+    "client": 140
+  },
+  "limitations": [
+    "Supplied bronze swords/equipment, fixed clock and lethal damage are explicit fixtures, not earned combat.",
+    "No new graphical/physical controller, Deck, restart or unrecovered-grave persistence acceptance.",
+    "Initial empty-slot precondition failure and runner name-matching mistake are excluded from qualified red evidence."
+  ],
+  "jars_sha256": {
+    "server": "d6b071660ba8424e056c4851bddc7d380417a283acb0f8af7c2d5e6fcdcb0760",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+  },
+  "packaged_classes": [
+    {
+      "name": "content/entity/player/kept/ItemsKeptOnDeath$WhenMappings.class",
+      "sha256": "64c9ee7382b0d3ab93d5cd30c50afb8721d82c08b1b9c34f94115644d9f36832"
+    },
+    {
+      "name": "content/entity/player/kept/ItemsKeptOnDeath$getAllOrdered$$inlined$sortedByDescending$1.class",
+      "sha256": "d6b96bbc0470d746ffb6079808d998ffdb7ce431518c1a9a45488e545435f988"
+    },
+    {
+      "name": "content/entity/player/kept/ItemsKeptOnDeath.class",
+      "sha256": "8aa2208eabcd8ada0f50957680a5dbd7241dbc0026d5cbe6b5a01435ed21944d"
+    },
+    {
+      "name": "content/entity/player/kept/ItemsKeptOnDeathScreen.class",
+      "sha256": "820650119bf5692d8b0ea4a816b0b6910e11c765158d6ea4f12211d26623cbe7"
+    }
+  ],
+  "matched_prepare_passed": true
+}
