@@ -20,7 +20,7 @@ Reviewed 17 October 2026 against `main` `502df96`. **Backport content, not an en
 
 ## Start with the architecture already present
 
-`upstream/game-server/engine/.../data/definition/ItemDefinitions.kt` loads semantic string IDs from TOML, rejects duplicate names and resolves clone metadata. NPC/object definitions use the same family of mechanisms. `cache/.../definition/decoder/ItemDecoder.kt` maps native items to index 19 with archive `id >> 8` and file `id & 255`; `ItemDecoderFull`/`ItemEncoder` expose fuller encode/decode information. Native client decoding, model loading, sprites and packet widths remain separate contracts.
+`upstream/game-server/engine/.../data/definition/ItemDefinitions.kt` loads semantic string IDs from TOML, rejects duplicate names and resolves clone metadata. NPC/object definitions use the same family of mechanisms. `cache/.../definition/decoder/ItemDecoder.kt` maps native items to index 19 with archive `id >> 8` and file `id & 255`; `ItemDecoderFull`/`ItemEncoder` expose fuller encode/decode information. Native client decoding, model loading, sprites and packet widths remain separate contracts. The lightweight `ItemDecoder.read` has no fail-fast unknown-opcode branch; do not feed modern data to it and assume compatibility. The lab needs an explicit supported-opcode contract around the selected full codecs.
 
 Therefore add an **authoring/build compatibility layer**, not another live content database. Existing gameplay keeps semantic server keys; new `SoloContent` references can be generated wrappers over those keys. The client receives only resolved native target IDs, preserving ordinary native action validation and controller adapters. Never scatter OSRS source IDs through scripts, drop tables, client UI or saves.
 
