@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "12a584a",
+  "reviewed_base": "992c4b3",
   "entries": [
     {
       "id": "controls",
@@ -239,8 +239,8 @@
       "scope": "Unrecovered grave/floor loot through a full local-world restart",
       "delivery": "NOT IMPLEMENTED",
       "acceptance": "DEFERRED",
-      "evidence": "WORLD_TRANSIENT_SAVE_AUDIT_20261017.md",
-      "note": "Source audit finds no runtime grave/floor writer and nonpersistent marker variables. Two-JVM restart reproduction and explicit lifecycle policy remain open; recovered inventory tests do not cover this boundary."
+      "evidence": "GRAVE_COLD_JVM_PROBE_20261017.md",
+      "note": "Two cold native WorldTest JVMs on one private storage root reproduce absent unexpired grave/drop while kept account state survives. Native shutdown/primary save pass; no network Main or physical acceptance. Recovery policy, persistence and no-duplication implementation remain open."
     },
     {
       "id": "slayer-kill-ownership",
