@@ -1,0 +1,151 @@
+{
+  "task": "targeted solo Dungeoneering native pass",
+  "date": "2026-10-17",
+  "baseline": {
+    "root_commit": "e44af90",
+    "server_patches_applied": "0001-0024",
+    "server_patch_added": "patches/server/0025-targeted-solo-dungeoneering.patch"
+  },
+  "path_proven": {
+    "scope": "solo normal player, small complexity 1, floor 1, native handlers, one bind, one leave, one logout",
+    "steps": [
+      "Climb-down on daemonheim_dungeon_entrance without a party opens dialogue_multi2 (Yes/No)",
+      "Yes makes the player party leader (DungeoneeringParty.setLeader)",
+      "Second Climb-down generates a Small c1 floor 1 dungeon with playerCount 1 and teleports to dungeon.startTile()",
+      "Ring of kinship is worn and removed from inventory; allocateGear supplies air runes 86-165 and a rapier",
+      "Bind (Option3) on the starting rapier moves it to the dungeoneering_bound inventory",
+      "DungeoneeringParty.leave clears in_dungeoneering, teleports to 3460,3721,1 and keeps the bound item",
+      "Save TOML read back: tile 3460,3721,1 and dungeoneering_bound contains rapier_bound",
+      "Despawn.player (playerDespawn leave) then saveQueue.save snapshot, then Players.remove: saved tile is 3460,3721,1 and bound item persists"
+    ]
+  },
+  "fixtures_explicit": [
+    "Ring of kinship added to inventory (normally bought from the tutor; not exercised)",
+    "Player spawns at 3456,3723,0 beside the entrance; the walk is not exercised",
+    "Entrance click invokes the registered Climb-down:daemonheim_dungeon_entrance native handler in an Unconfined coroutine (packet InteractObject path does not reach it in WorldTest)",
+    "Logout test sets storage.disabled=false for that test only so saveQueue.save takes a snapshot",
+    "Save verified from the saved TOML file, not a second live login",
+    "No quest progress, teleport, kill, spawn or admin start_dungeon"
+  ],
+  "unproven": [
+    "Combat and Icy Bones boss kill",
+    "Keys, locks and door traversal inside the dungeon",
+    "Trapdoor End-dungeon completion, reward XP, tokens, prestige and dungeon_reward_given",
+    "Walking the real route to the entrance (InteractObject packet dispatch in WorldTest)",
+    "Second live login from the saved file",
+    "Multi-member party and floors beyond 1"
+  ],
+  "first_remaining_gap": "InteractObject packet path does not run the entrance handler in WorldTest: after objectOption and 12 ticks the mode is EmptyMode and no dialogue opens, while the same registered handler opens dialogue_multi2 when invoked directly. Next action: trace ObjectOptionHandler.validate and PlayerOnObjectInteract scheduling in the WorldTest harness, or label as harness-only and move on to a boss fixture.",
+  "commands": [
+    {
+      "name": "baseline ItemBindingTest",
+      "command": "JAVA_HOME=/home/kannibalkiwi/orca/projects/SoloScape/.runtime/jdks/jdk21 GRADLE_USER_HOME=/home/kannibalkiwi/orca/projects/SoloScape/.gradle SOLOSCAPE_TEST_ROOT=<worktree>/.runtime/targeted-dungeoneering-20261017 flock <worktree>/.runtime/build.lock bash ./gradlew :game:test --tests content.skill.dungeoneering.ItemBindingTest --offline",
+      "result": "8 passed, 0 failed"
+    },
+    {
+      "name": "lifecycle test (final)",
+      "command": ".runtime/run-gradle-tests.sh <log> content.skill.dungeoneering.SoloDungeonLifecycleTest",
+      "result": "2 passed, 0 failed, 0 skipped"
+    },
+    {
+      "name": "selected packages (final)",
+      "command": ".runtime/run-gradle-tests.sh <log> 'content.skill.dungeoneering.*' 'content.area.wilderness.daemonheim.*'",
+      "result": "BUILD SUCCESSFUL; DungeonGenerationWorldTest 9, DungeonGeneratorTest 8, ItemBindingTest 8, SoloDungeonLifecycleTest 2, DaemonheimRewardsTest 3, DungeoneeringPartyTest 6, RingOfKinshipTest 3; 39 total, 0 failed, 0 skipped; XML written 14:17:09"
+    },
+    {
+      "name": "patch stack verify",
+      "command": "python3 scripts/verify_patches.py server",
+      "result": "server: all 63 modified/patched source files match the exported stack"
+    },
+    {
+      "name": "patch 0025 on untouched baseline",
+      "command": "patch -p1 on a copy of the pre-edit game/src snapshot, then cmp",
+      "result": "applies cleanly; reproduced file is byte-identical"
+    }
+  ],
+  "files": [
+    "patches/server/0025-targeted-solo-dungeoneering.patch (new, adds game/src/test/kotlin/content/skill/dungeoneering/SoloDungeonLifecycleTest.kt)",
+    "docs/DUNGEONEERING_TARGETED_PASS_20261017.md (new)",
+    "docs/evidence/targeted-dungeoneering-20261017.json (new)",
+    "upstream/game-server/game/src/test/kotlin/content/skill/dungeoneering/SoloDungeonLifecycleTest.kt (untracked in ignored upstream checkout; carried by patch 0025)"
+  ],
+  "production_changes": "none",
+  "coordinator_review": {
+    "isolation": "New save-writing class requires SOLOSCAPE_TEST_ROOT; separate test storage only.",
+    "packet_boundary": "Unresolved harness dispatch gap, not a confirmed product defect.",
+    "selected_rerun": {
+      "totals": {
+        "tests": 43,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suites": [
+        {
+          "suite": "content.area.wilderness.daemonheim.DaemonheimRewardsTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "content.area.wilderness.daemonheim.DungeoneeringPartyTest",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "content.area.wilderness.daemonheim.RingOfKinshipTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "content.skill.dungeoneering.DungeonGenerationWorldTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "content.skill.dungeoneering.DungeonGeneratorTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "content.skill.dungeoneering.ItemBindingTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "content.skill.dungeoneering.SoloDungeonLifecycleTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "content.skill.summoning.SoloSpiritWolfLifecycleTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "content.skill.summoning.SummoningLevelGateTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "log": ".runtime/solo-content-review-20261017.log"
+    }
+  }
+}

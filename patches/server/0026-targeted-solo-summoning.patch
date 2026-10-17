@@ -1,0 +1,189 @@
+diff --git a/game/src/test/kotlin/content/skill/summoning/SoloSpiritWolfLifecycleTest.kt b/game/src/test/kotlin/content/skill/summoning/SoloSpiritWolfLifecycleTest.kt
+new file mode 100644
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/summoning/SoloSpiritWolfLifecycleTest.kt
+@@ -0,0 +1,184 @@
++package content.skill.summoning
++
++import WorldTest
++import containsMessage
++import dialogueOption
++import interfaceOption
++import itemOption
++import kotlinx.coroutines.runBlocking
++import objectOption
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertFalse
++import org.junit.jupiter.api.Assertions.assertNotNull
++import org.junit.jupiter.api.Assertions.assertNull
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
++import world.gregs.voidps.engine.data.AccountManager
++import world.gregs.voidps.engine.data.Settings
++import world.gregs.voidps.engine.data.PlayerSave
++import world.gregs.voidps.engine.data.SaveQueue
++import world.gregs.voidps.engine.data.definition.EnumDefinitions
++import world.gregs.voidps.engine.data.definition.ItemDefinitions
++import world.gregs.voidps.engine.data.file.FileStorage
++import world.gregs.voidps.engine.entity.Despawn
++import world.gregs.voidps.engine.entity.character.npc.NPCs
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.Players
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.entity.item.Item
++import world.gregs.voidps.engine.entity.obj.GameObjects
++import world.gregs.voidps.engine.get
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.engine.inv.transact.add
++import world.gregs.voidps.engine.inv.transact.operation.AddItem.add
++import world.gregs.voidps.type.Tile
++import java.io.File
++
++/**
++ * One native spirit wolf lifecycle at real beginner level, with only native paths:
++ *
++ * 1. Infuse a spirit wolf pouch at the obelisk from supplied materials. The recipe is read from the
++ *    same cache definitions [SummoningCrafting] uses, not hard-coded.
++ * 2. Summon it from the pouch and dismiss it through the familiar_details confirmation.
++ * 3. Recovery boundary: summon, save to disk, log out, then load the save into a fresh [Player] and log
++ *    it back in. Only the saved variables and inventory come back; the familiar NPC itself is not
++ *    persisted, so it is rebuilt by the native playerSpawn restore from the saved familiar_details timer.
++ *
++ * Fixtures are explicit: the owner is a new account (real Summoning level 1, empty xp, full points pool
++ * of 1), the materials are added straight into the inventory, and the save is written through the
++ * native [SaveQueue] into the isolated test saves folder. Test storage is disabled, so the save is taken
++ * explicitly here rather than by autosave.
++ */
++@EnabledIfEnvironmentVariable(named = "SOLOSCAPE_TEST_ROOT", matches = ".+")
++class SoloSpiritWolfLifecycleTest : WorldTest() {
++
++    private val obeliskTile = Tile(2521, 3055)
++    private val pouchId = "spirit_wolf_pouch"
++    private val familiarId = "spirit_wolf_familiar"
++
++    /** Adds the supplied materials and infuses one pouch at the obelisk. Returns the recipe consumed. */
++    private fun infuseSpiritWolfPouch(player: Player): Map<String, Int> {
++        val pouch = Item(pouchId)
++        val charmId: Int = pouch.def["summoning_charm_id"]
++        val charmAmount: Int = pouch.def["summoning_charm_amount"]
++        val shardId: Int = pouch.def["summoning_shard_id"]
++        val shardAmount: Int = pouch.def["summoning_shard_amount"]
++        val blankId: Int = pouch.def["summoning_pouch_id"]
++        val blankAmount: Int = pouch.def["summoning_pouch_amount"]
++        val tertiaryId: Int = pouch.def["summoning_pouch_req_item_id_1"]
++        val tertiaryAmount: Int = pouch.def["summoning_pouch_req_item_amount_1"]
++        val recipe = listOf(
++            Item(ItemDefinitions.get(charmId).stringId, charmAmount),
++            Item(ItemDefinitions.get(shardId).stringId, shardAmount),
++            Item(ItemDefinitions.get(blankId).stringId, blankAmount),
++            Item(ItemDefinitions.get(tertiaryId).stringId, tertiaryAmount),
++        )
++        player.inventory.transaction { recipe.forEach { add(it.id, it.amount) } }
++
++        player.objectOption(GameObjects.find(obeliskTile, "obelisk"), "Infuse-pouch")
++        tick()
++        // The obelisk interface addresses pouches by enum index: (slot + 3) / 5 in SummoningCrafting.
++        val enumIndex = EnumDefinitions.get("summoning_pouch_ids_1").map!!.entries.first { it.value == pouch.def.id }.key as Int
++        player.interfaceOption("summoning_pouch_creation", "pouches", "Infuse", item = Item(pouchId), slot = enumIndex * 5 - 3)
++        tick()
++        return recipe.associate { it.id to it.amount }
++    }
++
++    private fun summonFromPouch(player: Player) {
++        player.itemOption("Summon", pouchId)
++        tick(3)
++    }
++
++    /** Live spirit wolves owned by [player], counted from the world rather than one follower reference. */
++    private fun ownedFamiliars(player: Player) = NPCs.count { it.id == familiarId && it["owner_index", -1] == player.index }
++
++    private fun saveToDisk(player: Player): PlayerSave {
++        val dir = File(Settings["storage.players.path"], "summoning-wolf-${player.accountName.lowercase()}").apply { mkdirs() }
++        try {
++            runBlocking { SaveQueue(FileStorage(dir)).direct().join() }
++            return PlayerSave.load(dir.resolve("${player.accountName.lowercase()}.toml"))
++        } finally {
++            dir.deleteRecursively()
++        }
++    }
++
++    /** Logs the player out the way the server does: despawn, remove, then let the queued NPC removal run. */
++    private fun logout(player: Player) {
++        Despawn.player(player)
++        Players.remove(player)
++        tick()
++    }
++
++    /** Loads the save into a new [Player] and runs the native login path, as an account login would. */
++    private fun loginFromSave(save: PlayerSave): Player {
++        val accounts = get<AccountManager>()
++        val fresh = save.toPlayer()
++        accounts.setup(fresh, null, 0, viewport = true)
++        assertTrue(accounts.index(fresh), "the saved account indexes as a new player")
++        accounts.spawn(fresh, null)
++        tick(3)
++        return fresh
++    }
++
++    @Test
++    fun `Infuse, summon and dismiss a spirit wolf consume the native materials, points and pouch`() {
++        val player = createPlayer(Tile(2523, 3056))
++        val xpBeforeInfuse = player.experience.get(Skill.Summoning)
++        val recipe = infuseSpiritWolfPouch(player)
++
++        assertEquals(1, player.inventory.count(pouchId), "infusing makes one spirit wolf pouch")
++        for ((id, amount) in recipe) {
++            assertEquals(0, player.inventory.count(id), "infusing consumes all $amount of $id")
++        }
++        val infuseXp: Double = ItemDefinitions.get(pouchId)["infuse_experience"]
++        assertEquals(infuseXp, player.experience.get(Skill.Summoning) - xpBeforeInfuse, 0.0001, "infusing awards the pouch's infuse_experience")
++
++        val xpBeforeSummon = player.experience.get(Skill.Summoning)
++        val pointsBeforeSummon = player.levels.get(Skill.Summoning)
++        summonFromPouch(player)
++
++        assertEquals(familiarId, player.follower?.id, "the summoned spirit wolf is the follower")
++        assertEquals(1, ownedFamiliars(player), "exactly one spirit wolf is in the world for this owner")
++        assertEquals(0, player.inventory.count(pouchId), "summoning consumes the pouch")
++        assertEquals(pointsBeforeSummon - 1, player.levels.get(Skill.Summoning), "summoning costs the pouch's summon_points")
++        assertEquals(60, player["summoning_special_points_remaining", 0], "a new follower starts with a full special pool")
++        assertTrue(player.experience.get(Skill.Summoning) > xpBeforeSummon, "summoning awards summon_experience")
++        assertEquals(6, player["familiar_details_minutes_remaining", 0], "the lifetime is summoning_time_minutes")
++        assertFalse(player.containsMessage("not high enough"), "the level 1 owner meets the pouch requirement")
++
++        player.interfaceOption("familiar_details", "dismiss", "Dismiss Familiar")
++        player.dialogueOption(1) // "Yes."
++        tick()
++
++        assertNull(player.follower, "dismissing clears the follower")
++        assertEquals(0, ownedFamiliars(player), "no spirit wolf is left in the world after dismissal")
++        assertEquals(0, player.inventory.count(pouchId), "dismissing does not return the pouch")
++        assertEquals(0, player["familiar_details_minutes_remaining", 0], "dismissal clears the persisted lifetime")
++    }
++
++    @Test
++    fun `A spirit wolf saved to disk is restored once after relog with the pouch and points unchanged`() {
++        val player = createPlayer(Tile(2523, 3056))
++        infuseSpiritWolfPouch(player)
++        summonFromPouch(player)
++        assertNotNull(player.follower, "precondition: a follower is summoned before the save")
++        val xpBeforeSave = player.experience.get(Skill.Summoning)
++        val pointsBeforeSave = player.levels.get(Skill.Summoning)
++        val minutesBeforeSave = player["familiar_details_minutes_remaining", 0]
++
++        val save = saveToDisk(player)
++        assertEquals(minutesBeforeSave, save.variables["familiar_details_minutes_remaining"], "the save holds the familiar lifetime")
++        logout(player)
++        assertEquals(0, ownedFamiliars(player), "logging out removes the spirit wolf from the world")
++
++        val fresh = loginFromSave(save)
++
++        assertEquals(familiarId, fresh.follower?.id, "the native playerSpawn restore rebuilds the follower")
++        assertEquals(1, ownedFamiliars(fresh), "exactly one owner-matching spirit wolf is live after relog")
++        assertEquals(0, fresh.inventory.count(pouchId), "relog neither returns nor duplicates the pouch")
++        assertEquals(pointsBeforeSave, fresh.levels.get(Skill.Summoning), "summoning points survive the disk round trip")
++        assertEquals(xpBeforeSave, fresh.experience.get(Skill.Summoning), 0.0001, "summoning xp survives the disk round trip")
++        assertEquals(minutesBeforeSave, fresh["familiar_details_minutes_remaining", 0], "the saved lifetime is restored, not reset")
++    }
++}
