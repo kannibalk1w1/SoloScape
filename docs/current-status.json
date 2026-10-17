@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-18",
-  "reviewed_base": "39fd65b",
+  "reviewed_base": "f29c549",
   "entries": [
     {
       "id": "controls",
@@ -463,8 +463,8 @@
       "scope": "Current prepared private native build and New/Save & Quit/Continue",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
-      "evidence": "NATIVE_TEST_BUILD_51_20261017.md",
-      "note": "10,888 listed entries and five fixture backups verify after actual exported New/Save & Quit/Continue/cancellation on software Xvfb without audio. Includes native grave timer fixes. No physical pad/Deck/FPS or owner installation claim."
+      "evidence": "NATIVE_TEST_BUILD_52_20261018.md",
+      "note": "10,907 listed entries and five fixture backups verify after exported New/Save & Quit/Continue/cancellation on software Xvfb without audio. Includes permanent Slayer block/recovery fixes; 48 packaged classes match. No physical pad/Deck/FPS or owner installation claim."
     },
     {
       "id": "backport-lab-token",
@@ -529,6 +529,14 @@
       "acceptance": "DEFERRED",
       "evidence": "BACKPORT_NATIVE_TOKEN_20261018.md",
       "note": "New plus two fresh server/client reconnects retain one stack of 2 and starter slots; native transaction rollback and cold read pass; six backups verify. Original cache inputs unchanged. Fixture only: no appearance, earned content, permanent allocation, production uninstall or Deck acceptance."
+    },
+    {
+      "id": "slayer-permanent-blocks",
+      "scope": "Native permanent Slayer blocks, unblock buttons and exhausted-task recovery",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "SLAYER_TASK_BLOCKS_20261018.md",
+      "note": "53 selected native cases pass, including 17 new cases. All five block/unblock slots survive native disk restore and full account spawn; paid/refused UI actions, account isolation and empty-task streak preservation pass. Supplied stats/tasks/points; earned journey and physical controller acceptance remain open."
     },
     {
       "id": "wasm-triangle",
