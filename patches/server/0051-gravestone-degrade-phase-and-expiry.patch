@@ -1,0 +1,104 @@
+diff --git a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt
+--- a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt
++++ b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt
+@@ -166,12 +166,18 @@
+ 
+     fun tick(npc: NPC): Int {
+         val remaining = npc.remaining("grave_timer", epochSeconds())
+-        if (remaining <= 120 && !npc.transform.endsWith("broken")) {
+-            npc.transform("${npc.id}_broken")
+-        } else if (remaining <= 60 && !npc.transform.endsWith("collapse")) {
+-            npc.transform("${npc.id}_collapse")
+-            val player = Players.find(npc["player_name", ""])
+-            player?.message("Your gravestone has collapsed.")
++        val phase = when {
++            remaining <= 0 -> return Timer.CANCEL
++            remaining <= 60 -> "collapse"
++            remaining <= 120 -> "broken"
++            else -> return Timer.CONTINUE
++        }
++        if (!npc.transform.endsWith(phase)) {
++            npc.transform("${npc.id}_$phase")
++            if (phase == "collapse") {
++                val player = Players.find(npc["player_name", ""])
++                player?.message("Your gravestone has collapsed.")
++            }
+         }
+         return Timer.CONTINUE
+     }
+diff --git a/game/src/test/kotlin/content/area/misthalin/lumbridge/church/GravestoneDegradePhaseTest.kt b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/GravestoneDegradePhaseTest.kt
+new file mode 100644
+index 0000000..1175a40
+--- /dev/null
++++ b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/GravestoneDegradePhaseTest.kt
+@@ -0,0 +1,70 @@
++package content.area.misthalin.lumbridge.church
++
++import WorldTest
++import content.entity.effect.transform
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertFalse
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.BeforeEach
++import org.junit.jupiter.api.Test
++import world.gregs.voidps.engine.entity.character.npc.NPCs
++import world.gregs.voidps.engine.timer.TimerApi
++import world.gregs.voidps.engine.timer.setCurrentTime
++import world.gregs.voidps.type.Tile
++
++class GravestoneDegradePhaseTest : WorldTest() {
++
++    @BeforeEach
++    fun setup() {
++        setCurrentTime { 0 }
++    }
++
++    @Test
++    fun elapsedGraveLifetimeRemovesTheGraveThroughItsScheduledTimer() {
++        val tile = Tile(3235, 3220)
++        val player = createPlayer(tile)
++        Gravestone.spawn(player, tile)
++        tick()
++        val grave = NPCs.first(tile) { it.id.startsWith("gravestone_") }
++        assertTrue(grave.softTimers.contains("grave_degrade"))
++
++        // Advance the fixture clock past the ordinary five-minute plaque lifetime.
++        // Let the native scheduler poll and stop its timer; never call stop directly.
++        setCurrentTime { 301_000L }
++        tick(121)
++        assertFalse(NPCs.at(tile).any { it === grave }, "Expired grave must be removed by its scheduled timer")
++        assertFalse(player.contains("gravestone_npc"))
++        assertFalse(player.contains("gravestone_time"))
++        assertFalse(player.contains("gravestone_tile"))
++    }
++
++    @Test
++    fun collapsedGraveDoesNotReturnToBrokenOnLaterTicks() {
++        val tile = Tile(3235, 3220)
++        val player = createPlayer(tile)
++        Gravestone.spawn(player, tile)
++        tick()
++        val grave = NPCs.first(tile) { it.id.startsWith("gravestone_") }
++        val base = grave.id
++
++        // Shortened remaining lifetime and advancing clock are explicit fixtures.
++        // Exercise the native degradation handlers rather than assigning transform state.
++        grave["grave_timer"] = 119
++        TimerApi.tick(grave, "grave_degrade")
++        assertEquals("${base}_broken", grave.transform)
++
++        // The handler repeats every 60 game ticks (36 seconds).
++        setCurrentTime { 36_000L }
++        TimerApi.tick(grave, "grave_degrade")
++        assertEquals("${base}_broken", grave.transform)
++
++        setCurrentTime { 72_000L }
++        TimerApi.tick(grave, "grave_degrade")
++        assertEquals("${base}_collapse", grave.transform)
++
++        setCurrentTime { 108_000L }
++        TimerApi.tick(grave, "grave_degrade")
++        assertEquals("${base}_collapse", grave.transform, "Collapsed grave must not regress to broken")
++        assertTrue(NPCs.at(tile).any { it === grave }, "Degradation must retain the same live grave")
++    }
++}
