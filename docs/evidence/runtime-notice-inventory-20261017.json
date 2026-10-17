@@ -1,0 +1,1621 @@
+{
+  "artifacts": {
+    "client": [
+      {
+        "classes": 85,
+        "coordinate": null,
+        "embedded_native_libraries": [],
+        "entries": 85,
+        "file": "clientlibs.jar",
+        "notice_candidates": [],
+        "origin": "file-or-unattributed",
+        "sha256": "fe200df6e0c53ac82d7d190ec2cc04d1b88037fa268ccff6c120d90e27e78fb8",
+        "size": 53368
+      },
+      {
+        "classes": 59,
+        "coordinate": null,
+        "embedded_native_libraries": [],
+        "entries": 59,
+        "file": "graphics.jar",
+        "notice_candidates": [],
+        "origin": "file-or-unattributed",
+        "sha256": "d533809890ccb15294b7214bcb38bbd60c908bb516b58dcf2f7c8f68f56de1dd",
+        "size": 38517
+      },
+      {
+        "classes": 69,
+        "coordinate": null,
+        "embedded_native_libraries": [],
+        "entries": 70,
+        "file": "trident-1.5.00.jar",
+        "notice_candidates": [],
+        "origin": "file-or-unattributed",
+        "sha256": "3214e1c23d549d5d67c91da4da1ef33c5248470bb824f91cbe8f9e0beea59eef",
+        "size": 79726
+      },
+      {
+        "classes": 9,
+        "coordinate": "aopalliance:aopalliance:1.0",
+        "embedded_native_libraries": [],
+        "entries": 10,
+        "file": "aopalliance-1.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "0addec670fedcd3f113c5c8091d783280d23f75e3acb841b61a9cdb079376a08",
+        "size": 4467
+      },
+      {
+        "classes": 157,
+        "coordinate": "ch.qos.logback:logback-classic:1.2.10",
+        "embedded_native_libraries": [],
+        "entries": 170,
+        "file": "logback-classic-1.2.10.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "3160ae988af82c8bf3024ddbe034a82da98bb186fd09e76c50543c5b9da5cc5e",
+        "size": 233809
+      },
+      {
+        "classes": 354,
+        "coordinate": "ch.qos.logback:logback-core:1.2.10",
+        "embedded_native_libraries": [],
+        "entries": 357,
+        "file": "logback-core-1.2.10.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "ba51a3fe56691f9dd7fe742e4a73c3ab4aaaa32202c73409ba56f18687399a08",
+        "size": 454203
+      },
+      {
+        "classes": 35,
+        "coordinate": "com.google.code.findbugs:jsr305:3.0.2",
+        "embedded_native_libraries": [],
+        "entries": 38,
+        "file": "jsr305-3.0.2.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7",
+        "size": 19936
+      },
+      {
+        "classes": 189,
+        "coordinate": "com.google.code.gson:gson:2.9.0",
+        "embedded_native_libraries": [],
+        "entries": 192,
+        "file": "gson-2.9.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "c96d60551331a196dac54b745aa642cd078ef89b6f267146b705f2c2cbef052d",
+        "size": 249277
+      },
+      {
+        "classes": 24,
+        "coordinate": "com.google.errorprone:error_prone_annotations:2.7.1",
+        "embedded_native_libraries": [],
+        "entries": 27,
+        "file": "error_prone_annotations-2.7.1.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "cd5257c08a246cf8628817ae71cb822be192ef91f6881ca4a3fcff4f1de1cff3",
+        "size": 14835
+      },
+      {
+        "classes": 2,
+        "coordinate": "com.google.guava:failureaccess:1.0.1",
+        "embedded_native_libraries": [],
+        "entries": 5,
+        "file": "failureaccess-1.0.1.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "a171ee4c734dd2da837e4b16be9df4661afab72a41adaf31eb84dfdaf936ca26",
+        "size": 4617
+      },
+      {
+        "classes": 2060,
+        "coordinate": "com.google.guava:guava:31.0.1-jre",
+        "embedded_native_libraries": [],
+        "entries": 2063,
+        "file": "guava-31.0.1-jre.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "d5be94d65e87bd219fb3193ad1517baa55a3b88fc91d21cf735826ab5af087b9",
+        "size": 2974216
+      },
+      {
+        "classes": 0,
+        "coordinate": "com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava",
+        "embedded_native_libraries": [],
+        "entries": 3,
+        "file": "listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "b372a037d4230aa57fbeffdef30fd6123f9c0c2db85d0aced00c91b974f33f99",
+        "size": 2199
+      },
+      {
+        "classes": 494,
+        "coordinate": "com.google.inject:guice:5.1.0",
+        "embedded_native_libraries": [],
+        "entries": 499,
+        "file": "guice-5.1.0.jar",
+        "notice_candidates": [
+          {
+            "path": "META-INF/LICENSE",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+            "size": 11358
+          },
+          {
+            "path": "META-INF/NOTICE",
+            "sha256": "7e7f20226f26a1c2693c5422fc14c1c961d2b56c928d60ac881ab5ad4735025f",
+            "size": 166
+          }
+        ],
+        "origin": "resolved-module-or-project",
+        "sha256": "4130e50bfac48099c860f0d903b91860c81a249c90f38245f8fed58fc817bc26",
+        "size": 777563
+      },
+      {
+        "classes": 12,
+        "coordinate": "com.google.j2objc:j2objc-annotations:1.3",
+        "embedded_native_libraries": [],
+        "entries": 15,
+        "file": "j2objc-annotations-1.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "21af30c92267bd6122c0e0b4d20cccb6641a37eaf956c6540ec471d584e64a7b",
+        "size": 8781
+      },
+      {
+        "classes": 6,
+        "coordinate": "javax.inject:javax.inject:1",
+        "embedded_native_libraries": [],
+        "entries": 6,
+        "file": "javax.inject-1.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff",
+        "size": 2497
+      },
+      {
+        "classes": 125,
+        "coordinate": "net.java.dev.jna:jna:5.19.1",
+        "embedded_native_libraries": [
+          {
+            "path": "com/sun/jna/win32-x86/jnidispatch.dll",
+            "sha256": "752d597cee7e95cb517327146bf42f124c0d6c0bc48b3ecc3b1b3b0531a52f44",
+            "size": 226304
+          },
+          {
+            "path": "com/sun/jna/darwin-x86-64/libjnidispatch.jnilib",
+            "sha256": "69cca8bbe2f0ff3fc412481e73333d5b49fc3a1ba2ff564a0af9495d7e6b531d",
+            "size": 109824
+          },
+          {
+            "path": "com/sun/jna/darwin-aarch64/libjnidispatch.jnilib",
+            "sha256": "70c9af22ba3ce12128881b4654422ce69a6f96fc238333731cf718601b536245",
+            "size": 159800
+          },
+          {
+            "path": "com/sun/jna/linux-x86/libjnidispatch.so",
+            "sha256": "546ec7cc6548de411cc52a1069295301308437080be014cda2346ccd0f99bf55",
+            "size": 123384
+          },
+          {
+            "path": "com/sun/jna/linux-x86-64/libjnidispatch.so",
+            "sha256": "ca07953d595210082339753d9e818a1fdb40509a17a41914d9a2cb0d2df6b6af",
+            "size": 134447
+          },
+          {
+            "path": "com/sun/jna/linux-arm/libjnidispatch.so",
+            "sha256": "b2a32135dea251fde4027f536345420001bc921e21baf82b2e01ce2753da2097",
+            "size": 130788
+          },
+          {
+            "path": "com/sun/jna/linux-armel/libjnidispatch.so",
+            "sha256": "d9db010b0336cdbf643c38921c1c04519f811bee0f45824b6872661a25d64ed2",
+            "size": 139472
+          },
+          {
+            "path": "com/sun/jna/linux-aarch64/libjnidispatch.so",
+            "sha256": "f18fa2c973b2b9ea2dfa6d36d397e0bb743aa2aa09876e2a3b8c87a5e67bf8b6",
+            "size": 162288
+          },
+          {
+            "path": "com/sun/jna/linux-ppc/libjnidispatch.so",
+            "sha256": "fbde8c5b108934e75c7008562e95b209535bf4996b3bc246ec5e425a0757a903",
+            "size": 127724
+          },
+          {
+            "path": "com/sun/jna/linux-ppc64le/libjnidispatch.so",
+            "sha256": "aaa31a2220e270f69259d930540c5682b1bd662a6d774918605e62cd562d5d11",
+            "size": 145072
+          },
+          {
+            "path": "com/sun/jna/linux-mips64el/libjnidispatch.so",
+            "sha256": "0025cd4345faec5a7d9fc8c88f187016dbaf4a6ef411cd6c8907e199d952528d",
+            "size": 144056
+          },
+          {
+            "path": "com/sun/jna/linux-loongarch64/libjnidispatch.so",
+            "sha256": "6c55d9ec3efaaee1843795648246b3fe52de09d3990984c5b8a580cc803c6bc9",
+            "size": 341968
+          },
+          {
+            "path": "com/sun/jna/linux-s390x/libjnidispatch.so",
+            "sha256": "b31df7050aa22907e5caae2ef81db83e2900b7b6e683080f6f5681373a71e400",
+            "size": 136976
+          },
+          {
+            "path": "com/sun/jna/linux-riscv64/libjnidispatch.so",
+            "sha256": "f817ac611184e31fd84ac2d223ff8f9312300fbc025adfb5cadbfefb8d1a2c13",
+            "size": 100064
+          },
+          {
+            "path": "com/sun/jna/sunos-x86/libjnidispatch.so",
+            "sha256": "fdba3f2f4220fb407c7841b2f49efd4fe1c06dca26c9768513e13461ed1520c5",
+            "size": 153152
+          },
+          {
+            "path": "com/sun/jna/sunos-x86-64/libjnidispatch.so",
+            "sha256": "4a0b0b11369d4f88437700e8ee3557cb518ec017bfe2df3bd49faf82e60e8f8e",
+            "size": 169992
+          },
+          {
+            "path": "com/sun/jna/sunos-sparc/libjnidispatch.so",
+            "sha256": "5ae26c1d50dd6836d0bafb1af2a6c39eb4084be42f0a05da0645d31feed1efad",
+            "size": 231108
+          },
+          {
+            "path": "com/sun/jna/sunos-sparcv9/libjnidispatch.so",
+            "sha256": "ccd720895968a885d423facf63615c7f16490f94d946ecb5fefdd4951c62297c",
+            "size": 166976
+          },
+          {
+            "path": "com/sun/jna/dragonflybsd-x86-64/libjnidispatch.so",
+            "sha256": "c0c6e64b476d726d86e996af1397491bbff9ccadcba1e0c4639a8f1ae5454062",
+            "size": 116880
+          },
+          {
+            "path": "com/sun/jna/freebsd-x86/libjnidispatch.so",
+            "sha256": "784b2a955b1504dec96fa8b87972bcb2815ecfa818fe5c2e57ed9073cab0592c",
+            "size": 105372
+          },
+          {
+            "path": "com/sun/jna/freebsd-x86-64/libjnidispatch.so",
+            "sha256": "3c4d14c74bb6798c76b43cad4395b8bdaa9181a7991e160a376f87bb1ab13ced",
+            "size": 121040
+          },
+          {
+            "path": "com/sun/jna/freebsd-aarch64/libjnidispatch.so",
+            "sha256": "bca4aece4b834fd04301d5896482f657d06d6860e2d03089c0cc78eea65dd492",
+            "size": 116008
+          },
+          {
+            "path": "com/sun/jna/openbsd-x86-64/libjnidispatch.so",
+            "sha256": "ee3b7bfa0887b7388ad598dea98281ae40907bafa8cf56b406427aecd3d2ecdd",
+            "size": 98728
+          },
+          {
+            "path": "com/sun/jna/win32-x86-64/jnidispatch.dll",
+            "sha256": "5a7ff949f6d93d86491eb5b26b1cfc60051168a60622650224b89995ac420023",
+            "size": 273408
+          },
+          {
+            "path": "com/sun/jna/win32-aarch64/jnidispatch.dll",
+            "sha256": "b8f98be314234cf12b5b46c29652f70c0f6abb93ae19b63d3fe2692062aa699d",
+            "size": 274432
+          }
+        ],
+        "entries": 156,
+        "file": "jna-5.19.1.jar",
+        "notice_candidates": [
+          {
+            "path": "META-INF/LICENSE",
+            "sha256": "07c938b23950ab7d47a24ef35f9f5da3a05ae164278dc959ad6994135ed59ff1",
+            "size": 797
+          }
+        ],
+        "origin": "resolved-module-or-project",
+        "sha256": "4fb141dd8ef6b0585ffceea4bc49602fbc6312fa977e2c488794ea3e6aafecae",
+        "size": 1950853
+      },
+      {
+        "classes": 766,
+        "coordinate": "net.runelite.pushingpixels:substance:8.0.02",
+        "embedded_native_libraries": [],
+        "entries": 830,
+        "file": "substance-8.0.02.jar",
+        "notice_candidates": [
+          {
+            "path": "Intellij.license",
+            "sha256": "8c1e966c7855fb54027bcaf6ebe7a43abe4785791e8cf9148c363761d493d097",
+            "size": 11352
+          },
+          {
+            "path": "Looks.license",
+            "sha256": "9af6ee0107b76475b037b18daf43d80fc72e6be08d0bc730ffebb396f35453c1",
+            "size": 1564
+          },
+          {
+            "path": "MaterialIcons.license",
+            "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+            "size": 11357
+          },
+          {
+            "path": "Quaqua.license",
+            "sha256": "51a1e94dd322c39cca52dd947b99cdfd578cd131467b469cb899c6e65ce9464f",
+            "size": 30749
+          },
+          {
+            "path": "Substance.license",
+            "sha256": "0abd76d3b05fc2cfb893ea3712a4d4c0f194d9c7c882f6b51f494eb81e0bf098",
+            "size": 1844
+          },
+          {
+            "path": "XUI.license",
+            "sha256": "53692a2ed6c6a2c6ec9b32dd0b820dfae91e0a1fcdf625ca9ed0bdf8705fcc4f",
+            "size": 25755
+          }
+        ],
+        "origin": "resolved-module-or-project",
+        "sha256": "0467d25f408428824d5c9c09ec60ee1f0bc341d9bf48971a77fd14939a826c83",
+        "size": 1589195
+      },
+      {
+        "classes": 58,
+        "coordinate": "net.sf.jopt-simple:jopt-simple:6.0-alpha-3",
+        "embedded_native_libraries": [],
+        "entries": 63,
+        "file": "jopt-simple-6.0-alpha-3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "d440ceb839d6adb5cfa81aa321813d60255e68a3e9ca564c91126599310abde5",
+        "size": 79368
+      },
+      {
+        "classes": 17,
+        "coordinate": "org.apache.commons:commons-csv:1.9.0",
+        "embedded_native_libraries": [],
+        "entries": 22,
+        "file": "commons-csv-1.9.0.jar",
+        "notice_candidates": [
+          {
+            "path": "META-INF/LICENSE.txt",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+            "size": 11358
+          },
+          {
+            "path": "META-INF/NOTICE.txt",
+            "sha256": "f0f63c91b99efc3ebd486f8fd6bf6af1efe1de72a27fed6df755570cd65fcc26",
+            "size": 173
+          }
+        ],
+        "origin": "resolved-module-or-project",
+        "sha256": "c418d6aab4db4f1f70983d355de8d7c1e755c754820a92294da2e5f5081022cc",
+        "size": 51322
+      },
+      {
+        "classes": 339,
+        "coordinate": "org.apache.commons:commons-lang3:3.11",
+        "embedded_native_libraries": [],
+        "entries": 344,
+        "file": "commons-lang3-3.11.jar",
+        "notice_candidates": [
+          {
+            "path": "META-INF/LICENSE.txt",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+            "size": 11358
+          },
+          {
+            "path": "META-INF/NOTICE.txt",
+            "sha256": "04e4eec1b178271820694b455fe19b37561d1d1f7b2cea69e3687502dd044f42",
+            "size": 174
+          }
+        ],
+        "origin": "resolved-module-or-project",
+        "sha256": "4ee380259c068d1dbe9e84ab52186f2acd65de067ec09beff731fca1697fdb16",
+        "size": 577742
+      },
+      {
+        "classes": 135,
+        "coordinate": "org.apache.commons:commons-text:1.9",
+        "embedded_native_libraries": [],
+        "entries": 140,
+        "file": "commons-text-1.9.jar",
+        "notice_candidates": [
+          {
+            "path": "META-INF/LICENSE.txt",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+            "size": 11358
+          },
+          {
+            "path": "META-INF/NOTICE.txt",
+            "sha256": "9ad4ec6b60a0d6ffa269c116fd117ce41d67c31fc301c8a2cba309f1d72cfde3",
+            "size": 174
+          }
+        ],
+        "origin": "resolved-module-or-project",
+        "sha256": "0812f284ac5dd0d617461d9a2ab6ac6811137f25122dfffd4788a4871e732d00",
+        "size": 216211
+      },
+      {
+        "classes": 333,
+        "coordinate": "org.checkerframework:checker-qual:3.12.0",
+        "embedded_native_libraries": [],
+        "entries": 335,
+        "file": "checker-qual-3.12.0.jar",
+        "notice_candidates": [
+          {
+            "path": "META-INF/LICENSE.txt",
+            "sha256": "e90eaa08dea089df10f2bf7f9dba63a5f6237c01562c4741e2e86773e78582d5",
+            "size": 1126
+          }
+        ],
+        "origin": "resolved-module-or-project",
+        "sha256": "ff10785ac2a357ec5de9c293cb982a2cbb605c0309ea4cc1cb9b9bc6dbe7f3cb",
+        "size": 208835
+      },
+      {
+        "classes": 35,
+        "coordinate": "org.pushing-pixels:radiance-neon:1.0.2",
+        "embedded_native_libraries": [],
+        "entries": 36,
+        "file": "radiance-neon-1.0.2.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "4f72e669b6e40e5c499d5a144609262c505e431a5690391013592553e68c0aee",
+        "size": 50668
+      },
+      {
+        "classes": 34,
+        "coordinate": "org.slf4j:slf4j-api:1.7.32",
+        "embedded_native_libraries": [],
+        "entries": 37,
+        "file": "slf4j-api-1.7.32.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "3624f8474c1af46d75f98bc097d7864a323c81b3808aa43689a6e1c601c027be",
+        "size": 41513
+      }
+    ],
+    "server": [
+      {
+        "classes": 189,
+        "coordinate": "ch.qos.logback:logback-classic:1.5.18",
+        "embedded_native_libraries": [],
+        "entries": 204,
+        "file": "logback-classic-1.5.18.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "3e1533d0321f8815eef46750aee0111b41554f9a4644c3c4d2d404744b09f60f",
+        "size": 306760
+      },
+      {
+        "classes": 473,
+        "coordinate": "ch.qos.logback:logback-core:1.5.18",
+        "embedded_native_libraries": [],
+        "entries": 477,
+        "file": "logback-core-1.5.18.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "85139e7b57b464f8e5e36326dd81317648bed199ccc4f98cd42585f8d7571027",
+        "size": 627250
+      },
+      {
+        "classes": 13,
+        "coordinate": "co.touchlab:stately-concurrency-jvm:2.1.0",
+        "embedded_native_libraries": [],
+        "entries": 15,
+        "file": "stately-concurrency-jvm-2.1.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "86739675892fb1c17d6bd36d05347e89ff313957421bb01a45a743ce774e8e29",
+        "size": 11382
+      },
+      {
+        "classes": 57,
+        "coordinate": "co.touchlab:stately-concurrent-collections-jvm:2.1.0",
+        "embedded_native_libraries": [],
+        "entries": 59,
+        "file": "stately-concurrent-collections-jvm-2.1.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "0e0d9e7f20eaee18f7862309064c8db58ce6a3a861d8871f561546af63df1893",
+        "size": 72445
+      },
+      {
+        "classes": 1,
+        "coordinate": "co.touchlab:stately-strict-jvm:2.1.0",
+        "embedded_native_libraries": [],
+        "entries": 3,
+        "file": "stately-strict-jvm-2.1.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "581070db2802cbad81f6e6e2d9d2494835443153b314458d53aa43c68260c9fa",
+        "size": 1607
+      },
+      {
+        "classes": 6,
+        "coordinate": "com.displee:disio:2.2",
+        "embedded_native_libraries": [],
+        "entries": 8,
+        "file": "disio-2.2.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "c4eb3fd121df53906a0d0444570aa070debec7697fa38110ba8979231ae88a71",
+        "size": 19825
+      },
+      {
+        "classes": 46,
+        "coordinate": "com.displee:rs-cache-library:7.1.7",
+        "embedded_native_libraries": [],
+        "entries": 48,
+        "file": "rs-cache-library-7.1.7.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "ae1963bc1c5cecc59c142e041b60ddf0ea3fa0a037ce1ef2ee034296b6b8ba0f",
+        "size": 112487
+      },
+      {
+        "classes": 32,
+        "coordinate": "com.github.jponge:lzma-java:1.3",
+        "embedded_native_libraries": [],
+        "entries": 35,
+        "file": "lzma-java-1.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "75ccc0e24d37ed5b8916e1bcffad1e067c2b1cfa21b635287f968db5c3c1963a",
+        "size": 51041
+      },
+      {
+        "classes": 4,
+        "coordinate": "com.michael-bull.kotlin-inline-logger:kotlin-inline-logger-jvm:1.0.6",
+        "embedded_native_libraries": [],
+        "entries": 6,
+        "file": "kotlin-inline-logger-jvm-1.0.6.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "5b2b368b6000bae33f747b5863fc5e6f48d514626754a807cf19877e3be39b07",
+        "size": 8460
+      },
+      {
+        "classes": 181,
+        "coordinate": "com.typesafe:config:1.4.3",
+        "embedded_native_libraries": [],
+        "entries": 182,
+        "file": "config-1.4.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "8ada4c185ce72416712d63e0b5afdc5f009c0cdf405e5f26efecdf156aa5dfb6",
+        "size": 296029
+      },
+      {
+        "classes": 202,
+        "coordinate": "io.insert-koin:koin-core-jvm:4.1.1",
+        "embedded_native_libraries": [],
+        "entries": 204,
+        "file": "koin-core-jvm-4.1.1.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "90a8e98c0de5351325804db39a2154ab283503a6d92981609da3dcc16b0d15ca",
+        "size": 399319
+      },
+      {
+        "classes": 3,
+        "coordinate": "io.insert-koin:koin-logger-slf4j:4.1.1",
+        "embedded_native_libraries": [],
+        "entries": 5,
+        "file": "koin-logger-slf4j-4.1.1.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "fbc4cd30c8d982cdcff722ff847dd2fd67a89ea31d7e2a7c21e70732b0efd64b",
+        "size": 3668
+      },
+      {
+        "classes": 4,
+        "coordinate": "io.ktor:ktor-events-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 6,
+        "file": "ktor-events-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "825ceb67f7cd900de10561b943b635de5151be0841dd21a5f986896d42bef3df",
+        "size": 6390
+      },
+      {
+        "classes": 61,
+        "coordinate": "io.ktor:ktor-http-cio-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 63,
+        "file": "ktor-http-cio-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "6f0bb91fa601f8d49c72d347fe4d56e3a52e5dc41fd25666e187cbab94a45645",
+        "size": 124533
+      },
+      {
+        "classes": 220,
+        "coordinate": "io.ktor:ktor-http-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 222,
+        "file": "ktor-http-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "29f7af1eb6e3507e6b9acada6f79664cb02f99c050b013684b664b97de78ce66",
+        "size": 410084
+      },
+      {
+        "classes": 193,
+        "coordinate": "io.ktor:ktor-io-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 195,
+        "file": "ktor-io-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "32b684fb6c96f48e18a0f4184e19bb1cb7d27531f048d888c7ed1374ff9d7cca",
+        "size": 283081
+      },
+      {
+        "classes": 119,
+        "coordinate": "io.ktor:ktor-network-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 121,
+        "file": "ktor-network-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "885467321a056eaf8bb562e739d358604ba31e97b3b69013de4e4f6145703ced",
+        "size": 195724
+      },
+      {
+        "classes": 17,
+        "coordinate": "io.ktor:ktor-serialization-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 19,
+        "file": "ktor-serialization-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "bef6be528df3a8bb584bbd631946a46c40b2d221ef0121f4ebb4bc17f35bee73",
+        "size": 22059
+      },
+      {
+        "classes": 57,
+        "coordinate": "io.ktor:ktor-server-cio-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 59,
+        "file": "ktor-server-cio-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "6d00e53709fd1c97b19e228553c7ec9e9f4ad508645f4d6807e0d59880d786e7",
+        "size": 118036
+      },
+      {
+        "classes": 453,
+        "coordinate": "io.ktor:ktor-server-core-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 456,
+        "file": "ktor-server-core-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "efccb2ef750ed678a08aebe4a2ee6c6ee8cde9ee7025e3a32d92a350168508ed",
+        "size": 881908
+      },
+      {
+        "classes": 9,
+        "coordinate": "io.ktor:ktor-server-html-builder-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 11,
+        "file": "ktor-server-html-builder-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "86682ba790abafcd6fd99f69a2603516494e6e1ae42a70bc9f5026baab6e6fcc",
+        "size": 17608
+      },
+      {
+        "classes": 24,
+        "coordinate": "io.ktor:ktor-server-websockets-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 26,
+        "file": "ktor-server-websockets-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "026133a31e8fd19f3ba27519dc50eb26be411840229e0482cbb90dbb980b5501",
+        "size": 48943
+      },
+      {
+        "classes": 200,
+        "coordinate": "io.ktor:ktor-utils-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 203,
+        "file": "ktor-utils-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "50cd8f7c84e5d0d33759c49c38b920a4217c570bf1dd22b907065cead1d9743a",
+        "size": 339141
+      },
+      {
+        "classes": 3,
+        "coordinate": "io.ktor:ktor-websocket-serialization-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 5,
+        "file": "ktor-websocket-serialization-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "65536c7e359b0f667981f516392ccef81893ed5d6c429cf7d58f38141d99b2ed",
+        "size": 7008
+      },
+      {
+        "classes": 84,
+        "coordinate": "io.ktor:ktor-websockets-jvm:3.2.3",
+        "embedded_native_libraries": [],
+        "entries": 86,
+        "file": "ktor-websockets-jvm-3.2.3.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "d051598e4a8bd1d33e3b0bd339668a43bc8f6683d1f0240e7a46edae7aa02af3",
+        "size": 169817
+      },
+      {
+        "classes": 12885,
+        "coordinate": "it.unimi.dsi:fastutil:8.5.16",
+        "embedded_native_libraries": [],
+        "entries": 12886,
+        "file": "fastutil-8.5.16.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "317a1c26252da2c6f5cb32454e2995f6b93940f09c6642969a330c6b9ff67342",
+        "size": 23841388
+      },
+      {
+        "classes": 10,
+        "coordinate": "net.pearx.kasechange:kasechange-jvm:1.4.1",
+        "embedded_native_libraries": [],
+        "entries": 12,
+        "file": "kasechange-jvm-1.4.1.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "7692a8f82d550ee904cdcd01b01cf101cccfe5727137266c19b6a1fc8b1bf559",
+        "size": 17833
+      },
+      {
+        "classes": 4,
+        "coordinate": "org.apache.ant:ant-launcher:1.10.14",
+        "embedded_native_libraries": [],
+        "entries": 8,
+        "file": "ant-launcher-1.10.14.jar",
+        "notice_candidates": [
+          {
+            "path": "META-INF/LICENSE.txt",
+            "sha256": "6d62d1dd52f932865d6f1e28920d53d0a6f9730ef6b8e02c48d99f470e160a0d",
+            "size": 15291
+          },
+          {
+            "path": "META-INF/NOTICE.txt",
+            "sha256": "96ec6064cc85580cb94327d37dcfb2029b23f67fc3fed947985f83e1328d8f09",
+            "size": 306
+          }
+        ],
+        "origin": "resolved-module-or-project",
+        "sha256": "f0909725a7a24e393888f3fbb558347abf506ce2f7ebc581ff26331b94d951a5",
+        "size": 18871
+      },
+      {
+        "classes": 1174,
+        "coordinate": "org.apache.ant:ant:1.10.14",
+        "embedded_native_libraries": [],
+        "entries": 1189,
+        "file": "ant-1.10.14.jar",
+        "notice_candidates": [
+          {
+            "path": "META-INF/LICENSE.txt",
+            "sha256": "6d62d1dd52f932865d6f1e28920d53d0a6f9730ef6b8e02c48d99f470e160a0d",
+            "size": 15291
+          },
+          {
+            "path": "META-INF/NOTICE.txt",
+            "sha256": "96ec6064cc85580cb94327d37dcfb2029b23f67fc3fed947985f83e1328d8f09",
+            "size": 306
+          }
+        ],
+        "origin": "resolved-module-or-project",
+        "sha256": "4cbbd9243de4c1042d61d9a15db4c43c90ff93b16d78b39481da1c956c8e9671",
+        "size": 2303167
+      },
+      {
+        "classes": 46,
+        "coordinate": "org.fusesource.jansi:jansi:2.4.2",
+        "embedded_native_libraries": [
+          {
+            "path": "org/fusesource/jansi/internal/native/FreeBSD/x86/libjansi.so",
+            "sha256": "af40370e582dba5d1e81ae41ddc34cd7040e3d97eb3a8e8acaa1f22122afff2b",
+            "size": 10196
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/FreeBSD/x86_64/libjansi.so",
+            "sha256": "ee1a719fc65d4e7830cfd3bd605fd1ea328cf84e6e76ac3a901c87d8ebd682bf",
+            "size": 13228
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Linux/arm/libjansi.so",
+            "sha256": "4a56efedfb60bf211d63cf1ad68bec5debb3147145b4decca93919a6367f8b90",
+            "size": 22052
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Linux/arm64/libjansi.so",
+            "sha256": "fff11e2c117f1325670587b654f07e663e80dc912cdbc81dc65af9edcee5684d",
+            "size": 19544
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Linux/armv6/libjansi.so",
+            "sha256": "e3b4d8e7c8559f18c3a3364ecf23267438e7e02acca7eee42fd1962d1df7640c",
+            "size": 15088
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Linux/armv7/libjansi.so",
+            "sha256": "d42832e4679f80ca7949013ff3c681b98b8fb85ae7e54f4679beb4e2ba6c92a6",
+            "size": 14444
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Linux/ppc64/libjansi.so",
+            "sha256": "5c84e6b6be45d799992d0bb64105f6656da9554ac52bdf22ad4318012d3a534b",
+            "size": 73224
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Linux/x86/libjansi.so",
+            "sha256": "96f650ecbb00059fc2f6fb629f8feadd5879032a58c70a7ac8f169775239ee5b",
+            "size": 16988
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Linux/x86_64/libjansi.so",
+            "sha256": "249095f2a73e3d2ab348d9f1de659947d253c18cf6a2049f75296b5a0d6ee079",
+            "size": 18976
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Mac/arm64/libjansi.jnilib",
+            "sha256": "56928bfe57da94d49490e237264e143a7e19713e68f6c653158f860f70de6dc8",
+            "size": 53036
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Mac/x86/libjansi.jnilib",
+            "sha256": "13347f218b0888db403234b0f13b3ad5beb3809a0469b8213afd9fdd5c86cd90",
+            "size": 14748
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Mac/x86_64/libjansi.jnilib",
+            "sha256": "65dd54cec4bc003d9623de13195845164cf607897b5287f8250209008d73c051",
+            "size": 15612
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Windows/arm64/jansi.dll",
+            "sha256": "470e6dfc44b28d628e404d5d6bfbb14728c7973e2397d9149430c85171389a19",
+            "size": 81408
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Windows/x86/jansi.dll",
+            "sha256": "9e6409c3264a6f33f5f97c58265c06e95bf91a896e8e179ebaeb8204c5d19ed3",
+            "size": 115972
+          },
+          {
+            "path": "org/fusesource/jansi/internal/native/Windows/x86_64/jansi.dll",
+            "sha256": "7020260c8db5116042315ea73714ac36ad94acdc330852280e889212506085c0",
+            "size": 130522
+          }
+        ],
+        "entries": 68,
+        "file": "jansi-2.4.2.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "0b7b8b003a90ea491579b62f5118828e45112914c65589b00faa49d6ec785839",
+        "size": 256537
+      },
+      {
+        "classes": 1965,
+        "coordinate": "org.jetbrains.kotlin:kotlin-reflect:2.1.21",
+        "embedded_native_libraries": [],
+        "entries": 1984,
+        "file": "kotlin-reflect-2.1.21.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "bcd75a36ca4ad8e06117214ed807f8dea2fe61a71e07f91ca14f4335024b8463",
+        "size": 3081305
+      },
+      {
+        "classes": 38,
+        "coordinate": "org.jetbrains.kotlin:kotlin-script-runtime:2.4.0",
+        "embedded_native_libraries": [],
+        "entries": 40,
+        "file": "kotlin-script-runtime-2.4.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "196e8ecbf63daf477e34e67c2f871ee232ae7bf8b377432d876d1bbf9d273de3",
+        "size": 46564
+      },
+      {
+        "classes": 1,
+        "coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.4.0",
+        "embedded_native_libraries": [],
+        "entries": 2,
+        "file": "kotlin-stdlib-jdk7-2.4.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "5072265564b6b0296f9c7b21fee65edee760c5697436f5ae7427033fa58fc034",
+        "size": 946
+      },
+      {
+        "classes": 1,
+        "coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.4.0",
+        "embedded_native_libraries": [],
+        "entries": 2,
+        "file": "kotlin-stdlib-jdk8-2.4.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "d96b4e297136b8a4b2b88c1adcdc64d92e90d52a417e4315cdcf964adede8aa2",
+        "size": 952
+      },
+      {
+        "classes": 990,
+        "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.4.0",
+        "embedded_native_libraries": [],
+        "entries": 1002,
+        "file": "kotlin-stdlib-2.4.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "ccb14ff83fabcb11458b798dbc9824748ccdffeec79c9aba789e6ed1cda86b1c",
+        "size": 1841929
+      },
+      {
+        "classes": 0,
+        "coordinate": "org.jetbrains.kotlinx:atomicfu-common:0.14.1",
+        "embedded_native_libraries": [],
+        "entries": 14,
+        "file": "atomicfu-common-0.14.1.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "d68131283c01f81cc1532ae26aebaf760f6e0b92675a0e13816d45e7f28a7f58",
+        "size": 5977
+      },
+      {
+        "classes": 27,
+        "coordinate": "org.jetbrains.kotlinx:atomicfu:0.14.1",
+        "embedded_native_libraries": [],
+        "entries": 29,
+        "file": "atomicfu-0.14.1.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "173c75de696de3b7ca9fcb30ebe7ae1d537644ef0c817ece2fb965617eb1b778",
+        "size": 47921
+      },
+      {
+        "classes": 834,
+        "coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2",
+        "embedded_native_libraries": [],
+        "entries": 841,
+        "file": "kotlinx-coroutines-core-jvm-1.10.2.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd",
+        "size": 1479317
+      },
+      {
+        "classes": 635,
+        "coordinate": "org.jetbrains.kotlinx:kotlinx-html-jvm:0.12.0",
+        "embedded_native_libraries": [],
+        "entries": 637,
+        "file": "kotlinx-html-jvm-0.12.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "f854126f39acbd963fd54e0cd226000a151a76f7225ee28185d52f44e262befb",
+        "size": 844584
+      },
+      {
+        "classes": 12,
+        "coordinate": "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm:0.7.0",
+        "embedded_native_libraries": [],
+        "entries": 14,
+        "file": "kotlinx-io-bytestring-jvm-0.7.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "ea38a66b0ff46ed82dded9e81d2dce70e5fbe03bd6cc52b4fc8869381dea7b7d",
+        "size": 22690
+      },
+      {
+        "classes": 69,
+        "coordinate": "org.jetbrains.kotlinx:kotlinx-io-core-jvm:0.7.0",
+        "embedded_native_libraries": [],
+        "entries": 71,
+        "file": "kotlinx-io-core-jvm-0.7.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "6ededc9be4d878aea80c7dd609f91bfc47fcd3d36cc91fd0f3f328fbd6656c8f",
+        "size": 151554
+      },
+      {
+        "classes": 143,
+        "coordinate": "org.jetbrains.kotlinx:kotlinx-io-jvm:0.1.16",
+        "embedded_native_libraries": [],
+        "entries": 146,
+        "file": "kotlinx-io-jvm-0.1.16.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "6a01681d7b2be5e616e6b9275edf7ef45498ed83903ca7241d71ff1a77c40ee6",
+        "size": 301870
+      },
+      {
+        "classes": 0,
+        "coordinate": "org.jetbrains.kotlinx:kotlinx-io:0.1.16",
+        "embedded_native_libraries": [],
+        "entries": 54,
+        "file": "kotlinx-io-0.1.16.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "dfe4c55ad79425459c3cb964d412fc86bd5bb17d7575b4ab16c09e03cb5e052f",
+        "size": 32687
+      },
+      {
+        "classes": 227,
+        "coordinate": "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.1",
+        "embedded_native_libraries": [],
+        "entries": 233,
+        "file": "kotlinx-serialization-core-jvm-1.8.1.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "3565b6d4d789bf70683c45566944287fc1d8dc75c23d98bd87d01059cc76f2b3",
+        "size": 391821
+      },
+      {
+        "classes": 58,
+        "coordinate": "org.jetbrains:annotations:23.0.0",
+        "embedded_native_libraries": [],
+        "entries": 59,
+        "file": "annotations-23.0.0.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "7b0f19724082cbfcbc66e5abea2b9bc92cf08a1ea11e191933ed43801eb3cd05",
+        "size": 29371
+      },
+      {
+        "classes": 1,
+        "coordinate": "org.mindrot:jbcrypt:0.4",
+        "embedded_native_libraries": [],
+        "entries": 4,
+        "file": "jbcrypt-0.4.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "e183f6f59404fc1e12073cfea4ace7ea103c900463cd21fb609a7c617ecdf624",
+        "size": 17429
+      },
+      {
+        "classes": 28,
+        "coordinate": "org.rsmod:rsmod-pathfinder:4.2.1",
+        "embedded_native_libraries": [],
+        "entries": 30,
+        "file": "rsmod-pathfinder-4.2.1.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "29fa1af9f2cb4d08521d30dfd2987c7056400addf3d65b00259709239d3fb6f0",
+        "size": 69087
+      },
+      {
+        "classes": 56,
+        "coordinate": "org.slf4j:slf4j-api:2.0.17",
+        "embedded_native_libraries": [],
+        "entries": 60,
+        "file": "slf4j-api-2.0.17.jar",
+        "notice_candidates": [
+          {
+            "path": "META-INF/LICENSE.txt",
+            "sha256": "4e7f90c86ab51278228bce153122f1d8df30149d13ce9ef524c8444a84c32dcc",
+            "size": 1178
+          }
+        ],
+        "origin": "resolved-module-or-project",
+        "sha256": "7b751d952061954d5abfed7181c1f645d336091b679891591d63329c622eb832",
+        "size": 69908
+      },
+      {
+        "classes": 13,
+        "coordinate": "world.gregs.void:buffer:dev",
+        "embedded_native_libraries": [],
+        "entries": 15,
+        "file": "buffer-dev.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "8cc2182ad4b7ba672339bb91b46a3cffa905d0c64f544f5b5e8c9ff17b16b318",
+        "size": 30920
+      },
+      {
+        "classes": 181,
+        "coordinate": "world.gregs.void:cache:dev",
+        "embedded_native_libraries": [],
+        "entries": 184,
+        "file": "cache-dev.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "2aefbba97c0ac62b5d750daa434518e1522b1dd5a18325b535ceac4539c3e255",
+        "size": 547768
+      },
+      {
+        "classes": 4,
+        "coordinate": "world.gregs.void:config:dev",
+        "embedded_native_libraries": [],
+        "entries": 6,
+        "file": "config-dev.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "1808137367050f0a11e7becac2807a2953f85833e885afa869384e1eec60790f",
+        "size": 19791
+      },
+      {
+        "classes": 653,
+        "coordinate": "world.gregs.void:engine:dev",
+        "embedded_native_libraries": [],
+        "entries": 655,
+        "file": "engine-dev.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "87ca6796630422183ae58d07122b9fdd045ba9aaaa302afba434541a4290ad2f",
+        "size": 1604079
+      },
+      {
+        "classes": 403,
+        "coordinate": "world.gregs.void:network:dev",
+        "embedded_native_libraries": [],
+        "entries": 405,
+        "file": "network-dev.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "094aadbcc42dc942c9075450f8a6390a7c1723a04de8c3a0cd7f8f8470304cf9",
+        "size": 653622
+      },
+      {
+        "classes": 31,
+        "coordinate": "world.gregs.void:types:dev",
+        "embedded_native_libraries": [],
+        "entries": 33,
+        "file": "types-dev.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "43f4ac9d55df798afc68ba2935e677c7f2f2881be448f1441b69ab8af123a7e6",
+        "size": 63411
+      },
+      {
+        "classes": 12,
+        "coordinate": "world.gregs.void:web:dev",
+        "embedded_native_libraries": [],
+        "entries": 14,
+        "file": "web-dev.jar",
+        "notice_candidates": [],
+        "origin": "resolved-module-or-project",
+        "sha256": "b121405307564939a814b52b84002d83382263bc6102f174b0be8ee127be5a42",
+        "size": 26868
+      }
+    ]
+  },
+  "date": "2026-10-17",
+  "gradle_inventory_sha256": "e9cc00872a4c1c0c7039ecf5ca84f2e10bf0f9b93b27c49963952b8ca7d19641",
+  "jar_sha256": {
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b",
+    "server": "9a873520a9b55f27fe30efdfbc41c77b1c2c15d982f03fd206b31710d6c87682"
+  },
+  "limits": [
+    "Resolved graph includes modules a minimized shadow jar may omit; not byte-level attribution of every fat-jar class",
+    "Notice candidate names/hashes do not establish legal completeness, rights or compatibility",
+    "Unattributed local file dependencies need provenance review",
+    "JDK/Python/system libraries, fonts/artwork/cache and inherited game/client/data rights need separate review",
+    "No public binary package or redistribution approved"
+  ],
+  "matched_jars": {
+    "client": {
+      "classes": 6737,
+      "embedded_native_libraries": [
+        {
+          "path": "com/sun/jna/win32-x86/jnidispatch.dll",
+          "sha256": "752d597cee7e95cb517327146bf42f124c0d6c0bc48b3ecc3b1b3b0531a52f44",
+          "size": 226304
+        },
+        {
+          "path": "com/sun/jna/darwin-x86-64/libjnidispatch.jnilib",
+          "sha256": "69cca8bbe2f0ff3fc412481e73333d5b49fc3a1ba2ff564a0af9495d7e6b531d",
+          "size": 109824
+        },
+        {
+          "path": "com/sun/jna/darwin-aarch64/libjnidispatch.jnilib",
+          "sha256": "70c9af22ba3ce12128881b4654422ce69a6f96fc238333731cf718601b536245",
+          "size": 159800
+        },
+        {
+          "path": "com/sun/jna/linux-x86/libjnidispatch.so",
+          "sha256": "546ec7cc6548de411cc52a1069295301308437080be014cda2346ccd0f99bf55",
+          "size": 123384
+        },
+        {
+          "path": "com/sun/jna/linux-x86-64/libjnidispatch.so",
+          "sha256": "ca07953d595210082339753d9e818a1fdb40509a17a41914d9a2cb0d2df6b6af",
+          "size": 134447
+        },
+        {
+          "path": "com/sun/jna/linux-arm/libjnidispatch.so",
+          "sha256": "b2a32135dea251fde4027f536345420001bc921e21baf82b2e01ce2753da2097",
+          "size": 130788
+        },
+        {
+          "path": "com/sun/jna/linux-armel/libjnidispatch.so",
+          "sha256": "d9db010b0336cdbf643c38921c1c04519f811bee0f45824b6872661a25d64ed2",
+          "size": 139472
+        },
+        {
+          "path": "com/sun/jna/linux-aarch64/libjnidispatch.so",
+          "sha256": "f18fa2c973b2b9ea2dfa6d36d397e0bb743aa2aa09876e2a3b8c87a5e67bf8b6",
+          "size": 162288
+        },
+        {
+          "path": "com/sun/jna/linux-ppc/libjnidispatch.so",
+          "sha256": "fbde8c5b108934e75c7008562e95b209535bf4996b3bc246ec5e425a0757a903",
+          "size": 127724
+        },
+        {
+          "path": "com/sun/jna/linux-ppc64le/libjnidispatch.so",
+          "sha256": "aaa31a2220e270f69259d930540c5682b1bd662a6d774918605e62cd562d5d11",
+          "size": 145072
+        },
+        {
+          "path": "com/sun/jna/linux-mips64el/libjnidispatch.so",
+          "sha256": "0025cd4345faec5a7d9fc8c88f187016dbaf4a6ef411cd6c8907e199d952528d",
+          "size": 144056
+        },
+        {
+          "path": "com/sun/jna/linux-loongarch64/libjnidispatch.so",
+          "sha256": "6c55d9ec3efaaee1843795648246b3fe52de09d3990984c5b8a580cc803c6bc9",
+          "size": 341968
+        },
+        {
+          "path": "com/sun/jna/linux-s390x/libjnidispatch.so",
+          "sha256": "b31df7050aa22907e5caae2ef81db83e2900b7b6e683080f6f5681373a71e400",
+          "size": 136976
+        },
+        {
+          "path": "com/sun/jna/linux-riscv64/libjnidispatch.so",
+          "sha256": "f817ac611184e31fd84ac2d223ff8f9312300fbc025adfb5cadbfefb8d1a2c13",
+          "size": 100064
+        },
+        {
+          "path": "com/sun/jna/sunos-x86/libjnidispatch.so",
+          "sha256": "fdba3f2f4220fb407c7841b2f49efd4fe1c06dca26c9768513e13461ed1520c5",
+          "size": 153152
+        },
+        {
+          "path": "com/sun/jna/sunos-x86-64/libjnidispatch.so",
+          "sha256": "4a0b0b11369d4f88437700e8ee3557cb518ec017bfe2df3bd49faf82e60e8f8e",
+          "size": 169992
+        },
+        {
+          "path": "com/sun/jna/sunos-sparc/libjnidispatch.so",
+          "sha256": "5ae26c1d50dd6836d0bafb1af2a6c39eb4084be42f0a05da0645d31feed1efad",
+          "size": 231108
+        },
+        {
+          "path": "com/sun/jna/sunos-sparcv9/libjnidispatch.so",
+          "sha256": "ccd720895968a885d423facf63615c7f16490f94d946ecb5fefdd4951c62297c",
+          "size": 166976
+        },
+        {
+          "path": "com/sun/jna/dragonflybsd-x86-64/libjnidispatch.so",
+          "sha256": "c0c6e64b476d726d86e996af1397491bbff9ccadcba1e0c4639a8f1ae5454062",
+          "size": 116880
+        },
+        {
+          "path": "com/sun/jna/freebsd-x86/libjnidispatch.so",
+          "sha256": "784b2a955b1504dec96fa8b87972bcb2815ecfa818fe5c2e57ed9073cab0592c",
+          "size": 105372
+        },
+        {
+          "path": "com/sun/jna/freebsd-x86-64/libjnidispatch.so",
+          "sha256": "3c4d14c74bb6798c76b43cad4395b8bdaa9181a7991e160a376f87bb1ab13ced",
+          "size": 121040
+        },
+        {
+          "path": "com/sun/jna/freebsd-aarch64/libjnidispatch.so",
+          "sha256": "bca4aece4b834fd04301d5896482f657d06d6860e2d03089c0cc78eea65dd492",
+          "size": 116008
+        },
+        {
+          "path": "com/sun/jna/openbsd-x86-64/libjnidispatch.so",
+          "sha256": "ee3b7bfa0887b7388ad598dea98281ae40907bafa8cf56b406427aecd3d2ecdd",
+          "size": 98728
+        },
+        {
+          "path": "com/sun/jna/win32-x86-64/jnidispatch.dll",
+          "sha256": "5a7ff949f6d93d86491eb5b26b1cfc60051168a60622650224b89995ac420023",
+          "size": 273408
+        },
+        {
+          "path": "com/sun/jna/win32-aarch64/jnidispatch.dll",
+          "sha256": "b8f98be314234cf12b5b46c29652f70c0f6abb93ae19b63d3fe2692062aa699d",
+          "size": 274432
+        }
+      ],
+      "entries": 6992,
+      "notice_candidates": [
+        {
+          "path": "META-INF/soloscape-controller-NOTICES.txt",
+          "sha256": "27689c008837d952ad4444476717ad178009098903f3259a00039d35160d11c5",
+          "size": 508
+        },
+        {
+          "path": "META-INF/LICENSE",
+          "sha256": "07c938b23950ab7d47a24ef35f9f5da3a05ae164278dc959ad6994135ed59ff1",
+          "size": 797
+        },
+        {
+          "path": "META-INF/LICENSE.txt",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "size": 11358
+        },
+        {
+          "path": "META-INF/NOTICE.txt",
+          "sha256": "f0f63c91b99efc3ebd486f8fd6bf6af1efe1de72a27fed6df755570cd65fcc26",
+          "size": 173
+        },
+        {
+          "path": "META-INF/NOTICE",
+          "sha256": "7e7f20226f26a1c2693c5422fc14c1c961d2b56c928d60ac881ab5ad4735025f",
+          "size": 166
+        },
+        {
+          "path": "Intellij.license",
+          "sha256": "8c1e966c7855fb54027bcaf6ebe7a43abe4785791e8cf9148c363761d493d097",
+          "size": 11352
+        },
+        {
+          "path": "Looks.license",
+          "sha256": "9af6ee0107b76475b037b18daf43d80fc72e6be08d0bc730ffebb396f35453c1",
+          "size": 1564
+        },
+        {
+          "path": "MaterialIcons.license",
+          "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+          "size": 11357
+        },
+        {
+          "path": "Quaqua.license",
+          "sha256": "51a1e94dd322c39cca52dd947b99cdfd578cd131467b469cb899c6e65ce9464f",
+          "size": 30749
+        },
+        {
+          "path": "Substance.license",
+          "sha256": "0abd76d3b05fc2cfb893ea3712a4d4c0f194d9c7c882f6b51f494eb81e0bf098",
+          "size": 1844
+        },
+        {
+          "path": "XUI.license",
+          "sha256": "53692a2ed6c6a2c6ec9b32dd0b820dfae91e0a1fcdf625ca9ed0bdf8705fcc4f",
+          "size": 25755
+        }
+      ],
+      "size": 14358038
+    },
+    "server": {
+      "classes": 19560,
+      "embedded_native_libraries": [
+        {
+          "path": "org/fusesource/jansi/internal/native/FreeBSD/x86/libjansi.so",
+          "sha256": "af40370e582dba5d1e81ae41ddc34cd7040e3d97eb3a8e8acaa1f22122afff2b",
+          "size": 10196
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/FreeBSD/x86_64/libjansi.so",
+          "sha256": "ee1a719fc65d4e7830cfd3bd605fd1ea328cf84e6e76ac3a901c87d8ebd682bf",
+          "size": 13228
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Linux/arm/libjansi.so",
+          "sha256": "4a56efedfb60bf211d63cf1ad68bec5debb3147145b4decca93919a6367f8b90",
+          "size": 22052
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Linux/arm64/libjansi.so",
+          "sha256": "fff11e2c117f1325670587b654f07e663e80dc912cdbc81dc65af9edcee5684d",
+          "size": 19544
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Linux/armv6/libjansi.so",
+          "sha256": "e3b4d8e7c8559f18c3a3364ecf23267438e7e02acca7eee42fd1962d1df7640c",
+          "size": 15088
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Linux/armv7/libjansi.so",
+          "sha256": "d42832e4679f80ca7949013ff3c681b98b8fb85ae7e54f4679beb4e2ba6c92a6",
+          "size": 14444
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Linux/ppc64/libjansi.so",
+          "sha256": "5c84e6b6be45d799992d0bb64105f6656da9554ac52bdf22ad4318012d3a534b",
+          "size": 73224
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Linux/x86/libjansi.so",
+          "sha256": "96f650ecbb00059fc2f6fb629f8feadd5879032a58c70a7ac8f169775239ee5b",
+          "size": 16988
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Linux/x86_64/libjansi.so",
+          "sha256": "249095f2a73e3d2ab348d9f1de659947d253c18cf6a2049f75296b5a0d6ee079",
+          "size": 18976
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Mac/arm64/libjansi.jnilib",
+          "sha256": "56928bfe57da94d49490e237264e143a7e19713e68f6c653158f860f70de6dc8",
+          "size": 53036
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Mac/x86/libjansi.jnilib",
+          "sha256": "13347f218b0888db403234b0f13b3ad5beb3809a0469b8213afd9fdd5c86cd90",
+          "size": 14748
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Mac/x86_64/libjansi.jnilib",
+          "sha256": "65dd54cec4bc003d9623de13195845164cf607897b5287f8250209008d73c051",
+          "size": 15612
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Windows/arm64/jansi.dll",
+          "sha256": "470e6dfc44b28d628e404d5d6bfbb14728c7973e2397d9149430c85171389a19",
+          "size": 81408
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Windows/x86/jansi.dll",
+          "sha256": "9e6409c3264a6f33f5f97c58265c06e95bf91a896e8e179ebaeb8204c5d19ed3",
+          "size": 115972
+        },
+        {
+          "path": "org/fusesource/jansi/internal/native/Windows/x86_64/jansi.dll",
+          "sha256": "7020260c8db5116042315ea73714ac36ad94acdc330852280e889212506085c0",
+          "size": 130522
+        }
+      ],
+      "entries": 19765,
+      "notice_candidates": [
+        {
+          "path": "META-INF/LICENSE.txt",
+          "sha256": "4e7f90c86ab51278228bce153122f1d8df30149d13ce9ef524c8444a84c32dcc",
+          "size": 1178
+        },
+        {
+          "path": "META-INF/NOTICE.txt",
+          "sha256": "96ec6064cc85580cb94327d37dcfb2029b23f67fc3fed947985f83e1328d8f09",
+          "size": 306
+        }
+      ],
+      "size": 49794560
+    }
+  },
+  "observed_checkout_commit": "999482974fd40ef97eb381bab929e59f6c7f73b5",
+  "passed": true,
+  "patches": {
+    "patches/client/0001-controller-camera.patch": "dd7aee826008b25827ae268d415086677c1c3b17f1d774b7fd0f900623dd8471",
+    "patches/client/0002-controller-world.patch": "0790ab6e3b23d77eceb27f57f120b45318a4064a2c29e247ed3e3948977e980b",
+    "patches/client/0003-controller-movement-tiles.patch": "77fab56779dfd4a5bc652143a447c54066bb89b53943c498e2b09f3e55e7facf",
+    "patches/client/0004-controller-inventory-dialogue.patch": "ac7c0b7ccbd932adabc5d3ce765e46760d74d8d3f0c0550504b6051fb7612836",
+    "patches/client/0005-controller-world-usability.patch": "fe85995dd43d11389943b6fc06e9edb0328b41ea1a89d791cc6f3b26a07465b2",
+    "patches/client/0006-controller-direct-movement.patch": "1c5af526c5339999a61a293f2777a97fb50c0e5f3b7d255c8a7c6f6819132766",
+    "patches/client/0007-controller-world-actions-loot.patch": "1a523faab77d77c9b28d71516e20c6e07ba21ceb01d543d342b93aca72c37ccb",
+    "patches/client/0008-controller-review-fixes.patch": "fceea9732afa15b2b59d78eea3eb8fbdb2ade938a053a34ce76ac90570ab1e76",
+    "patches/client/0009-controller-tab-radial.patch": "25f3dbf6823b8fae931966e02d5ebca2598b611eb32d4340677712bd084ebae1",
+    "patches/client/0010-controller-reliability.patch": "676c954a56fc5ffe86a3372c17273234b776e259a4a982390a8e71bad3135f47",
+    "patches/client/0011-bank-shop-focus.patch": "f2c6dbbc8e7b18079adfd79a40d377f129bd592f2204156a837155ee93d584f1",
+    "patches/client/0012-controller-entry-and-panel-recovery.patch": "e251e4aa3130e0b37fe70afaa146c2f4b99b146c13d6141bb36fa33c3e24338e",
+    "patches/client/0013-tab-panels-and-safe-spell-targeting.patch": "7a02b8962a9b1f4c1a356f8efd8d1476aa9c076dfec719fbad3dac93b62381f3",
+    "patches/client/0014-quick-actions-production-and-controller-usability.patch": "00d3690b50adbedf7d9338b929bad38020936f05237e7861de942337cc36f6e6",
+    "patches/client/0015-local-profile-launcher-and-login.patch": "72f3356fec0b5e410f27046d2476cde93852bc484a68ea5f6fb102685a3d520d",
+    "patches/client/0016-controller-panel-presentation-foundation.patch": "0bb0b2f6dcafbed6d9a19530757a3b45847f6ecc3c63cb8c1aacc3dbab0c6284",
+    "patches/client/0017-custom-controller-panels.patch": "b23f13f27ceec8930c7e60adc9858007c2f1acdec0289d56048169a34dfe456d",
+    "patches/client/0018-controller-remapping-and-session-capabilities.patch": "ceb774adf55d38a6ac8dfeb62f78850f598249294be493ee57affec053f8c3d5",
+    "patches/client/0019-claude-panel-fixes-and-persistent-launcher.patch": "c36a9886ee5ade4dcca9ac771fb7fdf6a8f0e66831ed6deba87b10c765b6e92e",
+    "patches/client/0020-menu-parents-and-right-stick-scrolling.patch": "d4f86cb803b2ce9949b21ba4ce9350f1b670374a70f179972b18bb2e6c2c0e23",
+    "patches/client/0021-native-item-artwork-mapped-hints-and-session-polish.patch": "2bb793215ff8024e713188c5b715f6c34b1dc3ebdbaf854d5044ee398732e40d",
+    "patches/client/0022-preserve-native-action-labels-in-mapped-hints.patch": "86f97b4be3d6461ca7360b5e979ada6a8ca8131f3182afdbf35762671c3b41ba",
+    "patches/client/0023-adventure-ui-journal-skills.patch": "5008560a4ef371a88726a2680128245630f443cff5d30345132550f2c01acb47",
+    "patches/client/0024-adventure-combat-prayer-spells.patch": "349859fabe6ea290353bd7768fcd5eeca860e536a15e5209a22283202297ef86",
+    "patches/client/0025-controller-settings-setup.patch": "ffb3516bbf1e4ddadfa2cbbec17d0e6ea6b9ff9ccc07e56a5bdd5158ba68a2bc",
+    "patches/client/0026-controller-targeting-return-review-fixes.patch": "fcc6668d6b76413984db03deb4e7985bddd857d14e8b03df23434f7ef8054b76",
+    "patches/client/0027-native-spell-requirements.patch": "cdf807422944106722f2817c182f4770bfcb0b6a538ff6b6603c56025e7e7d25",
+    "patches/client/0028-controller-launcher-entry-and-navigation.patch": "0aed923a2b8481a9fffd49528262a330f62e51e6e9e205535d8ef5c9d459f860",
+    "patches/client/0029-launcher-keyboard-ownership.patch": "be8258e492a4906eb9524481594dbc659fd36fc5b0aa37b96d48ddf6417efc90",
+    "patches/client/0030-ingame-keyboard-and-classic-ui.patch": "05e783e400130a1b137571cfc3f9c79b49e3bf03167abf4485b12ee44078c6c4",
+    "patches/client/0031-playable-loop.patch": "b4ae1fce774a2e5bfc3915c0f68823141af90720ca0c9711b6e3cf6d9e14af30",
+    "patches/client/0032-idempotent-native-inventory.patch": "19bad5132f8460e8a807a525e0e98519dd242623a19a1777e321fade2cb87073",
+    "patches/client/0033-object-footprint-reachability.patch": "60c415332b18225ec6d992fc91c5cb2c5d3295e8012bf103a69a5aa1c17b6b37",
+    "patches/client/0034-bank-search-once.patch": "e74c6c7082f614336f4b8736b16196826d41425e5f562cff7dcd3e85ddd41002",
+    "patches/client/0035-bank-search-filter.patch": "286627015f977b9dce1427a02850a52b9698525163311b035548f4698179e0fb",
+    "patches/client/0036-sidebar-resize-thread-and-controller-default.patch": "64d122201f5b144ce9e0e647fbb8038a540b84a1082ed24259e96c2a9672e8da",
+    "patches/client/0037-playtest-controller-and-ui.patch": "7f359e67e1aaed6e538c2451f6ff46a82069824e30a4bfe308caecf4848cd42b",
+    "patches/client/0038-deck-frame-pacing-and-profiling.patch": "90b5d020f4c313f27da134be957f08d2aaef44ddc184327781779529b0dfd208",
+    "patches/client/0039-fullscreen-keybind.patch": "391860f3b7361d81c2ed6cbd9f46d07f3ba3a88f68c1918a7fd36ee567229fe2",
+    "patches/client/0040-playtest-two.patch": "9c04550e0b23a6308bdcbac93e688bd2b62eefd79469f493e3bb3e3b341497d8",
+    "patches/client/0041-remove-approach-wording.patch": "a14c55c25f2f3d7b7b2da7c41c1a8c68e0a1fddd3d864182f730dcfecf57ffd9",
+    "patches/client/0042-jagex-ui-overhaul.patch": "9e33f091bb58b24891a637ca371f399c9e8958072f8dc7dc1f64feba495c01ce",
+    "patches/client/0043-dpad-tab-bar-focus.patch": "a92b53418ea40e881c2d3b7261a34557ef739844088f7c27cc3f124a04caccbd",
+    "patches/client/0044-native-ui-artwork.patch": "f2a33495098454bb8b5ac65f4fe76f42c98f31a4b7b683027a257388c6cebe61",
+    "patches/client/0045-launcher-steam-input-and-save-quit.patch": "bd4128f7b825f6cf45c1e0a80e75ba4e9956e099944153cd3874ebf449e98beb",
+    "patches/client/0046-readable-quest-intros-and-rewards.patch": "761076bc01901c22320817e13fb3dd3af77bca6e6c61c13b38b85bfa6c97a42e",
+    "patches/client/0047-launcher-readable-body-text.patch": "656399cc7c73794a7ca0f662fb16888d56b343ace445a52109f85617be6b1455",
+    "patches/client/0048-animated-launcher-braziers.patch": "463e93d997e0468017f7d5d028590168604b48bc506118cc95d7a445e7221ba9",
+    "patches/client/0049-reference-brazier-frames-and-bold-launcher-text.patch": "3a170239e3a3189920dc8b0bc2246eb68a38bad605d720b2e9045de98c048b31",
+    "patches/client/0050-align-reference-flames-and-halve-speed.patch": "664cec6149f9383007d0f5442b5b7dc39c72a1b39038ac544e40bf7a049790a5",
+    "patches/client/0051-restore-launcher-refresh-preserve-flame-speed.patch": "9afa1c527dd0c2a36e92eb4eb4b2124c3a1acaea1c5b33e3509d16589ecee496",
+    "patches/client/0052-resend-dropped-controller-walks.patch": "3b19c9c9f6c480146141006acc1705be712b8572b30d9a57fe8e6383f7603827",
+    "patches/client/0053-shop-stock-boxes-in-controller-panel.patch": "7e934f6bbf02618c30b2742d65a7ff459884f8f5b206aa9babf292cb5b632401",
+    "patches/client/0054-controller-precision-walking.patch": "88d4b4857a295d2980b6b42882d5770cfafdf7251f3c0221c3127bf4213161e0",
+    "patches/client/0055-launcher-release-discovery.patch": "d9d01d594a175cd2f2c4a8aa129d0211a12fc41a48151366596850abc8b3087f",
+    "patches/client/0056-external-launcher-home.patch": "abc17b2aefed99b38752b609c0d967cb01c60664ffb0e2cbe14c37c59005fc54",
+    "patches/server/0001-controller-direct-movement.patch": "9c9deeee3bf04c093d175cbcbbe2cd37a3ccf8369ac469e689d6da6ad6ba2aba",
+    "patches/server/0002-controller-world-cancel.patch": "badab72e2cbff33d91f8fe3ba4802665e48ca0e1c0aed0923152307123aeda1a",
+    "patches/server/0003-controller-cancel-cleanup.patch": "f3a3020bcd38ccac88531c7db5b299ee0951136962398a45686df309b4436ec8",
+    "patches/server/0004-profile-save-durability-and-loopback.patch": "cd9974042afd733ceba5dd84448a7a41e456ade896750a045502e17554186ac8",
+    "patches/server/0005-exchange-file-save-durability.patch": "9aee9f965d281ca94c72781d5faa9e6e32a15b8505f255b90dfa6527a64b3c3d",
+    "patches/server/0006-isolated-level-one-progression-fixture.patch": "5f16b1f8f58fe4a5b2999545a9748b0894e7fb2d0d667b19654d6dc894bda8d7",
+    "patches/server/0007-session-capability-negotiation.patch": "6e1dfcf9616de74f7ef8540dfb92ceb133f69d0bc0d1e69f7747bfea69c9a9bd",
+    "patches/server/0008-exchange-counter-crash-recovery.patch": "430709ac013726b2247db47c45b27632cc571f871c83fd49847dd115848ce8dc",
+    "patches/server/0009-general-store-validation-and-session-adventure.patch": "f555b69ae8fccb751c127d48427ab8b0750fa5f6b109cbe3c361a7a0c60678e6",
+    "patches/server/0010-actual-adventure-route-audit.patch": "d79bc83b4e394480ae911df2c3beee8b2ad800bf0a2096572b2e010b57ca4a4b",
+    "patches/server/0011-full-native-adventure-journeys.patch": "9eba588c7055414de52c0424a580c6ffec8b0558de347bcc971d5a80e1efdee0",
+    "patches/server/0012-playable-loop.patch": "0585e80c7d4990a194a64bbad6327c45b2b8b1e8248eb0b1e06f71cb4daa8d01",
+    "patches/server/0013-private-entry-probe.patch": "29f337c60ac4dc36a2d0a2bd5f3cab5332e040fb7a2bb4af432216c35640f319",
+    "patches/server/0014-script-cancellation.patch": "8f05efcf7ddb2a9b58677ef668dd77e4a4c47bc1735199e154f5550476e748d6",
+    "patches/server/0015-stop-game-loop-before-saving.patch": "637ac3f2e2b2c78d1b8ed432dff9142ed742cec00b97ba5dc507b5ec4bc8bb2b",
+    "patches/server/0016-direct-movement-sliding-and-recovery.patch": "b83f67de385ee5585d95636c3b1dfe210881d6c8d0f0229e360cb42b62c7de4a",
+    "patches/server/0017-opt-in-game-loop-timings.patch": "3e1ce16fb6ef9ab7f823a53e587d17bc9c2a034fd517abc2806879c7b2ec0b4f",
+    "patches/server/0018-player-lit-fire-use.patch": "1042687359390e780c7e8aaa86c6a5fb3973f89f8249ed5fa02435d75319fd32",
+    "patches/server/0019-pottery-fire-skip-finished-items.patch": "133a0e2b3c836a6f122256fdab3e7ffa8e28b7bb7de526ac417af3f538fa2a22",
+    "patches/server/0020-pottery-recipe-products-and-levels.patch": "2e56067c0db1850823f54e7cb87470c4256a189bf6b2bb064648ebb8f9efb317",
+    "patches/server/0021-grow-save-reader-string-buffer.patch": "f4c536a7d0cebae7eb06449dd3b39bbcd6805ddfb56cd4b3a68f90f58c00f740",
+    "patches/server/0022-toml-safe-save-string-escapes.patch": "590b43482c9fb346a693ced562cfadb3e9d010d585141bfcfc93fc33e2b2b754",
+    "patches/server/0023-dungeoneering-real-template-solvability.patch": "db4a40603eacafd90fe995ebcaa325e34d65136d16c875732bb57eaff772227f",
+    "patches/server/0024-controller-corner-running.patch": "7c8c7a2b92c4a1f417a3743d86284946f92ece8f74a41fd938939fb262c07f9d",
+    "patches/server/0025-targeted-solo-dungeoneering.patch": "eefd82e4669ee513f73e20079148ea2a76557170fd50294d10831ea3eb824080",
+    "patches/server/0026-targeted-solo-summoning.patch": "b76af2ad88206ea2800cc61bf1456657dd9779b5f248c532c319fcda3f657f29",
+    "patches/server/0027-earned-lumbridge-progression.patch": "e93cac44082e1f2e239292627d46db9bde1c2e7037ce3e9442bd17bc2a4c9838",
+    "patches/server/0028-dungeon-native-entrance-validation.patch": "c7492b0772a05ff77cc72320b644106838fdf7f1c5ce56d23050689b4fc2b495",
+    "patches/server/0029-summoning-supply-acquisition.patch": "1cc0431c4717ad47c88e6078dcd0ce70779f6b0a07cfb2a702cc46a3b9b9c771",
+    "patches/server/0030-production-capacity-recovery.patch": "5133a7289fb9f9f079c5ecb95b9c31efff8817cfde4a1b7447a341372e59b711",
+    "patches/server/0031-dungeon-boss-trapdoor-contract.patch": "5bbdcae553d09be0d0671c6ddd6486e1770fecfd9b07e3c472f8f0187ca31da0",
+    "patches/server/0032-fix-dungeon-room-coordinate-rotation.patch": "18b916f8db6e58cc9aa47478fe4f00b0bb14e978f0ed0983c98ab8cb425927ec",
+    "patches/server/0033-dungeon-reward-notice-countdown.patch": "ca4ceee51c18cb2f554e0ae1d6c4c9f2ca2475e8fea47ff058de39e2303e00b9",
+    "patches/server/0034-native-primary-save-confirmation.patch": "5dc6a5e47253bd2f9e7d389fc0373416832857270b9bf9d7ed61a64882960739",
+    "patches/server/0035-cooking-target-lifetime.patch": "fe56219742bd5f240baa8462a55af634c830ab83cb64b4cfddcd777bc8d0ebfb",
+    "patches/server/0036-death-loot-recovery.patch": "4fc3f479842e4138fd6cc846dfed1c298bd4ee16b765c8d6eee278197af2e19d",
+    "patches/server/0037-slayer-kill-ownership.patch": "990f3fc6be21abf4eedbff9c8a46ca26db377902b483289a7d82ed60206bceae",
+    "patches/server/0038-familiar-owner-session.patch": "e6c3930dfb536edb58d90966a0a11dc6a17cfaaef742f817d00194d14a4c2d5e",
+    "patches/server/0039-familiar-dismissal-identity.patch": "f02f216c14167b658983b520af22c4dde02d2d6f3506b67412a289d0af8e8703",
+    "patches/server/0040-ground-loot-transaction.patch": "ffdd82aeedea80a5999602bb053b5b78c388497b0a4ce76d1de24bc4051413cf",
+    "patches/server/0041-grave-lifecycle-identity.patch": "9e535fce8ebd472370e328d7e1f00e1fa82eb1b5d72cf838e999c16d720c87da",
+    "patches/server/0042-retain-failed-offline-saves.patch": "b1474b3d3a4f68f163ab91f1bc9c9314fd36fc799db59aa0da47ef907a091f17",
+    "patches/server/0043-npc-deferred-queue-identity.patch": "ef80d83ab8b7216a0138fd6f5e81f3e4b917ad505d7e1041d256c4b3677416e0",
+    "patches/server/0044-save-variable-list-snapshots.patch": "79d4931a971283e9352b17b422bc4022d47befcb5c0b2efc486bddb56607dc30",
+    "patches/server/0045-gravestone-shop-server-availability.patch": "0822709ecab48c579b018409802bb1048e4da4378fce9ff70bb4965752db7657"
+  },
+  "pins": {
+    "634-client": "b39d45f49a0480f3f200fe3e31ad0798faf163ab",
+    "game-server": "9f9113559eb686abd917893b5dca16404be07f93",
+    "runelite-client": "297bc8a4861755b676855664d32859054779c067"
+  },
+  "private_report_sha256": "b0b421efc0f41d8e01c08baae989c256f59848a40a8f7a6ab79e289001e3e890",
+  "public_distribution_approved": false,
+  "root_tooling": {
+    "optional_skipped": 1,
+    "passed": true,
+    "tests": 247
+  },
+  "runner_sha256": "1e08d69057652f755f4c89224e5b3cd347b7046f763def414907408d79af8adb",
+  "scope": "Offline resolved-runtime and archive metadata inventory only; not legal clearance, vulnerability scanning or a complete SBOM.",
+  "source_licence_files": [
+    {
+      "path": "upstream/game-server/LICENSE",
+      "sha256": "0eb268230e5d11c13ff8fdbf32efa608dc7a86d7de82726cce5b4214a0111fb1"
+    },
+    {
+      "path": "upstream/runelite-client/LICENSE",
+      "sha256": "0057b645632ab70f838906319bfe1fcb624ddcc8c7a258b895660955edc30153"
+    }
+  ]
+}

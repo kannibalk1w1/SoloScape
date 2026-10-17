@@ -79,6 +79,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 | Native mutable persisted list ownership at queued account-save capture | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Three actual native snapshot/codec reds, two controls; final snapshot 5/engine save 15/journeys 3 pass without skips. Flat list containers isolated; no recursive graph, DB, whole-world or hardware acceptance.](SAVE_VARIABLE_SNAPSHOTS_20261017.md) |
 | Server-side quest availability check before gravestone selection/payment | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [24 selected death/gravestone cases; supplied-input shop controls, no purchase-ownership model or stopped-world grave persistence added](GRAVESTONE_SHOP_AUTHORITY_20261017.md) |
 | Private native A/B profile lock, original-context orphan recovery and code rollback retaining new progress | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Specific server42/45 client56 builds, 10 valid backups, actual ground-click tile change survives rollback; no installer/apply/public package/audio/Deck acceptance](PREBUILT_VERSION_LIFECYCLE_20261017.md) |
+| Offline resolved runtime artifact, notice candidate and embedded-native metadata inventory | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [55 server /24 client artifacts; 3 unattributed local jars; metadata only, M13-02 distribution review remains open](RUNTIME_NOTICE_INVENTORY_20261017.md) |
 
 ## Decisions and maintenance
 
