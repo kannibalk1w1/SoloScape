@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "d795deb",
+  "reviewed_base": "68f367c",
   "entries": [
     {
       "id": "controls",
@@ -289,6 +289,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "PROFILE_LOCATION_20261017.md",
       "note": "Five external-home cases, cross-build recovery refusal and165 tooling cases (one optional skip) pass. Real private Swing probe preserves inherited-home canary. Default unchanged; no migration, managed install or version rollback."
+    },
+    {
+      "id": "update-staging-lab",
+      "scope": "Original-fixture verified update candidate staging lab",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "UPDATE_STAGING_LAB_20261017.md",
+      "note": "24 staging cases and189 root cases (one optional skip); actual CLI stages exact dummy bytes and refuses replacement. No real package, download, activation, publisher authentication or power-loss durability proof."
     }
   ]
 }

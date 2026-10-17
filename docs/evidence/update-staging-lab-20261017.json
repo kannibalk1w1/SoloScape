@@ -1,0 +1,59 @@
+{
+  "archive_sha256": "ef179c645e0ff98151922d0bc89ab9e687ba3fe40ae968167dc18b61dd198168",
+  "candidate": ".runtime/update-lab/ef179c645e0ff98151922d0bc89ab9e687ba3fe40ae968167dc18b61dd198168",
+  "declared": {
+    "cache_revision": 634,
+    "cache_revision_detected": false,
+    "format": 1,
+    "platform": "linux-x86_64",
+    "repository": "kannibalk1w1/SoloScape",
+    "source_commit40": "abababababababababababababababababababab"
+  },
+  "duplicate_stage_refused": true,
+  "files": {
+    "app/client/client.jar": {
+      "mode": "0644",
+      "sha256": "9a9e9154fc26e2368250542e78ff41aa77544188aee78658fd3f5a860fa4820e",
+      "size": 28
+    },
+    "app/launcher/launch.sh": {
+      "mode": "0755",
+      "sha256": "080d72bb184324fc464ea28db71d47aca2f7c540b310c347de111ec9d32a7808",
+      "size": 33
+    },
+    "app/server/server.jar": {
+      "mode": "0644",
+      "sha256": "1d5680e2737ad7e88c009e1ee8cf52ae9f2bbcffa51a83930d2d1a79ac40cb16",
+      "size": 28
+    }
+  },
+  "input_and_candidate_unchanged_on_refusal": true,
+  "limits": {
+    "archive_bytes": 8388608,
+    "file_bytes": 4194304,
+    "files": 100,
+    "manifest_bytes": 65536,
+    "output_bytes": 16777216
+  },
+  "manifest_sha256": "9380ab6b3bbb07427c020313e9a6ce791e2361ef18f1dc9d79c16479429cfcb6",
+  "provisional": true,
+  "result": "staged",
+  "roles": {
+    "client": "app/client/client.jar",
+    "launcher": "app/launcher/launch.sh",
+    "server": "app/server/server.jar"
+  },
+  "root_tests": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 1,
+    "tests": 189
+  },
+  "scope": "Original dummy payloads; no download, activation, publisher authentication, game launch or power-loss durability proof.",
+  "source_and_cache_identity": "declared dummy metadata, not a matched runtime or cache check",
+  "staging_tests": 24,
+  "tools_sha256": {
+    "experiments/update-staging/stage.py": "05e876192fa3197be1c110119803c162635d18a9fc31ba2fde30ce0561a9f1ed",
+    "scripts/test_update_staging.py": "728af0b7751c3e75fd1ea6ce7b290d39068da3e5fa4e9d86459a811589212cab"
+  }
+}
