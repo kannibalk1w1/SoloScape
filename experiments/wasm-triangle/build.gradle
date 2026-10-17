@@ -1,0 +1,16 @@
+// Isolated TeaVM 0.16.0 WasmGC build of the verbatim native flat-colour triangle closure.
+// Generated sources come from tools/extract_triangle_closure.py under build/generated-src.
+// The native jar is not on this classpath, so nothing outside the extracted closure is compiled.
+plugins {
+    id 'java'
+    id 'org.teavm' version '0.16.0'
+}
+repositories { mavenCentral() }
+dependencies {
+    implementation 'org.teavm:teavm-jso:0.16.0'
+}
+sourceSets.main.java.srcDirs = ['src/shared/java', 'src/browser/java', 'build/generated-src']
+teavm {
+    all { mainClass = 'TriangleProbe' }
+    wasmGC { targetFileName = 'triangle.wasm' }
+}

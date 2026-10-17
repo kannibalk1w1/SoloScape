@@ -1,0 +1,274 @@
+{
+  "schema": "soloscape.wasm-triangle.evidence/1",
+  "inputsSha256": {
+    "client_jar": "ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918",
+    "Class109.java": "058b9ffd636007796f75dd50f25a422e173e820f7dcee135b6b71989d874308a",
+    "Class167.java": "d76c65b840aaca9bf042581c68c6e5c4b5bcd037f00c19a72f82edacbd1a5975",
+    "ha_Sub1.java": "f3f01437c28ad160ca356311ab021d9d4cfbc4759cb367435f0209eba4b0bae7",
+    "ha.java": "f50efd45125feb64dfee81a3dcbe6b25324550b1a8d5701f6121d0b91a8d2a6b",
+    "Class64_Sub1.java": "e02518708ff51fc07c42e1f3fa587810c40c715948054c344b90484afda91398"
+  },
+  "runtime": "teavm-0.16.0-wasmgc",
+  "browser": {
+    "clock": "performance.now with real time; no virtual-time budget",
+    "browser": "Chromium 153.0.8010.52 Arch Linux",
+    "node": "v26.11.1",
+    "presentation": "headless Chromium software Canvas; host only"
+  },
+  "results": [
+    {
+      "scene": "single",
+      "size": "765x503",
+      "triangles": 1,
+      "coveredPixels": 75046,
+      "colourFnv1a": "71213147",
+      "depthFnv1a": "d33d455a",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 0.0,
+        "rasterMedianMs": 0.10000000149011612,
+        "rasterP90Ms": 0.30000000074505806,
+        "rasterMaxMs": 0.40000000037252903
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.300000000745058,
+      "jvmVerbatimRasterMedianMs": 0.06884099915623665,
+      "jvmNativeJarRasterMedianMs": 0.14742800034582615,
+      "jvmVerbatimClearMedianMs": 0.8787869997322559
+    },
+    {
+      "scene": "single64",
+      "size": "765x503",
+      "triangles": 64,
+      "coveredPixels": 75046,
+      "colourFnv1a": "a2493229",
+      "depthFnv1a": "d7cb455a",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 6.900000000372529,
+        "rasterMedianMs": 7.400000000372529,
+        "rasterP90Ms": 7.900000000372529,
+        "rasterMaxMs": 7.900000000372529
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 0.5,
+      "jvmVerbatimRasterMedianMs": 3.4971689991652966,
+      "jvmNativeJarRasterMedianMs": 3.3831580001860857,
+      "jvmVerbatimClearMedianMs": 0.07558099925518036
+    },
+    {
+      "scene": "mesh",
+      "size": "765x503",
+      "triangles": 2180,
+      "coveredPixels": 379741,
+      "colourFnv1a": "b0e3d579",
+      "depthFnv1a": "de7c96c0",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 2.299999998882413,
+        "rasterMedianMs": 2.400000000372529,
+        "rasterP90Ms": 2.5,
+        "rasterMaxMs": 2.599999999627471
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 0.5,
+      "jvmVerbatimRasterMedianMs": 2.2914509996771812,
+      "jvmNativeJarRasterMedianMs": 2.677275000140071,
+      "jvmVerbatimClearMedianMs": 0.08103099837899208
+    },
+    {
+      "scene": "single",
+      "size": "1280x800",
+      "triangles": 1,
+      "coveredPixels": 199679,
+      "colourFnv1a": "6b70375",
+      "depthFnv1a": "f8b3b900",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 0.19999999925494194,
+        "rasterMedianMs": 0.2999999988824129,
+        "rasterP90Ms": 0.3999999985098839,
+        "rasterMaxMs": 0.40000000037252903
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.099999999627471,
+      "jvmVerbatimRasterMedianMs": 0.23316100053489208,
+      "jvmNativeJarRasterMedianMs": 0.25824599899351597,
+      "jvmVerbatimClearMedianMs": 0.21681000106036663
+    },
+    {
+      "scene": "single64",
+      "size": "1280x800",
+      "triangles": 64,
+      "coveredPixels": 199679,
+      "colourFnv1a": "c7ca24b2",
+      "depthFnv1a": "5bd2b900",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 13.900000000372529,
+        "rasterMedianMs": 14.400000000372529,
+        "rasterP90Ms": 14.800000000745058,
+        "rasterMaxMs": 14.800000000745058
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.099999999627471,
+      "jvmVerbatimRasterMedianMs": 13.100770998746157,
+      "jvmNativeJarRasterMedianMs": 14.04989599995315,
+      "jvmVerbatimClearMedianMs": 0.1925670001655817
+    },
+    {
+      "scene": "mesh",
+      "size": "1280x800",
+      "triangles": 2180,
+      "coveredPixels": 1020572,
+      "colourFnv1a": "979c0db8",
+      "depthFnv1a": "8bf41420",
+      "match": "native-jar == jvm-verbatim == wasmgc",
+      "wasmRasterMs": {
+        "rasterMinMs": 4.099999999627471,
+        "rasterMedianMs": 4.099999999627471,
+        "rasterP90Ms": 4.199999999254942,
+        "rasterMaxMs": 4.200000001117587
+      },
+      "samples": 15,
+      "wasmClearMedianMs": 1.0,
+      "jvmVerbatimRasterMedianMs": 5.359570998698473,
+      "jvmNativeJarRasterMedianMs": 5.698150999844074,
+      "jvmVerbatimClearMedianMs": 0.18663799948990345
+    }
+  ],
+  "presentation": [
+    {
+      "size": "765x503",
+      "perPixelJsCallMs": {
+        "min": 6.400000000372529,
+        "median": 6.899999998509884,
+        "max": 9.799999998882413,
+        "n": 7
+      },
+      "bulkCopyMs": {
+        "min": 1.700000001117587,
+        "median": 1.799999998882413,
+        "max": 2.800000000745058,
+        "n": 7
+      },
+      "putImageDataMs": {
+        "min": 0.0,
+        "median": 0.10000000149011612,
+        "max": 1.0,
+        "n": 7
+      },
+      "presentedFnv1a": "4b686e57",
+      "canvasReadbackFnv1a": "4b686e57"
+    },
+    {
+      "size": "1280x800",
+      "perPixelJsCallMs": {
+        "min": 18.90000000037253,
+        "median": 19.700000001117587,
+        "max": 20.200000001117587,
+        "n": 7
+      },
+      "bulkCopyMs": {
+        "min": 4.400000000372529,
+        "median": 4.599999999627471,
+        "max": 4.700000001117587,
+        "n": 7
+      },
+      "putImageDataMs": {
+        "min": 0.10000000149011612,
+        "median": 0.2000000011175871,
+        "max": 1.8999999985098839,
+        "n": 7
+      },
+      "presentedFnv1a": "f0c3b49b",
+      "canvasReadbackFnv1a": "f0c3b49b"
+    }
+  ],
+  "closure": {
+    "extracted_methods": [
+      "method1018",
+      "method1026"
+    ],
+    "extracted_lines": 509,
+    "class109_total_lines": 4467,
+    "native_methods_not_extracted": [
+      "method1016",
+      "method1017",
+      "method1019",
+      "method1020",
+      "method1021",
+      "method1022",
+      "method1023",
+      "method1024",
+      "method1025",
+      "method1027",
+      "method1028"
+    ],
+    "ha_Sub1_members_read_by_constructor": [
+      "aFloatArray7511",
+      "anInt7477",
+      "anIntArray7483"
+    ],
+    "ha_members_called_by_bodies": [
+      "method3645"
+    ],
+    "class167_members_read": [
+      "aBoolean2202"
+    ],
+    "method1018_call_sites": [
+      "Class64_Sub1.java:371",
+      "Class64_Sub1.java:1993",
+      "Class64_Sub1.java:2010",
+      "Class64_Sub1.java:2011",
+      "ha_Sub1.java:1766",
+      "ha_Sub1.java:1768",
+      "s_Sub1.java:576",
+      "s_Sub1.java:614",
+      "s_Sub1.java:654",
+      "s_Sub1.java:894",
+      "s_Sub1.java:920",
+      "s_Sub1.java:947",
+      "s_Sub1.java:973",
+      "s_Sub1.java:1481"
+    ]
+  },
+  "artifacts": {
+    "triangle.wasm": {
+      "sha256": "e7ce11288ad30be423b8a0f472df9194ebe9abd26fbd408749bf81b940ea263a",
+      "rawBytes": 57528,
+      "gzip9Bytes": 25859
+    },
+    "triangle.wasm-runtime.js": {
+      "rawBytes": 17268,
+      "gzip9Bytes": 6091
+    }
+  },
+  "timing": {
+    "clock": "performance.now (real time, no virtual-time budget); Chromium coarsens it to 0.1 ms steps",
+    "warmupFrames": 3,
+    "samplesPerCase": 15,
+    "presentationSamples": 7,
+    "rasterIncludes": "triangle submissions only (fill + depth test + clip); buffer clear and context bind are timed separately",
+    "repeatRun": "a second full run reproduced medians within ~10% (see doc)"
+  },
+  "oneOffSensitivityChecks": {
+    "note": "ad hoc JVM runs of the mesh at 765x503, not committed",
+    "normal": "b0e3d579",
+    "depthTestDisabled": "c5741a2a (hash changes)",
+    "xClipFlagForcedFalse": "ArrayIndexOutOfBoundsException (clipping is exercised)"
+  },
+  "host": {
+    "cpu": "Intel i7-14700HX (as in the raster PoC; uncontrolled power state)",
+    "os": "Linux 7.2 (CachyOS)",
+    "jdk": "21 (root .runtime/jdks/jdk21)",
+    "teavm": "0.16.0",
+    "headless": true
+  },
+  "limitations": [
+    "Only flat-colour triangles (method1018) are in the closure; textured, Gouraud and wireframe paths are excluded.",
+    "Original synthetic geometry only; no decoded models, cache data or textures.",
+    "Host headless Chromium software canvas; not a Deck/Chromebook or display-frame measurement.",
+    "FNV-1a is a 32-bit hash; JVM-vs-Wasm equality on colour and depth hashes makes a bit difference unlikely, not impossible."
+  ]
+}
