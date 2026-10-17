@@ -44,6 +44,7 @@ SUMMONING_SUITES = (
     'content.skill.summoning.SummoningSupplyAcquisitionTest',
     'content.skill.summoning.SoloSpiritWolfLifecycleTest',
     'content.skill.summoning.FamiliarOwnerIdentityTest',
+    'content.skill.summoning.FamiliarDismissalIdentityTest',
     'content.skill.summoning.SummoningLevelGateTest',
     'content.skill.summoning.SummoningObeliskTest',
 )
