@@ -108,6 +108,79 @@ def verify_shop_save(saved, bought=None):
             raise RuntimeError(f'The purchased {bought} is missing from the saved inventory: {items}')
 
 
+def verify_native_save_failure(profile, testroot, marker, run):
+    """Fault only this probe's private world, after verified native login; keep every recovery copy."""
+    import session_recovery
+    import shutil
+    safe_root = local_dev.RUNTIME / 'alpha-tests'
+    if (not testroot.resolve().is_relative_to(safe_root.resolve())
+            or not profile.directory.resolve().is_relative_to(testroot.resolve())
+            or profile.manifest['account'] != 'AlphaTest' or os.geteuid() == 0):
+        raise RuntimeError('Save failure injection requires an unprivileged disposable smoke profile.')
+    state = profile.state
+    targets = [state / 'saves', state / 'errors']
+    if any(path.is_symlink() for path in targets):
+        raise RuntimeError('Save failure injection refuses linked storage.')
+    backup = profile.backup('before-save-failure-probe')
+    old_backups = set((profile.directory / 'backups').glob('*.zip'))
+    marker.unlink(missing_ok=True)
+    cancelled = threading.Event()
+    faulted = threading.Event()
+    observed = []
+    def inject():
+        deadline = time.monotonic() + 120
+        while time.monotonic() < deadline and not cancelled.is_set():
+            if marker.exists():
+                observed.append((state / 'saves/alphatest.toml').read_bytes())
+                for path in targets:
+                    path.chmod(0o500)
+                faulted.set()
+                cancelled.set()
+                return
+            time.sleep(0.02)
+        cancelled.set()
+    observer = threading.Thread(target=inject)
+    observer.start()
+    failure = None
+    try:
+        try:
+            run(cancelled)
+        except RuntimeError as exc:
+            failure = str(exc)
+    finally:
+        cancelled.set()
+        observer.join(125)
+        for path in targets:
+            path.chmod(0o700)
+    if not faulted.is_set() or failure is None or 'confirm' not in failure.lower():
+        raise RuntimeError('Native double-save failure was not observed and refused: ' + str(failure))
+    log = profile.directory / 'session-logs/server.log'
+    text = log.read_text(errors='replace')
+    if 'Fallback save failed!' not in text or 'Primary world save was not confirmed' not in text:
+        raise RuntimeError('Both native write paths must fail before claiming the failure check.')
+    record = session_recovery.read(profile)
+    if record is None or record['phase'] != 'unverified' or session_recovery.primary_save_confirmed(profile, record):
+        raise RuntimeError('Unconfirmed native shutdown did not retain its session record.')
+    if session_recovery.save_artifacts_need_inspection(profile):
+        raise RuntimeError('Failure check must reach the no-artifact case, not just the artifact guard.')
+    if (state / 'saves/alphatest.toml').read_bytes() != observed[0]:
+        raise RuntimeError('The failed primary write changed the previous character save.')
+    # The run may add only its pre-launch backup, never an after-clean-shutdown snapshot.
+    if len(set((profile.directory / 'backups').glob('*.zip')) - old_backups) != 1:
+        raise RuntimeError('Unconfirmed shutdown published an unexpected backup.')
+    shutil.copyfile(log, testroot / 'native-save-failure-server.log')
+    session_recovery.archive_ended(profile)
+    profile.restore(backup.name)
+    if profile.state == state or not state.is_dir() or profile.metadata()['error']:
+        raise RuntimeError('Verified restore did not preserve the failed world generation.')
+    result = {'primary_and_fallback_write_failures_observed': True, 'error_artifacts_absent': True,
+              'current_session_receipt_absent': True, 'launcher_refused_clean_status': True,
+              'previous_primary_bytes_preserved': True, 'unverified_record_retained_then_archived': True,
+              'verified_backup_restored': True, 'failed_generation_retained': True}
+    (testroot / 'native-save-failure.json').write_text(json.dumps(result, indent=2) + '\n')
+    return result
+
+
 def _main():
     parser=argparse.ArgumentParser(description="Disposable native New/Continue/save and optional adventure UI probe.")
     parser.add_argument("--adventure",action="store_true",help="Probe real native adventure tabs, local settings and software overlay intervals.")
@@ -137,6 +210,7 @@ def _main():
     parser.add_argument("--blood-pact-caitlin",choices=("spare","kill"),help="Override Caitlin's fate in the earned Blood Pact route; implies --blood-pact.")
     parser.add_argument("--blood-pact-reese",choices=("kill","spare"),default="kill",help="Reese's final dialogue choice (he dies either way); implies --blood-pact when spare.")
     parser.add_argument("--blood-pact-kill-cultists",action="store_true",help="Run the earned Blood Pact route choosing to kill Kayle and Caitlin; implies --blood-pact.")
+    parser.add_argument("--save-failure",action="store_true",help="After basic New/Continue, make only this disposable world's primary/fallback directories unwritable and require unverified closure; restore its verified backup.")
     parser.add_argument("--save-quit",action="store_true",help="Confirm the in-game Save & Quit gateway and verify normal server save/shutdown.")
     parser.add_argument("--artwork",action="store_true",help="Capture actual native cache item sprites for UI previews in a disposable world.")
     parser.add_argument("--tab-bar",action="store_true",help="Drive D-pad tab-bar focus through the plugin input tick: order, highlight, A ownership, opening and B to world.")
@@ -144,6 +218,14 @@ def _main():
     parser.add_argument("--deck60-gl-only",action="store_true",help="Skip software stages and compare OpenGL pacing at full resolution.")
     parser.add_argument("--deck-route-seconds",type=int,default=0,help="Repeat the real-map full-resolution route for 60–3600 seconds, then verify a no-action reload.")
     options=parser.parse_args()
+    if options.save_failure and any((options.adventure, options.journey, options.settings, options.text,
+            options.desktop, options.sidebar, options.sidebar_baseline, options.performance, options.fullscreen,
+            options.fullscreen_gl_only, options.playtest_two, options.map, options.content_coverage,
+            options.blood_pact, options.druidic_ritual, options.gather_cook, options.world_xp_check,
+            options.shop_trade, options.artwork, options.tab_bar, options.deck60, options.deck60_gl_only,
+            options.deck_route_seconds, options.blood_pact_magic, options.blood_pact_kill_cultists,
+            options.blood_pact_kayle, options.blood_pact_caitlin, options.blood_pact_reese == 'spare')):
+        parser.error('Run --save-failure with the basic private session smoke and optional --save-quit only.')
     if options.druidic_ritual or options.gather_cook or options.world_xp_check or options.shop_trade:options.blood_pact=True
     if options.blood_pact_kill_cultists or options.blood_pact_magic or options.blood_pact_kayle or options.blood_pact_caitlin or options.blood_pact_reese=="spare":options.blood_pact=True
     if options.fullscreen_gl_only:options.fullscreen=True
@@ -281,6 +363,18 @@ def _main():
         print('Verified backups:',len(list((profile.directory/'backups').glob('*.zip'))))
         print('Original mutable paths unchanged:',before==fingerprint())
         if code or not marker.exists() or not profile.metadata()['saved'] or before!=fingerprint():raise RuntimeError('Native smoke failed; see private profile logs')
+        save_failure = None
+        if options.save_failure:
+            metrics = NativeMetrics()
+            metrics.start()
+            try:
+                with patch.object(subprocess, 'Popen', side_effect=popen):
+                    save_failure = verify_native_save_failure(profile, testroot, marker,
+                        lambda cancelled: profile_session.run(profile, cancelled,
+                            lambda stage, message: print(stage, message, flush=True), port=43595))
+            finally:
+                (testroot / 'resources-save-failure.json').write_text(json.dumps(metrics.finish(), indent=2) + '\n')
+            print('Native primary and fallback write failures refused clean closure; verified backup restored.')
         # Cancel a real native startup while content is still loading. Compare the entire
         # saved world, including exchange files; never touch the legacy world.
         saved_world={str(p.relative_to(profile.state/'saves')):p.read_bytes() for p in (profile.state/'saves').rglob('*') if p.is_file()}
@@ -309,7 +403,7 @@ def _main():
         print('Cancelled native startup preserved entire saved world:',after_cancel==saved_world)
         print('New/Continue complete-session seconds (includes client readiness and save):',elapsed)
         (testroot/'native-smoke-summary.json').write_text(json.dumps({'new_session_seconds':elapsed[0],'continue_session_seconds':elapsed[1],
-            'native_startup_cancel_preserved':True,'original_mutable_paths_unchanged':before==fingerprint(),
+            'native_save_failure':save_failure, 'native_startup_cancel_preserved':True,'original_mutable_paths_unchanged':before==fingerprint(),
             'session_environment':{key:os.environ.get(key) for key in ('XDG_SESSION_DESKTOP','XDG_CURRENT_DESKTOP','DISPLAY','SteamAppId','SteamGameId')},
             'adventure':adventure,'text_focused':options.text,'playable_journey':options.journey,'playtest_two':options.playtest_two,'fullscreen_probe':options.fullscreen,'fullscreen_renderers':'OpenGL only' if options.fullscreen_gl_only else 'software and OpenGL' if options.fullscreen and options.desktop else 'software only' if options.fullscreen else None,'sidebar_probe':options.sidebar,'sidebar_baseline':options.sidebar_baseline,'display':'existing-desktop' if options.desktop else 'private-xvfb',
             'precondition':'Desktop probes require hands off, awake display; real input/focus may interfere.' if options.desktop else 'Owned private display.',

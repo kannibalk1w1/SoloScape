@@ -122,8 +122,9 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
                 local_dev.stop(client, output=shutdown_output)
                 local_dev.stop(server, output=shutdown_output)
                 dirty = session_recovery.save_artifacts_need_inspection(profile)
+                confirmed = not ready or session_recovery.primary_save_confirmed(profile, record)
                 # Exit status and a readable old save cannot hide a failed write.
-                if ready and server is not None and server.returncode in (0, 143, -15) and failed is None and not dirty:
+                if ready and server is not None and server.returncode in (0, 143, -15) and failed is None and not dirty and confirmed:
                     notify('backup', 'Verifying the saved-world backup…')
                     profile._backup('after-clean-shutdown')
                     (profile.directory / session_recovery.RECORD).unlink()
@@ -139,3 +140,5 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
                     notify('stopped', 'World closed. Previous verified backup retained; check logs after an error.')
                     if dirty and failed is None:
                         raise RuntimeError('World closed, but save errors or unfinished temporary files need inspection. Previous verified backup and session record retained.')
+                    if ready and not confirmed and failed is None and not dirty:
+                        raise RuntimeError('World closed without confirming the latest world save. Previous verified backup and session record retained.')

@@ -203,6 +203,45 @@ profile_session.run(profile,threading.Event(),lambda *args:None,checked=False)
     def test_normal_shutdown_does_not_claim_clean_when_atomic_save_is_unfinished(self):
         self.check_failed_save_artifact('saves/.save-incomplete.tmp')
 
+    def check_unconfirmed_native_save(self, case):
+        from test_profiles import native_save
+        import session_recovery
+        os.environ['TEST_CASE'] = case
+        save = self.profile.state / 'saves/tester.toml'
+        save.write_bytes(native_save())
+        cancelled = threading.Event()
+        events, errors = [], []
+        def run():
+            try:
+                profile_session.run(self.profile, cancelled, lambda *args: events.append(args), checked=False)
+            except Exception as exc:
+                errors.append(exc)
+        worker = threading.Thread(target=run)
+        worker.start()
+        try:
+            self.wait_for(lambda: (self.root / 'client.args').exists())
+        finally:
+            cancelled.set()
+            worker.join(5)
+        self.assertFalse(worker.is_alive())
+        self.assertEqual(len(errors), 1, events)
+        self.assertIn('confirm', str(errors[0]).lower())
+        self.assertFalse(any('saved and verified' in message for _, message in events))
+        self.assertEqual(session_recovery.read(self.profile)['phase'], 'unverified')
+        self.assertEqual(save.read_bytes(), native_save())
+        self.assertEqual(len(list((self.profile.directory / 'backups').glob('*.zip'))), 1)
+        for role in ('server', 'client'):
+            self.assertEqual((self.root / (role + '.stopped')).read_text(), 'graceful')
+
+    def test_clean_exit_without_native_save_confirmation_is_unverified(self):
+        self.check_unconfirmed_native_save('no-save-receipt')
+
+    def test_another_sessions_save_confirmation_cannot_confirm_this_world(self):
+        self.check_unconfirmed_native_save('wrong-save-receipt')
+
+    def test_save_confirmation_embedded_in_other_text_is_rejected(self):
+        self.check_unconfirmed_native_save('prefixed-save-receipt')
+
     def test_profile_environment_overrides_inherited_dotted_settings(self):
         env=profile_session.owned_environment(self.profile,43595)
         self.assertEqual(env['storage.players.path'],str(self.profile.state/'saves')+'/')

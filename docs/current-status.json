@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "96e64d2",
+  "reviewed_base": "e8942f826521fa18046499e6fb169111a2d44b11",
   "entries": [
     {
       "id": "controls",
@@ -193,6 +193,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "DUNGEON_REWARD_NOTICE_FIX_20261017.md",
       "note": "Reproduced lost201XP/20tokens/floorcredit when notice timed out; countdown now starts after reward queue completes; 28 selected cases pass, full-floor/exit/save and group acceptance remain open"
+    },
+    {
+      "id": "native-save-confirmation",
+      "scope": "Current-session primary world save confirmation for normal and orphan shutdown",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "NATIVE_SAVE_CONFIRMATION_20261017.md",
+      "note": "10 native save-queue tests, 140 tooling cases (one optional skip), real New/Continue/cancel and no-artifact primary+fallback write failure/restore pass on private Xvfb; no Deck acceptance"
     }
   ]
 }
