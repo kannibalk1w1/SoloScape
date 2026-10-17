@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "e8942f826521fa18046499e6fb169111a2d44b11",
+  "reviewed_base": "1fcb0d1",
   "entries": [
     {
       "id": "controls",
@@ -201,6 +201,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "NATIVE_SAVE_CONFIRMATION_20261017.md",
       "note": "10 native save-queue tests, 140 tooling cases (one optional skip), real New/Continue/cancel and no-artifact primary+fallback write failure/restore pass on private Xvfb; no Deck acceptance"
+    },
+    {
+      "id": "backup-deflate-recovery",
+      "scope": "Damaged compressed backup isolation during discovery and restore",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "BACKUP_DEFLATE_RECOVERY_20261017.md",
+      "note": "Corrupted metadata and save streams remain visible as invalid beside healthy backups; failed restore changes no save/generation and healthy restore succeeds. 141 tooling cases, one optional skip; disposable host fixtures only."
     }
   ]
 }
