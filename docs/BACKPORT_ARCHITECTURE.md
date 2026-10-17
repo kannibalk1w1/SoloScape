@@ -64,7 +64,7 @@ No packer writes the installed cache, profile cache or a running world's files. 
 
 ## Backport Lab acceptance sequence
 
-The tracked [lab directory](../backport/README.md) contains only design/example manifests. Private inputs, keys, converted binaries and test cache copies live under ignored `.runtime/backport-lab/`. **None of the ten cache-import stages below is claimed complete by adding these documents.** They are observable gates for a later bounded implementation.
+The tracked [lab directory](../backport/README.md) contains design/example manifests and narrowly scoped original inspection tools. Private inputs, keys, converted binaries and test cache copies live under ignored `.runtime/backport-lab/`. The [occupancy catalogue](BACKPORT_CATALOGUE_20261017.md) and [original codec probe](BACKPORT_ITEM_CODEC_20261017.md) supply partial inspection/definition evidence. Neither allocates an ID or patches a cache. **The ten complete cache-import gates below remain open.** They are observable gates for a later bounded implementation.
 
 | Gate | Smallest experiment / evidence |
 | --- | --- |
