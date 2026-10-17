@@ -1,0 +1,152 @@
+diff --git a/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathLootRecoveryTest.kt b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathLootRecoveryTest.kt
+new file mode 100644
+index 0000000..bbec884
+--- /dev/null
++++ b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathLootRecoveryTest.kt
+@@ -0,0 +1,146 @@
++package content.area.misthalin.lumbridge.church
++
++import WorldTest
++import containsMessage
++import content.entity.combat.hit.damage
++import floorItemOption
++import itemOption
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertFalse
++import org.junit.jupiter.api.Assertions.assertNotNull
++import org.junit.jupiter.api.Assertions.assertNull
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.BeforeEach
++import org.junit.jupiter.api.Test
++import kotlinx.coroutines.runBlocking
++import org.junit.jupiter.api.Assertions.assertArrayEquals
++import walk
++import world.gregs.voidps.engine.data.AccountManager
++import world.gregs.voidps.engine.data.PlayerSave
++import world.gregs.voidps.engine.data.SaveQueue
++import world.gregs.voidps.engine.data.file.FileStorage
++import world.gregs.voidps.engine.data.definition.ItemDefinitions
++import world.gregs.voidps.engine.entity.Despawn
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.Players
++import world.gregs.voidps.engine.entity.character.npc.NPCs
++import world.gregs.voidps.engine.entity.item.floor.FloorItems
++import world.gregs.voidps.engine.get
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.engine.timer.*
++import world.gregs.voidps.type.Tile
++import java.nio.file.Files
++
++/**
++ * Supplied inventory is an explicit fixture of four items. Kept-on-death keeps the three most valuable
++ * by cache cost, so the cheapest supplied item is the one that drops. The death uses the normal damage API,
++ * as [GravestonesTest] does.
++ */
++class DeathLootRecoveryTest : WorldTest() {
++
++    @BeforeEach
++    fun setup() {
++        setCurrentTime { 0 }
++    }
++
++    @Test
++    fun `Full inventory Take refuses the death drop then succeeds exactly once after a native Drop`() {
++        val deathTile = Tile(3235, 3220)
++        val supplied = listOf("logs", "bronze_dagger", "bronze_sword", "tinderbox")
++        val filler = "raw_shrimps"
++        require(filler !in supplied) { "Filler must not be a supplied item" }
++        val costs = supplied.associateWith { ItemDefinitions.get(it).cost }
++        require(costs.values.toSet().size == costs.size) { "Fixture costs must be distinct: $costs" }
++        val lost = costs.minBy { it.value }.key
++        val player = createPlayer(deathTile)
++        supplied.forEach { player.inventory.add(it) }
++        tick()
++
++        player.damage(101)
++        tick(9)
++
++        assertNotNull(NPCs.firstOrNull(deathTile) { it.id.startsWith("gravestone") })
++        assertEquals(Tile(3221, 3219), player.tile)
++        assertFalse(player.inventory.contains(lost), "The cheapest supplied item must drop, not be kept")
++        supplied.filter { it != lost }.forEach { assertEquals(1, player.inventory.count(it), "$it must be kept") }
++        val floorItem = FloorItems.firstOrNull(deathTile, lost)
++        assertNotNull(floorItem)
++        assertEquals(1, floorItem!!.amount)
++
++        // Fill the remaining slots with an explicit filler so the kept items plus filler leave no free slot.
++        player.inventory.add(filler, 25)
++        assertEquals(0, player.inventory.spaces)
++
++        player.walk(Tile(3234, 3220))
++        tickIf(60) { player.tile != Tile(3234, 3220) }
++        assertArrival(player, deathTile, Tile(3234, 3220))
++
++        player.floorItemOption(floorItem, "Take")
++        tick(2)
++        assertTrue(player.containsMessage("inventory space"))
++        assertFalse(player.inventory.contains(lost))
++        assertEquals(floorItem, FloorItems.firstOrNull(deathTile, lost))
++        assertEquals(1, FloorItems.firstOrNull(deathTile, lost)!!.amount)
++
++        // The refused Take's approach stepped the player onto the grave tile, where Drop is refused.
++        // Walk back off the grave, then free one slot with an ordinary native Drop.
++        player.walk(Tile(3234, 3220))
++        tickIf(60) { player.tile != Tile(3234, 3220) }
++        assertArrival(player, deathTile, Tile(3234, 3220))
++        val dropTile = player.tile
++        player.itemOption("Drop", filler)
++        tick()
++        assertEquals(1, player.inventory.spaces)
++        assertNotNull(FloorItems.firstOrNull(dropTile, filler))
++
++        player.floorItemOption(floorItem, "Take")
++        tick(2)
++        assertEquals(1, player.inventory.count(lost))
++        assertNull(FloorItems.firstOrNull(deathTile, lost))
++
++        // Further ticks must not duplicate the item on the ground or in the inventory.
++        tick(20)
++        assertEquals(1, player.inventory.count(lost))
++        assertNull(FloorItems.firstOrNull(deathTile, lost))
++
++        // Native file save of the post-recovery player, then a fresh player restored from that file.
++        // Expected arrays are copied from the live player before the save so later restore cannot alias them.
++        val expectedTile = player.tile
++        val expectedXp = player.experience.experience.copyOf()
++        val expectedInventories = player.inventories.instances.mapValues { (_, inv) -> inv.items.map { it.copy() }.toTypedArray() }
++        val dir = Files.createTempDirectory("soloscape-death-loot-recovery-")
++        try {
++            runBlocking { SaveQueue(FileStorage(dir.toFile())).direct().join() }
++            val save = PlayerSave.load(dir.resolve("${player.accountName.lowercase()}.toml").toFile())
++            assertEquals(expectedTile, save.tile)
++            Despawn.player(player)
++            Players.remove(player)
++            tick()
++            val fresh = save.toPlayer()
++            assertTrue(fresh !== player)
++            val accounts = get<AccountManager>()
++            accounts.setup(fresh, null, 0, viewport = true)
++            assertTrue(accounts.index(fresh))
++            accounts.spawn(fresh, null)
++            tick(3)
++
++            assertEquals(expectedTile, fresh.tile)
++            assertArrayEquals(expectedXp, fresh.experience.experience)
++            assertEquals(expectedInventories.keys, fresh.inventories.instances.keys)
++            for ((id, items) in expectedInventories) assertArrayEquals(items, fresh.inventories.inventory(id).items, "Inventory $id")
++            assertEquals(1, fresh.inventory.count(lost), "The recovered item must be present exactly once after restore")
++            supplied.filter { it != lost }.forEach { assertEquals(1, fresh.inventory.count(it), "$it must be kept after restore") }
++            assertTrue(fresh.contains("creation"), "Restored save must keep the creation marker so welcome does not re-run")
++        } finally {
++            dir.toFile().deleteRecursively()
++        }
++    }
++
++    /** Arrival is proven by the player's tile, not by the tickIf loop ending, and the tile must be next to the grave. */
++    private fun assertArrival(player: Player, grave: Tile, expected: Tile) {
++        assertEquals(expected, player.tile, "Walk must arrive at the adjacent tile")
++        assertEquals(1, grave.distanceTo(player.tile), "Arrival tile must be adjacent to the grave")
++        assertFalse(player.tile == grave, "Arrival tile must not be the grave tile")
++    }
++}
