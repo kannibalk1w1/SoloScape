@@ -26,8 +26,12 @@ File barriers keep both clients alive until their independent observations can b
 
 - Final success: `.runtime/alpha-tests/coop-1792253536839131147/summary.json`; log `.runtime/native-coop-final-20261017.log`. Two complete sessions took **63.104s and 19.198s**, including loading, both client handshakes and saves. These are uncontrolled host session times, not frame-time/FPS/Deck measurements.
 - Earlier successful run: `.runtime/alpha-tests/coop-1792252490027824772/summary.json`, 85.872s and 19.787s. The positive inventory-ready witness was added afterward.
-- Three root fixture tests reject incorrect account/index/position/inventory/dispatch evidence and observer movement. All 151 root tooling cases pass, with one existing optional skip.
+- Three root fixture tests reject incorrect account/index/position/inventory/dispatch evidence and observer movement. All 152 root tooling cases pass, with one existing optional skip.
 - Both successful sessions preserve legacy mutable-path byte hashes. [Sanitized evidence](evidence/native-two-client-20261017.json) includes matched build identities and the cleanup control.
+
+## Tooling cleanup correction
+
+The first PR check exposed an existing simulated-process fixture race: recovery-test cleanup sent SIGTERM but deleted its temporary directory before the children exited. A deliberately slow fake shutdown reproduces the failure. The fixture now retains verified child pidfds, signals only those processes and waits for exit before directory removal. The recovery group passes 18 cases and the full tooling suite passes 152 cases (one optional skip). This changes test cleanup, not native save or shutdown behaviour.
 
 ## Open gates
 
