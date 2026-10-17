@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "27096a6",
+  "reviewed_base": "34c7d21",
   "entries": [
     {
       "id": "controls",
@@ -353,6 +353,14 @@
       "acceptance": "DEFERRED",
       "evidence": "GRAVE_RECEIPT_MODEL_20261017.md",
       "note": "20 scenarios:18 restricted guard/exit outcomes and2 unsafe controls. Actual native inventory reloads; erased receipt is accepted by protocol and caught only by the independent oracle. No live save integration, production schema or power-loss acceptance."
+    },
+    {
+      "id": "prebuilt-native-server-closure",
+      "scope": "Private prebuilt empty-server payload without source layout and a safe runtime-data selector",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "PREBUILT_NATIVE_SERVER_20261017.md",
+      "note": "11 original selector boundary tests; actual server42 boots/closes with3843 data inputs and separate cache/state. Exact receipt and unchanged payload/caches. Host4.210s startup,1.33GiB observed high-water RSS; no client/launcher, character, Deck or distribution acceptance."
     }
   ]
 }
