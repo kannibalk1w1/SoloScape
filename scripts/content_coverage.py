@@ -79,8 +79,10 @@ def main():
             'content.skill.slayer.SlayerMasterTest',
         ),
         'death': (
+            'content.entity.player.inv.TakeTest',
             'content.area.misthalin.lumbridge.church.DeathLootRecoveryTest',
             'content.area.misthalin.lumbridge.church.GravestonesTest',
+            'content.area.misthalin.lumbridge.church.RepeatedGraveIdentityTest',
         ),
         'dungeon': (
             'content.skill.dungeoneering.DungeonRoomCoordinateTest',

@@ -1,0 +1,207 @@
+diff --git a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestone.kt b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestone.kt
+--- a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestone.kt
++++ b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestone.kt
+@@ -26,6 +26,8 @@
+         gravestone.anim(if (grave == "memorial_plaque") "gravestone_fall_plaque" else "gravestone_fall")
+         gravestone["player_name"] = player.name
+         gravestone["player_male"] = player.male
++        // Runtime identity only: an older grave must not clear a newer grave's UI state.
++        player["gravestone_npc"] = gravestone
+         player["gravestone_time"] = epochSeconds() + seconds
+         player["gravestone_tile"] = tile
+         MapMarkers.add(player, tile, "grave")
+diff --git a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt
+--- a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt
++++ b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt
+@@ -137,8 +137,8 @@
+             }
+             val remainder = target.remaining("grave_timer", epochSeconds())
+             val minutes = TimeUnit.SECONDS.toMinutes(remainder.toLong())
++            // The stop handler owns NPC removal.
+             target.softTimers.stop("grave_degrade")
+-            NPCs.remove(target)
+             message("It looks like it'll survive another $minutes ${"minute".plural(minutes)}. You demolish it anyway.")
+         }
+ 
+@@ -179,11 +179,12 @@
+     fun stop(npc: NPC, death: Boolean) {
+         val player = Players.find(npc.remove("player_name") ?: "")
+         if (player != null) {
+-            player.clear("gravestone_time")
+-            val tile: Tile? = player.remove("gravestone_tile")
+-            if (tile != null) {
+-                MapMarkers.remove(player, tile, "grave")
+-            }
++            if (player.get<NPC>("gravestone_npc") === npc) {
++                player.clear("gravestone_npc")
++                player.clear("gravestone_time")
++                player.clear("gravestone_tile")
++            }
++            MapMarkers.remove(player, npc.tile, "grave")
+         }
+         npc.stop("grave_timer")
+         NPCs.remove(npc)
+diff --git a/game/src/main/kotlin/content/entity/player/modal/map/MapMarkers.kt b/game/src/main/kotlin/content/entity/player/modal/map/MapMarkers.kt
+--- a/game/src/main/kotlin/content/entity/player/modal/map/MapMarkers.kt
++++ b/game/src/main/kotlin/content/entity/player/modal/map/MapMarkers.kt
+@@ -26,8 +26,8 @@
+                 player.clear("world_map_marker_$i")
+                 player.clear("world_map_marker_text_$i")
+                 player.clear("world_map_marker_type_$i")
++                break
+             }
+-            break
+         }
+     }
+ }
+diff --git a/game/src/test/kotlin/content/area/misthalin/lumbridge/church/RepeatedGraveIdentityTest.kt b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/RepeatedGraveIdentityTest.kt
+new file mode 100644
+index 0000000..ab7f134
+--- /dev/null
++++ b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/RepeatedGraveIdentityTest.kt
+@@ -0,0 +1,145 @@
++package content.area.misthalin.lumbridge.church
++
++import WorldTest
++import npcOption
++import content.entity.player.modal.map.MapMarkers
++import org.junit.jupiter.api.BeforeEach
++import org.junit.jupiter.api.Test
++import world.gregs.voidps.engine.entity.character.npc.NPC
++import world.gregs.voidps.engine.entity.character.npc.NPCs
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.timer.*
++import world.gregs.voidps.type.Tile
++import kotlin.test.*
++
++class RepeatedGraveIdentityTest : WorldTest() {
++
++    @BeforeEach
++    fun setup() {
++        setCurrentTime { 0 }
++    }
++
++    @Test
++    fun `Expiring an older grave on distinct tiles keeps the newer grave state`() {
++        val oldTile = Tile(3235, 3220)
++        val newTile = Tile(3238, 3220)
++        val player = createPlayer(Tile(3240, 3224))
++        tick()
++
++        val older = spawnGrave(player, oldTile, "memorial_plaque")
++        val newer = spawnGrave(player, newTile, "ornate_gravestone")
++        val newerTime: Int = player["gravestone_time", -1]
++        assertEquals(480, newerTime - epochSeconds())
++        assertTrue(older in graves(oldTile))
++        assertTrue(newer in graves(newTile))
++        assertEquals(listOf(oldTile.id, newTile.id).sorted(), graveMarkers(player).sorted())
++        assertEquals(newTile, player.get<Tile>("gravestone_tile"))
++
++        TimerApi.stop(older, "grave_degrade", false)
++        tick()
++
++        assertTrue(graves(oldTile).isEmpty())
++        assertTrue(newer in graves(newTile), "newer grave NPC was removed by older expiry")
++        assertEquals(newerTime, player["gravestone_time", -1], "older expiry changed newer gravestone_time")
++        assertEquals(newTile, player.get<Tile>("gravestone_tile"), "older expiry cleared newer gravestone_tile")
++        assertEquals(listOf(newTile.id), graveMarkers(player), "older expiry removed newer map marker")
++
++        TimerApi.stop(newer, "grave_degrade", false)
++        tick()
++
++        assertTrue(graves(newTile).isEmpty())
++        assertFalse(player.contains("gravestone_time"))
++        assertNull(player.get<Tile>("gravestone_tile"))
++        assertTrue(graveMarkers(player).isEmpty())
++    }
++
++    @Test
++    fun `Expiring an older grave on the same tile keeps the newer grave state`() {
++        val tile = Tile(3235, 3220)
++        val player = createPlayer(Tile(3240, 3224))
++        tick()
++
++        val older = spawnGrave(player, tile, "memorial_plaque")
++        val newer = spawnGrave(player, tile, "ornate_gravestone")
++        val newerTime: Int = player["gravestone_time", -1]
++        assertEquals(480, newerTime - epochSeconds())
++        assertNotSame(older, newer)
++        assertEquals(2, graves(tile).size)
++        assertTrue(older in graves(tile))
++        assertTrue(newer in graves(tile))
++        assertEquals(listOf(tile.id, tile.id), graveMarkers(player))
++        assertEquals(tile, player.get<Tile>("gravestone_tile"))
++
++        TimerApi.stop(older, "grave_degrade", false)
++        tick()
++
++        assertFalse(older in graves(tile), "older grave NPC was not removed")
++        assertTrue(newer in graves(tile), "newer grave NPC was removed by older expiry")
++        assertEquals(newerTime, player["gravestone_time", -1], "older expiry changed newer gravestone_time")
++        assertEquals(tile, player.get<Tile>("gravestone_tile"), "older expiry cleared newer gravestone_tile")
++        assertEquals(listOf(tile.id), graveMarkers(player), "older expiry removed newer map marker")
++
++        TimerApi.stop(newer, "grave_degrade", false)
++        tick()
++
++        assertTrue(graves(tile).isEmpty())
++        assertFalse(player.contains("gravestone_time"))
++        assertNull(player.get<Tile>("gravestone_tile"))
++        assertTrue(graveMarkers(player).isEmpty())
++    }
++
++    @Test
++    fun `Grave expiry removes its marker after an unrelated earlier marker`() {
++        val tile = Tile(3235, 3220)
++        val other = tile.addX(3)
++        val player = createPlayer(Tile(3240, 3224))
++        MapMarkers.add(player, other, "yellow")
++        val grave = spawnGrave(player, tile, "memorial_plaque")
++        assertEquals(listOf(tile.id), graveMarkers(player))
++        assertEquals(other.id, player["world_map_marker_1", -1])
++
++        TimerApi.stop(grave, "grave_degrade", false)
++        tick()
++
++        assertTrue(graves(tile).isEmpty())
++        assertFalse(player.contains("gravestone_time"))
++        assertNull(player.get<Tile>("gravestone_tile"))
++        assertTrue(graveMarkers(player).isEmpty(), "Expiry must find the grave beyond an unrelated marker")
++        assertEquals(other.id, player["world_map_marker_1", -1], "Keep the unrelated marker")
++    }
++
++    @Test
++    fun `Native Demolish counts the grave removal once`() {
++        val tile = Tile(3235, 3220)
++        val player = createPlayer(tile)
++        val baseline = NPCs.count()
++        assertEquals(baseline, NPCs.size)
++        val grave = spawnGrave(player, tile, "memorial_plaque")
++        assertEquals(baseline + 1, NPCs.size)
++
++        player.npcOption(grave, "Demolish")
++        tick(2)
++
++        assertTrue(graves(tile).isEmpty())
++        assertEquals(baseline, NPCs.count())
++        assertEquals(NPCs.count(), NPCs.size, "Native Demolish must count removal once")
++        assertTrue(graveMarkers(player).isEmpty())
++    }
++
++    /** Spawns through the native [Gravestone.spawn] and returns the NPC that call added, by reference. */
++    private fun spawnGrave(player: Player, tile: Tile, grave: String): NPC {
++        val before = graves(tile).toSet()
++        player["gravestone_current"] = grave
++        Gravestone.spawn(player, tile)
++        tick()
++        val added = graves(tile).filter { it !in before }
++        assertEquals(1, added.size, "expected exactly one new gravestone NPC at $tile")
++        return added.single()
++    }
++
++    private fun graves(tile: Tile): List<NPC> = NPCs.at(tile).filter { it.id.startsWith("gravestone_") }.toList()
++
++    private fun graveMarkers(player: Player): List<Int> = (1..5)
++        .filter { player.contains("world_map_marker_$it") && player["world_map_marker_type_$it", "yellow"] == "grave" }
++        .map { player["world_map_marker_$it", -1] }
++}
