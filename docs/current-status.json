@@ -100,11 +100,11 @@
     },
     {
       "id": "solo-dungeon",
-      "scope": "Solo small-c1 floor-1 entry handlers, binding, leaving and logout save",
+      "scope": "Native packet entry through both mirrored solo small-c1 floor-1 entrances, binding and exit/logout save",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
-      "evidence": "DUNGEONEERING_TARGETED_PASS_20261017.md",
-      "note": "Direct registered entrance-handler fixture; packet entry, doors/boss/rewards and full floor remain unproven"
+      "evidence": "DUNGEONEERING_NATIVE_ENTRY_20261017.md",
+      "note": "Blocked-side fixture corrected; no direct handler bypass. Ring/initial position supplied; doors/boss/rewards/full floor and physical input remain unproven."
     },
     {
       "id": "solo-summoning",

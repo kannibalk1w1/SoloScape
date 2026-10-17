@@ -17,7 +17,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
 | client | 54 | `0054-controller-precision-walking.patch` | `edbbcc303e2cb43d7622116de70639453586b10021b4c6dfd12d22a8cd65e7d1` |
-| server | 27 | `0027-earned-lumbridge-progression.patch` | `a21673b65d29979675ecd9309ba1a008ae721be031b0ee5db5e8e4c7bb3f3736` |
+| server | 28 | `0028-dungeon-native-entrance-validation.patch` | `dcd08944cc0334c024a24134b3d0b5302913e8dc3a543f63d349b46596cb78f0` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
 
@@ -37,7 +37,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 | True solo simulation pause | DEFERRED | DEFERRED | [Menus currently do not freeze the world](ROADMAP.md) |
 | Later-content compatibility runtime, AI/economy expansion and web port | NOT IMPLEMENTED | DEFERRED | [Research/planning does not implement gameplay or authorize a port](ROADMAP.md) |
 | Isolated WASM masked-edge kernel; no triangle/model/game client | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [JVM/browser hashes agree at two sizes; real-clock host measurements only](WASM_RASTER_POC.md) |
-| Solo small-c1 floor-1 entry handlers, binding, leaving and logout save | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Direct registered entrance-handler fixture; packet entry, doors/boss/rewards and full floor remain unproven](DUNGEONEERING_TARGETED_PASS_20261017.md) |
+| Native packet entry through both mirrored solo small-c1 floor-1 entrances, binding and exit/logout save | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Blocked-side fixture corrected; no direct handler bypass. Ring/initial position supplied; doors/boss/rewards/full floor and physical input remain unproven.](DUNGEONEERING_NATIVE_ENTRY_20261017.md) |
 | Level-1 spirit wolf native infusion, summon, dismissal and fresh-player disk restore | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Recipe materials supplied; same-JVM fresh-player restore, not server restart; controller and earned materials not exercised](SUMMONING_TARGETED_PASS_20261017.md) |
 | Connected native Cook, gathering, player-lit cooking, combat, bank and fresh-player disk restore | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Actual starter kit and native resources; bounded ordinary-input retries handle roaming NPCs. Same-JVM restore, not launcher restart; inventory-full/death and physical controller acceptance remain open.](EARNED_LUMBRIDGE_SLICE_20261017.md) |
 
