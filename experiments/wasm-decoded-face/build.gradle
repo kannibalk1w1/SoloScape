@@ -1,0 +1,16 @@
+// Isolated TeaVM 0.16.0 WasmGC build of the decoded-model bridge. Inputs: build/reused (read-only copies of the
+// shared face sources), build/bridge (encoded fixtures) and build/generated-src (both extracted closures composed).
+// The native jar and NativeFace/ClipScene are not on this classpath.
+plugins {
+    id 'java'
+    id 'org.teavm' version '0.16.0'
+}
+repositories { mavenCentral() }
+dependencies {
+    implementation 'org.teavm:teavm-jso:0.16.0'
+}
+sourceSets.main.java.srcDirs = ['src/shared/java', 'src/browser/java', 'build/reused', 'build/bridge', 'build/generated-src']
+teavm {
+    all { mainClass = 'BridgeProbe' }
+    wasmGC { targetFileName = 'bridge.wasm' }
+}
