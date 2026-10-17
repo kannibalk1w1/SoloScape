@@ -72,6 +72,9 @@ def main():
         'm6': M6_SUITES,
         'summoning': SUMMONING_SUITES,
         'dungeon': (
+            'content.skill.dungeoneering.DungeonRoomCoordinateTest',
+            'content.skill.dungeoneering.DungeonGenerationWorldTest',
+            'content.skill.dungeoneering.DungeonGeneratorTest',
             'content.skill.dungeoneering.SoloBossTrapdoorUnlockTest',
             'content.skill.dungeoneering.SoloDungeonLifecycleTest',
         ),
