@@ -154,6 +154,55 @@ profile_session.run(profile,threading.Event(),lambda *args:None,checked=False)
         self.assertEqual(len(profiles.list_backups(self.profile.manifest['id'])),2)
         with self.profile.lock():pass
 
+    def check_failed_save_artifact(self, relative):
+        from test_profiles import native_save
+        import session_recovery
+        save = self.profile.state / 'saves/tester.toml'
+        save.write_bytes(native_save())
+        generation = self.profile.state
+        cancelled = threading.Event()
+        events, errors = [], []
+        def run():
+            try:
+                profile_session.run(self.profile, cancelled, lambda *args: events.append(args), checked=False)
+            except Exception as exc:
+                errors.append(exc)
+        worker = threading.Thread(target=run)
+        worker.start()
+        try:
+            self.wait_for(lambda: (self.root / 'client.args').exists())
+            (generation / relative).write_text('simulated failed native save')
+        finally:
+            cancelled.set()
+            worker.join(5)
+        self.assertFalse(worker.is_alive())
+        self.assertEqual(len(errors), 1, events)
+        self.assertIn('save', str(errors[0]).lower())
+        self.assertFalse(any('saved and verified' in message for _, message in events))
+        self.assertEqual(session_recovery.read(self.profile)['phase'], 'unverified')
+        self.assertEqual(save.read_bytes(), native_save())
+        self.assertEqual((generation / relative).read_text(), 'simulated failed native save')
+        backups = list((self.profile.directory / 'backups').glob('*.zip'))
+        self.assertEqual(len(backups), 1, 'Only the pre-launch backup may be published')
+        for role in ('server', 'client'):
+            self.assertEqual((self.root / (role + '.stopped')).read_text(), 'graceful')
+        with self.profile.lock():
+            pass
+        with local_dev.build_lock():
+            pass
+        # Existing explicit ended-session archive + verified restore remains usable.
+        session_recovery.archive_ended(self.profile)
+        self.profile.restore(backups[0].name)
+        self.assertNotEqual(self.profile.state, generation)
+        self.assertEqual((self.profile.state / 'saves/tester.toml').read_bytes(), native_save())
+        self.assertEqual((generation / relative).read_text(), 'simulated failed native save')
+
+    def test_normal_shutdown_does_not_claim_clean_when_save_error_remains(self):
+        self.check_failed_save_artifact('errors/failed-save.toml')
+
+    def test_normal_shutdown_does_not_claim_clean_when_atomic_save_is_unfinished(self):
+        self.check_failed_save_artifact('saves/.save-incomplete.tmp')
+
     def test_profile_environment_overrides_inherited_dotted_settings(self):
         env=profile_session.owned_environment(self.profile,43595)
         self.assertEqual(env['storage.players.path'],str(self.profile.state/'saves')+'/')
