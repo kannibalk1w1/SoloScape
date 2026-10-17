@@ -4,7 +4,7 @@ Research date: 17 October 2026. Native baseline: merged `502df96`, revision 634 
 
 Recommendation: **later**, a bounded software-framebuffer/compiler-isolation experiment, then an existing Java server behind an explicitly scoped browser transport if rendering succeeds. Do not approve a whole-client rewrite, local browser server or universal transport abstraction now. The small compiler boundary experiment below is complete; a playable browser prototype is not.
 
-Follow-up: the [bounded masked-edge raster experiment](WASM_RASTER_POC.md) now matches JVM/browser hashes at two sizes. The triangle/model gate remains unproven; naive presentation misses a host 60 FPS budget. This does not change the native-first recommendation.
+Follow-up: the [native flat-colour triangle investigation](WASM_RENDERER_INVESTIGATION.md) now matches colour/depth hashes for original synthetic geometry at two sizes. [Bulk pixel transfer](WASM_TRANSFER_INVESTIGATION.md) removes much of the earlier host-call overhead. Full model/scene rendering and the application/platform boundary remain unproven. This does not change the native-first recommendation.
 
 ## Inspection and measured boundary experiment
 

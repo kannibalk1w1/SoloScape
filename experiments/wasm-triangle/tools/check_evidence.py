@@ -9,6 +9,7 @@ self-test hook that corrupts one input so the rejection path can be exercised.
 import argparse
 import html
 import json
+import math
 import pathlib
 import re
 import sys
@@ -53,7 +54,12 @@ def main():
     verbatim = read_jsonl(build / "jvm-verbatim.jsonl")
     native = read_jsonl(build / "jvm-native.jsonl")
     doc = read_browser(build / "browser-dom.html", args.mutate)
-    browser = {(r["scene"], r["size"]): r for r in doc["raster"]}
+    browser = {}
+    for row in doc['raster']:
+        key = row['scene'], row['size']
+        if key in browser:
+            raise SystemExit('Duplicate browser raster case: ' + str(key))
+        browser[key] = row
     if args.mutate == "browser-hash":
         browser[("mesh", "1280x800")]["fnv1a"] = "deadbeef"
     if args.mutate == "zero-timing":
@@ -74,6 +80,10 @@ def main():
             if ref["covered"] <= 0:
                 raise SystemExit(f"{scene} {size}: nothing was drawn")
             b = browser[key]
+            for field in ('rasterMinMs', 'rasterMedianMs', 'rasterP90Ms', 'rasterMaxMs', 'clearMedianMs'):
+                value = b[field]
+                if not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+                    raise SystemExit(f'browser {scene} {size}: invalid {field}')
             # One triangle can fall below the browser's 0.1 ms timer step; single64 and mesh must be timeable.
             for field in (() if scene == "single" else ("rasterMinMs", "rasterMedianMs", "rasterP90Ms", "rasterMaxMs")):
                 if not b[field] > 0:
@@ -93,7 +103,11 @@ def main():
         if len(hashes) != len(SCENES):
             raise SystemExit(f"{size}: scene hashes are not distinct")
 
-    present = {p["size"]: p for p in doc["present"]}
+    present = {}
+    for row in doc['present']:
+        if row['size'] in present:
+            raise SystemExit('Duplicate presentation size')
+        present[row['size']] = row
     for size in SIZES:
         p = present.get(size)
         if p is None:

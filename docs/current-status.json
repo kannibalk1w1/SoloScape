@@ -97,6 +97,14 @@
       "acceptance": "DEFERRED",
       "evidence": "WASM_RASTER_POC.md",
       "note": "JVM/browser hashes agree at two sizes; real-clock host measurements only"
+    },
+    {
+      "id": "wasm-triangle",
+      "scope": "Native flat-colour WASM triangle fill and original synthetic mesh; no full game scene",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "WASM_RENDERER_INVESTIGATION.md",
+      "note": "Six colour/depth hash comparisons independently reproduced; textures/model projection/UI remain unproven"
     }
   ]
 }

@@ -1,0 +1,252 @@
+{
+  "scope": "Same original synthetic masked-edge scene and native extracted kernel; only frame transport differs. Host headless real-clock Chromium; no Deck/full-scene/frame-pacing claim.",
+  "samples_per_variant": {
+    "warmup": 1,
+    "measured": 6
+  },
+  "negative_control": "Altered bulk-array-copy RGBA hash rejected by validator",
+  "runs": [
+    {
+      "sizes": [
+        {
+          "size": "765x503",
+          "fnv1a": "9e30c466",
+          "hashes": {
+            "jvm-native": "9e30c466",
+            "jvm-verbatim": "9e30c466",
+            "browser": "9e30c466"
+          },
+          "timings": {
+            "verbatimJvmRasterMedianMs": 5.298634000122547,
+            "browserRasterMedianMs": 9.199999999254942,
+            "browserRasterMinMs": 9.099999999627471,
+            "browserConvertMs": 2.300000000745058,
+            "browserPutImageDataMs": 0.09999999962747097
+          }
+        },
+        {
+          "size": "1280x800",
+          "fnv1a": "f22bb6bd",
+          "hashes": {
+            "jvm-native": "f22bb6bd",
+            "jvm-verbatim": "f22bb6bd",
+            "browser": "f22bb6bd"
+          },
+          "timings": {
+            "verbatimJvmRasterMedianMs": 7.566917000338435,
+            "browserRasterMedianMs": 12.200000001117587,
+            "browserRasterMinMs": 12.099999999627471,
+            "browserConvertMs": 6.100000001490116,
+            "browserPutImageDataMs": 0.5
+          }
+        }
+      ],
+      "transfer_comparisons": [
+        {
+          "size": "765x503",
+          "variant": "per-pixel-js",
+          "rgbaFnv1a": "e0225db2",
+          "canvasByteFnv1a": "6a126212",
+          "conversionMedianMs": 14.200000001117587,
+          "transferMedianMs": 0.0,
+          "uploadMedianMs": 0.19999999925494194,
+          "totalMedianMs": 14.5
+        },
+        {
+          "size": "765x503",
+          "variant": "bulk-array-copy",
+          "rgbaFnv1a": "e0225db2",
+          "canvasByteFnv1a": "6a126212",
+          "conversionMedianMs": 1.400000000372529,
+          "transferMedianMs": 1.099999999627471,
+          "uploadMedianMs": 0.2000000011175871,
+          "totalMedianMs": 2.700000001117587
+        },
+        {
+          "size": "765x503",
+          "variant": "direct-nio",
+          "rgbaFnv1a": "e0225db2",
+          "canvasByteFnv1a": "6a126212",
+          "conversionMedianMs": 2.300000000745058,
+          "transferMedianMs": 0.0,
+          "uploadMedianMs": 0.09999999962747097,
+          "totalMedianMs": 2.400000000372529
+        },
+        {
+          "size": "1280x800",
+          "variant": "per-pixel-js",
+          "rgbaFnv1a": "ac2dd08",
+          "canvasByteFnv1a": "f261f08c",
+          "conversionMedianMs": 31.699999999254942,
+          "transferMedianMs": 0.0,
+          "uploadMedianMs": 0.40000000037252903,
+          "totalMedianMs": 32.09999999962747
+        },
+        {
+          "size": "1280x800",
+          "variant": "bulk-array-copy",
+          "rgbaFnv1a": "ac2dd08",
+          "canvasByteFnv1a": "f261f08c",
+          "conversionMedianMs": 3.699999999254942,
+          "transferMedianMs": 2.599999999627471,
+          "uploadMedianMs": 0.40000000037252903,
+          "totalMedianMs": 6.599999999627471
+        },
+        {
+          "size": "1280x800",
+          "variant": "direct-nio",
+          "rgbaFnv1a": "ac2dd08",
+          "canvasByteFnv1a": "f261f08c",
+          "conversionMedianMs": 6.100000001490116,
+          "transferMedianMs": 0.0,
+          "uploadMedianMs": 0.5,
+          "totalMedianMs": 6.5
+        }
+      ],
+      "runtime": "teavm-0.16.0-wasmgc",
+      "sha256": {
+        "jvm-verbatim.jsonl": "0112c0fdeddc4286e658b4c6eaeb2993abcacafaa59c844f2945eee5dc7b2861",
+        "jvm-native.jsonl": "f163a169c37004bdd670ff044a402ddb3da134965f4246c66747e2438711c37e",
+        "browser-dom.html": "9a09ad43440dc2a0a76f7189cec0899aa627e1f0e09e22059a22501b26c1f7e8",
+        "teavm-out/raster.wasm": "e9c1ddbd7120a141b698809bf9cbb2a82697f12c6442ed1b4e604fefffe1d211"
+      },
+      "inputs": {
+        "source_sha256": "f3f01437c28ad160ca356311ab021d9d4cfbc4759cb367435f0209eba4b0bae7",
+        "client_jar_sha256": "ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918"
+      },
+      "browser": {
+        "clock": "performance.now with real time; no virtual-time budget",
+        "browser": "Chromium 153.0.8010.52 Arch Linux",
+        "node": "v26.11.1",
+        "presentation": "headless Chromium software Canvas; host only"
+      },
+      "expectedSizes": [
+        "765x503",
+        "1280x800"
+      ],
+      "validated": true
+    },
+    {
+      "sizes": [
+        {
+          "size": "765x503",
+          "fnv1a": "9e30c466",
+          "hashes": {
+            "jvm-native": "9e30c466",
+            "jvm-verbatim": "9e30c466",
+            "browser": "9e30c466"
+          },
+          "timings": {
+            "verbatimJvmRasterMedianMs": 5.970323000103235,
+            "browserRasterMedianMs": 8.5,
+            "browserRasterMinMs": 8.100000001490116,
+            "browserConvertMs": 2.0,
+            "browserPutImageDataMs": 0.19999999925494194
+          }
+        },
+        {
+          "size": "1280x800",
+          "fnv1a": "f22bb6bd",
+          "hashes": {
+            "jvm-native": "f22bb6bd",
+            "jvm-verbatim": "f22bb6bd",
+            "browser": "f22bb6bd"
+          },
+          "timings": {
+            "verbatimJvmRasterMedianMs": 8.043566999956965,
+            "browserRasterMedianMs": 11.800000000745058,
+            "browserRasterMinMs": 11.199999999254942,
+            "browserConvertMs": 4.200000001117587,
+            "browserPutImageDataMs": 0.30000000074505806
+          }
+        }
+      ],
+      "transfer_comparisons": [
+        {
+          "size": "765x503",
+          "variant": "per-pixel-js",
+          "rgbaFnv1a": "e0225db2",
+          "canvasByteFnv1a": "6a126212",
+          "conversionMedianMs": 12.200000001117587,
+          "transferMedianMs": 0.0,
+          "uploadMedianMs": 0.2000000011175871,
+          "totalMedianMs": 12.300000000745058
+        },
+        {
+          "size": "765x503",
+          "variant": "bulk-array-copy",
+          "rgbaFnv1a": "e0225db2",
+          "canvasByteFnv1a": "6a126212",
+          "conversionMedianMs": 1.299999998882413,
+          "transferMedianMs": 1.099999999627471,
+          "uploadMedianMs": 0.19999999925494194,
+          "totalMedianMs": 2.299999998882413
+        },
+        {
+          "size": "765x503",
+          "variant": "direct-nio",
+          "rgbaFnv1a": "e0225db2",
+          "canvasByteFnv1a": "6a126212",
+          "conversionMedianMs": 2.0,
+          "transferMedianMs": 0.0,
+          "uploadMedianMs": 0.19999999925494194,
+          "totalMedianMs": 2.199999999254942
+        },
+        {
+          "size": "1280x800",
+          "variant": "per-pixel-js",
+          "rgbaFnv1a": "ac2dd08",
+          "canvasByteFnv1a": "f261f08c",
+          "conversionMedianMs": 24.799999998882413,
+          "transferMedianMs": 0.0,
+          "uploadMedianMs": 0.40000000037252903,
+          "totalMedianMs": 25.199999999254942
+        },
+        {
+          "size": "1280x800",
+          "variant": "bulk-array-copy",
+          "rgbaFnv1a": "ac2dd08",
+          "canvasByteFnv1a": "f261f08c",
+          "conversionMedianMs": 2.600000001490116,
+          "transferMedianMs": 1.900000000372529,
+          "uploadMedianMs": 0.30000000074505806,
+          "totalMedianMs": 4.799999998882413
+        },
+        {
+          "size": "1280x800",
+          "variant": "direct-nio",
+          "rgbaFnv1a": "ac2dd08",
+          "canvasByteFnv1a": "f261f08c",
+          "conversionMedianMs": 4.200000001117587,
+          "transferMedianMs": 0.0,
+          "uploadMedianMs": 0.30000000074505806,
+          "totalMedianMs": 4.5
+        }
+      ],
+      "runtime": "teavm-0.16.0-wasmgc",
+      "sha256": {
+        "jvm-verbatim.jsonl": "03e992f139ac8c5105330beea5f90c431c295d11b4dc99a836bc69e93c7ea62e",
+        "jvm-native.jsonl": "f163a169c37004bdd670ff044a402ddb3da134965f4246c66747e2438711c37e",
+        "browser-dom.html": "69167e1897a607d9c17f49af6ae98d8badf18ab012445da1cb257b5d9c9d732e",
+        "teavm-out/raster.wasm": "e9c1ddbd7120a141b698809bf9cbb2a82697f12c6442ed1b4e604fefffe1d211"
+      },
+      "inputs": {
+        "source_sha256": "f3f01437c28ad160ca356311ab021d9d4cfbc4759cb367435f0209eba4b0bae7",
+        "client_jar_sha256": "ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918",
+        "entry_point": "TransferProbe"
+      },
+      "browser": {
+        "clock": "performance.now with real time; no virtual-time budget",
+        "browser": "Chromium 153.0.8010.52 Arch Linux",
+        "node": "v26.11.1",
+        "presentation": "headless Chromium software Canvas; host only"
+      },
+      "expectedSizes": [
+        "765x503",
+        "1280x800"
+      ],
+      "validated": true
+    }
+  ],
+  "source_reference": "https://teavm.org/docs/runtime/jso.html#passing-nio-buffers"
+}

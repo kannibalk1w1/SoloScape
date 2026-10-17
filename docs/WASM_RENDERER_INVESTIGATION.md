@@ -61,7 +61,7 @@ Three implementations run the identical original scene through a `Fill` seam tha
 2. the extracted source on JDK 21;
 3. the same source in TeaVM WasmGC, headless Chromium 153.
 
-For every case the triangle count, covered pixels, **colour-buffer FNV-1a and depth-buffer FNV-1a (bit patterns)** match across all three. Floating-point set-up and per-pixel depth interpolation are in play, and the results are bit-identical, so no pixel tolerance was needed.
+For every case the triangle count, covered pixels, **colour-buffer FNV-1a and depth-buffer FNV-1a (bit patterns)** match across all three. Floating-point set-up and per-pixel depth interpolation are in play. All recorded colour/depth hashes agree; no tolerance is accepted by the validator. Full framebuffer byte dumps were not compared, so the 32-bit hash limitation below still applies.
 
 | Scene | Size | Triangles | Pixels drawn | Colour FNV-1a | Depth FNV-1a |
 | --- | --- | --- | --- | --- | --- |
@@ -123,3 +123,7 @@ Module payload: `triangle.wasm` 57,528 bytes raw, 25,859 gzip -9 (hash in the ev
 ## Next step (not started)
 
 Audit `method1022/1027` (shaded) and the textured path closures from the same extractor, then the smallest face loop in `Class64_Sub1` that feeds `method1018` from projected vertices. Stop at the same boundary: a broad `Class64_Sub1` or `ha_Sub1` port is a different decision.
+
+## Coordinator verification
+
+An independent clean experiment run reproduced all six scene/size cases against the real jar, extracted JVM and browser. Missing results, altered browser hashes and zero mesh timings were each rejected. Browser duplicate cases and non-finite raster/clear timings are also rejected. The original worker evidence is retained, with this additional run appended. See the separate [pixel-transfer comparison](WASM_TRANSFER_INVESTIGATION.md) for the reusable direct-NIO and primitive-array options; neither result establishes a full game scene.

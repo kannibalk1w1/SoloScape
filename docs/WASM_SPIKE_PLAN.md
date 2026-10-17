@@ -1,6 +1,6 @@
 # Smallest useful next WASM spike
 
-Status: **partial masked-edge experiment complete; triangle/model gate unproven**. See the [reviewed result](WASM_RASTER_POC.md). The remaining full-raster closure is a later gate. The compiler sanity/kernel and negative native-presenter tests are recorded in [feasibility](WASM_FEASIBILITY.md) and [the reproducible experiment](../experiments/wasm-kernel/README.md). They do not enable a browser game. Keep this track separate from the native release.
+Status: **flat-colour triangle and original synthetic mesh gates passed; full model/scene gate unproven**. See the [actual triangle investigation](WASM_RENDERER_INVESTIGATION.md). See the [reviewed result](WASM_RASTER_POC.md). The remaining full-raster closure is a later gate. The compiler sanity/kernel and negative native-presenter tests are recorded in [feasibility](WASM_FEASIBILITY.md) and [the reproducible experiment](../experiments/wasm-kernel/README.md). They do not enable a browser game. Keep this track separate from the native release.
 
 ## Decision and uncertainty
 

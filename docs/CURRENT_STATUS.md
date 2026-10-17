@@ -37,6 +37,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 | True solo simulation pause | DEFERRED | DEFERRED | [Menus currently do not freeze the world](ROADMAP.md) |
 | Later-content compatibility runtime, AI/economy expansion and web port | NOT IMPLEMENTED | DEFERRED | [Research/planning does not implement gameplay or authorize a port](ROADMAP.md) |
 | Isolated WASM masked-edge kernel; no triangle/model/game client | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [JVM/browser hashes agree at two sizes; real-clock host measurements only](WASM_RASTER_POC.md) |
+| Native flat-colour WASM triangle fill and original synthetic mesh; no full game scene | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [Six colour/depth hash comparisons independently reproduced; textures/model projection/UI remain unproven](WASM_RENDERER_INVESTIGATION.md) |
 
 ## Decisions and maintenance
 
