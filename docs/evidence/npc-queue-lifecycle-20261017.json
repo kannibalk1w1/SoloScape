@@ -1,0 +1,88 @@
+{
+  "base_commit": "c26b1ca",
+  "server_patch_count": 43,
+  "client_patch_count": 56,
+  "patched_server_files": 89,
+  "patched_client_files": 140,
+  "engine_suites": [
+    {
+      "suite": "world.gregs.voidps.engine.entity.character.npc.NPCsTest",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "world.gregs.voidps.engine.entity.character.CharacterIndexMapTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "world.gregs.voidps.engine.client.update.npc.NPCUpdateTaskTest",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "game_groups": [
+    {
+      "group": "summoning",
+      "private_report": ".runtime/content-coverage/1792265007885270969/summary.json",
+      "totals": {
+        "tests": 20,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "group": "death",
+      "private_report": ".runtime/content-coverage/1792265032653203568/summary.json",
+      "totals": {
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "group": "dungeon",
+      "private_report": ".runtime/content-coverage/1792265053969682418/summary.json",
+      "totals": {
+        "tests": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    }
+  ],
+  "total_targeted_native_tests": 105,
+  "jars": {
+    "server": "00c834576d49ffd3d46dce2348741e0e65b288d7b8019072376ef2ef114a33a9",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+  },
+  "patch_sha256": "ef80d83ab8b7216a0138fd6f5e81f3e4b917ad505d7e1041d256c4b3677416e0",
+  "pre_fix_main_regressions": {
+    "tests": 12,
+    "failures": 7,
+    "errors": 0,
+    "skipped": 0,
+    "private_xml": ".runtime/npc-queue-lifecycle-20261017/coordinator-red.xml"
+  },
+  "pre_fix_spawn_lookup": {
+    "tests": 14,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "private_xml": ".runtime/npc-queue-lifecycle-20261017/lookup-red.xml"
+  },
+  "private_report_directory": ".runtime/npc-queue-lifecycle-20261017",
+  "physical_acceptance": false,
+  "owner_deployment": false,
+  "root_tooling_tests": 241,
+  "root_tooling_optional_skips": 1,
+  "static_review": "Haiku read-only review: no blocker; reentrant reset/callback atomicity and pending-region/capacity limits retained."
+}
