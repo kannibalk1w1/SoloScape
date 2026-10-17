@@ -1,0 +1,101 @@
+{
+  "task": "task_62665be3f7b4",
+  "scope": "one spirit wolf lifecycle plus one logout/relog-from-disk recovery boundary; not a quest/matrix campaign",
+  "baseline_commit": "e44af90",
+  "patch": "patches/server/0026-targeted-solo-summoning.patch",
+  "test_file": "upstream/game-server/game/src/test/kotlin/content/skill/summoning/SoloSpiritWolfLifecycleTest.kt",
+  "test_root": "SOLOSCAPE_TEST_ROOT=.runtime/summoning-targeted-20261017/test-root (saves written under storage.players.path)",
+  "command": "flock .runtime/build.lock ./gradlew --offline :game:test --tests content.skill.summoning.SoloSpiritWolfLifecycleTest",
+  "suite": {
+    "name": "content.skill.summoning.SoloSpiritWolfLifecycleTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "timestamp": "2026-10-17T12:57:47.589Z"
+  },
+  "results": [
+    {
+      "name": "Infuse, summon and dismiss a spirit wolf consume the native materials, points and pouch()",
+      "status": "passed",
+      "seconds": 0.155
+    },
+    {
+      "name": "A spirit wolf saved to disk is restored once after relog with the pouch and points unchanged()",
+      "status": "passed",
+      "seconds": 0.054
+    }
+  ],
+  "regression_baseline": {
+    "command_class": "content.skill.summoning.SummoningLevelGateTest",
+    "results": [
+      {
+        "name": "The real summoning level still gates the pouch()",
+        "status": "passed"
+      },
+      {
+        "name": "Drained summoning points don't block summoning a familiar()",
+        "status": "passed"
+      }
+    ]
+  },
+  "fixtures": {
+    "owner": "new player at Tile(2523, 3056), real Summoning level 1 (default experience), full points pool",
+    "materials": "charm, shard, blank pouch and tertiary added straight into the inventory, amounts read from spirit_wolf_pouch definitions",
+    "obelisk": "GameObjects.find(Tile(2521, 3055), 'obelisk') with Infuse-pouch then interface Infuse",
+    "save": "native SaveQueue(FileStorage).direct() into the isolated saves folder, read back with PlayerSave.load",
+    "relog": "PlayerSave.toPlayer() into a new Player, then AccountManager.setup/index/spawn and 3 ticks"
+  },
+  "recovery_boundary": {
+    "persisted": [
+      "familiar_details_minutes_remaining",
+      "summoning levels",
+      "summoning experience",
+      "pouch inventory"
+    ],
+    "reconstructed": "the familiar NPC is not persisted; playerSpawn rebuilds it from the saved familiar_details timer",
+    "owner_count_check": "NPCs filtered by id spirit_wolf_familiar and owner_index == player.index"
+  },
+  "fixture_limits": [
+    "Not a 154-recipe or familiar-wide run; one spirit wolf pouch only",
+    "Materials are supplied by fixture, not earned through Pikkupstix, shops, drops or travel",
+    "No real profile or save: the test writes to the isolated test saves folder",
+    "The relog is a same-process reload into a fresh Player, not a server restart",
+    "Scroll/howl special and Wolf Whistle are not exercised",
+    "Expiry while online is not exercised; only the logout recovery boundary"
+  ],
+  "iterations": [
+    {
+      "run": 1,
+      "result": "compile failed",
+      "cause": "test-file imports (transact add overload, dialogueOption)"
+    },
+    {
+      "run": 2,
+      "result": "one failed",
+      "cause": "test timing: NPC removal from logout is queued until the next tick"
+    },
+    {
+      "run": 3,
+      "result": "passed",
+      "cause": "tick added after logout"
+    },
+    {
+      "run": 4,
+      "result": "passed",
+      "cause": "in-memory relog version, superseded by disk round trip"
+    },
+    {
+      "run": 5,
+      "result": "passed",
+      "cause": "rewritten to native disk save and fresh Player reload, beginner level"
+    }
+  ],
+  "production_changes": [],
+  "gaps": [
+    "Earned route: charm, shard and tertiary acquisition are not proven from native sources in this pass",
+    "Howl scroll and Wolf Whistle are not implemented or tested",
+    "Expiry while online and owner death are not covered by this test",
+    "Patch number 0025 is absent from patches/server; 0026 is numbered as the brief requires"
+  ]
+}
