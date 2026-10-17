@@ -12,6 +12,7 @@ import local_dev
 import profile_session
 import profiles
 import session_recovery
+import release_updates
 import signal
 
 MAX_REQUEST = 16384
@@ -37,6 +38,11 @@ class Backend:
 
     def dispatch(self, request):
         action = request.get('action')
+        if action == 'update_check':
+            # Network timeouts must never delay this backend's active-world stop request.
+            if self.current()['running']:
+                return release_updates.result('busy', 'Save & Quit before checking for updates.')
+            return release_updates.check()
         if action == 'settings':
             if request.get('save', False):
                 port = self.port(request)

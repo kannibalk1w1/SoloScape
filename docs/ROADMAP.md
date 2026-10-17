@@ -302,6 +302,8 @@ Acceptance: a small group can reliably play a private hosted world without publi
 
 ## M13 — reproducible packaging and release readiness
 
+The owner requested GitHub launcher updates on17 October. [Release discovery and the staged delivery plan](GITHUB_UPDATES.md) bring bounded packaging work forward alongside native acceptance: discover releases, separate saved state/assets, prove staging/apply/rollback on fixtures, then accept a disposable Deck update. Discovery alone does not complete M13-03/04/05, and the private Deck export must not become a public package.
+
 Priority: prototype packaging can begin after M4; release gates apply to the features
 chosen for that release, not every optional future milestone.
 
