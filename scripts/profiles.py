@@ -19,6 +19,7 @@ import tempfile
 import tomllib
 import uuid
 import zipfile
+import zlib
 
 ROOT = Path(__file__).resolve().parent.parent
 PROFILES = ROOT / '.runtime/profiles'
@@ -328,7 +329,7 @@ class Profile:
                         validate_save(data, self.manifest['account'] if relative == primary else None)
                     result[relative] = data
                 return manifest, result
-        except (zipfile.BadZipFile, KeyError, TypeError, json.JSONDecodeError) as exc:
+        except (zipfile.BadZipFile, zlib.error, KeyError, TypeError, json.JSONDecodeError) as exc:
             raise ValueError('Backup is corrupt or has an invalid manifest.') from exc
 
     def restore(self, backup_name, recovery=False):
@@ -493,7 +494,7 @@ def recovery_profile(uid, backup_name):
             'tutorial': bool(metadata.get('tutorial', False)), 'generation': uuid.uuid4().hex}
         profile.validate_backup(backup)
         return profile
-    except (zipfile.BadZipFile, KeyError, TypeError, json.JSONDecodeError) as exc:
+    except (zipfile.BadZipFile, zlib.error, KeyError, TypeError, json.JSONDecodeError) as exc:
         raise ValueError('Recovery backup metadata is corrupt.') from exc
 
 
