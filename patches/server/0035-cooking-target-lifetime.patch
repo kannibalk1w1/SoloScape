@@ -1,0 +1,109 @@
+diff --git a/game/src/main/kotlin/content/skill/cooking/Cooking.kt b/game/src/main/kotlin/content/skill/cooking/Cooking.kt
+index fcabc87..9b86915 100644
+--- a/game/src/main/kotlin/content/skill/cooking/Cooking.kt
++++ b/game/src/main/kotlin/content/skill/cooking/Cooking.kt
+@@ -121,6 +121,7 @@
+         anim("cook_${if (obj.id.startsWith("fire_")) "fire" else "range"}")
+         weakQueue("cooking", offset ?: 4) {
+             if (!GameObjects.contains(obj)) {
++                softTimers.stop("cooking")
+                 return@weakQueue
+             }
+             val level = levels.get(Skill.Cooking)
+@@ -132,6 +133,7 @@
+                 else -> row.intRange("chance_fire")
+             }
+             if (failedToReplace(row, item, Level.success(level, chance))) {
++                softTimers.stop("cooking")
+                 return@weakQueue
+             }
+             if (leftover != null && !inventory.add(leftover)) {
+diff --git a/game/src/test/kotlin/content/skill/cooking/CookingTargetLifetimeTest.kt b/game/src/test/kotlin/content/skill/cooking/CookingTargetLifetimeTest.kt
+new file mode 100644
+index 0000000..2f22e21
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/cooking/CookingTargetLifetimeTest.kt
+@@ -0,0 +1,83 @@
++package content.skill.cooking
++
++import WorldTest
++import content.skill.firemaking.Firemaking
++import dialogueOption
++import objectOption
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertFalse
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.Test
++import world.gregs.voidps.engine.data.definition.Rows
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.entity.obj.GameObject
++import world.gregs.voidps.engine.entity.obj.GameObjects
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.engine.inv.remove
++import world.gregs.voidps.type.Tile
++
++/** Supplied fires and inventories isolate the cooking target lifetime, not an earned lighting journey. */
++internal class CookingTargetLifetimeTest : WorldTest() {
++
++    @Test
++    fun `Removing the fire during queued cooking stops the activity without consuming or granting anything`() {
++        val player = createPlayer(emptyTile)
++        player.levels.set(Skill.Cooking, 100)
++        player.inventory.add("raw_shrimps", 2)
++        val fire = spawnFire(player, emptyTile.addY(1))
++
++        player.objectOption(fire, "Use")
++        tick(2)
++        player.dialogueOption(id = "dialogue_skill_creation", component = "choice1")
++        assertTrue(player.softTimers.contains("cooking"))
++        assertEquals(2, player.inventory.count("raw_shrimps"))
++
++        GameObjects.remove(fire)
++        tick(12)
++        assertEquals(2, player.inventory.count("raw_shrimps"))
++        assertEquals(0, player.inventory.count("shrimps"))
++        assertEquals(0.0, player.experience.get(Skill.Cooking))
++        assertFalse(player.softTimers.contains("cooking"))
++
++        // Single raw item keeps the fresh Use's amount deterministic.
++        player.inventory.remove("raw_shrimps", 1)
++        val replacement = spawnFire(player, emptyTile.addY(2))
++        player.objectOption(replacement, "Use")
++        tick(2)
++        player.dialogueOption(id = "dialogue_skill_creation", component = "choice1")
++        tick(8)
++        assertEquals(0, player.inventory.count("raw_shrimps"))
++        assertEquals(1, player.inventory.count("shrimps") + player.inventory.count("burnt_shrimp"))
++        assertTrue(player.experience.get(Skill.Cooking) > 0)
++        assertFalse(player.softTimers.contains("cooking"))
++    }
++
++    @Test
++    fun `Withdrawing raw input during queued cooking stops the activity without conversion`() {
++        val player = createPlayer(emptyTile)
++        player.levels.set(Skill.Cooking, 100)
++        player.inventory.add("raw_shrimps", 2)
++        val fire = spawnFire(player, emptyTile.addY(1))
++
++        player.objectOption(fire, "Use")
++        tick(2)
++        player.dialogueOption(id = "dialogue_skill_creation", component = "choice1")
++        assertTrue(player.softTimers.contains("cooking"))
++
++        // Controlled inventory fixture, not an ordinary player cancellation.
++        player.inventory.remove("raw_shrimps", 2)
++        tick(12)
++        assertEquals(0, player.inventory.count("raw_shrimps"))
++        assertEquals(0, player.inventory.count("shrimps"))
++        assertEquals(0, player.inventory.count("burnt_shrimp"))
++        assertEquals(0.0, player.experience.get(Skill.Cooking))
++        assertFalse(player.softTimers.contains("cooking"))
++    }
++
++    private fun spawnFire(player: Player, tile: Tile): GameObject {
++        scripts.filterIsInstance<Firemaking>().single().spawnFire(player, tile, Rows.get("firemaking.logs"))
++        return GameObjects.findOrNull(tile, "fire_orange")!!
++    }
++}

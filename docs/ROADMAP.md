@@ -9,7 +9,7 @@ promised before the relevant subsystem has been inspected.
 
 Keep the existing milestone IDs and dated checkpoints below. Checkboxes record scoped implementation, not physical acceptance; [CURRENT_STATUS](CURRENT_STATUS.md) indexes newer evidence without rewriting historical reports. This research does not authorize substantial feature implementation.
 
-1. **Physical native session and P0/P1 fixes (M0–M4):** save/closure truth, controller ownership/B/neutral, Steam text input and a single representative production/commerce/combat loop. Unverified ended owner sessions and the unexplained one-tile Settings save difference remain explicit follow-ups. Do not run every quest as a substitute for human acceptance.
+1. **Physical native session and P0/P1 fixes (M0–M4):** save/closure truth (including [unrecovered grave/floor loot at restart](WORLD_TRANSIENT_SAVE_AUDIT_20261017.md)), controller ownership/B/neutral, Steam text input and a single representative production/commerce/combat loop. Unverified ended owner sessions and the unexplained one-tile Settings save difference remain explicit follow-ups. Do not run every quest as a substitute for human acceptance.
 2. **Bounded M6 audit alongside lifecycle/performance diagnosis:** inspect what actually works, including Slayer, Summoning/Dungeoneering and solo bottlenecks. Audit one proposed progression slice before expanding content. Continue measured region rebuild/map-renderer diagnosis; keep current 60 FPS criteria open.
 3. **One enjoyable complete solo slice (M7), with M3/M4 as concurrent gates:** freshness, readability, progression, persistence and failure recovery on real Deck. Challenge the idea that lifecycle/performance can wait until after content: fix P0/P1 and measure them now; final acceptance can accompany the slice. Do not relax performance targets or claim pause/suspend support implicitly.
 4. **Close Deck lifecycle/performance acceptance (M4) before release/expansion:** controlled comparable power/renderer traces, suspend or explicit safe fallback, reconnect and save/reload; use measured changes, not an architectural rewrite.
@@ -177,7 +177,7 @@ and tested suspend/resume or an explicit safe fallback preserves the save.
 Priority: before global economy, population or pause changes. This is a smoke test,
 not a polished hosting product. Depends on M0/M3 and the matching protocol builds.
 
-- [ ] M5-01 Connect two clients/accounts to one server and verify independent positions, inventories and persistence.
+- [x] M5-01 Connect two clients/accounts to one server and verify independent positions, inventories and persistence. [Automated native localhost evidence](NATIVE_TWO_CLIENT_COMPATIBILITY_20261017.md); physical/private-network and guest-lifecycle acceptance remain separate.
 - [ ] M5-02 Test one controller player and one mouse player; include direct movement, world cancel and item ownership.
 - [ ] M5-03 Test a private LAN connection using explicit host configuration.
 - [ ] M5-04 Audit new features for shared/global state, target identity and per-player UI/controller state.

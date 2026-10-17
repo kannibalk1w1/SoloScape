@@ -1,0 +1,241 @@
+{
+  "task": "task_f9e09b705e4f",
+  "dispatch": "ctx_92c43f35c19e",
+  "followup_task": "task_e8ca54c170c1",
+  "date": "2026-10-17",
+  "status": "test_only_green_no_production_change",
+  "scope": "native lethal death at Lumbridge, respawn, floor-item Take of death drops with full-inventory refusal, native Drop, retry Take exactly once, then native file save and fresh-player restore",
+  "test": {
+    "file": "upstream/game-server/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathLootRecoveryTest.kt",
+    "sha256": "19aa3f8e977ba7f5198f4c170f2afe1e7d15414df36632e334872a094850a602",
+    "cases": [
+      {
+        "name": "Full inventory Take refuses the death drop then succeeds exactly once after a native Drop",
+        "death": "player.damage(101) at Tile(3235, 3220), same API as GravestonesTest; respawn at Tile(3221, 3219)",
+        "fixture": "supplied logs, bronze_dagger, bronze_sword, tinderbox; raw_shrimps x25 filler added after respawn",
+        "derived_drop": "tinderbox (lowest cache cost among supplied); logs, bronze_dagger, bronze_sword kept",
+        "walk_arrival": "asserted: player.tile == Tile(3234, 3220), distance 1 from the grave tile, not the grave tile, after each walk",
+        "save_restore": {
+          "method": "SaveQueue(FileStorage(dir)).direct().join() into an isolated Files.createTempDirectory owned by the test, PlayerSave.load, Despawn.player + Players.remove, save.toPlayer(), AccountManager setup/index/spawn, tick(3); dir deleted in finally",
+          "expected_snapshot": "tile, experience and every inventory copied from the live player before the save, not aliased to the save",
+          "asserted": [
+            "restored tile equals the saved tile",
+            "experience array equals the live array",
+            "every inventory instance id set and item array equals the live array",
+            "recovered item count is exactly 1 in the fresh player",
+            "kept originals (logs, bronze_dagger, bronze_sword) each count 1 in the fresh player",
+            "creation marker survives restore"
+          ]
+        },
+        "result": "PASSED"
+      }
+    ],
+    "limits": [
+      "Death uses the damage API, not a real combat encounter.",
+      "The supplied inventory is an explicit fixture; no earned progression.",
+      "The refused Take's ordinary approach stepped the player onto the grave tile; the test walks back to Tile(3234, 3220) before the native Drop, which is refused on the grave tile.",
+      "No teleport is used; the walks use the Walk instruction helper.",
+      "The save restore runs in-process against a temp save directory; it is not a login through a live session, owner save, or server process."
+    ]
+  },
+  "corrections": [
+    "The earlier claim that no test-visible helper applies a PlayerSave to a fresh Player was wrong. FullAdventureJourneyTest.verifyFreshPlayerRestore (lines 272-298) already uses save.toPlayer() with AccountManager setup/index/spawn, and this test now follows that pattern."
+  ],
+  "runs": {
+    "earlier_in_memory_only": {
+      "note": "Before the save-restore extension. No file save and no fresh player; evidence for the death/fullbag/refusal/Drop/retry steps only.",
+      "new_class": {
+        "log": ".runtime/earned-lumbridge-20261017/death-loot-recovery-new-20261017.log",
+        "tests": 1,
+        "failures": 0,
+        "skipped": 0,
+        "xml": ".runtime/earned-lumbridge-20261017/death-loot-recovery-DeathLootRecoveryTest-20261017.xml"
+      },
+      "combined_with_GravestonesTest": {
+        "log": ".runtime/earned-lumbridge-20261017/death-loot-recovery-combined-20261017.log",
+        "tests": 10,
+        "failures": 0,
+        "skipped": 0,
+        "breakdown": {
+          "DeathLootRecoveryTest": 1,
+          "GravestonesTest": 9
+        },
+        "xml": [
+          ".runtime/earned-lumbridge-20261017/death-loot-recovery-DeathLootRecoveryTest-20261017.xml",
+          ".runtime/earned-lumbridge-20261017/death-loot-recovery-GravestonesTest-20261017.xml"
+        ]
+      }
+    },
+    "save_restore_extension": {
+      "log": ".runtime/earned-lumbridge-20261017/death-loot-save-combined-20261017.log",
+      "classes": [
+        "content.area.misthalin.lumbridge.church.DeathLootRecoveryTest",
+        "content.area.misthalin.lumbridge.church.GravestonesTest"
+      ],
+      "tests": 10,
+      "failures": 0,
+      "skipped": 0,
+      "breakdown": {
+        "DeathLootRecoveryTest": 1,
+        "GravestonesTest": 9
+      },
+      "xml": [
+        ".runtime/earned-lumbridge-20261017/death-loot-save-DeathLootRecoveryTest-20261017.xml",
+        ".runtime/earned-lumbridge-20261017/death-loot-save-GravestonesTest-20261017.xml"
+      ]
+    }
+  },
+  "patch": {
+    "file": "patches/server/0036-death-loot-recovery.patch",
+    "sha256": "4fc3f479842e4138fd6cc846dfed1c298bd4ee16b765c8d6eee278197af2e19d",
+    "contents": [
+      "new DeathLootRecoveryTest.kt only"
+    ],
+    "reverse_check": "git apply --check --reverse passed in upstream/game-server (absolute patch path)",
+    "verify_patches_server": "all 76 modified/patched source files match the exported stack (log: .runtime/earned-lumbridge-20261017/death-loot-save-verify-server-20261017.log)",
+    "stack_0001_0034_unchanged": true
+  },
+  "production_changes": [],
+  "not_run": [
+    "whole suite",
+    "FullAdventureJourneyTest",
+    "physical acceptance",
+    "owner saves, profiles, Deck or server sessions",
+    "commit, stage, push, or branch switch"
+  ],
+  "coordinator_verification": {
+    "death_group": {
+      "environment": "Isolated host native server; mixed unit, supplied-input and actual-map route fixtures. No graphical or physical controller acceptance. See suite sources for setup.",
+      "group": "death",
+      "server_patches_sha256": {
+        "0001-controller-direct-movement.patch": "9c9deeee3bf04c093d175cbcbbe2cd37a3ccf8369ac469e689d6da6ad6ba2aba",
+        "0002-controller-world-cancel.patch": "badab72e2cbff33d91f8fe3ba4802665e48ca0e1c0aed0923152307123aeda1a",
+        "0003-controller-cancel-cleanup.patch": "f3a3020bcd38ccac88531c7db5b299ee0951136962398a45686df309b4436ec8",
+        "0004-profile-save-durability-and-loopback.patch": "cd9974042afd733ceba5dd84448a7a41e456ade896750a045502e17554186ac8",
+        "0005-exchange-file-save-durability.patch": "9aee9f965d281ca94c72781d5faa9e6e32a15b8505f255b90dfa6527a64b3c3d",
+        "0006-isolated-level-one-progression-fixture.patch": "5f16b1f8f58fe4a5b2999545a9748b0894e7fb2d0d667b19654d6dc894bda8d7",
+        "0007-session-capability-negotiation.patch": "6e1dfcf9616de74f7ef8540dfb92ceb133f69d0bc0d1e69f7747bfea69c9a9bd",
+        "0008-exchange-counter-crash-recovery.patch": "430709ac013726b2247db47c45b27632cc571f871c83fd49847dd115848ce8dc",
+        "0009-general-store-validation-and-session-adventure.patch": "f555b69ae8fccb751c127d48427ab8b0750fa5f6b109cbe3c361a7a0c60678e6",
+        "0010-actual-adventure-route-audit.patch": "d79bc83b4e394480ae911df2c3beee8b2ad800bf0a2096572b2e010b57ca4a4b",
+        "0011-full-native-adventure-journeys.patch": "9eba588c7055414de52c0424a580c6ffec8b0558de347bcc971d5a80e1efdee0",
+        "0012-playable-loop.patch": "0585e80c7d4990a194a64bbad6327c45b2b8b1e8248eb0b1e06f71cb4daa8d01",
+        "0013-private-entry-probe.patch": "29f337c60ac4dc36a2d0a2bd5f3cab5332e040fb7a2bb4af432216c35640f319",
+        "0014-script-cancellation.patch": "8f05efcf7ddb2a9b58677ef668dd77e4a4c47bc1735199e154f5550476e748d6",
+        "0015-stop-game-loop-before-saving.patch": "637ac3f2e2b2c78d1b8ed432dff9142ed742cec00b97ba5dc507b5ec4bc8bb2b",
+        "0016-direct-movement-sliding-and-recovery.patch": "b83f67de385ee5585d95636c3b1dfe210881d6c8d0f0229e360cb42b62c7de4a",
+        "0017-opt-in-game-loop-timings.patch": "3e1ce16fb6ef9ab7f823a53e587d17bc9c2a034fd517abc2806879c7b2ec0b4f",
+        "0018-player-lit-fire-use.patch": "1042687359390e780c7e8aaa86c6a5fb3973f89f8249ed5fa02435d75319fd32",
+        "0019-pottery-fire-skip-finished-items.patch": "133a0e2b3c836a6f122256fdab3e7ffa8e28b7bb7de526ac417af3f538fa2a22",
+        "0020-pottery-recipe-products-and-levels.patch": "2e56067c0db1850823f54e7cb87470c4256a189bf6b2bb064648ebb8f9efb317",
+        "0021-grow-save-reader-string-buffer.patch": "f4c536a7d0cebae7eb06449dd3b39bbcd6805ddfb56cd4b3a68f90f58c00f740",
+        "0022-toml-safe-save-string-escapes.patch": "590b43482c9fb346a693ced562cfadb3e9d010d585141bfcfc93fc33e2b2b754",
+        "0023-dungeoneering-real-template-solvability.patch": "db4a40603eacafd90fe995ebcaa325e34d65136d16c875732bb57eaff772227f",
+        "0024-controller-corner-running.patch": "7c8c7a2b92c4a1f417a3743d86284946f92ece8f74a41fd938939fb262c07f9d",
+        "0025-targeted-solo-dungeoneering.patch": "eefd82e4669ee513f73e20079148ea2a76557170fd50294d10831ea3eb824080",
+        "0026-targeted-solo-summoning.patch": "b76af2ad88206ea2800cc61bf1456657dd9779b5f248c532c319fcda3f657f29",
+        "0027-earned-lumbridge-progression.patch": "e93cac44082e1f2e239292627d46db9bde1c2e7037ce3e9442bd17bc2a4c9838",
+        "0028-dungeon-native-entrance-validation.patch": "c7492b0772a05ff77cc72320b644106838fdf7f1c5ce56d23050689b4fc2b495",
+        "0029-summoning-supply-acquisition.patch": "1cc0431c4717ad47c88e6078dcd0ce70779f6b0a07cfb2a702cc46a3b9b9c771",
+        "0030-production-capacity-recovery.patch": "5133a7289fb9f9f079c5ecb95b9c31efff8817cfde4a1b7447a341372e59b711",
+        "0031-dungeon-boss-trapdoor-contract.patch": "5bbdcae553d09be0d0671c6ddd6486e1770fecfd9b07e3c472f8f0187ca31da0",
+        "0032-fix-dungeon-room-coordinate-rotation.patch": "18b916f8db6e58cc9aa47478fe4f00b0bb14e978f0ed0983c98ab8cb425927ec",
+        "0033-dungeon-reward-notice-countdown.patch": "ca4ceee51c18cb2f554e0ae1d6c4c9f2ca2475e8fea47ff058de39e2303e00b9",
+        "0034-native-primary-save-confirmation.patch": "5dc6a5e47253bd2f9e7d389fc0373416832857270b9bf9d7ed61a64882960739",
+        "0035-cooking-target-lifetime.patch": "fe56219742bd5f240baa8462a55af634c830ab83cb64b4cfddcd777bc8d0ebfb",
+        "0036-death-loot-recovery.patch": "4fc3f479842e4138fd6cc846dfed1c298bd4ee16b765c8d6eee278197af2e19d"
+      },
+      "suites": [
+        {
+          "suite": "content.area.misthalin.lumbridge.church.DeathLootRecoveryTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "content.area.misthalin.lumbridge.church.GravestonesTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "exit_code": 0
+    },
+    "capacity_group": {
+      "environment": "Isolated host native server; mixed unit, supplied-input and actual-map route fixtures. No graphical or physical controller acceptance. See suite sources for setup.",
+      "group": "capacity",
+      "server_patches_sha256": {
+        "0001-controller-direct-movement.patch": "9c9deeee3bf04c093d175cbcbbe2cd37a3ccf8369ac469e689d6da6ad6ba2aba",
+        "0002-controller-world-cancel.patch": "badab72e2cbff33d91f8fe3ba4802665e48ca0e1c0aed0923152307123aeda1a",
+        "0003-controller-cancel-cleanup.patch": "f3a3020bcd38ccac88531c7db5b299ee0951136962398a45686df309b4436ec8",
+        "0004-profile-save-durability-and-loopback.patch": "cd9974042afd733ceba5dd84448a7a41e456ade896750a045502e17554186ac8",
+        "0005-exchange-file-save-durability.patch": "9aee9f965d281ca94c72781d5faa9e6e32a15b8505f255b90dfa6527a64b3c3d",
+        "0006-isolated-level-one-progression-fixture.patch": "5f16b1f8f58fe4a5b2999545a9748b0894e7fb2d0d667b19654d6dc894bda8d7",
+        "0007-session-capability-negotiation.patch": "6e1dfcf9616de74f7ef8540dfb92ceb133f69d0bc0d1e69f7747bfea69c9a9bd",
+        "0008-exchange-counter-crash-recovery.patch": "430709ac013726b2247db47c45b27632cc571f871c83fd49847dd115848ce8dc",
+        "0009-general-store-validation-and-session-adventure.patch": "f555b69ae8fccb751c127d48427ab8b0750fa5f6b109cbe3c361a7a0c60678e6",
+        "0010-actual-adventure-route-audit.patch": "d79bc83b4e394480ae911df2c3beee8b2ad800bf0a2096572b2e010b57ca4a4b",
+        "0011-full-native-adventure-journeys.patch": "9eba588c7055414de52c0424a580c6ffec8b0558de347bcc971d5a80e1efdee0",
+        "0012-playable-loop.patch": "0585e80c7d4990a194a64bbad6327c45b2b8b1e8248eb0b1e06f71cb4daa8d01",
+        "0013-private-entry-probe.patch": "29f337c60ac4dc36a2d0a2bd5f3cab5332e040fb7a2bb4af432216c35640f319",
+        "0014-script-cancellation.patch": "8f05efcf7ddb2a9b58677ef668dd77e4a4c47bc1735199e154f5550476e748d6",
+        "0015-stop-game-loop-before-saving.patch": "637ac3f2e2b2c78d1b8ed432dff9142ed742cec00b97ba5dc507b5ec4bc8bb2b",
+        "0016-direct-movement-sliding-and-recovery.patch": "b83f67de385ee5585d95636c3b1dfe210881d6c8d0f0229e360cb42b62c7de4a",
+        "0017-opt-in-game-loop-timings.patch": "3e1ce16fb6ef9ab7f823a53e587d17bc9c2a034fd517abc2806879c7b2ec0b4f",
+        "0018-player-lit-fire-use.patch": "1042687359390e780c7e8aaa86c6a5fb3973f89f8249ed5fa02435d75319fd32",
+        "0019-pottery-fire-skip-finished-items.patch": "133a0e2b3c836a6f122256fdab3e7ffa8e28b7bb7de526ac417af3f538fa2a22",
+        "0020-pottery-recipe-products-and-levels.patch": "2e56067c0db1850823f54e7cb87470c4256a189bf6b2bb064648ebb8f9efb317",
+        "0021-grow-save-reader-string-buffer.patch": "f4c536a7d0cebae7eb06449dd3b39bbcd6805ddfb56cd4b3a68f90f58c00f740",
+        "0022-toml-safe-save-string-escapes.patch": "590b43482c9fb346a693ced562cfadb3e9d010d585141bfcfc93fc33e2b2b754",
+        "0023-dungeoneering-real-template-solvability.patch": "db4a40603eacafd90fe995ebcaa325e34d65136d16c875732bb57eaff772227f",
+        "0024-controller-corner-running.patch": "7c8c7a2b92c4a1f417a3743d86284946f92ece8f74a41fd938939fb262c07f9d",
+        "0025-targeted-solo-dungeoneering.patch": "eefd82e4669ee513f73e20079148ea2a76557170fd50294d10831ea3eb824080",
+        "0026-targeted-solo-summoning.patch": "b76af2ad88206ea2800cc61bf1456657dd9779b5f248c532c319fcda3f657f29",
+        "0027-earned-lumbridge-progression.patch": "e93cac44082e1f2e239292627d46db9bde1c2e7037ce3e9442bd17bc2a4c9838",
+        "0028-dungeon-native-entrance-validation.patch": "c7492b0772a05ff77cc72320b644106838fdf7f1c5ce56d23050689b4fc2b495",
+        "0029-summoning-supply-acquisition.patch": "1cc0431c4717ad47c88e6078dcd0ce70779f6b0a07cfb2a702cc46a3b9b9c771",
+        "0030-production-capacity-recovery.patch": "5133a7289fb9f9f079c5ecb95b9c31efff8817cfde4a1b7447a341372e59b711",
+        "0031-dungeon-boss-trapdoor-contract.patch": "5bbdcae553d09be0d0671c6ddd6486e1770fecfd9b07e3c472f8f0187ca31da0",
+        "0032-fix-dungeon-room-coordinate-rotation.patch": "18b916f8db6e58cc9aa47478fe4f00b0bb14e978f0ed0983c98ab8cb425927ec",
+        "0033-dungeon-reward-notice-countdown.patch": "ca4ceee51c18cb2f554e0ae1d6c4c9f2ca2475e8fea47ff058de39e2303e00b9",
+        "0034-native-primary-save-confirmation.patch": "5dc6a5e47253bd2f9e7d389fc0373416832857270b9bf9d7ed61a64882960739",
+        "0035-cooking-target-lifetime.patch": "fe56219742bd5f240baa8462a55af634c830ab83cb64b4cfddcd777bc8d0ebfb",
+        "0036-death-loot-recovery.patch": "4fc3f479842e4138fd6cc846dfed1c298bd4ee16b765c8d6eee278197af2e19d"
+      },
+      "suites": [
+        {
+          "suite": "content.soloscape.ProductionCapacityRecoveryTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "content.skill.fishing.FishingTest",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "content.skill.cooking.CookingTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "suite": "content.skill.cooking.CookingTargetLifetimeTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "exit_code": 0
+    },
+    "server_patch_verification": "All 76 modified/patched source files match the exported stack; scripts/verify_patches.py server."
+  }
+}

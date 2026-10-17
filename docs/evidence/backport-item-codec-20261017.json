@@ -1,0 +1,88 @@
+{
+  "mode": "original-native-codec-probe",
+  "cache_written": false,
+  "id_allocated": false,
+  "cases": [
+    {
+      "cost": 37,
+      "note_reference": -1,
+      "server_full_note": -1,
+      "server_light_note": -1,
+      "client_note": -1,
+      "reference_agrees": true,
+      "bytes": 31,
+      "sha256": "3556bdb8778104f9dda9a22b42cfb2cf60f88c01a9b7fa7c7186e742837e45ab"
+    },
+    {
+      "cost": 37,
+      "note_reference": 32767,
+      "server_full_note": 32767,
+      "server_light_note": 32767,
+      "client_note": 32767,
+      "reference_agrees": true,
+      "bytes": 34,
+      "sha256": "8cfb785b5cec9532d5d5530a999fd952c4a9cc30ea01b8f37cd42f3d84109e21"
+    },
+    {
+      "cost": 37,
+      "note_reference": 32768,
+      "server_full_note": -32768,
+      "server_light_note": -32768,
+      "client_note": 32768,
+      "reference_agrees": false,
+      "bytes": 34,
+      "sha256": "8f18d156712310020bfadedd554306cb84c1cff8123ba69c56488f1d34da2a20"
+    },
+    {
+      "cost": 37,
+      "note_reference": 65534,
+      "server_full_note": -2,
+      "server_light_note": -2,
+      "client_note": 65534,
+      "reference_agrees": false,
+      "bytes": 34,
+      "sha256": "53753b62a03e519ba815e1cf45bcae5970d35a0067d3735dfd248abe928b5e66"
+    },
+    {
+      "cost": 37,
+      "note_reference": 65535,
+      "server_full_note": -1,
+      "server_light_note": -1,
+      "client_note": 65535,
+      "reference_agrees": false,
+      "bytes": 34,
+      "sha256": "63edbf65886069d5e468a5221749046978d36c113421360876d5b3a3c5b4c232"
+    },
+    {
+      "cost": 38,
+      "note_reference": -1,
+      "server_full_note": -1,
+      "server_light_note": -1,
+      "client_note": -1,
+      "reference_agrees": true,
+      "bytes": 31,
+      "sha256": "04ee5218682da4b43eac05587a3a9fdeec98ce1ae16c1611fa7c78d920af224a"
+    }
+  ],
+  "rejected_malformed_controls": 6,
+  "inputs_sha256": {
+    "cache": "2aefbba97c0ac62b5d750daa434518e1522b1dd5a18325b535ceac4539c3e255",
+    "server": "d32575ef69f5e06f8779517c8ad2496efd2715d45cf5a82388968af0a71812dd",
+    "client": "ac6e2671ed548c73ad4dcaf8e4446789f29c2780236059de12e6132795a6f918"
+  },
+  "tools_sha256": {
+    "OriginalItemCodec.java": "c5f204b84754eb9f6013128841afd579c9f5834fb6110679315d6fc81f263fd8",
+    "backport_item_codec.py": "e1f2a83ae299fb75781bf46d3d49eeb6c9b3142b3e5a8e63998d659c5607f8fc"
+  },
+  "limits": [
+    "Original name/cost/stackability/scale subset and numeric note-reference boundaries only.",
+    "No cache opened or changed, target ID allocated, asset decoded or game item enabled.",
+    "Three high-reference mismatches are expected evidence, not successful conversions.",
+    "Raw opcode decode only; no cache definition-link normalization, model render or inventory packet test."
+  ],
+  "two_fresh_report_bytes_equal": true,
+  "private_evidence": [
+    ".runtime/backport-lab/item-codec-report-1792253429790579164.json",
+    ".runtime/backport-lab/item-codec-report-1792253430851676780.json"
+  ]
+}

@@ -2,6 +2,8 @@
 
 Reviewed 17 October 2026 against `main` `502df96`. **Backport content, not an entire revision.** No cache replacement, imported gameplay, converter or compatibility runtime is delivered by this research. Native 2010–2011 SoloScape remains the product. [Research source inventory](RESEARCH_SOURCES_20261017.md) pins the inspected external code; source licences do not grant rights to game assets.
 
+Follow-up: the [read-only occupancy catalogue](BACKPORT_CATALOGUE_20261017.md) now inventories four supplied-cache definition namespaces. Conversion, safe allocation, dependency closure and cache patching below remain designs.
+
 ## What the precedents establish
 
 | Inspected project/code | Useful lesson | Boundary for SoloScape |
@@ -62,7 +64,7 @@ No packer writes the installed cache, profile cache or a running world's files. 
 
 ## Backport Lab acceptance sequence
 
-The tracked [lab directory](../backport/README.md) contains only design/example manifests. Private inputs, keys, converted binaries and test cache copies live under ignored `.runtime/backport-lab/`. **None of the ten cache-import stages below is claimed complete by adding these documents.** They are observable gates for a later bounded implementation.
+The tracked [lab directory](../backport/README.md) contains design/example manifests and narrowly scoped original inspection tools. Private inputs, keys, converted binaries and test cache copies live under ignored `.runtime/backport-lab/`. The [occupancy catalogue](BACKPORT_CATALOGUE_20261017.md) and [original codec probe](BACKPORT_ITEM_CODEC_20261017.md) supply partial inspection/definition evidence. Neither allocates an ID or patches a cache. **The ten complete cache-import gates below remain open.** They are observable gates for a later bounded implementation.
 
 | Gate | Smallest experiment / evidence |
 | --- | --- |

@@ -71,6 +71,43 @@ class ProfileTests(unittest.TestCase):
         other=profiles.create('Other','Other')
         with self.assertRaises(ValueError):other.validate_backup(self.profile.backup())
 
+    def test_broken_deflate_stream_does_not_hide_verified_backups_or_change_world(self):
+        good = self.profile.backup()
+        with zipfile.ZipFile(good) as archive:
+            contents = {entry.filename: archive.read(entry) for entry in archive.infolist()}
+        for member in ('backup.json', 'state/saves/tester.toml'):
+            with self.subTest(member=member):
+                bad = good.with_name('broken-' + ('header' if member == 'backup.json' else 'save') + '.zip')
+                with zipfile.ZipFile(bad, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+                    for name, data in contents.items():
+                        archive.writestr(name, data)
+                damaged = bytearray(bad.read_bytes())
+                with zipfile.ZipFile(bad) as archive:
+                    offset = archive.getinfo(member).header_offset
+                # Local ZIP header followed by name/extra fields, then raw DEFLATE.
+                start = offset + 30 + int.from_bytes(damaged[offset+26:offset+28], 'little') + int.from_bytes(damaged[offset+28:offset+30], 'little')
+                damaged[start] = 0x07  # BFINAL=1, reserved BTYPE=3: deterministic decompression failure.
+                bad.write_bytes(damaged)
+                before_manifest = (self.profile.directory / 'profile.json').read_bytes()
+                before_state = self.profile.state
+                generations = set((self.profile.directory / 'states').iterdir())
+
+                rows = {row['name']: row for row in profiles.list_backups(self.profile.manifest['id'])}
+                self.assertFalse(rows[bad.name]['valid'])
+                self.assertTrue(rows[good.name]['valid'])
+                with self.assertRaises(ValueError):
+                    self.profile.restore(bad.name)
+                self.assertEqual((self.profile.directory / 'profile.json').read_bytes(), before_manifest)
+                self.assertEqual(set((self.profile.directory / 'states').iterdir()), generations)
+                self.assertEqual((before_state / 'saves/tester.toml').read_bytes(), native_save())
+                self.assertEqual(bad.read_bytes(), damaged)
+
+                self.profile.restore(good.name)
+                self.assertNotEqual(self.profile.state, before_state)
+                self.assertEqual((self.profile.state / 'saves/tester.toml').read_bytes(), native_save())
+                self.assertTrue(before_state.is_dir())
+                self.assertEqual(bad.read_bytes(), damaged)
+
     def test_checksums_do_not_make_a_wrong_primary_account_restorable(self):
         backup = self.profile.backup()
         before_manifest = (self.profile.directory / 'profile.json').read_bytes()
