@@ -1,0 +1,166 @@
+{
+  "date": "2026-10-17",
+  "reviewed_base": "3c760b4",
+  "scope": "preserve native nonPvP per-item charge state through death-drop refusal and recovery",
+  "native_stack": {
+    "server": 50,
+    "client": 56
+  },
+  "before_source_sha256": "f051e3dd1a174f4cdc5f123ce5474b4af53ad8043764184ba12149363250c5da",
+  "source_sha256": {
+    "patches/server/0050-death-drop-charge-recovery.patch": "6767ce8cab939230ada191268694b74139f2abbd2f3fbd0df00d71854ef07804",
+    "scripts/content_coverage.py": "8672a1c034ac8d61cb7e12f29a26c1989f5e123677cee4a4efcad11d9aeb0ff0",
+    "upstream/game-server/game/src/main/kotlin/content/entity/death/PlayerDeath.kt": "75afe005a722b66d5b183628d69debfb6137fd4bd4108f78a8914723992d9ad7",
+    "upstream/game-server/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathDropChargeRecoveryTest.kt": "09289176a68fc03c6855862cad97a661828c748e5f2875071904a77b92cea8da"
+  },
+  "before_fix": {
+    "file": ".runtime/death-drop-charges-20261017/report/TEST-content.area.misthalin.lumbridge.church.DeathDropChargeRecoveryTest.xml",
+    "counts": {
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "failure": "org.opentest4j.AssertionFailedError: Death drop must keep the weapon's charges ==> expected: <12345> but was: <0>",
+    "xml_sha256": "092a00a57a76726f681fe0acf40b9a320bcb1b8a34d9219cbe3fa77d6edfcd2f"
+  },
+  "fixed_related_suites": [
+    {
+      "suite": "content.area.misthalin.lumbridge.church.DeathDropChargeRecoveryTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failures_detail": []
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.IdenticalItemsKeptOnDeathTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failures_detail": []
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.KeptItemChargePreservationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failures_detail": []
+    },
+    {
+      "suite": "content.entity.player.effect.degrade.DegradeTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failures_detail": []
+    },
+    {
+      "suite": "content.entity.player.equip.DragonfireShieldTest",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failures_detail": []
+    },
+    {
+      "suite": "content.skill.melee.armour.CombatDegradeTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failures_detail": []
+    }
+  ],
+  "fixed_death_suites": [
+    {
+      "suite": "content.entity.player.inv.TakeTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.DeathLootRecoveryTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.KeptItemChargePreservationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.IdenticalItemsKeptOnDeathTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.DeathDropChargeRecoveryTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.GravestonesTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.GravestoneShopAuthorityTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "content.area.misthalin.lumbridge.church.RepeatedGraveIdentityTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "distinct_native_cases": 64,
+  "overlap_cases": 5,
+  "root_tooling": {
+    "tests": 276,
+    "existing_optional_skips": 1
+  },
+  "source_exports": {
+    "server": 99,
+    "client": 140
+  },
+  "limitations": [
+    "Rapier/charge/skull/filler/lethal damage/clock are explicit fixtures, not earned progression.",
+    "Baseline stops before inventory-full/Drop/Take; only fixed run exercises recovery.",
+    "No disk round trip for this charged recovery, no restart grave persistence or physical Deck acceptance.",
+    "Existing dragonfire-shield discharge and PvP conversion policy remain unchanged; selected shield/death regressions pass."
+  ],
+  "jars_sha256": {
+    "server": "3fc9085053ebb539aedc7274e3873fc7b2c7cb20cec17fed57d19398c4a97f2d",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+  },
+  "packaged_classes": [
+    {
+      "name": "content/entity/death/PlayerDeath$1$1.class",
+      "sha256": "ae2a788a366f500aee97a06d778e3210c8de1ade5c292892701c198ab3b52dfe"
+    },
+    {
+      "name": "content/entity/death/PlayerDeath.class",
+      "sha256": "2a5b061987acd75e4e1df588013ad5533d39b1abf05964e00301b588be3ed101"
+    }
+  ],
+  "matched_prepare_passed": true
+}

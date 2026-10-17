@@ -1,0 +1,131 @@
+diff --git a/game/src/main/kotlin/content/entity/death/PlayerDeath.kt b/game/src/main/kotlin/content/entity/death/PlayerDeath.kt
+--- a/game/src/main/kotlin/content/entity/death/PlayerDeath.kt
++++ b/game/src/main/kotlin/content/entity/death/PlayerDeath.kt
+@@ -181,7 +181,7 @@
+                 FloorItems.add(tile, "coins", item.amount * item.def.cost, revealTicks = reveal, disappearTicks = 240, owner = killer)
+             }
+         } else {
+-            FloorItems.add(tile, item.id, item.amount, revealTicks = time, disappearTicks = time + 60, owner = player)
++            FloorItems.add(tile, item.id, item.amount, revealTicks = time, disappearTicks = time + 60, charges = item.charges(), owner = player)
+         }
+     }
+ 
+diff --git a/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathDropChargeRecoveryTest.kt b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathDropChargeRecoveryTest.kt
+new file mode 100644
+index 0000000..caab109
+--- /dev/null
++++ b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathDropChargeRecoveryTest.kt
+@@ -0,0 +1,113 @@
++package content.area.misthalin.lumbridge.church
++
++import WorldTest
++import containsMessage
++import content.entity.combat.dead
++import content.entity.combat.hit.damage
++import content.entity.player.effect.skullCounter
++import floorItemOption
++import itemOption
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertFalse
++import org.junit.jupiter.api.Assertions.assertNotNull
++import org.junit.jupiter.api.Assertions.assertNull
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.BeforeEach
++import org.junit.jupiter.api.Test
++import walk
++import world.gregs.voidps.engine.entity.character.npc.NPCs
++import world.gregs.voidps.engine.entity.character.player.name
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.entity.item.floor.FloorItems
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.engine.inv.transact.operation.SetCharge.setCharge
++import world.gregs.voidps.engine.timer.setCurrentTime
++import world.gregs.voidps.type.Tile
++
++/**
++ * Charged weapon dropped by a skulled death. The weapon is the only explicit inventory fixture at the start, and its
++ * charge is set through the native SetCharge transaction. The skull fixture makes every item drop, the lethal hit
++ * is the normal damage API, and tick(9) runs the native death clock. Recovery uses a supplied raw_shrimps filler,
++ * placed after the death, to fill the inventory. It then uses the native floor Take and item Drop actions, with no
++ * direct take helper and no charge added to the floor fixture.
++ */
++class DeathDropChargeRecoveryTest : WorldTest() {
++
++    @BeforeEach
++    fun setup() {
++        setCurrentTime { 0 }
++    }
++
++    @Test
++    fun deathDropKeepsChargesThroughInventoryFullRecovery() {
++        val deathTile = Tile(3235, 3220)
++        val approach = Tile(3234, 3220)
++        val player = createPlayer(deathTile)
++        player.inventory.add("chaotic_rapier")
++        assertTrue(player.inventory.transaction { setCharge(0, CHARGES) }, "Setting the fixture charge must succeed")
++        tick()
++
++        val rapier = player.inventory[0]
++        assertTrue(rapier.def.contains("charges"), "Chaotic rapier must have per-item charges")
++        assertFalse(rapier.def.contains("charge"), "Chaotic rapier must not use a shared charge variable")
++        assertEquals(1, rapier.amount)
++        assertEquals(CHARGES, rapier.rawValue())
++
++        player.skullCounter = 20
++        player.damage(player.levels.get(Skill.Constitution))
++        tick(9)
++        assertEquals(Tile(3221, 3219), player.tile, "native death finishes at the respawn tile")
++        assertFalse(player.dead, "the native death queue has finished")
++        assertNotNull(NPCs.firstOrNull(deathTile) { it.id.startsWith("gravestone") })
++        assertFalse(player.inventory.contains("chaotic_rapier"), "The skulled weapon must not be kept")
++
++        val floorItem = FloorItems.firstOrNull(deathTile, "chaotic_rapier")
++        assertNotNull(floorItem)
++        assertEquals(1, FloorItems.at(deathTile).count { it.id == "chaotic_rapier" }, "Exactly one dropped weapon")
++        assertEquals(1, floorItem!!.amount, "charges must not become a floor quantity")
++        assertEquals(player.name, floorItem.owner, "Death drop must stay owned by the dead player")
++        assertEquals(CHARGES, floorItem.charges, "Death drop must keep the weapon's charges")
++
++        player.inventory.add(FILLER, 28)
++        assertEquals(0, player.inventory.spaces)
++        player.walk(approach)
++        tickIf(60) { player.tile != approach }
++        assertEquals(approach, player.tile, "Walk must arrive at the adjacent tile")
++
++        player.floorItemOption(floorItem, "Take")
++        tick(2)
++        assertTrue(player.containsMessage("inventory space"), "Full inventory must refuse the Take")
++        assertEquals(0, player.inventory.count("chaotic_rapier"))
++        assertEquals(floorItem, FloorItems.firstOrNull(deathTile, "chaotic_rapier"), "The same charged floor item is retained")
++        assertEquals(CHARGES, floorItem.charges)
++
++        // The refused Take's approach may have stepped onto the grave, where Drop is refused. Walk off it first.
++        player.walk(approach)
++        tickIf(60) { player.tile != approach }
++        assertEquals(approach, player.tile, "Walk must arrive at the adjacent tile")
++        player.itemOption("Drop", FILLER)
++        tick()
++        assertEquals(1, player.inventory.spaces)
++
++        player.floorItemOption(floorItem, "Take")
++        tick(2)
++        val recovered = player.inventory.items.filter { it.id == "chaotic_rapier" }
++        assertEquals(1, recovered.size, "Exactly one recovered weapon")
++        assertEquals(1, recovered[0].amount, "charges must not become an item quantity")
++        assertEquals(CHARGES, recovered[0].rawValue(), "Recovered weapon must keep its raw charge")
++        assertNull(FloorItems.firstOrNull(deathTile, "chaotic_rapier"), "No floor copy after Take")
++
++        tick(20)
++        assertEquals(1, player.inventory.count("chaotic_rapier"), "No duplicate in inventory after ticks")
++        assertNull(FloorItems.firstOrNull(deathTile, "chaotic_rapier"), "No duplicate on the floor after ticks")
++        val stable = player.inventory.items.single { it.id == "chaotic_rapier" }
++        assertEquals(1, stable.amount, "Recovered weapon quantity must stay 1 after ticks")
++        assertEquals(CHARGES, stable.rawValue(), "Recovered weapon raw charge must stay stable after ticks")
++    }
++
++    private companion object {
++        const val CHARGES = 12345
++        const val FILLER = "raw_shrimps"
++    }
++}
