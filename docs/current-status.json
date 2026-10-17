@@ -233,6 +233,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "DEATH_LOOT_RECOVERY_20261017.md",
       "note": "Ten selected native death cases and nine capacity cases pass independently. Supplied items/API damage; fresh player in same process. Unrecovered ground loot across server restart remains separate."
+    },
+    {
+      "id": "unrecovered-grave-persistence",
+      "scope": "Unrecovered grave/floor loot through a full local-world restart",
+      "delivery": "NOT IMPLEMENTED",
+      "acceptance": "DEFERRED",
+      "evidence": "WORLD_TRANSIENT_SAVE_AUDIT_20261017.md",
+      "note": "Source audit finds no runtime grave/floor writer and nonpersistent marker variables. Two-JVM restart reproduction and explicit lifecycle policy remain open; recovered inventory tests do not cover this boundary."
     }
   ]
 }
