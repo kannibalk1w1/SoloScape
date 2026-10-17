@@ -17,9 +17,9 @@ derived from the script's own path (ignored by git). It refuses symlinked `.runt
 Steps, in order:
 
 1. Validate the expected digest (64 lowercase hex). Refuse a lab root that is a symlink or not a directory.
-2. Freeze the bundle: `O_NOFOLLOW`, regular file, at most 8 MiB, read once with a bound, refused if its
+2. Freeze the bundle: `O_NOFOLLOW | O_NONBLOCK`, checked as a regular file before reading, at most 8 MiB, read once with a bound, refused if its
    device/inode/size/mtime changed while being read. Verify the SHA-256 before any ZIP parsing.
-3. Take a non-blocking `flock` on `lab_root/.update-staging.lock`. Refuse if another run holds it.
+3. Require `lab_root/.update-staging.lock` to be a regular file, opened no-follow/nonblocking, then take a non-blocking `flock`. Refuse special files or another run holding the guard.
 4. Refuse if `lab_root/<archive-sha256>` already exists.
 5. Write everything into a `mkdtemp` partial directory `lab_root/.partial-*`. Any failure removes only that
    partial directory. Inputs and unrelated files are never touched.
@@ -78,7 +78,7 @@ The API returns the same dictionary, plus `candidate`.
 
 ## Scope and limits of the proof
 
-Proven by `scripts/test_update_staging.py` (24 tests, original dummy fixtures only): exact bytes and modes on a
+Proven by `scripts/test_update_staging.py` (26 tests, original dummy fixtures only): exact bytes and modes on a
 positive bundle, including setuid and executable archive bits that must not leak; refusal of a wrong or malformed
 digest; a bundle changed while being read; mismatched file hash and size; unsafe and private paths; duplicate
 ZIP names; duplicate JSON keys; symlink, FIFO and directory entries; unlisted and missing members; oversized
@@ -89,6 +89,8 @@ stage the entry when the guard is removed); and real subprocess CLI runs from a 
 `--root` is rejected with nothing created anywhere in the tree, that a refused bundle exits 1 with no candidate, and that
 a valid bundle stages only under the copied `ROOT/.runtime/update-lab`. Each refusal
 also checks that the lab listing, the sentinel file, and the input bundle bytes are unchanged.
+
+The [18 October special-file follow-up](../../docs/UPDATE_STAGING_SPECIAL_FILES_20261018.md) also proves refusal of a FIFO bundle without waiting for a writer, and FIFO/directory/symlink staging guards without publication or input changes.
 
 Fixtures are original dummy bytes only. No real game binaries, assets or jars were staged. The provisional
 4 MiB file and 16 MiB total limits are unsuitable for current real jars.

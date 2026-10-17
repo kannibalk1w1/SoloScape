@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-18",
+  "scope": "Experimental update staging only; original inert fixture files, no native game or owner state",
+  "source_sha256": {
+    "stage.py": "c249f8027536dffc26e7d76d684ab5edf53fd36e8513212a76b384b616692009",
+    "test_update_staging.py": "9fa435bb3b18e6425e038a698118c2970139f523099f6052c4e418c8edfcfd0a"
+  },
+  "baseline": {
+    "tests": 26,
+    "failures": 1,
+    "errors": 2,
+    "fifo_subprocess_timeout_seconds": 3,
+    "guard_fifo_published_instead_of_refusing": true,
+    "stage_sha256": "05e876192fa3197be1c110119803c162635d18a9fc31ba2fde30ce0561a9f1ed",
+    "diagnostic_log_sha256": "607dd7ecf2b37051ffbbeb2a8d7cde9b2f027320e6c9caaadd993fdd8d607976"
+  },
+  "qualified_staging": {
+    "tests": 26,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "root_tooling": {
+    "tests": 278,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1,
+    "diagnostic_log_sha256": "e90851715730c452441d5836ca43327fc6779b84b1e262c4cb247fd120e21197"
+  },
+  "controls": [
+    "actual FIFO bundle without writer refuses with regular-file diagnostic",
+    "actual FIFO guard refuses",
+    "actual directory guard refuses",
+    "actual symlink guard refuses",
+    "bundle bytes, lab membership and sentinel preserved",
+    "no candidate created on guard refusals",
+    "existing exact ZIP bytes/modes, contention and isolated CLI cases pass",
+    "refused guard retains device, inode and file type"
+  ],
+  "review": {
+    "agent": "Claude Haiku",
+    "scope": "read-only source and independent staging test run",
+    "actionable_findings": 0
+  },
+  "native_build_changed": false,
+  "production_update_integration": false,
+  "power_loss_proof": false
+}
