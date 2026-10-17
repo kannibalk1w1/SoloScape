@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "d2bccb2",
+  "reviewed_base": "3c760b4",
   "entries": [
     {
       "id": "controls",
@@ -489,6 +489,22 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "KEPT_ITEM_CHARGES_20261017.md",
       "note": "Reproduced12,345->1 charge loss; fixed without changing quantity/coin splits.26 death and37 charge-related cases pass (two overlap); packaged classes match. No general dropped-charge, disk/Deck or grave persistence claim."
+    },
+    {
+      "id": "identical-kept-items",
+      "scope": "Preserve identical physical copies in native death protection selection",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "IDENTICAL_KEPT_ITEMS_20261017.md",
+      "note": "Four identical swords now keep3/drop1; inventory2/equipment1 keep all3.28 death and39 related cases pass (four overlap). Supplied fixtures; no physical/restart or grave persistence claim."
+    },
+    {
+      "id": "death-drop-charges",
+      "scope": "Preserve charged native death loot through full-inventory refusal and Take recovery",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "DEATH_DROP_CHARGES_20261017.md",
+      "note": "Reproduced floor charges0 instead of12,345; same charged floor loot survives refused Take, then recovers once.29 death/40 related cases pass (five overlap). No disk/Deck or grave persistence claim."
     },
     {
       "id": "wasm-triangle",
