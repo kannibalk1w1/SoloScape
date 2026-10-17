@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-17",
-  "reviewed_base": "efc5ea075b995cf231d5116ca39a1d46e5a992d4",
+  "reviewed_base": "96e64d2",
   "entries": [
     {
       "id": "controls",
@@ -185,6 +185,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "SAVE_ARTIFACT_CLOSURE_20261017.md",
       "note": "Two failing lifecycle reproductions fixed; 136 tooling cases pass (one optional skip); explicit native save-success receipt and real-process smoke still required"
+    },
+    {
+      "id": "dungeon-reward-notice",
+      "scope": "Solo dungeon reward delivery before next-floor countdown",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "DUNGEON_REWARD_NOTICE_FIX_20261017.md",
+      "note": "Reproduced lost201XP/20tokens/floorcredit when notice timed out; countdown now starts after reward queue completes; 28 selected cases pass, full-floor/exit/save and group acceptance remain open"
     }
   ]
 }
