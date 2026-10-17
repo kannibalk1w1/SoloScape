@@ -40,9 +40,10 @@ SERVER_JAR = re.compile(r'upstream/game-server/game/build/libs/void-server-[^/]+
 CLIENT_JAR = re.compile(r'upstream/runelite-client/client/build/libs/void-client-[^/]+\.jar')
 DATA_PREFIX = 'upstream/game-server/data/'
 DATA_SUFFIXES = ('.toml', '.txt')
-# Owner state and cache subtrees; refused anywhere in a payload path, which also covers the data exclusions.
+# Match the tracked-data selector: mutable state/cache lives directly under data/.
+# Nested social/trade/exchange contains immutable interface/content definitions.
 STATE_PARTS = frozenset({'cache', 'saves', 'errors', 'logs', 'temp', '.temp', 'exchange'})
-FORBIDDEN_PARTS = frozenset({'.git', '.gradle', '.runtime', 'gradle', 'native'}) | STATE_PARTS
+FORBIDDEN_PARTS = frozenset({'.git', '.gradle', '.runtime', 'gradle', 'native'})
 FORBIDDEN_NAMES = frozenset({'gradle.properties', 'gradlew', 'gradlew.bat'})
 FORBIDDEN_SUFFIXES = ('.c', '.cc', '.cpp', '.cxx', '.h', '.hpp', '.m', '.mm', '.rs', '.gradle', '.gradle.kts')
 PATCH_PATH = re.compile(r'patches/(client|server)/[0-9]{4}-[a-z0-9][a-z0-9-]*\.patch')
@@ -237,6 +238,8 @@ def _check_name(name, path):
         name.encode('utf-8')
     except UnicodeEncodeError as error:
         raise ValueError(f'path is not valid UTF-8: {path!r}') from error
+    if path.startswith(DATA_PREFIX) and path[len(DATA_PREFIX):].split('/')[0] in STATE_PARTS:
+        raise ValueError(f'forbidden top-level cache/state path in {path!r}')
     if name in FORBIDDEN_PARTS:
         raise ValueError(f'forbidden payload path component {name!r} in {path!r}')
     if name in FORBIDDEN_NAMES or name.endswith(FORBIDDEN_SUFFIXES):

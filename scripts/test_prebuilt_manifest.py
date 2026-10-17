@@ -119,6 +119,16 @@ class AcceptanceTests(PayloadTests):
         self.assertEqual(validate(self.root), self.manifest)
 
 
+class NativeDefinitionPathTests(PayloadTests):
+    def test_nested_exchange_definitions_are_content_not_top_level_world_state(self):
+        self.write('upstream/game-server/data/social/trade/exchange/grand_exchange.ifaces.toml',
+                   b'[original_fixture]\nid = 1\n')
+        manifest=self.make_manifest();self.write_manifest(manifest)
+        before=self.snapshot(self.base)
+        self.assertEqual(validate(self.root),manifest)
+        self.assertEqual(self.snapshot(self.base),before)
+
+
 class ManifestTextTests(PayloadTests):
     def test_refuses_duplicate_keys_and_non_json_text(self):
         good = json.dumps(self.manifest)
