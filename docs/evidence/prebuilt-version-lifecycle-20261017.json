@@ -1,0 +1,109 @@
+{
+  "date": "2026-10-17",
+  "passed": true,
+  "scope": "Private copied prebuilt native versions via real stdio launcher backend and raw java -jar clients; no native classpath instrumentation",
+  "audio_excluded": true,
+  "physical_input": false,
+  "full_update_activation": false,
+  "source_commits": {
+    "A": "c0fa87a5ba14f640f54482692f2adf584258dac9",
+    "B": "0a5b3eeeb05e3fc5eb74048e3c1e4cba375e81c4"
+  },
+  "jar_sha256": {
+    "A": {
+      "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b",
+      "server": "43d001e80f6a4a1ceff529d3e5a25d1a6312d1da48ca34e72480474f6d2f6e30"
+    },
+    "B": {
+      "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b",
+      "server": "9a873520a9b55f27fe30efdfbc41c77b1c2c15d982f03fd206b31710d6c87682"
+    }
+  },
+  "manifest_sha256": {
+    "A": "85566eda18845095146cc65e0f83d03be476e5e833c2f331c70249a5e0d74674",
+    "B": "a80687224a2023b1f3cc6b91dea2a5b020f03cd2c329b5e4fdb05566afa8c07f"
+  },
+  "versions": {
+    "A": {
+      "server_patches": 42,
+      "client_patches": 56
+    },
+    "B": {
+      "server_patches": 45,
+      "client_patches": 56
+    }
+  },
+  "tool_sha256": {
+    "runner_sha256": "e8fa51708d140cd8b1a513ffa408877e5f328380e60ffa85a38e2181ae35bea0",
+    "screen_helper_sha256": "a0019754d97697c845871b49d65ca09912a19099408ce0f35315017fa793e8bb"
+  },
+  "native_start": {
+    "client": {
+      "jar_sha256": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b",
+      "raw_jar_exact": true,
+      "real_java": true,
+      "same_process": true
+    },
+    "server": {
+      "jar_sha256": "43d001e80f6a4a1ceff529d3e5a25d1a6312d1da48ca34e72480474f6d2f6e30",
+      "raw_jar_exact": true,
+      "real_java": true,
+      "same_process": true
+    }
+  },
+  "same_profile_distinct_port_refusal": {
+    "error": "This character/world is running or another save operation is active.",
+    "refused_after_preflight": true
+  },
+  "wrong_version_recovery": {
+    "archive_error": "This character/world is running or another save operation is active.",
+    "children_alive": {
+      "client": true,
+      "server": true
+    },
+    "journal_unchanged": true,
+    "recover_error": "Owned process identity changed; no process was signalled."
+  },
+  "original_context_recovery": {
+    "message": "Recovered world closed; snapshot verified. Clean shutdown is unconfirmed. Previous backups retained.",
+    "backup_reason": "after-recovered-shutdown",
+    "save_fields_preserved": true
+  },
+  "new_native_progress": {
+    "input": "Reviewed private Xvfb, native Leave Alone graphics prompt, then Robot ground click; no save/state injection",
+    "tile_before": {
+      "x": 3221,
+      "y": 3219
+    },
+    "tile_after": {
+      "x": 3222,
+      "y": 3217
+    },
+    "account_xp_inventory_equal": true,
+    "rollback_kept_post_candidate_fields": true,
+    "generation_unchanged": true
+  },
+  "backup_total": 10,
+  "backup_reasons": {
+    "after-clean-shutdown": 4,
+    "after-recovered-shutdown": 1,
+    "before-launch": 5
+  },
+  "input_checks": {
+    "A": true,
+    "B": true,
+    "cache": true,
+    "new_payload": true,
+    "old_cache_source": true,
+    "old_payload": true,
+    "old_profiles_source": true
+  },
+  "owned_processes_remaining": false,
+  "private_report_sha256": "778d0a7ed2301a930946c099b2da3a19063d862be4c6a2451c577c13272c64ce",
+  "limits": [
+    "Two specific builds without save schema changes, not general downgrade compatibility",
+    "No installer/download/active-version pointer/public package or release approval",
+    "No physical controller, audible audio, clean-machine, Steam Gaming Mode or Deck performance acceptance",
+    "Grave/floor persistence across world closure remains open"
+  ]
+}

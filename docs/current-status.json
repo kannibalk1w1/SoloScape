@@ -425,6 +425,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "GRAVESTONE_SHOP_AUTHORITY_20261017.md",
       "note": "24 selected death/gravestone cases; supplied-input shop controls, no purchase-ownership model or stopped-world grave persistence added"
+    },
+    {
+      "id": "prebuilt-version-lifecycle",
+      "scope": "Private native A/B profile lock, original-context orphan recovery and code rollback retaining new progress",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "PREBUILT_VERSION_LIFECYCLE_20261017.md",
+      "note": "Specific server42/45 client56 builds, 10 valid backups, actual ground-click tile change survives rollback; no installer/apply/public package/audio/Deck acceptance"
     }
   ]
 }
