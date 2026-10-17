@@ -1,0 +1,468 @@
+{
+  "all_passed": true,
+  "cases": [
+    {
+      "case": "halt-1-alpha-write",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 0
+      },
+      "expected": {
+        "alpha_coins": 10,
+        "alpha_version": 1,
+        "beta_coins": 0,
+        "beta_version": 1,
+        "generation": "gen-000001",
+        "ledger_pile_coins": 2,
+        "ledger_remaining_ticks": 1000,
+        "ledger_version": 1,
+        "native_loaded_accounts": 2,
+        "state": "BASELINE",
+        "total_coins": 12
+      },
+      "failures": [],
+      "halt_point": "alpha-write",
+      "pids": {
+        "attempt": 3137914,
+        "baseline": 3137864,
+        "recover": 3137938
+      },
+      "recovered": {
+        "alpha_coins": 10,
+        "alpha_version": 1,
+        "beta_coins": 0,
+        "beta_version": 1,
+        "generation": "gen-000001",
+        "ledger_pile_coins": 2,
+        "ledger_remaining_ticks": 1000,
+        "ledger_version": 1,
+        "manifest_sha256": "e2052b50b17a85ad71b6d54640dc594e2f132cc54f1ccb11b64dcda6678946b0",
+        "native_loaded_accounts": 2,
+        "state": "BASELINE",
+        "total_coins": 12
+      }
+    },
+    {
+      "case": "halt-2-beta-write",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 0
+      },
+      "expected": {
+        "alpha_coins": 10,
+        "alpha_version": 1,
+        "beta_coins": 0,
+        "beta_version": 1,
+        "generation": "gen-000001",
+        "ledger_pile_coins": 2,
+        "ledger_remaining_ticks": 1000,
+        "ledger_version": 1,
+        "native_loaded_accounts": 2,
+        "state": "BASELINE",
+        "total_coins": 12
+      },
+      "failures": [],
+      "halt_point": "beta-write",
+      "pids": {
+        "attempt": 3138034,
+        "baseline": 3137996,
+        "recover": 3138059
+      },
+      "recovered": {
+        "alpha_coins": 10,
+        "alpha_version": 1,
+        "beta_coins": 0,
+        "beta_version": 1,
+        "generation": "gen-000001",
+        "ledger_pile_coins": 2,
+        "ledger_remaining_ticks": 1000,
+        "ledger_version": 1,
+        "manifest_sha256": "e2052b50b17a85ad71b6d54640dc594e2f132cc54f1ccb11b64dcda6678946b0",
+        "native_loaded_accounts": 2,
+        "state": "BASELINE",
+        "total_coins": 12
+      }
+    },
+    {
+      "case": "halt-3-ledger-write",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 0
+      },
+      "expected": {
+        "alpha_coins": 10,
+        "alpha_version": 1,
+        "beta_coins": 0,
+        "beta_version": 1,
+        "generation": "gen-000001",
+        "ledger_pile_coins": 2,
+        "ledger_remaining_ticks": 1000,
+        "ledger_version": 1,
+        "native_loaded_accounts": 2,
+        "state": "BASELINE",
+        "total_coins": 12
+      },
+      "failures": [],
+      "halt_point": "ledger-write",
+      "pids": {
+        "attempt": 3138154,
+        "baseline": 3138128,
+        "recover": 3138190
+      },
+      "recovered": {
+        "alpha_coins": 10,
+        "alpha_version": 1,
+        "beta_coins": 0,
+        "beta_version": 1,
+        "generation": "gen-000001",
+        "ledger_pile_coins": 2,
+        "ledger_remaining_ticks": 1000,
+        "ledger_version": 1,
+        "manifest_sha256": "e2052b50b17a85ad71b6d54640dc594e2f132cc54f1ccb11b64dcda6678946b0",
+        "native_loaded_accounts": 2,
+        "state": "BASELINE",
+        "total_coins": 12
+      }
+    },
+    {
+      "case": "halt-4-manifest-write",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 0
+      },
+      "expected": {
+        "alpha_coins": 10,
+        "alpha_version": 1,
+        "beta_coins": 0,
+        "beta_version": 1,
+        "generation": "gen-000001",
+        "ledger_pile_coins": 2,
+        "ledger_remaining_ticks": 1000,
+        "ledger_version": 1,
+        "native_loaded_accounts": 2,
+        "state": "BASELINE",
+        "total_coins": 12
+      },
+      "failures": [],
+      "halt_point": "manifest-write",
+      "pids": {
+        "attempt": 3138274,
+        "baseline": 3138249,
+        "recover": 3138322
+      },
+      "recovered": {
+        "alpha_coins": 10,
+        "alpha_version": 1,
+        "beta_coins": 0,
+        "beta_version": 1,
+        "generation": "gen-000001",
+        "ledger_pile_coins": 2,
+        "ledger_remaining_ticks": 1000,
+        "ledger_version": 1,
+        "manifest_sha256": "e2052b50b17a85ad71b6d54640dc594e2f132cc54f1ccb11b64dcda6678946b0",
+        "native_loaded_accounts": 2,
+        "state": "BASELINE",
+        "total_coins": 12
+      }
+    },
+    {
+      "case": "halt-5-generation-rename",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 0
+      },
+      "expected": {
+        "alpha_coins": 10,
+        "alpha_version": 1,
+        "beta_coins": 0,
+        "beta_version": 1,
+        "generation": "gen-000001",
+        "ledger_pile_coins": 2,
+        "ledger_remaining_ticks": 1000,
+        "ledger_version": 1,
+        "native_loaded_accounts": 2,
+        "state": "BASELINE",
+        "total_coins": 12
+      },
+      "failures": [],
+      "halt_point": "generation-rename",
+      "pids": {
+        "attempt": 3138393,
+        "baseline": 3138369,
+        "recover": 3138467
+      },
+      "recovered": {
+        "alpha_coins": 10,
+        "alpha_version": 1,
+        "beta_coins": 0,
+        "beta_version": 1,
+        "generation": "gen-000001",
+        "ledger_pile_coins": 2,
+        "ledger_remaining_ticks": 1000,
+        "ledger_version": 1,
+        "manifest_sha256": "e2052b50b17a85ad71b6d54640dc594e2f132cc54f1ccb11b64dcda6678946b0",
+        "native_loaded_accounts": 2,
+        "state": "BASELINE",
+        "total_coins": 12
+      }
+    },
+    {
+      "case": "halt-6-pointer-temp-fsync",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 0
+      },
+      "expected": {
+        "alpha_coins": 10,
+        "alpha_version": 1,
+        "beta_coins": 0,
+        "beta_version": 1,
+        "generation": "gen-000001",
+        "ledger_pile_coins": 2,
+        "ledger_remaining_ticks": 1000,
+        "ledger_version": 1,
+        "native_loaded_accounts": 2,
+        "state": "BASELINE",
+        "total_coins": 12
+      },
+      "failures": [],
+      "halt_point": "pointer-temp-fsync",
+      "pids": {
+        "attempt": 3138530,
+        "baseline": 3138488,
+        "recover": 3138606
+      },
+      "recovered": {
+        "alpha_coins": 10,
+        "alpha_version": 1,
+        "beta_coins": 0,
+        "beta_version": 1,
+        "generation": "gen-000001",
+        "ledger_pile_coins": 2,
+        "ledger_remaining_ticks": 1000,
+        "ledger_version": 1,
+        "manifest_sha256": "e2052b50b17a85ad71b6d54640dc594e2f132cc54f1ccb11b64dcda6678946b0",
+        "native_loaded_accounts": 2,
+        "state": "BASELINE",
+        "total_coins": 12
+      }
+    },
+    {
+      "case": "halt-7-pointer-replace",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 0
+      },
+      "expected": {
+        "alpha_coins": 10,
+        "alpha_version": 2,
+        "beta_coins": 2,
+        "beta_version": 2,
+        "generation": "gen-000002",
+        "ledger_pile_coins": 0,
+        "ledger_remaining_ticks": 0,
+        "ledger_version": 2,
+        "native_loaded_accounts": 2,
+        "state": "AFTER",
+        "total_coins": 12
+      },
+      "failures": [],
+      "halt_point": "pointer-replace",
+      "pids": {
+        "attempt": 3138650,
+        "baseline": 3138627,
+        "recover": 3138727
+      },
+      "recovered": {
+        "alpha_coins": 10,
+        "alpha_version": 2,
+        "beta_coins": 2,
+        "beta_version": 2,
+        "generation": "gen-000002",
+        "ledger_pile_coins": 0,
+        "ledger_remaining_ticks": 0,
+        "ledger_version": 2,
+        "manifest_sha256": "aa630363f404db6e2f111fbb6e26e61e477a5cfddc6fe62b2f9fa9d2d5b12559",
+        "native_loaded_accounts": 2,
+        "state": "AFTER",
+        "total_coins": 12
+      }
+    },
+    {
+      "case": "halt-8-parent-fsync",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 0
+      },
+      "expected": {
+        "alpha_coins": 10,
+        "alpha_version": 2,
+        "beta_coins": 2,
+        "beta_version": 2,
+        "generation": "gen-000002",
+        "ledger_pile_coins": 0,
+        "ledger_remaining_ticks": 0,
+        "ledger_version": 2,
+        "native_loaded_accounts": 2,
+        "state": "AFTER",
+        "total_coins": 12
+      },
+      "failures": [],
+      "halt_point": "parent-fsync",
+      "pids": {
+        "attempt": 3138797,
+        "baseline": 3138749,
+        "recover": 3138847
+      },
+      "recovered": {
+        "alpha_coins": 10,
+        "alpha_version": 2,
+        "beta_coins": 2,
+        "beta_version": 2,
+        "generation": "gen-000002",
+        "ledger_pile_coins": 0,
+        "ledger_remaining_ticks": 0,
+        "ledger_version": 2,
+        "manifest_sha256": "aa630363f404db6e2f111fbb6e26e61e477a5cfddc6fe62b2f9fa9d2d5b12559",
+        "native_loaded_accounts": 2,
+        "state": "AFTER",
+        "total_coins": 12
+      }
+    },
+    {
+      "case": "control-no-fault",
+      "exit_codes": {
+        "attempt": 0,
+        "baseline": 0,
+        "recover": 0
+      },
+      "expected": {
+        "alpha_coins": 10,
+        "alpha_version": 2,
+        "beta_coins": 2,
+        "beta_version": 2,
+        "generation": "gen-000002",
+        "ledger_pile_coins": 0,
+        "ledger_remaining_ticks": 0,
+        "ledger_version": 2,
+        "native_loaded_accounts": 2,
+        "state": "AFTER",
+        "total_coins": 12
+      },
+      "failures": [],
+      "halt_point": null,
+      "pids": {
+        "attempt": 3138943,
+        "baseline": 3138869,
+        "recover": 3138967
+      },
+      "recovered": {
+        "alpha_coins": 10,
+        "alpha_version": 2,
+        "beta_coins": 2,
+        "beta_version": 2,
+        "generation": "gen-000002",
+        "ledger_pile_coins": 0,
+        "ledger_remaining_ticks": 0,
+        "ledger_version": 2,
+        "manifest_sha256": "aa630363f404db6e2f111fbb6e26e61e477a5cfddc6fe62b2f9fa9d2d5b12559",
+        "native_loaded_accounts": 2,
+        "state": "AFTER",
+        "total_coins": 12
+      }
+    },
+    {
+      "case": "corrupt-changed-account-bytes",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 2
+      },
+      "failures": [],
+      "pids": {
+        "attempt": 3139062,
+        "baseline": 3138988,
+        "recover": 3139088
+      },
+      "refusal": "PROBE_PID 3139088\nREFUSED: manifest does not match member bytes"
+    },
+    {
+      "case": "corrupt-altered-manifest-pointer",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 2
+      },
+      "failures": [],
+      "pids": {
+        "attempt": 3139185,
+        "baseline": 3139110,
+        "recover": 3139209
+      },
+      "refusal": "PROBE_PID 3139209\nREFUSED: manifest hash does not match CURRENT"
+    },
+    {
+      "case": "corrupt-symlink-member",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 2
+      },
+      "failures": [],
+      "pids": {
+        "attempt": 3139306,
+        "baseline": 3139269,
+        "recover": 3139331
+      },
+      "refusal": "PROBE_PID 3139331\nREFUSED: not a regular member: beta.toml"
+    },
+    {
+      "case": "corrupt-traversal-pointer",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 2
+      },
+      "failures": [],
+      "pids": {
+        "attempt": 3139443,
+        "baseline": 3139399,
+        "recover": 3139479
+      },
+      "refusal": "PROBE_PID 3139479\nREFUSED: CURRENT is not the exact pointer shape"
+    },
+    {
+      "case": "corrupt-linked-generations-ancestor",
+      "exit_codes": {
+        "attempt": 75,
+        "baseline": 0,
+        "recover": 2
+      },
+      "failures": [],
+      "pids": {
+        "attempt": 3139562,
+        "baseline": 3139536,
+        "recover": 3139598
+      },
+      "refusal": "PROBE_PID 3139598\nREFUSED: linked path component <checkout>/.runtime/native-grave-checkpoint/1792259555968822957/cases/corrupt-linked-generations-ancestor/root/state/generations"
+    }
+  ],
+  "cases_run": 14,
+  "distinct_native_jvm_pids": 42,
+  "failures": [],
+  "helper_source_sha256": "38bbb652a252ae33484676cc47d1bccd75a8afb989c6a1e5a73dcee12ff9a659",
+  "mode": "native-grave-checkpoint-process-exit-proof",
+  "run": ".runtime/native-grave-checkpoint/1792259555968822957",
+  "runner_sha256": "2b446616b01b49f0491c809395db2562d5cc396173212bb3925d0cb8fecb1c18",
+  "scope": "Fixture-only process-exit ordering. Not power-loss durability, not live world, not production storage.",
+  "server_jar_sha256": "90c350b5d97ee93be4c96ba1706e912ec0d2c4355b89cab084c6478300f3d88a",
+  "server_jar_unchanged_after_run": true
+}
