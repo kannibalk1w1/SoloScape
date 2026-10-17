@@ -65,9 +65,19 @@ def read_results(report_directory, suites, archive):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--group', choices=('early', 'm6', 'journeys', 'summoning'), default='early')
+    parser.add_argument('--group', choices=('early', 'm6', 'journeys', 'summoning', 'capacity'), default='early')
     options = parser.parse_args()
-    suites = {'early': SUITES, 'm6': M6_SUITES, 'summoning': SUMMONING_SUITES, 'journeys': ('content.soloscape.FullAdventureJourneyTest',)}[options.group]
+    suites = {
+        'early': SUITES,
+        'm6': M6_SUITES,
+        'summoning': SUMMONING_SUITES,
+        'capacity': (
+            'content.soloscape.ProductionCapacityRecoveryTest',
+            'content.skill.fishing.FishingTest',
+            'content.skill.cooking.CookingTest',
+        ),
+        'journeys': ('content.soloscape.FullAdventureJourneyTest',),
+    }[options.group]
     directory = local_dev.RUNTIME / 'content-coverage' / str(time.time_ns())
     directory.mkdir(parents=True, mode=0o700)
     java = Path(os.environ.get('SERVER_JAVA', 'java'))
