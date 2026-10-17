@@ -271,8 +271,7 @@ price explosions or progression exploits; world economy state persists and remai
 
 ## M11 — one curated OSRS-style addition
 
-Priority: after a stable solo loop and asset/content pipeline. Depends on M6–M8;
-M10 is needed only if the chosen content depends on simulated trading.
+Priority: after a stable solo loop and the applicable compatibility gates. Depends on M6/M7 and the relevant M8-03/05/08/09 lab checks; a full original-art demonstration area is not a prerequisite. M10 is needed only if the chosen content depends on simulated trading.
 
 - [ ] M11-01 Choose a small monster, quest/mechanic or skilling addition; avoid raids/new continents as the first import.
 - [ ] M11-02 Write a manifest: references, requirements, XP, timing, formulas, drops, state, assets and solo deviations.
