@@ -76,6 +76,7 @@ def main():
             'content.skill.dungeoneering.DungeonGenerationWorldTest',
             'content.skill.dungeoneering.DungeonGeneratorTest',
             'content.skill.dungeoneering.SoloBossTrapdoorUnlockTest',
+            'content.skill.dungeoneering.SoloDungeonRewardNoticeTest',
             'content.skill.dungeoneering.SoloDungeonLifecycleTest',
         ),
         'capacity': (

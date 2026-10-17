@@ -1,0 +1,213 @@
+--- a/game/src/main/kotlin/content/skill/dungeoneering/DungeonComplete.kt
++++ b/game/src/main/kotlin/content/skill/dungeoneering/DungeonComplete.kt
+@@ -45,8 +45,7 @@
+             choice("<br>Are you sure you wish to proceed and take your party with you?") {
+                 option("Yes, continue.") {
+                     if (dungeonMembers.size == 1) {
+-                        dungeonComplete()
+-                        continueCountDown(leader)
++                        dungeonComplete { continueCountDown(leader) }
+                         return@option
+                     }
+                     set("dungeon_move_on_vote", true)
+@@ -195,7 +194,7 @@
+         return (y * 10.0).toInt()
+     }
+ 
+-    private fun Player.dungeonComplete() {
++    private fun Player.dungeonComplete(onComplete: () -> Unit = {}) {
+         strongQueue("dungeon_info") {
+             playTrack("dungeon_defeated")
+             set("had_party_open", interfaces.contains("dungeoneering_party"))
+@@ -321,6 +320,7 @@
+                     }
+                 }
+             }
++            onComplete()
+         }
+     }
+ 
+diff --git a/game/src/test/kotlin/content/skill/dungeoneering/SoloDungeonRewardNoticeTest.kt b/game/src/test/kotlin/content/skill/dungeoneering/SoloDungeonRewardNoticeTest.kt
+new file mode 100644
+index 0000000..eed8903
+--- /dev/null
++++ b/game/src/test/kotlin/content/skill/dungeoneering/SoloDungeonRewardNoticeTest.kt
+@@ -0,0 +1,178 @@
++package content.skill.dungeoneering
++
++import WorldTest
++import content.area.wilderness.daemonheim.DungeoneeringParty
++import content.entity.combat.hit.directHit
++import continueDialogue
++import dialogueOption
++import objectOption
++import org.junit.jupiter.api.Assertions.assertNotSame
++import org.junit.jupiter.api.Assertions.assertSame
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
++import world.gregs.voidps.engine.client.ui.dialogue
++import world.gregs.voidps.engine.client.ui.hasOpen
++import world.gregs.voidps.engine.entity.character.move.tele
++import world.gregs.voidps.engine.entity.character.npc.NPCs
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.entity.obj.GameObjects
++import world.gregs.voidps.engine.get
++import world.gregs.voidps.engine.inv.add
++import world.gregs.voidps.engine.inv.inventory
++import world.gregs.voidps.engine.suspend.Suspension
++import world.gregs.voidps.type.Tile
++
++/**
++ * Two ordinary-entry solo small complexity-1 floor-1 reward-notice contracts, from the boss death to the reward.
++ *
++ * Shared fixture (the same declared steps as SoloBossTrapdoorUnlockTest, copied because its helpers are private):
++ * - Ring of kinship supplied to the inventory; entrance Climb-down twice through the normal InteractObject path.
++ * - The boss room is opened directly with DungeonRoom.open. No other room is opened. unlock_dungeon is not used.
++ * - Controlled death: one directHit of the boss's full constitution. The npcDeath handler is not called by the test.
++ * - The player is teleported to the room tile east of the unlocked end trapdoor. That tile is inside the room.
++ * - The reward is started by the ordinary End-dungeon object option and the Yes choice. No reward flag, XP, token or
++ *   trapdoor state is written by the test.
++ *
++ * Cases:
++ * - Acknowledged: the item notice from dungeon_info is clicked through dialogue_obj_box:continue before the countdown
++ *   ends. This is the positive control.
++ * - Delayed acknowledgment: leave the notice open beyond thirty seconds, then acknowledge it and let the normal
++ *   countdown generate the next dungeon. The reward must survive the transition exactly once.
++ *
++ * Not proven: combat, walking to the trapdoor, the full floor, the real map data beyond this seed, live client display,
++ * and saving or logout.
++ */
++@EnabledIfEnvironmentVariable(named = "SOLOSCAPE_TEST_ROOT", matches = ".+")
++class SoloDungeonRewardNoticeTest : WorldTest() {
++
++    @Test
++    fun `acknowledged reward notice delivers xp tokens and floor credit`() {
++        val player = openRewardNotice()
++        val before = snapshot(player, "notice-open")
++
++        player.continueDialogue("dialogue_obj_box", "continue")
++        tick(2)
++        val after = snapshot(player, "acknowledged")
++
++        println("REWARD_NOTICE_CONTROL before=$before after=$after")
++        assertTrue(after.rewardGiven, "Acknowledging the notice must set dungeon_reward_given")
++        assertTrue(after.xp > before.xp, "Acknowledging the notice must grant Dungeoneering XP")
++        assertTrue(after.tokens > before.tokens, "Acknowledging the notice must grant Dungeoneering tokens")
++        assertTrue(after.floor1Complete, "Acknowledging the notice must tick off floor 1")
++    }
++
++    @Test
++    fun `reward notice can remain open past thirty seconds without losing progress`() {
++        val player = openRewardNotice()
++        val mapBefore = player.get<DungeonMap>("dungeon")
++        val before = snapshot(player, "notice-open")
++
++        // Reading a notice must not let a dependent timer replace the dungeon and discard its suspended reward.
++        tick(80)
++        assertSame(mapBefore, player.get<DungeonMap>("dungeon"))
++        assertTrue(player.hasOpen("dialogue_obj_box"))
++        assertEquals(before.xp, player.experience.get(Skill.Dungeoneering))
++        assertEquals(before.tokens, player["dungeoneering_tokens", 0])
++
++        player.continueDialogue("dialogue_obj_box", "continue")
++        tick(2)
++        val delivered = snapshot(player, "late-acknowledged")
++        assertTrue(delivered.rewardGiven)
++        assertTrue(delivered.xp > before.xp)
++        assertTrue(delivered.tokens > before.tokens)
++        assertTrue(delivered.floor1Complete)
++
++        // The normal countdown still advances after delivery, preserving the already-earned reward once.
++        tickIf(limit = 80) { player.get<DungeonMap>("dungeon") === mapBefore }
++        tick(5)
++        assertNotSame(mapBefore, player.get<DungeonMap>("dungeon"))
++        assertEquals(delivered.xp, player.experience.get(Skill.Dungeoneering))
++        assertEquals(delivered.tokens, player["dungeoneering_tokens", 0])
++        assertTrue(player["dungeon_floor_1_complete", false])
++        println("REWARD_NOTICE_DELAYED before=$before delivered=$delivered after-next=${snapshot(player, "next-dungeon")}")
++    }
++
++    /** Ordinary entry, boss room open, controlled death, then the native End-dungeon and Yes choice. Ends at the reward notice. */
++    private fun openRewardNotice(): Player {
++        val player = enterSoloDungeon()
++        assertTrue(player["in_dungeoneering", false])
++        val dungeon = requireNotNull(player.get<DungeonMap>("dungeon")) { "Generation must not return null for solo small c1 floor 1" }
++        val boss = dungeon.grid.filterNotNull().single { it.type == DungeonRoomType.Boss }
++
++        // FIXTURE: open the boss room directly. Every other room stays closed.
++        boss.open(player, dungeon)
++        tick()
++        val bossNpc = NPCs.at(dungeon.tile(boss, 7, 7).regionLevel).filter { it.id.startsWith("rand_ice_lord_boss_") }.single()
++
++        // CONTROLLED DEATH FIXTURE: one directHit through the native damage path.
++        bossNpc.directHit(player, bossNpc.levels.get(Skill.Constitution))
++        tick(5)
++
++        val base = dungeon.tile(boss)
++        val unlocked = "rand_dungeon_end_trapdoor_unlocked_frozen"
++        val roomTiles = (0 until 16).flatMap { x -> (0 until 16).map { y -> base.add(x, y) } }
++        val trapdoorTile = roomTiles.single { GameObjects.findOrNull(it, unlocked) != null }
++        val trapdoor = GameObjects.find(trapdoorTile, unlocked)
++
++        // Legal approach: the room tile directly east of the end trapdoor, reached by a native tele fixture.
++        player.tele(trapdoorTile.add(1, 0))
++        tick()
++        player.objectOption(trapdoor, "End-dungeon")
++        tick()
++        assertTrue(player.dialogue != null, "End-dungeon must open the confirmation choice")
++        player.dialogueOption(1)
++        tickIf(limit = 20) { !player.hasOpen("dialogue_obj_box") }
++        assertTrue(player.hasOpen("dialogue_obj_box"), "dungeon_info must reach the reward notice")
++        assertTrue(player.suspension is Suspension.Continue, "The reward notice must suspend the queued reward")
++        return player
++    }
++
++    private fun snapshot(player: Player, label: String) = Stage(
++        label = label,
++        xp = player.experience.get(Skill.Dungeoneering),
++        tokens = player["dungeoneering_tokens", 0],
++        rewardGiven = player["dungeon_reward_given", false],
++        floor1Complete = player["dungeon_floor_1_complete", false],
++        floorUnlocked = player["dungeoneering_floor_unlocked", 1],
++        notice = player.hasOpen("dialogue_obj_box"),
++        suspension = player.suspension?.javaClass?.simpleName ?: "none",
++        inDungeon = player["in_dungeoneering", false],
++        nextTimer = player["dungeon_next_timer", 0],
++    )
++
++    private data class Stage(
++        val label: String,
++        val xp: Double,
++        val tokens: Int,
++        val rewardGiven: Boolean,
++        val floor1Complete: Boolean,
++        val floorUnlocked: Int,
++        val notice: Boolean,
++        val suspension: String,
++        val inDungeon: Boolean,
++        val nextTimer: Int,
++    )
++
++    /**
++     * Copy of the SoloBossTrapdoorUnlockTest entry steps (its helper is private): ring, party, then the second Climb-down.
++     */
++    private fun enterSoloDungeon(): Player {
++        val player = createPlayer(Tile(3454, 3723, 0))
++        player.inventory.add("ring_of_kinship")
++        val entrance = GameObjects.find(Tile(3455, 3723, 0), "daemonheim_dungeon_entrance")
++
++        player.objectOption(entrance, "Climb-down")
++        tick(2)
++        assertTrue(player.dialogue == "dialogue_multi2", "Climb-down without a party must ask whether to start one")
++        player.dialogueOption(1)
++        tick(2)
++        assertTrue(DungeoneeringParty.inParty(player), "Choosing Yes must make the player party leader")
++
++        player.objectOption(entrance, "Climb-down")
++        tick(5)
++        return player
++    }
++}
