@@ -11,6 +11,9 @@ ENDPOINT = 'https://api.github.com/repos/' + REPOSITORY + '/releases/latest'
 MAX_RESPONSE = 256 * 1024
 TIMEOUT = 4
 TAG = re.compile(r'[A-Za-z0-9][A-Za-z0-9._-]{0,63}\Z')
+BUNDLE_NAME = re.compile(r'soloscape-update-[A-Za-z0-9._-]{1,64}\.zip\Z')
+DIGEST = re.compile(r'sha256:([0-9a-f]{64})\Z')
+MAX_BUNDLE = 8 << 20  # matches the staging lab's archive bound
 
 
 class NoRedirects(urllib.request.HTTPRedirectHandler):
@@ -38,7 +41,39 @@ def parse_release(value):
     if not isinstance(title, str) or len(title) > 200 or not isinstance(notes, str) or len(notes) > 128 * 1024:
         raise ValueError('Unsupported release text.')
     return result('release_available', 'Published release: ' + tag + '. Automatic installation is not available yet.',
-                  tag=tag, title=title, notes=notes, url=url)
+                  tag=tag, title=title, notes=notes, url=url, bundle=parse_bundle(tag, value.get('assets')))
+
+
+def asset_url(tag, name):
+    return 'https://github.com/' + REPOSITORY + '/releases/download/' + urllib.parse.quote(tag, safe='') + '/' + name
+
+
+def parse_bundle(tag, assets):
+    """Return the one declared update bundle, or None. Other assets are ignored, never fetched."""
+    if assets is None:
+        return None
+    if not isinstance(assets, list) or len(assets) > 64:
+        raise ValueError('Unsupported release assets.')
+    found = []
+    for asset in assets:
+        if not isinstance(asset, dict) or not isinstance(asset.get('name'), str):
+            raise ValueError('Unsupported release asset.')
+        if BUNDLE_NAME.fullmatch(asset['name']):
+            found.append(asset)
+    if not found:
+        return None
+    if len(found) > 1:
+        raise ValueError('More than one update bundle is published.')
+    asset = found[0]
+    name = asset['name']
+    size, digest = asset.get('size'), asset.get('digest')
+    if type(size) is not int or not 1 <= size <= MAX_BUNDLE:
+        raise ValueError('Update bundle size is not acceptable.')
+    if not isinstance(digest, str) or not DIGEST.fullmatch(digest):
+        raise ValueError('Update bundle has no sha256 digest.')
+    if asset.get('browser_download_url') != asset_url(tag, name):
+        raise ValueError('Update bundle URL does not match the project.')
+    return dict(name=name, size=size, sha256=digest[len('sha256:'):], url=asset_url(tag, name))
 
 
 def check():
