@@ -154,7 +154,8 @@ class UpdateManager:
                   'done': state['done'], 'total': state['total'],
                   'release': None if release is None else {'tag': release['tag'], 'title': release['title']},
                   'can_download': bool(self.managed and not active and not world_running and release is not None
-                                       and release.get('package') and release['package']['tag'] != self.managed['release']),
+                                       and release.get('package') and release['package']['tag'] != self.managed['release']
+                                       and not (candidate and candidate['zip_sha256'] == release['package']['sha256'])),
                   'can_cancel': active,
                   'can_apply': bool(self.managed and not active and not world_running and candidate is not None),
                   'last_result': None}

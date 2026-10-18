@@ -172,7 +172,9 @@ def download(url, size, sha256, destination, job, transport=_open):
         exc.close()
         raise PackageError('The download is unavailable. You can keep using your installed version.') from exc
     except (OSError, http.client.HTTPException) as exc:
+        job.check()  # a cancelled read may surface as a closed-socket error
         raise PackageError('The download was interrupted or is unavailable. You can keep using your installed version.') from exc
+    job.check()  # a cancel that raced the end of a blocked read is a cancel, not a short download
     if total != size:
         raise PackageError('The download stopped early. Try again later.')
     if not hmac.compare_digest(digest.hexdigest(), sha256):

@@ -20,7 +20,6 @@ This is a cooperative single-user protocol, not a security boundary against a ho
 """
 import errno
 import fcntl
-import hashlib
 import json
 import os
 import re
@@ -442,7 +441,7 @@ def _prune(root, keep):
             _discard(entry.path)
 
 
-def _switch(root, lease, target, expected_current, cutpoint, what):
+def _switch(root, target, expected_current, cutpoint):
     """Shared by activate and rollback; the caller holds an exclusive lease and has verified the manifest."""
     state = read_pointer(root)
     if state['current'] != expected_current:
@@ -453,7 +452,7 @@ def _switch(root, lease, target, expected_current, cutpoint, what):
 
 def activate(root, candidate, cutpoint=None):
     """Point current at a verified staged candidate. The old current becomes previous. Pointer-only."""
-    with acquire(root, 'exclusive') as lease:
+    with acquire(root, 'exclusive'):
         cfg = load_config(root)
         state = read_pointer(root)
         if candidate == state['current']:
@@ -463,14 +462,14 @@ def activate(root, candidate, cutpoint=None):
         if reasons:
             raise InstallError(' '.join(reasons))
         _publish(root, TRIAL, {'format': FORMAT_TRIAL, 'candidate': candidate, 'previous': state['current']})
-        _switch(root, lease, candidate, state['current'], cutpoint, 'activate')
+        _switch(root, candidate, state['current'], cutpoint)
         _prune(root, {candidate, state['current']})
     return candidate
 
 
 def rollback(root, cutpoint=None):
     """Return current to previous after the same checks. No saves are restored, copied or rewritten."""
-    with acquire(root, 'exclusive') as lease:
+    with acquire(root, 'exclusive'):
         cfg = load_config(root)
         state = read_pointer(root)
         if state['previous'] is None:
@@ -479,7 +478,7 @@ def rollback(root, cutpoint=None):
         reasons = blockers(cfg, manifest)
         if reasons:
             raise InstallError(' '.join(reasons))
-        _switch(root, lease, state['previous'], state['current'], cutpoint, 'rollback')
+        _switch(root, state['previous'], state['current'], cutpoint)
         Path(root, TRIAL).unlink(missing_ok=True)
         _prune(root, {state['previous'], state['current']})
     return state['previous']

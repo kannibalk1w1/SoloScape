@@ -35,13 +35,27 @@ public final class NativeManagedUpdateProbe {
         javax.imageio.ImageIO.write(robot.createScreenCapture(bounds),"png",dir.resolve("launch"+launch+"-"+name+".png").toFile());
     }
     static void focusButton(String dialogTitle,String text,int direction)throws Exception {
-        for(int i=0;i<10;i++){
+        for(int i=0;i<30;i++){   // a mapped press can be lost while the EDT repaints the animated scene; retry, but bounded
             if(edt(()->focus()==button(dialog(dialogTitle),text)))return;
             key(direction);
         }
         throw new IllegalStateException("Mapped navigation did not reach "+text);
     }
+    /** With no window manager the launcher may not hold X focus after the game client closes; click an inert area. */
+    static void activateLauncher()throws Exception {
+        JFrame frame=(JFrame)field("frame");
+        edt(()->{frame.toFront();frame.requestFocus();return null;});
+        long end=System.currentTimeMillis()+3000;
+        while(!edt(()->frame.isActive())&&System.currentTimeMillis()<end)Thread.sleep(50);
+        if(!edt(()->frame.isActive())){
+            Point at=edt(()->frame.getLocationOnScreen());Dimension size=edt(()->frame.getSize());
+            robot.mouseMove(at.x+size.width/2,at.y+70);robot.mousePress(java.awt.event.InputEvent.BUTTON1_DOWN_MASK);robot.mouseRelease(java.awt.event.InputEvent.BUTTON1_DOWN_MASK);
+        }
+        waitFor(()->frame.isActive(),10,"Launcher frame could not be activated");
+    }
     static void openUpdates()throws Exception {
+        Thread.sleep(2500);   // let the session teardown and scene animation settle before synthetic input
+        activateLauncher();
         edt(()->{((JButton)field("settings")).requestFocusInWindow();return null;});
         waitFor(()->focus()==field("settings"),10,"Settings did not receive seed focus");
         pressUntil(KeyEvent.VK_ENTER,()->dialog("Launcher Settings")!=null,"Mapped A did not open Settings");

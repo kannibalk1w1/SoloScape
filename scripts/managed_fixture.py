@@ -1,7 +1,6 @@
 """Original disposable fixtures for the managed updater tests. Not real game data; every byte is synthetic."""
 import hashlib
 import json
-import os
 import uuid
 from pathlib import Path
 

@@ -114,7 +114,8 @@ def main():
                         str(ROOT / 'scripts/harness/NativeManagedUpdateProbe.java')] +
                        [str(ROOT / 'scripts/harness' / (name + '.java')) for name in sessions.HARNESS], check=True)
         shim = run / 'shim/python3'
-        shim.write_text('#!/bin/sh\nexec %s -B %s "$@"\n' % (sys.executable, HERE / 'fake_github.py'))
+        shim.write_text('#!/bin/sh\ncase "$1" in\n  */launcher_backend.py) exec %s -B %s "$@";;\n  *) exec %s "$@";;\nesac\n'
+                        % (sys.executable, HERE / 'fake_github.py', sys.executable))
         shim.chmod(0o700)
         wrappers = {}
         for role, java in (('server', options.server_java), ('client', options.client_java)):
@@ -203,8 +204,8 @@ os.execv(java,[java]+args)
         (probe / 'round1.ack').write_text('verified\n')
         code = bootstrap.wait(timeout=240)
         checks['bootstrap_exit_clean'] = code == 0 and (probe / 'passed2').exists()
-        last = mi.read_result(root)
-        checks['result_recorded'] = bool(last and last['ok'] and last['message'].startswith('Updated.'))
+        # The launcher showed the apply result to the player once (the probe asserted its text) and then cleared it.
+        checks['result_shown_once_then_cleared'] = mi.read_result(root) is None
         # ---- save-format refusal and rollback ---------------------------------------------------------------------------
         old_only = dict(files)
         manifest_c = package_builder.build_manifest(old_only, 'private-test-c', (0,), '0' * 40, dict(local_dev.PINNED), patches)

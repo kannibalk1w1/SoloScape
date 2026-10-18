@@ -328,6 +328,19 @@ class Fetch(PackageCase):
             up.fetch_and_install(self.root, meta, job=up.Job(deadline=30, clock=lambda: now[0]), transport=lambda u: Trickle())
         self.assert_nothing_left()
 
+    def test_a_cancel_racing_the_end_of_a_read_is_a_cancel_not_a_short_download(self):
+        meta, payload, _ = self.package()
+        flag = threading.Event()
+
+        class Ends:
+            def read(self, n):
+                flag.set()
+                return b''
+            close = Mock()
+        with self.assertRaises(up.Cancelled):
+            up.fetch_and_install(self.root, meta, job=up.Job(cancelled=flag), transport=lambda u: Ends())
+        self.assert_nothing_left()
+
     def test_redirects_leave_the_github_object_hosts_only_over_https(self):
         handler = up._ProjectRedirects()
         request = Mock()

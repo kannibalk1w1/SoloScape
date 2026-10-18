@@ -226,6 +226,35 @@ class SaveFormat(InstallCase):
         self.assertTrue((self.root / 'versions' / b).is_dir())
 
 
+class CommandLine(InstallCase):
+    """The installed bootstrap copy, invoked the way a player or the launcher script invokes it."""
+
+    def cli(self, *args):
+        return subprocess.run([sys.executable, '-B', str(self.root / 'bootstrap' / 'managed_install.py'), *args],
+                              capture_output=True, text=True, cwd=self.tmp)
+
+    def test_init_status_activate_refusal_and_rollback_through_the_installed_bootstrap(self):
+        path, digest, _ = fx.make_package(self.tmp, 'r1')
+        done = subprocess.run([sys.executable, '-B', str(SCRIPTS / 'managed_install.py'), 'init', str(self.root), '--package', str(path),
+                               '--sha256', digest, '--profile-home', str(self.home), '--cache-home', str(self.tmp / 'cache'),
+                               '--launcher-home', str(self.tmp / 'launcher')], capture_output=True, text=True)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        a = done.stdout.strip()
+        status = json.loads(self.cli('status', str(self.root)).stdout)
+        self.assertEqual(status['identity']['release'], 'r1')
+        self.assertEqual(status['pointer'], {'current': a, 'previous': None})
+        b = self.stage('r2')
+        profile, save = fx.make_profile(self.home, session=True)
+        refused = self.cli('activate', str(self.root), b)
+        self.assertEqual(refused.returncode, 2)
+        self.assertIn('earlier session', refused.stderr)
+        self.assertEqual(self.cli('rollback', str(self.root)).returncode, 2)  # nothing to roll back to
+        (profile / 'session.json').unlink()
+        self.assertEqual(self.cli('activate', str(self.root), b).stdout.strip(), b)
+        self.assertEqual(self.cli('rollback', str(self.root)).stdout.strip(), a)
+        self.assertEqual(json.loads(self.cli('status', str(self.root)).stdout)['pointer'], {'current': a, 'previous': b})
+
+
 class Crash(InstallCase):
     def activate_in_child(self, candidate, cutpoint):
         code = ('import sys; sys.path.insert(0, %r); import managed_install as m\nm.activate(%r, %r, cutpoint=%r)'

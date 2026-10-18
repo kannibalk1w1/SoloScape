@@ -1,4 +1,3 @@
-import hashlib
 import json
 import os
 import shutil
@@ -79,6 +78,7 @@ class Flow(ManagerCase):
         status = self.wait(manager, 'staged')
         self.assertEqual(status['candidate']['release'], 'r2')
         self.assertTrue(status['can_apply'])
+        self.assertFalse(status['can_download'])  # already downloaded: nothing left to fetch
         self.assertFalse(status['can_download'] and status['stage'] == 'downloading')
         result = manager.apply(world_running=False)
         self.assertTrue(result['restart'])

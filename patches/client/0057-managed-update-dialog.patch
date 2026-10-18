@@ -13,7 +13,7 @@ diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher
          startController();
      }
  
-@@ -279,23 +284,96 @@
+@@ -279,23 +284,98 @@
          JSpinner number = new JSpinner(new SpinnerNumberModel(port, 1, 65535, 1));
          JPanel fields = new JPanel(new GridLayout(0, 1, 6, 6)); fields.add(new JLabel("Local game port (use another free port for an independent world)")); fields.add(number);
          fields.add(new JLabel("Gameplay controller settings remain in the SoloScape Controller plugin."));
@@ -50,7 +50,8 @@ diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher
 +    {
 +        final JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(anchor), "SoloScape updates", Dialog.ModalityType.APPLICATION_MODAL);
 +        final JLabel installed = new JLabel("Installed: checking…"), candidate = new JLabel(" ");
-+        final JTextArea text = new JTextArea("Choose Check for updates. Checking never changes your game, and you can keep playing the installed version.", 10, 58);
++        final String intro = "Choose Check for updates. Checking never changes your game, and you can keep playing the installed version.";
++        final JTextArea text = new JTextArea(intro, 10, 58);
 +        text.setEditable(false); text.setLineWrap(true); text.setWrapStyleWord(true);
 +        final JProgressBar bar = new JProgressBar(0, 1000); bar.setStringPainted(true); bar.setString(" ");
 +        final JButton check = new LauncherButton("Check for updates"), download = new LauncherButton("Download"),
@@ -85,6 +86,7 @@ diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher
 +            if (data.has("last_result") && !data.get("last_result").isJsonNull())
 +                message = data.getAsJsonObject("last_result").get("message").getAsString() + "\n\n" + message;
 +            String full = (checked[0].isEmpty() ? "" : checked[0] + "\n\n") + message;
++            if (full.isEmpty()) full = intro;
 +            if (!full.equals(shown[0])) { shown[0] = full; text.setText(full); text.setCaretPosition(0); }
 +            check.setEnabled(!active && !running);
 +            download.setEnabled(data.get("can_download").getAsBoolean());
@@ -125,7 +127,7 @@ diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher
      }
      private void close()
      {
-@@ -304,7 +382,7 @@
+@@ -304,7 +384,7 @@
          requests.execute(() -> {
              try { input.close(); backend.waitFor(); }
              catch (Exception ex) { System.err.println("Launcher shutdown: " + ex.getMessage()); }

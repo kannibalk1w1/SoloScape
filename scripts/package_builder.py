@@ -8,9 +8,7 @@ checks only structure and writes a sidecar marking the output private.
 import argparse
 import hashlib
 import json
-import os
 import stat
-import sys
 import zipfile
 from pathlib import Path
 
