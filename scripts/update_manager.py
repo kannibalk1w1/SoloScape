@@ -139,7 +139,7 @@ class UpdateManager:
         self.cancel_event = threading.Event()
         self._set(stage='downloading', message='Preparing release ' + package['tag'] + ': its source is fetched from the project, checked '
                   'against the release, and built on this computer. This can take many minutes. Cancel any time; your installed '
-                  'version keeps working.', done=0, total=package['size'], needs_build=None, detail='')
+                  'version keeps working.', done=0, total=package['size'], detail='')
         self.worker = threading.Thread(target=self._rebuild, args=(package, self.cancel_event), name='update-rebuild', daemon=True)
         self.worker.start()
         return dict(self.state)
@@ -158,7 +158,7 @@ class UpdateManager:
                                                      rebuild=build)
             self.install.write_candidate(self.root, found['id'], found['release'], found['zip_sha256'])
             self._set(stage='staged', message='Release ' + found['release'] + ' was rebuilt here, then downloaded and verified. '
-                      'Choose Install and Restart when you are ready.', done=0, total=0, detail='')
+                      'Choose Install and Restart when you are ready.', done=0, total=0, detail='', needs_build=None)
         except update_package.Cancelled as exc:
             self._set(stage='cancelled', message=str(exc), done=0, total=0, detail='')
         except update_package.PackageError as exc:

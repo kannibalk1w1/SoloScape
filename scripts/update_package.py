@@ -321,7 +321,7 @@ def _read_stamp(source):
     if (not isinstance(jars, dict) or set(jars) != {'server', 'client'}
             or not all(isinstance(v, str) and re.fullmatch('[0-9a-f]{64}', v) for v in jars.values())):
         raise PackageError('The source folder ' + str(source) + ' has no usable build record. Run ' + BUILD_SCRIPT
-                           + ' in it, then press Download again. Nothing was installed.', 'needs-build')
+                           + ' in it, then press Download again, or choose Update Source and Rebuild. Nothing was installed.', 'needs-build')
     return stamp
 
 
@@ -370,7 +370,8 @@ def _supply(scratch, manifest, roots, job, install=None):
                 where = '' if set(commit) == {'0'} else ' (source commit ' + commit[:12] + ')'
                 raise PackageError('Release ' + manifest['release'] + ' needs a different build than the one in ' + str(source)
                                    + ' (differs: ' + _differences(stamp, manifest) + '). Update that folder to the source of release '
-                                   + manifest['release'] + where + ', run ' + BUILD_SCRIPT + ' in it, then press Download again. '
+                                   + manifest['release'] + where + ', run ' + BUILD_SCRIPT + ' in it, then press Download again, or choose '
+                                   'Update Source and Rebuild to fetch and build the release source automatically. '
                                    'Your installed version keeps working.', 'needs-rebuild')
             return _copy_local(source, scratch, manifest, stamp, local, job)
         except PackageError as exc:
@@ -387,7 +388,7 @@ def _copy_local(source, scratch, manifest, stamp, local, job):
             fd = _open_below(source, path.split('/'))
         except OSError:
             raise PackageError('The build in ' + str(source) + ' is missing a file this release needs: ' + path + '. Run ' + BUILD_SCRIPT
-                               + ' in it again, then press Download.', 'needs-rebuild') from None
+                               + ' in it again, then press Download, or choose Update Source and Rebuild.', 'needs-rebuild') from None
         with os.fdopen(fd, 'rb') as handle:
             sizes[path] = os.fstat(handle.fileno()).st_size
         if sizes[path] > runtime_manifest.FILE_MAX_BYTES:
@@ -422,7 +423,7 @@ def _copy_local(source, scratch, manifest, stamp, local, job):
             raise PackageError('A local build file changed while it was being copied: ' + path)
         if path in roles and digest.hexdigest() != roles[path]:
             raise PackageError('The programs in ' + str(source) + ' changed after they were built. Run ' + BUILD_SCRIPT
-                               + ' in it again, then press Download.', 'needs-rebuild')
+                               + ' in it again, then press Download, or choose Update Source and Rebuild.', 'needs-rebuild')
         record[path] = {'sha256': digest.hexdigest(), 'size': copied}
     fd = os.open(scratch / runtime_manifest.SUPPLIED_NAME, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, 'wb') as out:

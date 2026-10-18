@@ -97,7 +97,7 @@ public final class NativeManagedUpdateProbe {
                 openUpdates();
                 String installed=edt(()->labels(dialog("SoloScape updates")));
                 require(installed.contains("Installed: release private-test-a"),"Wrong installed identity: "+installed);
-                edt(()->{JDialog d=dialog("SoloScape updates");require(!button(d,"Download").isEnabled()&&!button(d,"Install and Restart").isEnabled()&&!button(d,"Cancel Download").isEnabled(),"Nothing may be actionable before a check");return null;});
+                edt(()->{JDialog d=dialog("SoloScape updates");require(!button(d,"Download").isEnabled()&&!button(d,"Install and Restart").isEnabled()&&!button(d,"Cancel").isEnabled(),"Nothing may be actionable before a check");return null;});
                 pressUntil(KeyEvent.VK_ENTER,()->first(dialog("SoloScape updates"),JTextArea.class).getText().contains("An installable package is attached"),"Mapped A did not check updates");
                 require(edt(()->first(dialog("SoloScape updates"),JTextArea.class).getText().contains("PRIVATE TEST METADATA")),"Notes missing");
                 shot("1-checked");
@@ -108,7 +108,7 @@ public final class NativeManagedUpdateProbe {
                 pressUntil(KeyEvent.VK_ENTER,()->first(dialog("SoloScape updates"),JProgressBar.class).getValue()>40,"Download progress never advanced");
                 shot("2-downloading");
                 log("progress string while downloading: "+edt(()->first(dialog("SoloScape updates"),JProgressBar.class).getString()));
-                focusButton("SoloScape updates","Cancel Download",KeyEvent.VK_LEFT);
+                focusButton("SoloScape updates","Cancel",KeyEvent.VK_LEFT);
                 pressUntil(KeyEvent.VK_ENTER,()->first(dialog("SoloScape updates"),JTextArea.class).getText().toLowerCase().contains("cancelled"),"Cancel did not report");
                 waitFor(()->button(dialog("SoloScape updates"),"Download").isEnabled(),20,"Download not offered again after cancel");
                 shot("3-cancelled");

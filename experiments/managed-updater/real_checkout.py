@@ -53,3 +53,11 @@ def add_inert_patch(folder):
     target = Path(folder) / INERT_PATCH
     target.write_text(inert_patch_text(folder))
     return target
+
+
+def add_inert_patch_to(destination, source_root):
+    """Write the inert patch into another tree's patches folder, derived from `source_root`'s pinned game-server checkout."""
+    target = Path(destination) / INERT_PATCH
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(inert_patch_text(source_root))
+    return target

@@ -17,6 +17,7 @@ from pathlib import Path
 backend = sys.argv[1]
 sys.path.insert(0, str(Path(backend).resolve().parent))
 import release_updates  # noqa: E402
+import source_build  # noqa: E402
 import update_package  # noqa: E402
 
 
@@ -61,6 +62,9 @@ def opener(url):
     return Throttled(Path(state['path']).read_bytes(), state['rate'])
 
 
+if os.environ.get('SOLOSCAPE_FAKE_ORIGINS'):  # the fixed origins point at disposable local repositories, for this process only
+    source_build.ORIGINS = json.loads(os.environ['SOLOSCAPE_FAKE_ORIGINS'])
+    source_build.ALLOWED_PROTOCOLS = 'file'
 release_updates.check = check
 update_package._open = opener
 sys.argv = [backend]
