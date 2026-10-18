@@ -12,6 +12,18 @@ The real Swing probe exposed a controller problem beyond updates: calling modal 
 
 GitHub documents stable release metadata and asset digests in its [Releases API](https://docs.github.com/en/rest/releases/releases?apiVersion=latest). The current checker uses no account token and accepts no user-supplied feed or download URL. Release notes are data, not trusted instructions. Asset digests are for a later package verifier; none is downloaded by this increment.
 
+## Bundle fetch and staging (18 October 2026)
+
+`scripts/update_fetch.py` adds the first retrieval step, still without activation. `fetch_latest()` runs the same stable-release check, then accepts only one asset named `soloscape-update-<tag>.zip` whose URL is exactly the fixed project's `releases/download/<tag>/<name>` path. The asset must declare a size of 1 to 8 MiB and a `sha256:` digest. Other assets are ignored and never fetched. Only GitHub's `objects.githubusercontent.com` and `release-assets.githubusercontent.com` hosts are followed, over HTTPS, at most three redirects.
+
+The download goes to a private temporary file in the update lab. It is refused if it grows past the declared size, stops early, or does not match the digest. Verified bytes then go through the existing staging lab, which checks the manifest, roles, paths, modes, and per-file digests. The temporary file is removed on every path. A staged candidate is a new directory named by the archive digest. Nothing is activated and no profile, save, backup, or cache is touched.
+
+**Trust boundary.** The digest comes from the same GitHub API response that names the asset. It proves the bytes match what GitHub listed for the release. It does not authenticate the publisher. Anyone who can publish to `kannibalk1w1/SoloScape` can publish a valid bundle. Independent signing and a pinned key are still required before a bundle is installed or handed to players. The staging lab's manifest identities (`repository`, `source_commit40`, `cache_revision`) are declared, not verified.
+
+**Proven** by `scripts/test_update_fetch.py` (19 tests, original dummy fixtures, fake transports, no network): an exact valid bundle is fetched once and staged with its payload bytes; a wrong digest, a truncated download, an oversized download, and an interrupted read each leave no candidate and no temporary file; a digest-matching bundle with a traversal path is refused by the stager; an existing candidate is refused and untouched; a non-project URL is never requested; a linked lab is refused before any request; offline, rate-limited, and no-release checks fetch nothing; redirects outside the GitHub object hosts are refused.
+
+**Not done yet.** Activation and rollback through the activation lab; interrupted-activation recovery; preservation of shared profiles, backups, caches, and settings; the Continue acceptance; the controller progress/error UI and Launcher Settings wiring; a `launcher_backend` action; a public package builder and its licence inventory; the save-format downgrade gate that depends on the death-loot persistence work. The staging lab's provisional limits (4 MiB per file, 16 MiB total) are below real jar sizes, so the bundle schema is not yet usable for the client and server.
+
 ## Why installation is a separate stage
 
 Current delivery is a development checkout/private Deck snapshot. `scripts/deck_export.py` deliberately includes the owner's authorized cache, launcher art and local JDKs. **It is not a public release builder.** Do not upload its output to GitHub Releases.
