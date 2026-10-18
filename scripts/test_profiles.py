@@ -1,4 +1,6 @@
 """Recovery/isolation tests use disposable copies; never read real accounts or caches."""
+import base64
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -12,6 +14,26 @@ def native_save(name='Tester'):
     return ('accountName = '+json.dumps(name)+'\npasswordHash = "fixture-hash"\nexperience = '+str([0]*25)+'\nlevels = '+str([1]*25)+'\nlooks = '+str([0]*7)+'\ncolours = '+str([0]*5)+'\nmale = true\n[tile]\nx = 3221\ny = 3219\n[variables]\nquest_state = "completed"\n[inventories]\ninventory = [{id = "bronze_sword", amount = 1}, {}]\n').encode()
 
 
+WORLD_PAYLOAD = 'piles = []\n[[graves]]\nid = "0f8fad5b-d9cb-469f-a165-000000000001"\naccount = "tester"\nname = "Tester grave"\nmale = true\nkind = "player_grave"\ntile = 3221\ndirection = 0\nremaining = 300\nblessed = false\nlatest = true\n'
+
+
+def world_file(payload=WORLD_PAYLOAD, digest=None):
+    raw = payload.encode()
+    digest = hashlib.sha256(raw).hexdigest() if digest is None else digest
+    return ('format = 1\npayload = "' + base64.b64encode(raw).decode() + '"\nsha256 = "' + digest + '"\n').encode()
+
+
+def versioned_save(version, name='Tester'):
+    return b'storage_version = ' + str(version).encode() + b'\n' + native_save(name)
+
+
+def pending_batch(members):
+    rows = ''.join(f'{name}\t{len(data)}\t{hashlib.sha256(data).hexdigest()}\n' for name, data in sorted(members.items()))
+    files = {'manifest.tsv': ('SOLOSCAPE_ACCOUNT_BATCH_V1\n' + rows).encode()}
+    files.update(members)
+    return {'saves/.soloscape-account-save/' + name: data for name, data in files.items()}
+
+
 class ProfileTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -23,6 +45,28 @@ class ProfileTests(unittest.TestCase):
 
     def tearDown(self):
         self.patch.stop();self.temp.cleanup()
+
+    def test_malformed_pending_layout_refuses_backup_without_changing_saved_world(self):
+        healthy = self.profile.backup()
+        original = self.save.read_bytes()
+        pending = self.profile.state / 'saves/.soloscape-account-save'
+        pending.mkdir()
+        with self.assertRaisesRegex(ValueError, 'manifest'):
+            self.profile.backup()
+        self.assertEqual(self.save.read_bytes(), original)
+        self.assertEqual(list((self.profile.directory / 'backups').glob('*.zip')), [healthy])
+        # Even an empty unlisted directory cannot disappear from the byte-map
+        # validation and turn an invalid live journal into a verified backup.
+        member = native_save()
+        import hashlib
+        (pending / 'tester.toml').write_bytes(member)
+        (pending / 'manifest.tsv').write_text('SOLOSCAPE_ACCOUNT_BATCH_V1\n' + f'tester.toml\t{len(member)}\t{hashlib.sha256(member).hexdigest()}\n')
+        (pending / 'unexpected-empty-directory').mkdir()
+        with self.assertRaisesRegex(ValueError, 'unsupported member'):
+            self.profile.backup()
+        self.assertEqual(self.save.read_bytes(), original)
+        self.assertTrue((pending / 'unexpected-empty-directory').is_dir())
+        self.assertEqual(list((self.profile.directory / 'backups').glob('*.zip')), [healthy])
 
     def test_profile_creation_is_private_and_separates_mutable_world_paths(self):
         another=profiles.create('Other','Tester')
@@ -216,6 +260,86 @@ class ProfileTests(unittest.TestCase):
         backup.write_bytes(b'not a zip')
         with self.assertRaises(ValueError):profiles.restore_profile(uid,backup.name)
         self.assertEqual((self.profile.directory/'profile.json').read_text(),'broken')
+
+    def write_state(self, contents):
+        for relative, data in contents.items():
+            path = self.profile.state / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+
+    def state_files(self, root):
+        return {p.relative_to(root).as_posix(): p.read_bytes() for p in (root / 'saves').rglob('*') if p.is_file()}
+
+    def test_pending_mixed_batch_backup_and_restore_keep_journal_and_logical_world(self):
+        self.save.write_bytes(native_save())
+        self.write_state({'saves/other.toml': native_save('Other')})
+        self.write_state(pending_batch({'tester.toml': versioned_save(1), profiles.death_loot_state.WORLD_FILE: world_file()}))
+        before = self.state_files(self.profile.state)
+        backup = self.profile.backup()
+        _, contents = self.profile.validate_backup(backup)
+        self.assertEqual({k: v for k, v in contents.items() if k.startswith('saves/')}, before)
+        self.profile.restore(backup.name)
+        self.assertEqual(self.state_files(self.profile.state), before)
+        logical = profiles.death_loot_state.validate_state(before, profiles.validate_save)
+        self.assertEqual(logical['accounts']['tester']['storage_version'], 1)
+        self.assertEqual([g['name'] for g in logical['world']['graves']], ['Tester grave'])
+        self.assertEqual(sorted(logical['accounts']), ['other', 'tester'])
+
+    def test_storage_version_one_without_world_refuses_backup_and_keeps_healthy_backup(self):
+        healthy = self.profile.backup()
+        self.save.write_bytes(versioned_save(1))
+        before = self.save.read_bytes()
+        backups = sorted((self.profile.directory / 'backups').iterdir())
+        with self.assertRaisesRegex(ValueError, 'world'):
+            self.profile.backup()
+        self.assertEqual(self.save.read_bytes(), before)
+        self.assertEqual(sorted((self.profile.directory / 'backups').iterdir()), backups)
+        self.write_state({'saves/' + profiles.death_loot_state.WORLD_FILE: world_file(digest='0' * 64)})
+        with self.assertRaisesRegex(ValueError, 'checksum'):
+            self.profile.backup()
+        self.assertTrue(profiles.list_backups(self.profile.manifest['id'])[0]['valid'])
+        self.assertEqual(self.profile.directory.joinpath('backups', healthy.name).read_bytes(), healthy.read_bytes())
+        self.assertEqual(self.save.read_bytes(), before)
+
+    def test_tampered_journal_member_with_consistent_record_is_refused_on_restore(self):
+        self.write_state(pending_batch({'tester.toml': versioned_save(1), profiles.death_loot_state.WORLD_FILE: world_file()}))
+        backup = self.profile.backup()
+        with zipfile.ZipFile(backup) as archive:
+            contents = {entry.filename: archive.read(entry) for entry in archive.infolist()}
+        member = 'state/saves/.soloscape-account-save/tester.toml'
+        contents[member] = versioned_save(1, 'Other')
+        metadata = json.loads(contents['backup.json'])
+        metadata['files']['saves/.soloscape-account-save/tester.toml'] = {'size': len(contents[member]), 'sha256': profiles.hash_bytes(contents[member])}
+        contents['backup.json'] = json.dumps(metadata).encode()
+        with zipfile.ZipFile(backup, 'w') as archive:
+            for name, data in contents.items():
+                archive.writestr(name, data)
+        before_manifest = (self.profile.directory / 'profile.json').read_bytes()
+        self.assertFalse(profiles.list_backups(self.profile.manifest['id'])[0]['valid'])
+        with self.assertRaisesRegex(ValueError, 'checksum'):
+            self.profile.restore(backup.name)
+        self.assertEqual((self.profile.directory / 'profile.json').read_bytes(), before_manifest)
+
+    def test_native_storage_version_accepts_only_absent_zero_or_one(self):
+        for prefix in (b'', b'storage_version = 0\n', b'storage_version = 1\n'):
+            with self.subTest(prefix=prefix):
+                profiles.validate_save(prefix + native_save())
+        for value in (b'2', b'-1', b'true', b'"1"'):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    profiles.validate_save(b'storage_version = ' + value + b'\n' + native_save())
+
+    def test_world_copy_import_requires_the_world_file_for_versioned_accounts(self):
+        source = Path(self.temp.name) / 'versioned-world'
+        source.mkdir()
+        (source / 'tester.toml').write_bytes(versioned_save(1))
+        with self.assertRaisesRegex(ValueError, 'world'):
+            profiles.import_world_copy(source, 'Refused', 'Tester')
+        self.assertEqual(len(profiles.list_profiles()), 1)
+        (source / profiles.death_loot_state.WORLD_FILE).write_bytes(world_file())
+        imported = profiles.import_world_copy(source, 'Accepted', 'Tester')
+        self.assertEqual((imported.state / 'saves' / profiles.death_loot_state.WORLD_FILE).read_bytes(), world_file())
+        self.assertEqual(len(profiles.list_profiles()), 2)
 
     def test_failed_import_removes_only_its_new_profile(self):
         source=Path(self.temp.name)/'original.toml';source.write_bytes(native_save())

@@ -33,7 +33,7 @@ class LauncherLocationTests(unittest.TestCase):
         code=self.root/version
         scripts=code/'scripts'
         scripts.mkdir(parents=True)
-        for name in ('launcher_backend.py','local_dev.py','profile_session.py','profiles.py',
+        for name in ('launcher_backend.py','local_dev.py','profile_session.py','profiles.py','death_loot_state.py',
                      'session_recovery.py','release_updates.py','deck_awake.py'):
             shutil.copy2(Path(__file__).with_name(name),scripts/name)
         env={k:v for k,v in os.environ.items() if not k.startswith('SOLOSCAPE_')}

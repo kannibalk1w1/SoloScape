@@ -6,6 +6,7 @@ manifest pointer and retains the old generation rather than rewriting live files
 """
 from contextlib import contextmanager
 from datetime import datetime, timezone
+import death_loot_state
 import fcntl
 import hashlib
 import json
@@ -118,6 +119,9 @@ def validate_save(data, expected_account=None):
         raise ValueError('Character save has an invalid location.')
     if type(tile.get('level', 0)) is not int or not 0 <= tile.get('level', 0) <= 3:
         raise ValueError('Character save has an invalid plane.')
+    version = save.get('storage_version', 0)
+    if type(version) is not int or version not in (0, 1):
+        raise ValueError('Character save has an unsupported storage version.')
     inventories = save.get('inventories', {})
     if not isinstance(inventories, dict):
         raise ValueError('Character inventories are invalid.')
@@ -255,6 +259,7 @@ class Profile:
         atomic_json(self.directory / 'profile.json', self.manifest)
 
     def _files(self):
+        death_loot_state.validate_journal_layout(self.state / "saves")
         files = []
         for path in self.state.rglob('*'):
             if path.is_symlink():
@@ -288,6 +293,7 @@ class Profile:
                 primary = 'saves/' + self.manifest['account'].lower() + '.toml'
                 validate_save(data, self.manifest['account'] if relative == primary else None)
             contents[relative] = data
+        death_loot_state.validate_state(contents, validate_save)
         manifest = {'format': FORMAT, 'profile': self.manifest['id'], 'account': self.manifest['account'],
                     'metadata': {k: self.manifest[k] for k in ('label', 'created', 'last_played', 'tutorial')},
                     'world': world_settings(self.manifest.get('world')),
@@ -346,6 +352,7 @@ class Profile:
                         primary = 'saves/' + self.manifest['account'].lower() + '.toml'
                         validate_save(data, self.manifest['account'] if relative == primary else None)
                     result[relative] = data
+                death_loot_state.validate_state(result, validate_save)
                 return manifest, result
         except (zipfile.BadZipFile, zlib.error, KeyError, TypeError, json.JSONDecodeError) as exc:
             raise ValueError('Backup is corrupt or has an invalid manifest.') from exc
@@ -559,6 +566,7 @@ def import_world_copy(source, label, account, password='', world=None):
     if not isinstance(password, str) or len(password) > 20 or any(ord(c) < 32 or ord(c) > 126 for c in password):
         raise ValueError('Optional login password must use up to 20 printable ASCII characters.')
     files = []
+    death_loot_state.validate_journal_layout(source)
     for path in source.rglob('*'):
         if path.is_symlink():
             raise ValueError('World copy contains a symbolic link.')
@@ -585,6 +593,7 @@ def import_world_copy(source, label, account, password='', world=None):
         contents[relative] = data
     if any((path.stat().st_size, path.stat().st_mtime_ns) != saved for path, saved in fingerprints.items()):
         raise ValueError('World copy changed during import; use a stopped, stable copy.')
+    death_loot_state.validate_state({'saves/' + relative.as_posix(): data for relative, data in contents.items()}, validate_save)
     profile = create(label, account, password=password, _staging=True, world=world)
     try:
         with profile.lock():

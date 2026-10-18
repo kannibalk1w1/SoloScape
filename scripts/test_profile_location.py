@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 
+import death_loot_state
 import profiles
 from test_profiles import native_save
 
@@ -68,6 +69,7 @@ class ProfileLocationTests(unittest.TestCase):
         code = self.root / name
         (code / 'scripts').mkdir(parents=True)
         shutil.copy2(profiles.__file__, code / 'scripts/profiles.py')
+        shutil.copy2(death_loot_state.__file__, code / 'scripts/death_loot_state.py')
         return code
 
     def run_driver(self, code_root, mode, argument='', home=None, check=True):

@@ -53,7 +53,7 @@ class PrivateBootstrapTests(unittest.TestCase):
     def payload(self,name):
         root=self.base/name
         (root/'scripts').mkdir(parents=True)
-        for name in ('local_dev.py','profiles.py','profile_session.py','session_recovery.py','release_updates.py','deck_awake.py','launcher.sh'):
+        for name in ('local_dev.py','profiles.py','death_loot_state.py','profile_session.py','session_recovery.py','release_updates.py','deck_awake.py','launcher.sh'):
             shutil.copy2(Path(__file__).with_name(name),root/'scripts'/name)
         shutil.copy2(Path(__file__).with_name('launcher_backend.py'),root/'scripts/owned_launcher_backend.py')
         shutil.copy2(CONTRACT/'manifest.py',root/'scripts/prebuilt_manifest.py')

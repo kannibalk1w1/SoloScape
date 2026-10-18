@@ -1,0 +1,1289 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/DeathLootSnapshot.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/DeathLootSnapshot.kt
+new file mode 100644
+--- /dev/null
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/DeathLootSnapshot.kt
+@@ -0,0 +1,89 @@
++package world.gregs.voidps.engine.data
++
++import world.gregs.config.Config
++import world.gregs.config.writePair
++import java.security.MessageDigest
++import java.util.Base64
++
++/** Versioned original world records. No NPC indexes, Player objects, or wall-clock deadlines. */
++data class DeathLootSnapshot(val graves: List<Grave>, val piles: List<Pile>) {
++    data class Grave(val id: String, val account: String, val name: String, val male: Boolean, val kind: String, val tile: Int, val direction: Int, val remaining: Int, val blessed: Boolean, val latest: Boolean)
++    data class Pile(val id: String, val item: String, val amount: Int, val charges: Int, val tile: Int, val owner: String, val sources: List<String>, val reveal: Int, val disappear: Int)
++
++    fun encode(): ByteArray {
++        val payload = Config.stringWriter {
++            writePair("graves", graves.map { g -> mapOf("id" to g.id, "account" to g.account, "name" to g.name, "male" to g.male, "kind" to g.kind, "tile" to g.tile, "direction" to g.direction, "remaining" to g.remaining, "blessed" to g.blessed, "latest" to g.latest) })
++            writePair("piles", piles.map { p -> mapOf("id" to p.id, "item" to p.item, "amount" to p.amount, "charges" to p.charges, "tile" to p.tile, "owner" to p.owner, "sources" to p.sources, "reveal" to p.reveal, "disappear" to p.disappear) })
++        }.toByteArray(Charsets.UTF_8)
++        val bytes = Config.stringWriter {
++            writePair("format", 1)
++            writePair("payload", Base64.getEncoder().encodeToString(payload))
++            writePair("sha256", digest(payload))
++        }.toByteArray(Charsets.UTF_8)
++        // Every constructed record obeys the same rules as an on-disk record.
++        decode(bytes)
++        return bytes
++    }
++
++    companion object {
++        const val FILE = ".soloscape-death-loot.v1"
++        private val UUID = Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
++        private val ACCOUNT = Regex("[a-z0-9 _-]{1,64}")
++        private val ID = Regex("[a-z0-9_]{1,128}")
++        private val ITEM = Regex("[^\\p{C}\\p{Zl}\\p{Zp}]{1,256}")
++        private val SHA = Regex("[0-9a-f]{64}")
++        private const val LIMIT = 32 * 1024 * 1024
++        private fun digest(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
++
++        private fun parse(bytes: ByteArray): Map<String, Any> {
++            require(bytes.size in 1..LIMIT) { "Death-loot snapshot exceeds size limit" }
++            val text = Charsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(bytes)).toString()
++            val result = linkedMapOf<String, Any>()
++            Config.stringReader(text) {
++                while (nextPair()) {
++                    val name = key()
++                    require(!result.containsKey(name)) { "Duplicate death-loot field" }
++                    result[name] = value()
++                }
++                require(!nextSection()) { "Unexpected death-loot section" }
++            }
++            return result
++        }
++        private fun Map<*, *>.exact(vararg keys: String) { require(this.keys == keys.toSet()) { "Unexpected death-loot fields" } }
++        private fun Map<*, *>.text(key: String, pattern: Regex? = null): String {
++            val v = this[key] as? String ?: error("Invalid death-loot text: $key")
++            require(if (pattern != null) pattern.matches(v) else v.length <= 64 && v.all { it >= ' ' && it != '\u007f' }) { "Invalid death-loot text: $key" }
++            return v
++        }
++        private fun Map<*, *>.number(key: String, min: Int = 0, max: Int = Int.MAX_VALUE): Int = (this[key] as? Int)?.also { require(it in min..max) { "Invalid death-loot number: $key" } } ?: error("Invalid death-loot number: $key")
++        private fun Map<*, *>.flag(key: String) = this[key] as? Boolean ?: error("Invalid death-loot flag: $key")
++        private fun Map<*, *>.rows(key: String, max: Int): List<Map<*, *>> = (this[key] as? List<*>)?.also { require(it.size <= max) }?.map { it as? Map<*, *> ?: error("Invalid death-loot record") } ?: error("Invalid death-loot list")
++
++        fun decode(bytes: ByteArray): DeathLootSnapshot {
++            val envelope = parse(bytes)
++            envelope.exact("format", "payload", "sha256")
++            require(envelope.number("format") == 1) { "Unsupported death-loot version" }
++            val payloadString = envelope["payload"] as? String ?: error("Missing death-loot payload")
++            val payload = Base64.getDecoder().decode(payloadString)
++            require(Base64.getEncoder().encodeToString(payload) == payloadString && envelope.text("sha256", SHA) == digest(payload)) { "Death-loot checksum mismatch" }
++            val root = parse(payload)
++            root.exact("graves", "piles")
++            val graves = root.rows("graves", 2048).map { g ->
++                g.exact("id", "account", "name", "male", "kind", "tile", "direction", "remaining", "blessed", "latest")
++                Grave(g.text("id", UUID), g.text("account", ACCOUNT), g.text("name"), g.flag("male"), g.text("kind", ID), g.number("tile", max = 0x3fffffff), g.number("direction", max = 8), g.number("remaining", min = 1), g.flag("blessed"), g.flag("latest"))
++            }
++            val piles = root.rows("piles", 16384).map { p ->
++                p.exact("id", "item", "amount", "charges", "tile", "owner", "sources", "reveal", "disappear")
++                val sources = (p["sources"] as? List<*>)?.map { (it as? String)?.also { a -> require(ACCOUNT.matches(a)) } ?: error("Invalid source account") } ?: error("Missing source accounts")
++                require(sources.size in 1..2048 && sources.distinct().size == sources.size)
++                val pile = Pile(p.text("id", UUID), p.text("item", ITEM), p.number("amount", min = 1), p.number("charges"), p.number("tile", max = 0x3fffffff), p.text("owner"), sources.toList(), p.number("reveal", -1), p.number("disappear", -1))
++                require(if (pile.owner.isEmpty()) pile.reveal <= 0 else pile.reveal == -1 || pile.reveal > 0) { "Inconsistent death-loot visibility" }
++                pile
++            }
++            require(graves.map { it.id }.distinct().size == graves.size && piles.map { it.id }.distinct().size == piles.size) { "Duplicate death-loot identity" }
++            require(graves.all { it.name.isNotEmpty() } && graves.map { it.id }.toSet().intersect(piles.map { it.id }.toSet()).isEmpty()) { "Invalid grave name or shared record identity" }
++            require(graves.filter { it.latest }.groupBy { it.account }.all { it.value.size == 1 }) { "Multiple latest graves" }
++            return DeathLootSnapshot(graves.toList(), piles.toList())
++        }
++    }
++}
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/PlayerSave.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/PlayerSave.kt
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/data/PlayerSave.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/PlayerSave.kt
+@@ -37,6 +37,7 @@
+     val kills: Map<String, Int>,
+     val records: Map<String, Int>,
+     val recentEvents: List<RecentEvent>,
++    val storageVersion: Int = 0,
+ ) {
+ 
+     fun toPlayer(): Player = Player(
+@@ -59,6 +60,7 @@
+ 
+     fun save(file: File) {
+         Config.atomicFileWriter(file) {
++            if (storageVersion > 0) writePair("storage_version", storageVersion)
+             writePair("accountName", name)
+             writePair("passwordHash", password)
+             writePair("experience", experience)
+@@ -199,6 +201,7 @@
+ 
+         other as PlayerSave
+ 
++        if (storageVersion != other.storageVersion) return false
+         if (male != other.male) return false
+         if (name != other.name) return false
+         if (password != other.password) return false
+@@ -221,7 +224,7 @@
+     }
+ 
+     override fun hashCode(): Int {
+-        var result = male.hashCode()
++        var result = 31 * storageVersion + male.hashCode()
+         result = 31 * result + name.hashCode()
+         result = 31 * result + password.hashCode()
+         result = 31 * result + tile.hashCode()
+@@ -244,6 +247,7 @@
+ 
+     companion object {
+         fun load(file: File): PlayerSave {
++            var storageVersion = 0
+             var name = ""
+             var password = ""
+             var tile = Tile.EMPTY
+@@ -265,6 +269,7 @@
+             Config.fileReader(file) {
+                 while (nextPair()) {
+                     when (val key = key()) {
++                        "storage_version" -> { storageVersion = int(); require(storageVersion in 0..1) { "Unsupported account storage version" } }
+                         "accountName" -> name = string()
+                         "passwordHash" -> password = string()
+                         "experience" -> {
+@@ -464,6 +469,7 @@
+                 kills = kills,
+                 records = records,
+                 recentEvents = recentEvents,
++                storageVersion = storageVersion,
+             )
+         }
+     }
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/SaveQueue.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/SaveQueue.kt
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/data/SaveQueue.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/SaveQueue.kt
+@@ -20,20 +20,39 @@
+     private val failing = ConcurrentHashMap<String, Long>()
+     private val logger = InlineLogger()
+     private var job: Job? = null
++    // Installed by the native world persistence script; invoked only on the game thread.
++    var worldSnapshot: (() -> ByteArray)? = null
++    var checkpointReady: () -> Boolean = { true }
++    private var checkpointTicks = 0
++
++    private data class Capture(val accounts: List<PlayerSave>, val queued: Map<String, PlayerSave>)
++
++    private fun accounts(): Capture {
++        val queued = pending.toMap()
++        val online = Players.filter { !it.contains("bot") }.map { it.copy() }
++        val names = online.mapTo(HashSet()) { it.name }
++        return Capture(online + queued.values.filter { it.name !in names }, queued)
++    }
+ 
+     private val handler = CoroutineExceptionHandler { _, exception ->
+         logger.error(exception) { "Unexpected error in the save queue!" }
+     }
+ 
+     override fun run() {
+-        if (pending.isEmpty()) {
+-            return
++        if (job?.isActive == true || !checkpointReady()) return
++        val capture = worldSnapshot?.takeUnless { Settings["storage.disabled", false] }
++        if (capture != null) {
++            if (pending.isEmpty() && checkpointTicks++ % maxOf(1, Settings["storage.worldCheckpoint.ticks", 5]) != 0) return
++            try {
++                val snapshots = accounts()
++                val world = capture().copyOf()
++                job = scope.save(snapshots.accounts, world = world, acknowledged = snapshots.queued)
++            } catch (e: Exception) {
++                logger.error(e) { "World snapshot capture failed; retaining the previous complete checkpoint." }
++            }
++        } else if (pending.isNotEmpty()) {
++            job = scope.save(pending.values.toList())
+         }
+-        val job = job
+-        if (job != null && job.isActive) {
+-            return
+-        }
+-        this.job = scope.save(pending.values.toList())
+     }
+ 
+     /**
+@@ -41,27 +60,39 @@
+      * and with `false` when primary storage failed, even if the fallback then succeeded.
+      */
+     fun direct(onPrimaryResult: (Boolean) -> Unit = {}): Job {
+-        val online = Players.filter { !it.contains("bot") }.map { it.copy() }
+-        val names = online.mapTo(HashSet()) { it.name }
+-        val queued = pending.values.filter { it.name !in names }
+-        return scope.save(online + queued, retry = false, onPrimaryResult = onPrimaryResult)
++        val snapshots = accounts()
++        val previous = job
++        val world = try {
++            check(checkpointReady()) { "Cannot checkpoint an unfinished death" }
++            worldSnapshot?.invoke()?.copyOf()
++        } catch (e: Exception) {
++            return scope.launch(handler) {
++                previous?.join()
++                failed(snapshots.accounts, e, false)
++                onPrimaryResult(false)
++            }.also { job = it }
++        }
++        return scope.launch(handler) {
++            previous?.join()
++            scope.save(snapshots.accounts, retry = false, onPrimaryResult = onPrimaryResult, world = world, acknowledged = snapshots.queued).join()
++        }.also { job = it }
+     }
+ 
+     suspend fun awaitInFlight() {
+         job?.join()
+     }
+ 
+-    private fun CoroutineScope.save(accounts: List<PlayerSave>, retry: Boolean = true, onPrimaryResult: (Boolean) -> Unit = {}) = launch(handler) {
++    private fun CoroutineScope.save(accounts: List<PlayerSave>, retry: Boolean = true, onPrimaryResult: (Boolean) -> Unit = {}, world: ByteArray? = null, acknowledged: Map<String, PlayerSave> = accounts.associateBy { it.name }) = launch(handler) {
+         withContext(NonCancellable) {
+             val start = System.currentTimeMillis()
+             try {
+-                storage.save(accounts)
++                if (world == null) storage.save(accounts) else storage.saveWorld(accounts, world)
+             } catch (e: Exception) {
+                 failed(accounts, e, retry)
+                 onPrimaryResult(false)
+                 return@withContext
+             }
+-            clearPending(accounts)
++            clearPending(acknowledged.values.toList())
+             clearFailing(accounts)
+             onPrimaryResult(true)
+             logger.info { "Saved ${accounts.size} ${"account".plural(accounts.size)} in ${System.currentTimeMillis() - start}ms" }
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/Storage.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/Storage.kt
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/data/Storage.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/Storage.kt
+@@ -56,6 +56,13 @@
+      */
+     fun save(accounts: List<PlayerSave>)
+ 
++    /** Accounts and a captured death-loot world state must share a commit decision. */
++    fun saveWorld(accounts: List<PlayerSave>, snapshot: ByteArray) {
++        error("This storage does not support coherent world checkpoints")
++    }
++
++    fun loadWorld(): ByteArray? = null
++
+     /**
+      * Saves an abuse report
+      */
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/AccountSaveBatch.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/AccountSaveBatch.kt
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/AccountSaveBatch.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/AccountSaveBatch.kt
+@@ -1,6 +1,7 @@
+ package world.gregs.voidps.engine.data.file
+ 
+ import world.gregs.voidps.engine.data.PlayerSave
++import world.gregs.voidps.engine.data.DeathLootSnapshot
+ import java.io.File
+ import java.nio.channels.FileChannel
+ import java.nio.file.Files
+@@ -26,15 +27,15 @@
+     // Test-only observation seam; no setting, packet or environment variable enables it.
+     internal var boundary: (String) -> Unit = {}
+ 
+-    fun save(accounts: List<PlayerSave>) {
++    fun save(accounts: List<PlayerSave>, world: ByteArray? = null) {
+         recover()
+-        if (accounts.isEmpty()) return
++        if (accounts.isEmpty() && world == null) return
+         require(accounts.size <= MAX_ACCOUNTS) { "Account save batch is too large" }
+         val byName = accounts.associateBy { filename(it.name) }
+         require(byName.size == accounts.size) { "Duplicate account in save batch" }
+         safeAncestors(root)
+         Files.createDirectories(root)
+-        for (name in byName.keys) target(root.resolve(name))
++        for (name in byName.keys + listOfNotNull(world?.let { DeathLootSnapshot.FILE })) target(root.resolve(name))
+         val stage = Files.createDirectory(root.resolve(".account-save-stage-${UUID.randomUUID()}"))
+         var published = false
+         try {
+@@ -45,7 +46,15 @@
+                 force(path)
+                 boundary("staged:$name")
+                 record
++            }.toMutableList()
++            if (world != null) {
++                val path = stage.resolve(DeathLootSnapshot.FILE)
++                Files.createFile(path, java.nio.file.attribute.PosixFilePermissions.asFileAttribute(java.nio.file.attribute.PosixFilePermissions.fromString("rw-------")))
++                Files.write(path, world)
++                records.add(inspect(path, DeathLootSnapshot.FILE))
++                force(path)
+             }
++            records.sortBy { it.name }
+             require(records.sumOf { it.size } <= MAX_TOTAL) { "Account save batch is too large" }
+             val text = HEADER + "\n" + records.joinToString("") { "${it.name}\t${it.size}\t${it.digest}\n" }
+             Files.writeString(stage.resolve(MANIFEST), text)
+@@ -61,7 +70,7 @@
+             // A published decision is retained on failure for deterministic replay.
+             if (!published && Files.exists(stage, NOFOLLOW_LINKS)) {
+                 // Only our own freshly created, bounded stage is eligible for cleanup.
+-                for (name in byName.keys + MANIFEST) Files.deleteIfExists(stage.resolve(name))
++                for (name in byName.keys + MANIFEST + listOfNotNull(world?.let { DeathLootSnapshot.FILE })) Files.deleteIfExists(stage.resolve(name))
+                 // Native atomic-writer failure artifacts remain as evidence, if any.
+                 if (Files.list(stage).use { !it.findAny().isPresent }) Files.delete(stage)
+             }
+@@ -80,12 +89,12 @@
+         check(lines.first() == HEADER && lines.last() == "") { "Unsupported or damaged account batch journal" }
+         val records = lines.drop(1).dropLast(1).map { row ->
+             val parts = row.split('\t')
+-            check(parts.size == 3 && NAME.matches(parts[0]) && HASH.matches(parts[2])) { "Invalid account batch member" }
++            check(parts.size == 3 && (NAME.matches(parts[0]) || parts[0] == DeathLootSnapshot.FILE) && HASH.matches(parts[2])) { "Invalid account batch member" }
+             val size = parts[1].toLongOrNull()
+             check(size != null && size in 1..MAX_FILE && size.toString() == parts[1]) { "Invalid account batch member size" }
+             Record(parts[0], size, parts[2])
+         }
+-        check(records.size in 1..MAX_ACCOUNTS && records.map { it.name } == records.map { it.name }.distinct().sorted()) { "Invalid account batch member order/count" }
++        check(records.size in 1..(MAX_ACCOUNTS + 1) && records.map { it.name } == records.map { it.name }.distinct().sorted()) { "Invalid account batch member order/count" }
+         check(records.sumOf { it.size } <= MAX_TOTAL) { "Account batch exceeds size limit" }
+         val members = Files.list(pending).use { paths -> paths.map { it.fileName.toString() }.toList().toSet() }
+         check(members == records.map { it.name }.toSet() + MANIFEST) { "Account batch contains missing or unknown files" }
+@@ -95,6 +104,8 @@
+             target(root.resolve(record.name))
+             target(installPath(record.name))
+         }
++        val guarded = records.filter { it.name != DeathLootSnapshot.FILE }.any { PlayerSave.load(pending.resolve(it.name).toFile()).storageVersion > 0 }
++        check(!guarded || records.any { it.name == DeathLootSnapshot.FILE }) { "Versioned accounts require the paired world checkpoint" }
+         for (record in records) {
+             val install = installPath(record.name)
+             Files.copy(pending.resolve(record.name), install, REPLACE_EXISTING)
+@@ -141,7 +152,8 @@
+             }
+             check(total == size) { "Account batch member changed while reading" }
+         }
+-        check(filename(PlayerSave.load(path.toFile()).name) == expectedName) { "Account batch identity mismatch" }
++        if (expectedName == DeathLootSnapshot.FILE) DeathLootSnapshot.decode(Files.readAllBytes(path))
++        else check(filename(PlayerSave.load(path.toFile()).name) == expectedName) { "Account batch identity mismatch" }
+         return Record(expectedName, size, hash.digest().joinToString("") { "%02x".format(it) })
+     }
+ 
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt
+@@ -4,6 +4,7 @@
+ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+ import world.gregs.config.*
+ import world.gregs.voidps.engine.data.AbuseReport
++import world.gregs.voidps.engine.data.DeathLootSnapshot
+ import world.gregs.voidps.engine.data.PlayerSave
+ import world.gregs.voidps.engine.data.Settings
+ import world.gregs.voidps.engine.data.Storage
+@@ -25,6 +26,7 @@
+     @Synchronized
+     override fun names(): Map<String, AccountDefinition> {
+         accountBatch.recover()
++        loadWorld()
+         val files = directory.listFiles { _, b -> b.endsWith(".toml") } ?: return emptyMap()
+         val definitions: MutableMap<String, AccountDefinition> = Object2ObjectOpenHashMap()
+         for (save in files) {
+@@ -49,6 +51,7 @@
+     @Synchronized
+     override fun clans(): Map<String, Clan> {
+         accountBatch.recover()
++        loadWorld()
+         val files = directory.listFiles { _, b -> b.endsWith(".toml") } ?: return emptyMap()
+         val clans: MutableMap<String, Clan> = Object2ObjectOpenHashMap()
+         for (save in files) {
+@@ -349,7 +352,27 @@
+ 
+     @Synchronized
+     override fun save(accounts: List<PlayerSave>) {
++        check(loadWorld() == null) { "World-aware storage requires an account-and-loot checkpoint" }
+         accountBatch.save(accounts)
++    }
++
++    @Synchronized
++    override fun saveWorld(accounts: List<PlayerSave>, snapshot: ByteArray) {
++        DeathLootSnapshot.decode(snapshot)
++        accountBatch.save(accounts.map { it.copy(storageVersion = 1) }, snapshot)
++    }
++
++    @Synchronized
++    override fun loadWorld(): ByteArray? {
++        accountBatch.recover()
++        val path = directory.resolve(DeathLootSnapshot.FILE).toPath()
++        if (!java.nio.file.Files.exists(path, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
++            val guarded = directory.listFiles { _, name -> name.endsWith(".toml") }?.any { PlayerSave.load(it).storageVersion > 0 } ?: false
++            check(!guarded) { "Required death-loot world state is missing; restore a complete verified backup" }
++            return null
++        }
++        check(java.nio.file.Files.isRegularFile(path, java.nio.file.LinkOption.NOFOLLOW_LINKS) && java.nio.file.Files.size(path) in 1..(32L * 1024 * 1024)) { "Invalid death-loot world file" }
++        return java.nio.file.Files.readAllBytes(path).also { DeathLootSnapshot.decode(it) }
+     }
+ 
+     @Synchronized
+@@ -359,6 +382,6 @@
+         if (!file.exists()) {
+             return null
+         }
+-        return PlayerSave.load(file)
++        return PlayerSave.load(file).also { if (it.storageVersion > 0) check(loadWorld() != null) { "Required death-loot world state is missing" } }
+     }
+ }
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCs.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCs.kt
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCs.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCs.kt
+@@ -83,6 +83,9 @@
+         spawnIndex = 0
+     }
+ 
++    fun activeOrQueued(npc: NPC): Boolean = !npc.hide && npc.index in 1 until MAX_NPCS &&
++        (indexArray[npc.index] === npc || spawnReservations[npc.index] === npc) && removalIdentities[npc.index] !== npc
++
+     fun indexed(index: Int): NPC? = indexArray.getOrNull(index)
+ 
+     fun add(id: String, tile: Tile, direction: Direction = Direction.SOUTH): NPC {
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/item/floor/FloorItem.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/item/floor/FloorItem.kt
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/item/floor/FloorItem.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/item/floor/FloorItem.kt
+@@ -22,6 +22,9 @@
+     var owner: String? = null,
+ ) : Entity {
+ 
++    var deathLootId: String? = null
++    val deathSources: MutableSet<String> = linkedSetOf()
++
+     val def: ItemDefinition
+         get() = ItemDefinitions.get(id)
+ 
+@@ -42,6 +45,10 @@
+             return false
+         }
+         amount = combined
++        if (other.deathLootId != null) {
++            if (deathLootId == null) deathLootId = java.util.UUID.randomUUID().toString()
++            deathSources.addAll(other.deathSources)
++        }
+         return true
+     }
+ 
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/item/floor/FloorItems.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/item/floor/FloorItems.kt
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/entity/item/floor/FloorItems.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/entity/item/floor/FloorItems.kt
+@@ -47,13 +47,14 @@
+         addQueue.clear()
+     }
+ 
+-    fun add(tile: Tile, id: String, amount: Int = 1, revealTicks: Int = NEVER, disappearTicks: Int = NEVER, charges: Int = 0, owner: Player?) = add(tile, id, amount, revealTicks, disappearTicks, charges, owner?.name)
++    fun add(tile: Tile, id: String, amount: Int = 1, revealTicks: Int = NEVER, disappearTicks: Int = NEVER, charges: Int = 0, owner: Player?, deathSource: String? = null) = add(tile, id, amount, revealTicks, disappearTicks, charges, owner?.name, deathSource)
+ 
+-    fun add(tile: Tile, id: String, amount: Int = 1, revealTicks: Int = NEVER, disappearTicks: Int = NEVER, charges: Int = 0, owner: String? = null): FloorItem {
++    fun add(tile: Tile, id: String, amount: Int = 1, revealTicks: Int = NEVER, disappearTicks: Int = NEVER, charges: Int = 0, owner: String? = null, deathSource: String? = null): FloorItem {
+         if (!ItemDefinitions.contains(id)) {
+             logger.warn { "Invalid floor item id: '$id' at $tile" }
+         }
+         val item = FloorItem(tile, id, amount, revealTicks, disappearTicks, charges, if (revealTicks == IMMEDIATE) null else owner)
++        if (deathSource != null) { item.deathLootId = java.util.UUID.randomUUID().toString(); item.deathSources.add(deathSource.lowercase()) }
+         display(item)
+         return item
+     }
+@@ -103,6 +104,17 @@
+         }
+         return false
+     }
++
++    /** A prevalidated persisted pile is an exact identity, never a new merge/eviction. */
++    fun restoreDeathLoot(item: FloorItem) {
++        require(item.deathLootId != null && item.deathSources.isNotEmpty())
++        addQueue.add(item)
++        ZoneBatchUpdates.add(item.tile.zone, FloorItemAddition(item.tile.id, item.def.id, item.amount, item.owner))
++    }
++
++    /** Include queued additions: a death can occur after the start-of-tick flush. */
++    fun deathLoot(): List<FloorItem> = (data.values.flatMap { it.values.flatten() } + addQueue)
++        .filter { it.deathLootId != null }.distinctBy { it.deathLootId }
+ 
+     fun first(tile: Tile, id: String) = first(tile) { it.id == id }
+ 
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/data/SaveQueueTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/data/SaveQueueTest.kt
+--- a/engine/src/test/kotlin/world/gregs/voidps/engine/data/SaveQueueTest.kt
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/data/SaveQueueTest.kt
+@@ -36,6 +36,60 @@
+     }
+ 
+     @Test
++    fun `Capture failure leaves the game tick usable and direct save unconfirmed`() {
++        val storage = object : TestStorage() {
++            override fun saveWorld(accounts: List<PlayerSave>, snapshot: ByteArray) { error("Must not write a partial capture") }
++        }
++        val queue = SaveQueue(storage)
++        queue.worldSnapshot = { error("original fixture capture refusal") }
++        queue.save(Player(accountName = "capturefail"))
++        queue.run() // Capture failure must not escape and terminate GameLoop.
++        assertTrue(queue.saving("capturefail"))
++        val results = CopyOnWriteArrayList<Boolean>()
++        runBlocking { queue.direct { results.add(it) }.join() }
++        assertEquals(listOf(false), results)
++        assertTrue(queue.saving("capturefail"))
++        queue.worldSnapshot = null
++        queue.run()
++        runBlocking { queue.awaitInFlight() }
++        assertTrue(queue.empty(), "A corrected capture must leave the existing retry path usable")
++    }
++
++    @Test
++    fun `Online coherent capture acknowledges the queued version and freezes world bytes`() {
++        val started = CountDownLatch(1)
++        val release = CountDownLatch(1)
++        val seen = CopyOnWriteArrayList<ByteArray>()
++        val storage = object : TestStorage() {
++            override fun saveWorld(accounts: List<PlayerSave>, snapshot: ByteArray) {
++                started.countDown()
++                release.await(5, TimeUnit.SECONDS)
++                seen.add(snapshot)
++            }
++        }
++        val player = Player(accountName = "captured", index = 1)
++        val players = world.gregs.voidps.engine.entity.character.player.Players
++        assertTrue(players.add(player))
++        val queue = SaveQueue(storage)
++        val mutable = byteArrayOf(1, 2, 3)
++        queue.worldSnapshot = { mutable }
++        try {
++            queue.save(player)
++            queue.run()
++            assertTrue(started.await(5, TimeUnit.SECONDS))
++            mutable[0] = 9
++            release.countDown()
++            runBlocking { queue.awaitInFlight() }
++            assertEquals(listOf<Byte>(1, 2, 3), seen.single().toList())
++            assertTrue(queue.empty(), "Fresh online state supersedes its captured pending version")
++        } finally {
++            release.countDown()
++            runBlocking { queue.awaitInFlight() }
++            players.remove(player)
++        }
++    }
++
++    @Test
+     fun `Offline double write failure cannot become an empty successful shutdown`() {
+         val account = "offline_double"
+         val primary = refusedAccount(nativeDirectory.resolve("primary"), account)
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/DeathLootStorageTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/DeathLootStorageTest.kt
+new file mode 100644
+--- /dev/null
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/DeathLootStorageTest.kt
+@@ -0,0 +1,39 @@
++package world.gregs.voidps.engine.data.file
++
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.io.TempDir
++import world.gregs.voidps.engine.data.DeathLootSnapshot
++import java.nio.file.Files
++import java.nio.file.Path
++import kotlin.test.*
++
++class DeathLootStorageTest {
++    @TempDir lateinit var directory: Path
++    private val snapshot = DeathLootSnapshot(emptyList(), listOf(DeathLootSnapshot.Pile("00000000-0000-0000-0000-000000000001", "bronze_dagger_p+", 1, 0, 100, "owner", listOf("owner"), 500, 560)))
++
++    @Test
++    fun `Native item punctuation survives the world codec`() {
++        assertEquals(snapshot, DeathLootSnapshot.decode(snapshot.encode()))
++    }
++
++    @Test
++    fun `Guarded accounts refuse a missing or corrupt world without overwriting either`() {
++        val storage = FileStorage(directory.toFile())
++        storage.saveWorld(listOf(AccountBatchRecoveryTest.snapshot("batchone", 10)), DeathLootSnapshot(emptyList(), emptyList()).encode())
++        val path = directory.resolve(DeathLootSnapshot.FILE)
++        val save = directory.resolve("batchone.toml")
++        val original = Files.readAllBytes(save)
++        val world = Files.readAllBytes(path)
++        assertEquals(1, storage.load("batchone")!!.storageVersion)
++        assertFails { storage.save(listOf(AccountBatchRecoveryTest.snapshot("batchone", 0))) }
++        Files.delete(path)
++        assertFails { storage.loadWorld() }
++        assertFails { storage.load("batchone") }
++        assertFails { storage.names() }
++        assertFails { storage.save(listOf(AccountBatchRecoveryTest.snapshot("batchone", 0))) }
++        assertContentEquals(original, Files.readAllBytes(save))
++        Files.write(path, world.copyOf().also { it[0] = '!'.code.toByte() })
++        assertFails { storage.loadWorld() }
++        assertContentEquals(original, Files.readAllBytes(save))
++    }
++}
+diff --git a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/DeathLootPersistence.kt b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/DeathLootPersistence.kt
+new file mode 100644
+--- /dev/null
++++ b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/DeathLootPersistence.kt
+@@ -0,0 +1,104 @@
++package content.area.misthalin.lumbridge.church
++
++import content.entity.player.modal.map.MapMarkers
++import content.entity.combat.dead
++import world.gregs.voidps.engine.entity.character.player.Players
++import world.gregs.voidps.engine.client.variable.remaining
++import world.gregs.voidps.engine.client.variable.start
++import world.gregs.voidps.engine.data.DeathLootSnapshot
++import world.gregs.voidps.engine.data.SaveQueue
++import world.gregs.voidps.engine.data.Settings
++import world.gregs.voidps.engine.data.Storage
++import world.gregs.voidps.engine.data.definition.ItemDefinitions
++import world.gregs.voidps.engine.data.definition.NPCDefinitions
++import world.gregs.voidps.engine.data.file.FileStorage
++import world.gregs.voidps.engine.entity.character.npc.NPC
++import world.gregs.voidps.engine.entity.character.npc.NPCs
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.character.player.male
++import world.gregs.voidps.engine.entity.character.player.name
++import world.gregs.voidps.engine.entity.item.floor.FloorItem
++import world.gregs.voidps.engine.entity.item.floor.FloorItems
++import world.gregs.voidps.engine.get
++import world.gregs.voidps.engine.timer.epochSeconds
++import world.gregs.voidps.type.Direction
++import world.gregs.voidps.type.Tile
++import java.util.UUID
++
++/** Live world-owned identities; account logout never owns/overwrites this registry. */
++object DeathLootPersistence {
++    private val graves = linkedMapOf<String, NPC>()
++    private var restoredStorage: Storage? = null
++
++    fun register(npc: NPC, player: Player) {
++        for (old in graves.values) if (old["death_account", ""] == player.accountName.lowercase()) old["death_latest"] = false
++        val id = UUID.randomUUID().toString()
++        npc["death_account"] = player.accountName.lowercase()
++        npc["death_latest"] = true
++        npc.start("grave_timer", Gravestone.times.getValue(npc.id.removePrefix("gravestone_")) * 60, epochSeconds())
++        graves[id] = npc
++    }
++
++    fun forget(npc: NPC) { graves.entries.removeIf { it.value === npc } }
++
++    fun start() {
++        if (Settings["storage.disabled", false]) return
++        val storage = get<Storage>()
++        check(storage is FileStorage) { "Death-loot persistence requires native file storage" }
++        if (restoredStorage !== storage) {
++            val state = storage.loadWorld()?.let { DeathLootSnapshot.decode(it) }
++            // Resolve every definition before spawning anything or enabling saves.
++            if (state != null) {
++                for (g in state.graves) check(g.kind in Gravestone.times && NPCDefinitions.getOrNull("gravestone_${g.kind}") != null) { "Unknown persisted grave kind" }
++                for (p in state.piles) check(ItemDefinitions.contains(p.item)) { "Unknown persisted death-loot item" }
++            }
++            graves.clear()
++            if (state != null) {
++                for (g in state.graves) {
++                    val npc = NPCs.add("gravestone_${g.kind}", Tile(g.tile), Direction.entries[g.direction])
++                    check(npc.index > 0) { "Unable to restore gravestone" }
++                    npc["death_account"] = g.account
++                    npc["death_latest"] = g.latest
++                    npc["player_name"] = g.name
++                    npc["player_male"] = g.male
++                    npc["blessed"] = g.blessed
++                    npc.start("grave_timer", g.remaining, epochSeconds())
++                    graves[g.id] = npc
++                }
++                for (p in state.piles) {
++                    val item = FloorItem(Tile(p.tile), p.item, p.amount, p.reveal, p.disappear, p.charges, p.owner.ifEmpty { null })
++                    item.deathLootId = p.id
++                    item.deathSources.addAll(p.sources)
++                    FloorItems.restoreDeathLoot(item)
++                }
++            }
++            restoredStorage = storage
++        }
++        get<SaveQueue>().worldSnapshot = ::capture
++        get<SaveQueue>().checkpointReady = { Players.none { !it.contains("bot") && it.dead } }
++    }
++
++    fun capture(): ByteArray {
++        graves.entries.removeIf { !NPCs.activeOrQueued(it.value) }
++        val savedGraves = graves.mapNotNull { (id, npc) ->
++            val remaining = npc.remaining("grave_timer", epochSeconds())
++            if (remaining <= 0) null else DeathLootSnapshot.Grave(id, npc["death_account", ""], npc["player_name", ""], npc["player_male", true], npc.id.removePrefix("gravestone_"), npc.tile.id, npc.direction.ordinal, remaining, npc["blessed", false], npc["death_latest", false])
++        }
++        val piles = FloorItems.deathLoot().map { p -> DeathLootSnapshot.Pile(requireNotNull(p.deathLootId), p.id, p.amount, p.charges, p.tile.id, p.owner ?: "", p.deathSources.sorted(), p.revealTicks, p.disappearTicks) }
++        return DeathLootSnapshot(savedGraves, piles).encode()
++    }
++
++    fun attach(player: Player) {
++        val owned = graves.values.filter { NPCs.activeOrQueued(it) && it["death_account", ""] == player.accountName.lowercase() && it.remaining("grave_timer", epochSeconds()) > 0 }
++        if (owned.isEmpty()) return
++        // Rebuild only grave markers; unrelated user/map markers retain their slots.
++        for (i in 1..5) if (player.get<String>("world_map_marker_type_$i") == "grave") {
++            player.clear("world_map_marker_$i"); player.clear("world_map_marker_type_$i"); player.clear("world_map_marker_text_$i")
++        }
++        for (npc in owned) MapMarkers.add(player, npc.tile, "grave")
++        val latest = owned.firstOrNull { it["death_latest", false] } ?: return
++        player["gravestone_npc"] = latest
++        player["gravestone_tile"] = latest.tile
++        player["gravestone_time"] = epochSeconds().toLong() + latest.remaining("grave_timer", epochSeconds())
++    }
++}
+diff --git a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestone.kt b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestone.kt
+--- a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestone.kt
++++ b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestone.kt
+@@ -24,6 +24,7 @@
+         val seconds = TimeUnit.MINUTES.toSeconds(minutes.toLong()).toInt()
+         val gravestone = NPCs.add("gravestone_$grave", tile, player.direction)
+         gravestone.anim(if (grave == "memorial_plaque") "gravestone_fall_plaque" else "gravestone_fall")
++        DeathLootPersistence.register(gravestone, player)
+         gravestone["player_name"] = player.name
+         gravestone["player_male"] = player.male
+         // Runtime identity only: an older grave must not clear a newer grave's UI state.
+diff --git a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt
+--- a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt
++++ b/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt
+@@ -26,12 +26,14 @@
+ class Gravestones : Script {
+ 
+     init {
++        worldSpawn { DeathLootPersistence.start() }
++
+         playerSpawn {
++            DeathLootPersistence.attach(this)
+             val tile: Tile = get("gravestone_tile") ?: return@playerSpawn
+             val time: Long = get("gravestone_time") ?: return@playerSpawn
+             val remaining = time - epochSeconds()
+             if (remaining > 0) {
+-                MapMarkers.add(this, tile, "grave")
+                 sendScript("gravestone_set_timer", remaining / 60 * 100)
+             } else {
+                 clear("gravestone_tile")
+@@ -46,8 +48,9 @@
+         npcSpawn("gravestone_*") {
+             val minutes = Gravestone.times[id.removePrefix("gravestone_")] ?: return@npcSpawn
+             val seconds = TimeUnit.MINUTES.toSeconds(minutes.toLong()).toInt()
+-            start("grave_timer", seconds, epochSeconds())
++            if (!contains("grave_timer")) start("grave_timer", seconds, epochSeconds())
+             softTimers.start("grave_degrade")
++            tick(this)
+         }
+ 
+         npcOperate("Read", "gravestone_*") { (target) ->
+@@ -116,6 +119,7 @@
+                 return@npcOperate
+             }
+             val seconds = 3600 // 1 hour
++            target["blessed"] = true
+             target.start("grave_timer", seconds, epochSeconds())
+             updateItems(target.tile, name, seconds)
+             anim("altar_pray")
+@@ -123,7 +127,6 @@
+             sound("self_heal")
+             delay(2)
+             message("The gods hear your prayers; the gravestone will remain for a little longer.")
+-            target["blessed"] = true
+             val deceased = Players.find(name)
+             val remainder = target.remaining("grave_timer", epochSeconds())
+             val minutes = TimeUnit.SECONDS.toMinutes(remainder.toLong())
+@@ -183,6 +186,7 @@
+     }
+ 
+     fun stop(npc: NPC, death: Boolean) {
++        DeathLootPersistence.forget(npc)
+         val player = Players.find(npc.remove("player_name") ?: "")
+         if (player != null) {
+             if (player.get<NPC>("gravestone_npc") === npc) {
+diff --git a/game/src/main/kotlin/content/entity/death/PlayerDeath.kt b/game/src/main/kotlin/content/entity/death/PlayerDeath.kt
+--- a/game/src/main/kotlin/content/entity/death/PlayerDeath.kt
++++ b/game/src/main/kotlin/content/entity/death/PlayerDeath.kt
+@@ -16,7 +16,7 @@
+ import content.entity.player.logEvent
+ import content.entity.proj.shoot
+ import content.quest.instance
+-import content.quest.instanceLogout
++import content.quest.instanceOrigin
+ import content.skill.prayer.getActivePrayerVarKey
+ import content.skill.prayer.praying
+ import content.skill.summoning.dismissFamiliar
+@@ -54,25 +54,49 @@
+         get() = Tile(Settings["world.home.x", 0], Settings["world.home.y", 0], Settings["world.home.level", 0])
+ 
+     init {
++        // Logout/shutdown cancels queues. Complete an accepted death once before
++        // its inventory and queued world entities enter the same save checkpoint.
++        playerDespawn { get<() -> Unit>("soloscape_pending_death")?.invoke() }
++
+         levelChanged(Skill.Constitution) { _, _, to ->
+             if (to > 0 || queue.contains("death")) {
+                 return@levelChanged
+             }
+             dead = true
+             val onDeath = Death.killed(this@levelChanged)
++            val deathPosition = tile.copy()
++            val dropPosition = if (instance() != null) instanceOrigin() else deathPosition
++            val killer = damageDealers.maxByOrNull { it.value }?.key
++            set("death_drop_tile", dropPosition)
++            var completed = false
++            val finish: () -> Unit = {
++                if (!completed) {
++                    completed = true
++                    clear("soloscape_pending_death")
++                    clearAnim()
++                    attackers.clear()
++                    damageDealers.clear()
++                    jingle("death")
++                    timers.stopAll()
++                    softTimers.stopAll()
++                    clear(getActivePrayerVarKey())
++                    dismissFamiliar()
++                    if (onDeath.dropItems) dropItems(this, killer, dropPosition)
++                    levels.clear()
++                    runEnergy = MAX_RUN_ENERGY
++                    tele(onDeath.teleport ?: respawnTile)
++                    face(Direction.SOUTH, update = false)
++                    dead = false
++                    clear("death_drop_tile")
++                }
++            }
++            set("soloscape_pending_death", finish)
+             strongQueue("death") {
+                 steps.clear()
+-                val dealer = damageDealers.maxByOrNull { it.value }
+-                val killer = dealer?.key
+-                AuditLog.event(this, "died", tile, killer)
+-                if (killer is Player) {
+-                    killer.logEvent("I killed $name.", "I killed the player $name.")
+-                }
+-                while (true) {
+-                    instructions.tryReceive().getOrNull() ?: break
+-                }
+-                val tile = tile.copy()
+-                set("death_tile", tile)
++                AuditLog.event(this, "died", deathPosition, killer)
++                if (killer is Player) killer.logEvent("I killed $name.", "I killed the player $name.")
++                while (true) { instructions.tryReceive().getOrNull() ?: break }
++                set("death_tile", deathPosition)
+                 retribution(this)
+                 wrath(this)
+                 message("Oh dear, you are dead!")
+@@ -80,29 +104,7 @@
+                 queue.clear()
+                 clearHinted()
+                 delay(5)
+-                clearAnim()
+-                attackers.clear()
+-                damageDealers.clear()
+-                jingle("death")
+-                timers.stopAll()
+-                softTimers.stopAll()
+-                clear(getActivePrayerVarKey())
+-                dismissFamiliar()
+-                if (onDeath.dropItems) {
+-                    // Instance exit tile only applies while actually inside one; a leftover
+-                    // value would send the grave and every dropped item to that old tile.
+-                    val tile = if (instance() != null) instanceLogout() ?: tile else tile
+-                    dropItems(this, killer, tile)
+-                }
+-                levels.clear()
+-                runEnergy = MAX_RUN_ENERGY
+-                if (onDeath.teleport != null) {
+-                    tele(onDeath.teleport!!)
+-                } else {
+-                    tele(respawnTile)
+-                }
+-                face(Direction.SOUTH, update = false)
+-                dead = false
++                finish()
+             }
+         }
+     }
+@@ -176,12 +178,13 @@
+             // Real players keep the standard 180-tick private window before becoming public loot.
+             val reveal = if (player.isBot) FloorItems.NEVER else 180
+             if (item.tradeable) {
+-                FloorItems.add(tile, item.id, item.amount, revealTicks = reveal, disappearTicks = 240, owner = killer)
++                FloorItems.add(tile, item.id, item.amount, revealTicks = reveal, disappearTicks = 240, owner = killer, deathSource = player.accountName)
+             } else {
+-                FloorItems.add(tile, "coins", item.amount * item.def.cost, revealTicks = reveal, disappearTicks = 240, owner = killer)
++                val coins = item.amount * item.def.cost
++                if (coins > 0) FloorItems.add(tile, "coins", coins, revealTicks = reveal, disappearTicks = 240, owner = killer, deathSource = player.accountName)
+             }
+         } else {
+-            FloorItems.add(tile, item.id, item.amount, revealTicks = time, disappearTicks = time + 60, charges = item.charges(), owner = player)
++            FloorItems.add(tile, item.id, item.amount, revealTicks = time, disappearTicks = time + 60, charges = item.charges(), owner = player, deathSource = player.accountName)
+         }
+     }
+ 
+diff --git a/game/src/main/kotlin/content/skill/summoning/BeastOfBurden.kt b/game/src/main/kotlin/content/skill/summoning/BeastOfBurden.kt
+--- a/game/src/main/kotlin/content/skill/summoning/BeastOfBurden.kt
++++ b/game/src/main/kotlin/content/skill/summoning/BeastOfBurden.kt
+@@ -1,6 +1,9 @@
+ package content.skill.summoning
+ 
+ import content.entity.combat.underAttack
++import content.entity.combat.dead
++import content.quest.instance
++import content.quest.instanceOrigin
+ import content.entity.player.dialogue.type.intEntry
+ import content.entity.player.inv.item.tradeable
+ import content.entity.player.modal.Tab
+@@ -17,6 +20,7 @@
+ import world.gregs.voidps.engine.entity.item.drop.DropTables
+ import world.gregs.voidps.engine.entity.item.floor.FloorItems
+ import world.gregs.voidps.engine.inv.beastOfBurden
++import world.gregs.voidps.engine.inv.charges
+ import world.gregs.voidps.engine.inv.clear
+ import world.gregs.voidps.engine.inv.inventory
+ import world.gregs.voidps.engine.inv.sendInventory
+@@ -133,13 +137,13 @@
+         return
+     }
+     // Items drop under the familiar, falling back to the player if it's already gone.
+-    val dropTile = follower?.tile ?: tile
++    val dropTile = if (dead) get<world.gregs.voidps.type.Tile>("death_drop_tile") ?: (if (instance() != null) instanceOrigin() else follower?.tile ?: tile) else follower?.tile ?: tile
+     for (item in beastOfBurden.items) {
+         if (item.isEmpty()) {
+             continue
+         }
+         // Owner-only, retrievable for five minutes before despawning.
+-        FloorItems.add(dropTile, item.id, item.amount, revealTicks = FloorItems.NEVER, disappearTicks = TimeUnit.MINUTES.toTicks(5), owner = this)
++        FloorItems.add(dropTile, item.id, item.amount, revealTicks = FloorItems.NEVER, disappearTicks = TimeUnit.MINUTES.toTicks(5), charges = item.charges(), owner = this, deathSource = if (dead) accountName else null)
+     }
+     beastOfBurden.clear()
+     message("Your familiar has dropped all the items it was holding.")
+diff --git a/game/src/test/kotlin/WorldTest.kt b/game/src/test/kotlin/WorldTest.kt
+--- a/game/src/test/kotlin/WorldTest.kt
++++ b/game/src/test/kotlin/WorldTest.kt
+@@ -306,7 +306,7 @@
+             properties["events.penguinHideAndSeek.enabled"] = false
+             properties["events.tearsOfGuthix.active"] = false
+             properties["storage.autoSave.minutes"] = 0
+-            properties["storage.disabled"] = true
++            properties["storage.disabled"] = "true"
+             properties["events.randomEvents.active"] = false
+             properties["bots.count"] = 0
+             System.getenv("SOLOSCAPE_TEST_ROOT")?.let { path ->
+diff --git a/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathLootRestartTest.kt b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathLootRestartTest.kt
+new file mode 100644
+--- /dev/null
++++ b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathLootRestartTest.kt
+@@ -0,0 +1,337 @@
++package content.area.misthalin.lumbridge.church
++
++import WorldTest
++import content.entity.combat.hit.damage
++import content.skill.summoning.summonFamiliar
++import content.skill.summoning.follower
++import npcOption
++import world.gregs.voidps.engine.data.definition.NPCDefinitions
++import world.gregs.voidps.engine.entity.character.npc.NPCs
++import world.gregs.voidps.engine.entity.character.player.skill.Skill
++import world.gregs.voidps.engine.entity.character.player.skill.level.Level
++import content.entity.player.effect.skullCounter
++import content.entity.player.bank.bank
++import floorItemOption
++import itemOption
++import objectOption
++import interfaceOption
++import kotlinx.coroutines.runBlocking
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.io.TempDir
++import walk
++import world.gregs.voidps.engine.data.*
++import world.gregs.voidps.engine.data.file.FileStorage
++import world.gregs.voidps.engine.entity.World
++import world.gregs.voidps.engine.entity.character.move.tele
++import world.gregs.voidps.engine.entity.character.player.Player
++import world.gregs.voidps.engine.entity.item.Item
++import world.gregs.voidps.engine.entity.item.floor.FloorItems
++import world.gregs.voidps.engine.get
++import world.gregs.voidps.engine.inv.*
++import world.gregs.voidps.engine.inv.transact.operation.SetCharge.setCharge
++import world.gregs.voidps.engine.timer.setCurrentTime
++import world.gregs.voidps.type.Tile
++import java.io.File
++import java.net.URLClassLoader
++import java.nio.file.Files
++import java.nio.file.Path
++import java.util.concurrent.TimeUnit
++import kotlin.test.*
++import kotlin.system.exitProcess
++
++/** Real world boot/scripts/death/Take/bank/save paths in independent fixture JVMs. */
++class DeathLootRestartTest {
++    private val directory: Path = Path.of(requireNotNull(System.getenv("SOLOSCAPE_TEST_ROOT")) { "Disposable SOLOSCAPE_TEST_ROOT is required" }).resolve("death-loot-cold-${System.nanoTime()}").also { Files.createDirectories(it) }
++
++    @Test
++    fun `Death loot and partial charged recovery survive cold world restarts`() {
++        child(directory, "seed", "", 0)
++        child(directory, "partial", "", 0)
++        child(directory, "verify", "old", 0)
++        child(directory, "verify", "old", 0)
++        child(directory, "public", "", 0)
++        child(directory, "verify", "new", 0)
++        child(directory, "verify", "new", 0)
++    }
++
++    @Test
++    fun `Offline owner and banked guest pickup recover across actual world commit exits`() {
++        val baseline = Files.createDirectory(directory.resolve("baseline"))
++        child(baseline, "seed", "", 0)
++        child(baseline, "partial", "", 0)
++        for ((index, cut) in listOf("prepared", "published", "installed:.soloscape-death-loot.v1", "installed:deathguest.toml", "materialized", "retired").withIndex()) {
++            val root = Files.createDirectory(directory.resolve("cut$index"))
++            Files.walk(baseline.resolve("saves")).use { paths -> paths.forEach { source ->
++                val target = root.resolve("saves").resolve(baseline.resolve("saves").relativize(source))
++                if (Files.isDirectory(source)) Files.createDirectories(target) else Files.copy(source, target)
++            } }
++            child(root, "public", cut, 73)
++            child(root, "verify", if (cut == "prepared") "old" else "new", 0)
++            child(root, "verify", if (cut == "prepared") "old" else "new", 0)
++        }
++    }
++
++    @Test
++    fun `Blessed grave timers survive cold startup and reject repair`() {
++        child(directory, "seed", "bless", 0)
++        child(directory, "blessed-read", "", 0)
++        child(directory, "blessed-read", "", 0)
++    }
++
++    @Test
++    fun `Repeated same tile deaths preserve independent graves and one merged pile`() {
++        child(directory, "seed", "repeat", 0)
++        child(directory, "multiple-read", "", 0)
++        child(directory, "multiple-read", "", 0)
++    }
++
++    @Test
++    fun `Player death also persists spilled beast of burden contents`() {
++        child(directory, "seed", "burden", 0)
++        child(directory, "burden-read", "", 0)
++        child(directory, "burden-read", "", 0)
++    }
++
++    @Test
++    fun `Save and Quit during the death animation completes exactly once`() {
++        child(directory, "seed", "interrupt", 0)
++        child(directory, "unrecovered-read", "", 0)
++        child(directory, "unrecovered-read", "", 0)
++    }
++
++    @Test
++    fun `Disconnected dying owner is saved with the same world checkpoint`() {
++        child(directory, "seed", "logout", 0)
++        child(directory, "unrecovered-read", "", 0)
++        child(directory, "unrecovered-read", "", 0)
++    }
++
++    private fun child(root: Path, mode: String, cut: String, expected: Int) {
++        val urls = generateSequence(javaClass.classLoader) { it.parent }.filterIsInstance<URLClassLoader>()
++            .flatMap { it.urLs.asSequence() }.map { File(it.toURI()).path }.toList()
++        val cp = (urls + System.getProperty("java.class.path").split(File.pathSeparator)).distinct().joinToString(File.pathSeparator)
++        val log = root.resolve("$mode-${cut.replace(':', '_').replace('.', '_')}.log").toFile()
++        val builder = ProcessBuilder(File(System.getProperty("java.home"), "bin/java").path, "-Xmx2g", "-cp", cp, NativeDeathLootProcess::class.java.name, mode, cut)
++        builder.environment()["SOLOSCAPE_TEST_ROOT"] = root.toString()
++        val p = builder.redirectErrorStream(true).redirectOutput(log).start()
++        if (!p.waitFor(100, TimeUnit.SECONDS)) { p.destroyForcibly().waitFor(); fail("Owned world child timed out: $mode/$cut") }
++        assertEquals(expected, p.exitValue(), "World $mode/$cut: ${log.readText().takeLast(5000)}")
++        assertTrue(log.readText().contains("DEATH_LOOT_NATIVE_PHASE $mode"), "Child must reach real world phase")
++    }
++}
++
++object NativeDeathLootProcess {
++    @JvmStatic fun main(args: Array<String>) {
++        try {
++            val world = DeathLootWorldHarness()
++            world.beforeAll()
++            world.beforeEach()
++            world.phase(args[0], args[1])
++            exitProcess(0) // No WorldTest teardown: preserve this disposable world for the next JVM.
++        } catch (t: Throwable) { t.printStackTrace(); exitProcess(1) }
++    }
++}
++
++class DeathLootWorldHarness : WorldTest() {
++    private val deathTile = Tile(3235, 3220)
++    private var clock = 9_000_000_000L // Deliberately unrelated to the previous process clock.
++    private val storage get() = get<Storage>() as FileStorage
++
++    fun phase(mode: String, cut: String) {
++        clock = when (mode) { "seed" -> 9_000_000_000L; "partial" -> 10_000_000_000L; "public" -> 11_000_000_000L; else -> 12_000_000_000L }
++        settings["storage.disabled"] = "false"
++        setCurrentTime { clock }
++        DeathLootPersistence.start() // The same production startup handler, after native definitions/scripts load.
++        val original = storage.loadWorld()?.let { DeathLootSnapshot.decode(it) }
++        if (original != null) assertEquals(original, DeathLootSnapshot.decode(DeathLootPersistence.capture()), "Closed-world time must not consume any recorded timer or duplicate records")
++        // Keep asynchronous periodic IO out of deliberate cut ordering. Final native
++        // World.shutdown still uses the actual direct account+world save and receipt gate.
++        settings["storage.disabled"] = "true"
++        println("DEATH_LOOT_NATIVE_PHASE $mode pid=${ProcessHandle.current().pid()}")
++        System.out.flush()
++        when (mode) {
++            "seed" -> {
++                val owner = createPlayer(deathTile, "deathowner")
++                val guest = createPlayer(deathTile.addX(-1), "deathguest")
++                assertTrue(owner.inventory.add("coins", 1000))
++                assertTrue(owner.inventory.add("chaotic_rapier"))
++                assertTrue(owner.inventory.transaction { setCharge(owner.inventory.indexOf("chaotic_rapier"), 12345) })
++                assertTrue(owner.inventory.add("tinderbox"))
++                assertTrue(owner.inventory.add("bronze_dagger_p+"))
++                assertTrue(owner.inventory.add("raw_shrimps", 2))
++                if (cut == "burden") {
++                    owner.summonFamiliar(NPCDefinitions.get("thorny_snail_familiar"), false)
++                    tick(3)
++                    assertNotNull(owner.follower)
++                    assertTrue(owner.beastOfBurden.add("coins", 20))
++                }
++                owner.skullCounter = 20
++                owner.damage(101)
++                if (cut == "interrupt" || cut == "logout") {
++                    tick()
++                    if (cut == "logout") {
++                        settings["storage.disabled"] = "false"
++                        runBlocking { get<AccountManager>().logout(owner, false) }
++                        tick(3)
++                        runBlocking { get<SaveQueue>().awaitInFlight() }
++                        settings["storage.disabled"] = "true"
++                    }
++                    World.shutdown()
++                    val saved = DeathLootSnapshot.decode(requireNotNull(storage.loadWorld()))
++                    assertEquals(1000, saved.piles.filter { it.item == "coins" }.sumOf { it.amount })
++                    assertEquals(1, saved.piles.single { it.item == "chaotic_rapier" }.amount)
++                    assertEquals(12345, saved.piles.single { it.item == "chaotic_rapier" }.charges)
++                    assertEquals(Tile(3221, 3219), requireNotNull(storage.load("deathowner")).tile)
++                    println("DEATH_LOOT_NATIVE_OK $mode")
++                    return
++                }
++                tick(9)
++                assertEquals(Tile(3221, 3219), owner.tile)
++                assertEquals(0, owner.inventory.count("coins"))
++                assertEquals(if (cut == "burden") 1020 else 1000, FloorItems.deathLoot().filter { it.id == "coins" }.sumOf { it.amount })
++                assertEquals(12345, FloorItems.firstOrNull(deathTile, "chaotic_rapier")!!.charges)
++                assertEquals(1, DeathLootSnapshot.decode(DeathLootPersistence.capture()).graves.size)
++                if (cut == "bless") {
++                    guest.experience.set(Skill.Prayer, Level.experience(75))
++                    guest.levels.set(Skill.Prayer, 75)
++                    guest.npcOption(NPCs.first(deathTile) { it.id.startsWith("gravestone_") }, "Bless")
++                    tick(4)
++                    assertTrue(DeathLootSnapshot.decode(DeathLootPersistence.capture()).graves.single().blessed)
++                }
++                if (cut == "repeat") {
++                    owner.tele(deathTile)
++                    assertTrue(owner.inventory.add("coins", 7))
++                    owner.skullCounter = 20
++                    owner.damage(101)
++                    tick(9)
++                    val snap = DeathLootSnapshot.decode(DeathLootPersistence.capture())
++                    assertEquals(2, snap.graves.size)
++                    assertEquals(1, snap.piles.count { it.item == "coins" })
++                    assertEquals(1007, snap.piles.single { it.item == "coins" }.amount)
++                }
++                // Exercise the actual periodic game-loop capture and pending acknowledgement,
++                // then finish with the normal direct world-shutdown checkpoint.
++                settings["storage.disabled"] = "false"
++                val queue = get<SaveQueue>()
++                queue.save(owner)
++                tick()
++                runBlocking { queue.awaitInFlight() }
++                assertTrue(queue.empty(), "Coherent online capture must acknowledge its older queued snapshot")
++                settings["storage.disabled"] = "true"
++                World.shutdown()
++            }
++            "partial" -> {
++                val owner = restore("deathowner")
++                assertEquals(1, markerCount(owner))
++                val rapier = requireNotNull(FloorItems.firstOrNull(deathTile, "chaotic_rapier"))
++                assertTrue(owner.inventory.add("raw_shrimps", 28))
++                val approach = deathTile.addX(-1)
++                owner.walk(approach); tickIf(80) { owner.tile != approach }
++                assertEquals(approach, owner.tile)
++                owner.floorItemOption(rapier, "Take"); tick(2)
++                assertEquals(0, owner.inventory.count("chaotic_rapier"))
++                assertSame(rapier, FloorItems.firstOrNull(deathTile, "chaotic_rapier"))
++                owner.walk(approach); tickIf(20) { owner.tile != approach }
++                owner.itemOption("Drop", "raw_shrimps"); tick()
++                owner.floorItemOption(rapier, "Take"); tick(2)
++                assertEquals(1, owner.inventory.count("chaotic_rapier"))
++                assertEquals(12345, owner.inventory.items.single { it.id == "chaotic_rapier" }.rawValue())
++                assertNull(FloorItems.firstOrNull(deathTile, "chaotic_rapier"))
++                val before = DeathLootSnapshot.decode(DeathLootPersistence.capture()).graves.single().remaining
++                clock += 12000
++                assertEquals(before - 12, DeathLootSnapshot.decode(DeathLootPersistence.capture()).graves.single().remaining)
++                World.shutdown()
++            }
++            "public" -> {
++                val ownerBefore = File(Settings["storage.players.path"], "deathowner.toml").readBytes()
++                val guest = restore("deathguest")
++                val coins = requireNotNull(FloorItems.firstOrNull(deathTile, "coins"))
++                // Actual tracking/expiry stages run, with the normal 600ms/tick clock.
++                repeat(coins.revealTicks + 121) { clock += 600; tick() }
++                assertNull(coins.owner)
++                guest.floorItemOption(coins, "Take"); tick(2)
++                assertEquals(1000, guest.inventory.count("coins"))
++                val booth = createObject("36786", guest.tile.addY(2))
++                guest.objectOption(booth, "Use-quickly"); tick(6)
++                assertTrue(guest.interfaces.contains("bank"))
++                guest.interfaceOption("bank_side", "inventory", "Deposit-All", item = Item("coins"), slot = guest.inventory.indexOf("coins")); tick()
++                assertEquals(0, guest.inventory.count("coins"))
++                assertEquals(1000, guest.bank.count("coins"))
++                assertContentEquals(ownerBefore, File(Settings["storage.players.path"], "deathowner.toml").readBytes(), "Offline owner must never be overwritten through a stale Player")
++                if (cut.isNotEmpty()) {
++                    val field = FileStorage::class.java.getDeclaredField("accountBatch").apply { isAccessible = true }
++                    val batch = field.get(storage)
++                    batch.javaClass.getDeclaredField("boundary").apply { isAccessible = true }.set(batch, { phase: String -> if (phase == cut) Runtime.getRuntime().halt(73) })
++                }
++                World.shutdown()
++                assertContentEquals(ownerBefore, File(Settings["storage.players.path"], "deathowner.toml").readBytes())
++            }
++            "unrecovered-read" -> {
++                val owner = restore("deathowner")
++                assertEquals(0, owner.inventory.count("chaotic_rapier"))
++                assertEquals(1000, FloorItems.deathLoot().filter { it.id == "coins" }.sumOf { it.amount })
++                assertEquals(12345, FloorItems.deathLoot().single { it.id == "chaotic_rapier" }.charges)
++                assertEquals(1, FloorItems.deathLoot().count { it.id == "bronze_dagger_p+" })
++                assertEquals(1, markerCount(owner))
++                assertEquals(Tile(3221, 3219), owner.tile)
++            }
++            "blessed-read" -> {
++                val owner = restore("deathowner")
++                val guest = restore("deathguest")
++                val snap = DeathLootSnapshot.decode(DeathLootPersistence.capture())
++                assertTrue(snap.graves.single().blessed)
++                assertEquals(3600, snap.graves.single().remaining)
++                assertEquals(1, markerCount(owner))
++                val grave = NPCs.first(deathTile) { it.id.startsWith("gravestone_") }
++                assertTrue(grave["blessed", false])
++                guest.npcOption(grave, "Repair"); tick(4)
++                assertEquals(3600, DeathLootSnapshot.decode(DeathLootPersistence.capture()).graves.single().remaining)
++            }
++            "multiple-read" -> {
++                val owner = restore("deathowner")
++                val snap = DeathLootSnapshot.decode(DeathLootPersistence.capture())
++                assertEquals(2, snap.graves.size)
++                assertEquals(1, snap.graves.count { it.latest })
++                assertEquals(2, markerCount(owner))
++                assertEquals(2, NPCs.count { it.tile == deathTile && it.id.startsWith("gravestone_") })
++                assertEquals(1, snap.piles.count { it.item == "coins" })
++                assertEquals(1007, FloorItems.at(deathTile).single { it.id == "coins" }.amount)
++            }
++            "burden-read" -> {
++                val owner = restore("deathowner")
++                assertEquals(0, owner.beastOfBurden.count("coins"))
++                assertEquals(1020, FloorItems.deathLoot().filter { it.id == "coins" }.sumOf { it.amount })
++                assertTrue(FloorItems.deathLoot().all { "deathowner" in it.deathSources })
++                assertEquals(1, markerCount(owner))
++            }
++            "verify" -> {
++                val owner = restore("deathowner")
++                val guest = restore("deathguest")
++                assertEquals(1, owner.inventory.count("chaotic_rapier"))
++                assertEquals(12345, owner.inventory.items.single { it.id == "chaotic_rapier" }.rawValue())
++                assertNull(FloorItems.firstOrNull(deathTile, "chaotic_rapier"))
++                val floor = FloorItems.at(deathTile).filter { it.id == "coins" }.sumOf { it.amount }
++                val bank = guest.bank.count("coins")
++                assertEquals(1000, floor + bank + guest.inventory.count("coins") + owner.inventory.count("coins"))
++                if (cut == "old") { assertEquals(1000, floor); assertEquals(0, bank); assertEquals(1, markerCount(owner)) }
++                else { assertEquals(0, floor); assertEquals(1000, bank); assertEquals(0, markerCount(owner)) }
++                assertEquals(1, storage.load("deathowner")!!.storageVersion)
++                // Verification-only process exits without publishing a new checkpoint.
++            }
++            else -> error("Unknown phase")
++        }
++        println("DEATH_LOOT_NATIVE_OK $mode")
++    }
++
++    private fun markerCount(p: Player) = (1..5).count { p.get<String>("world_map_marker_type_$it") == "grave" }
++    private fun restore(name: String): Player {
++        val p = requireNotNull(storage.load(name)).toPlayer()
++        val accounts = get<AccountManager>()
++        accounts.setup(p, null, 0, viewport = true)
++        assertTrue(accounts.index(p))
++        accounts.spawn(p, null)
++        tick(3)
++        p.viewport?.loaded = true
++        return p
++    }
++}

@@ -17,7 +17,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
 | client | 56 | `0056-external-launcher-home.patch` | `60fa4f727ababa7d532ac495c62055ed38cbd83c07abc70c66a068cf24c7bc5a` |
-| server | 53 | `0053-recover-native-account-save-batches.patch` | `38d363ef24a02c8dad64fec4ee9768bca00ba307b9acdd4f24da4e693bc83900` |
+| server | 54 | `0054-persist-death-loot-world-checkpoints.patch` | `d42e10e39ae5cd1b0146db827e95d84cb04a0de697e40d4cf6ac6661dc282498` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
 
