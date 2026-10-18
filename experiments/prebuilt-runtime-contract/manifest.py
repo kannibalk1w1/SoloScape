@@ -30,7 +30,7 @@ TOP_FIELDS = {'format', 'source_commit', 'platform', 'cache_revision', 'pins', '
 PIN_FIELDS = {'game-server', '634-client', 'runelite-client'}
 ROLE_FIELDS = {'server', 'client', 'launcher'}
 RUNTIME_SCRIPTS = (
-    'local_dev.py', 'profiles.py', 'profile_session.py', 'session_recovery.py', 'launcher_backend.py',
+    'local_dev.py', 'profiles.py', 'death_loot_state.py', 'profile_session.py', 'session_recovery.py', 'launcher_backend.py',
     'release_updates.py', 'deck_awake.py', 'prebuilt_bootstrap.py', 'owned_launcher_backend.py',
     'prebuilt_manifest.py',
 )

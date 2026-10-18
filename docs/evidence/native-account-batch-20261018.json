@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-18",
+  "baseline": "99f044a",
+  "status": "DRAFT INTEGRATION PREREQUISITE; GRAVE/LOOT P1 STILL OPEN",
+  "scope": "Actual FileStorage.save/read entrypoints; original disposable native account fixtures. No running world, grave/pile capture, SaveQueue world checkpoint, profile backup integration, power-loss or Deck acceptance.",
+  "patch": "patches/server/0053-recover-native-account-save-batches.patch",
+  "patch_sha256": "640f02426d20850b545fc40dbe9253b47d7f4943adf82e493a686da85cf17552",
+  "sources_sha256": {
+    "engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt": "dd9a7d632ddd31b3654b44c408c35f3031028077574a82e9af9508599d42b001",
+    "engine/src/test/kotlin/world/gregs/voidps/engine/data/file/FileStorageTest.kt": "cbd530d2875f531f558fcebce681ff5b60e1a2752c68f4bb08d4714ec4c0c9c8",
+    "engine/src/main/kotlin/world/gregs/voidps/engine/data/file/AccountSaveBatch.kt": "436f8ff1d73b4de958d8ecee0519ed41354b92ad37b1b0daae372a6f70eb61c6",
+    "engine/src/test/kotlin/world/gregs/voidps/engine/data/file/AccountBatchRecoveryTest.kt": "4e9846c5d787307c7af9032de7c1e340d97135b6bc05380390185ce428eaab94"
+  },
+  "baseline_FileStorage_sha256": "243e00090f9c70f3989fc4b61d976151a093656e943a5a746eca36dd435078d4",
+  "suites": [
+    {
+      "suite": "world.gregs.voidps.engine.data.file.AccountBatchRecoveryTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "world.gregs.voidps.engine.data.file.FileStorageTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "world.gregs.voidps.engine.data.SaveQueueTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "world.gregs.voidps.engine.data.PlayerSaveTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "native_tests": 38,
+  "forced_exit_boundaries": [
+    "staged:batchone.toml",
+    "staged:batchtwo.toml",
+    "prepared",
+    "published",
+    "installed:batchone.toml",
+    "installed:batchtwo.toml",
+    "materialized",
+    "retired"
+  ],
+  "additional_replay_exit": "installed:batchone.toml",
+  "child_jvm_executions": 20,
+  "oracle": "Before publication: 10/0 coins. After publication and replay: 2/8. Exact total 10, never mixed via Storage reads.",
+  "private_evidence_directory": ".runtime/death-loot-integration-20261018",
+  "logs_sha256": {
+    "red.log": "368e37274cf2274980d48b09e10f037dd0b893f00ee56e4d0116e468bf1c7eee",
+    "initial-green.log": "3cd3b923bef9ea018d76e6a13cc1969222945651777b0c3067515b86522ca2cd",
+    "crash-tests.log": "738a6cb601e5b57e0d00c72ee1e4d233d637928be2b5b805ff2e7e3b50151574",
+    "qualified-save-group.log": "4f79a553eac2bf39cfd1e5ffb7d10d48f743b6d10e6fccae38487f0b5c1d7404"
+  },
+  "owner_save_or_deck_access": false,
+  "production_game_jar_rebuilt": false,
+  "qualified_coverage_summary": ".runtime/content-coverage/1792312054251374246/summary.json",
+  "qualified_summary_sha256": "ce37fd0fafc324a3d3fef0d0d6200e53c2b4f1603319c7f71caae65b3328032e",
+  "coverage_runner_sha256": "d568750d231cadc067a6b21eed7f5e733479e90274fc6cf972f3af64095b13b3",
+  "root_tooling": {
+    "tests": 278,
+    "skipped": 1,
+    "failures": 0,
+    "errors": 0,
+    "log_sha256": "009c561b8a655faf05901f33c3c01d05eae21245adce8a2fa86e40d36783cf50"
+  }
+}
