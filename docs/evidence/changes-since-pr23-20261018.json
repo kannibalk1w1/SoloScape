@@ -1,0 +1,4731 @@
+{
+  "schema_version": 1,
+  "report_date": "2026-10-18",
+  "scope": "Strictly after merged PR23; through native PR89; separate draft PR27 experiment inventory. Snapshot excludes this report itself.",
+  "baseline": {
+    "pr": 23,
+    "commit": "0836b5dfa6ebabf3cffe51a4d55868e62fe98fe1"
+  },
+  "native_head": "d6925aa7d9df894abf19c9e63d7f38e4e0f3fa21",
+  "merged_pr_count": 66,
+  "native_diff_summary": "333 files changed, 35256 insertions(+), 91 deletions(-)",
+  "native_changed_paths": [
+    "A\t.github/ISSUE_TEMPLATE/playtest.yml",
+    "M\t.github/workflows/tooling.yml",
+    "M\t.gitignore",
+    "M\tREADME-SOLOSCAPE.md",
+    "A\tbackport/README.md",
+    "A\tbackport/manifests/lab-token.json",
+    "A\tbackport/manifests/superior-slayer.example.json",
+    "A\tbackport/tooling/CacheSlots.java",
+    "A\tbackport/tooling/CacheSlotsOracle.java",
+    "A\tbackport/tooling/LabTokenCache.java",
+    "A\tbackport/tooling/OriginalItemCodec.java",
+    "M\tconfig/local.env.example",
+    "A\tdocs/AI_ADVENTURERS.md",
+    "M\tdocs/ARCHITECTURE.md",
+    "A\tdocs/BACKPORT_ARCHITECTURE.md",
+    "A\tdocs/BACKPORT_CATALOGUE_20261017.md",
+    "A\tdocs/BACKPORT_ITEM_CODEC_20261017.md",
+    "A\tdocs/BACKPORT_ITEM_ID_AUDIT_20261017.md",
+    "A\tdocs/BACKPORT_LAB_TOKEN_20261017.md",
+    "A\tdocs/BACKPORT_MANIFEST_EXAMPLE.md",
+    "A\tdocs/BACKPORT_NATIVE_TOKEN_20261018.md",
+    "A\tdocs/BACKUP_ACCOUNT_VALIDATION_20261017.md",
+    "A\tdocs/BACKUP_DEFLATE_RECOVERY_20261017.md",
+    "A\tdocs/CACHE_LOCATION_20261017.md",
+    "M\tdocs/CACHE_SETUP.md",
+    "A\tdocs/CONNECTED_SUMMONING_SUPPLIES_20261017.md",
+    "M\tdocs/CONSOLE_SETUP_UPDATE.md",
+    "A\tdocs/CONTROLLER_CORNER_MOVEMENT.md",
+    "A\tdocs/CONTROLLER_INTERACTION_ACCEPTANCE.md",
+    "A\tdocs/COOKING_TARGET_LIFETIME_20261017.md",
+    "A\tdocs/CURRENT_STATUS.md",
+    "A\tdocs/DEATH_DROP_CHARGES_20261017.md",
+    "A\tdocs/DEATH_LOOT_RECOVERY_20261017.md",
+    "A\tdocs/DECK_CONTROLLER_VALIDATION_20261014.md",
+    "A\tdocs/DECK_STALL_DIAGNOSIS_20261014.md",
+    "A\tdocs/DUNGEONEERING_AUDIT.md",
+    "A\tdocs/DUNGEONEERING_COMPLETION_AUDIT_20261017.md",
+    "A\tdocs/DUNGEONEERING_NATIVE_ENTRY_20261017.md",
+    "A\tdocs/DUNGEONEERING_TARGETED_PASS_20261017.md",
+    "A\tdocs/DUNGEON_BOSS_TRAPDOOR_20261017.md",
+    "A\tdocs/DUNGEON_REWARD_NOTICE_FIX_20261017.md",
+    "A\tdocs/DUNGEON_REWARD_NOTICE_INVESTIGATION_20261017.md",
+    "A\tdocs/DUNGEON_ROOM_ROTATION_20261017.md",
+    "A\tdocs/EARNED_LUMBRIDGE_SLICE_20261017.md",
+    "A\tdocs/FAMILIAR_DISMISSAL_IDENTITY_20261017.md",
+    "A\tdocs/FAMILIAR_OWNERSHIP_AUDIT_20261017.md",
+    "A\tdocs/GITHUB_UPDATES.md",
+    "A\tdocs/GITHUB_UPDATE_DISCOVERY_20261017.md",
+    "A\tdocs/GRAVESTONE_SHOP_AUTHORITY_20261017.md",
+    "A\tdocs/GRAVESTONE_TIMER_20261017.md",
+    "A\tdocs/GRAVE_CHECKPOINT_PROCESS_EXIT_20261017.md",
+    "A\tdocs/GRAVE_COLD_JVM_PROBE_20261017.md",
+    "A\tdocs/GRAVE_LIFECYCLE_IDENTITY_20261017.md",
+    "A\tdocs/GRAVE_PAUSE_PERSISTENCE_PLAN.md",
+    "A\tdocs/GRAVE_RECEIPT_MODEL_20261017.md",
+    "A\tdocs/GRAVE_RECORD_CODEC_20261017.md",
+    "A\tdocs/GROUND_LOOT_TRANSACTION_20261017.md",
+    "A\tdocs/IDENTICAL_KEPT_ITEMS_20261017.md",
+    "A\tdocs/KEPT_ITEM_CHARGES_20261017.md",
+    "A\tdocs/LAUNCHER_LOCATION_20261017.md",
+    "A\tdocs/MMO_DEPENDENCY_AUDIT.md",
+    "A\tdocs/NATIVE_SAVE_BATCH_BOUNDARY_20261017.md",
+    "A\tdocs/NATIVE_SAVE_CONFIRMATION_20261017.md",
+    "A\tdocs/NATIVE_TEST_BUILD_20261017.md",
+    "A\tdocs/NATIVE_TEST_BUILD_48_20261017.md",
+    "A\tdocs/NATIVE_TEST_BUILD_50_20261017.md",
+    "A\tdocs/NATIVE_TEST_BUILD_51_20261017.md",
+    "A\tdocs/NATIVE_TEST_BUILD_52_20261018.md",
+    "A\tdocs/NATIVE_TWO_CLIENT_COMPATIBILITY_20261017.md",
+    "M\tdocs/NEXT_DECK_SESSION_SPRINT.md",
+    "A\tdocs/NPC_QUEUE_LIFECYCLE_20261017.md",
+    "A\tdocs/OFFLINE_SAVE_FAILURE_RETENTION_20261017.md",
+    "A\tdocs/PLAYTEST_DIRECTION.md",
+    "A\tdocs/PREBUILT_LAUNCHER_CONTRACT_20261017.md",
+    "A\tdocs/PREBUILT_NATIVE_SERVER_20261017.md",
+    "A\tdocs/PREBUILT_NATIVE_SESSION_20261017.md",
+    "A\tdocs/PREBUILT_VERSION_LIFECYCLE_20261017.md",
+    "A\tdocs/PRODUCTION_CAPACITY_RECOVERY_20261017.md",
+    "A\tdocs/PROFILE_JVM_OPTIONS_20261017.md",
+    "A\tdocs/PROFILE_LOCATION_20261017.md",
+    "A\tdocs/PROFILE_METADATA_RECOVERY_20261017.md",
+    "A\tdocs/RESEARCH_SOURCES_20261017.md",
+    "M\tdocs/ROADMAP.md",
+    "A\tdocs/RUNTIME_NOTICE_INVENTORY_20261017.md",
+    "A\tdocs/SAVE_ARTIFACT_CLOSURE_20261017.md",
+    "A\tdocs/SAVE_VARIABLE_SNAPSHOTS_20261017.md",
+    "A\tdocs/SESSION_RECORD_VALIDATION_20261017.md",
+    "A\tdocs/SETTINGS_HARNESS_OWNERSHIP_20261014.md",
+    "A\tdocs/SETTINGS_SAVE_FOLLOWUP_20261017.md",
+    "A\tdocs/SLAYER_KILL_OWNERSHIP_20261017.md",
+    "A\tdocs/SLAYER_TASK_BLOCKS_20261018.md",
+    "A\tdocs/SOLO_CONTENT_AUDIT.md",
+    "A\tdocs/SUMMONING_ACQUISITION_20261017.md",
+    "A\tdocs/SUMMONING_AUDIT.md",
+    "A\tdocs/SUMMONING_LOOT_DELIVERY_20261017.md",
+    "A\tdocs/SUMMONING_TARGETED_PASS_20261017.md",
+    "A\tdocs/UPDATE_ACTIVATION_LAB_20261017.md",
+    "A\tdocs/UPDATE_STAGING_LAB_20261017.md",
+    "A\tdocs/UPDATE_STAGING_SPECIAL_FILES_20261018.md",
+    "A\tdocs/WASM_FEASIBILITY.md",
+    "A\tdocs/WASM_RASTER_POC.md",
+    "A\tdocs/WASM_SPIKE_PLAN.md",
+    "A\tdocs/WORLD_TRANSIENT_SAVE_AUDIT_20261017.md",
+    "A\tdocs/current-status.json",
+    "A\tdocs/evidence/backport-catalogue-20261017.json",
+    "A\tdocs/evidence/backport-item-codec-20261017.json",
+    "A\tdocs/evidence/backport-lab-token-20261017.json",
+    "A\tdocs/evidence/backport-native-token-20261018.json",
+    "A\tdocs/evidence/cache-location-20261017.json",
+    "A\tdocs/evidence/connected-summoning-20261017.json",
+    "A\tdocs/evidence/controller-corners-20261017.json",
+    "A\tdocs/evidence/cooking-target-lifetime-20261017.json",
+    "A\tdocs/evidence/death-drop-charges-20261017.json",
+    "A\tdocs/evidence/death-loot-recovery-20261017.json",
+    "A\tdocs/evidence/deck-controller-20261014/r29-gaming-mode.png",
+    "A\tdocs/evidence/deck-controller-20261014/r29-present.json",
+    "A\tdocs/evidence/deck-controller-20261014/r29-quick.json",
+    "A\tdocs/evidence/deck-controller-20261014/r29-route.json",
+    "A\tdocs/evidence/deck-controller-20261014/r30-settings.json",
+    "A\tdocs/evidence/deck-controller-20261014/r30-shop-approach.png",
+    "A\tdocs/evidence/deck-controller-20261014/r30-shop.json",
+    "A\tdocs/evidence/deck-controller-20261014/r31-settings.json",
+    "A\tdocs/evidence/deck-controller-20261014/r32-map.png",
+    "A\tdocs/evidence/deck-controller-20261014/r32-route-diagnostic.json",
+    "A\tdocs/evidence/dungeon-boss-trapdoor-20261017.json",
+    "A\tdocs/evidence/dungeon-native-entry-20261017.json",
+    "A\tdocs/evidence/dungeon-reward-notice-fix-20261017.json",
+    "A\tdocs/evidence/dungeon-room-rotation-20261017.json",
+    "A\tdocs/evidence/earned-lumbridge-20261017.json",
+    "A\tdocs/evidence/familiar-dismissal-20261017.json",
+    "A\tdocs/evidence/familiar-owner-20261017.json",
+    "A\tdocs/evidence/github-update-discovery-20261017.json",
+    "A\tdocs/evidence/grave-checkpoint-process-exit-20261017.json",
+    "A\tdocs/evidence/grave-cold-jvm-20261017.json",
+    "A\tdocs/evidence/grave-lifecycle-identity-20261017.json",
+    "A\tdocs/evidence/grave-receipt-model-20261017.json",
+    "A\tdocs/evidence/grave-record-codec-20261017.json",
+    "A\tdocs/evidence/gravestone-shop-authority-20261017.json",
+    "A\tdocs/evidence/gravestone-timer-20261017.json",
+    "A\tdocs/evidence/ground-loot-transaction-20261017.json",
+    "A\tdocs/evidence/identical-kept-items-20261017.json",
+    "A\tdocs/evidence/kept-item-charges-20261017.json",
+    "A\tdocs/evidence/launcher-location-20261017.json",
+    "A\tdocs/evidence/m6-content-20261017.json",
+    "A\tdocs/evidence/native-save-batch-boundary-20261017.json",
+    "A\tdocs/evidence/native-save-confirmation-20261017.json",
+    "A\tdocs/evidence/native-test-build-20261017.json",
+    "A\tdocs/evidence/native-test-build-48-20261017.json",
+    "A\tdocs/evidence/native-test-build-50-20261017.json",
+    "A\tdocs/evidence/native-test-build-51-20261017.json",
+    "A\tdocs/evidence/native-test-build-52-20261018.json",
+    "A\tdocs/evidence/native-two-client-20261017.json",
+    "A\tdocs/evidence/npc-queue-lifecycle-20261017.json",
+    "A\tdocs/evidence/offline-save-failure-retention-20261017.json",
+    "A\tdocs/evidence/prebuilt-launcher-contract-20261017.json",
+    "A\tdocs/evidence/prebuilt-native-server-20261017.json",
+    "A\tdocs/evidence/prebuilt-native-session-20261017.json",
+    "A\tdocs/evidence/prebuilt-version-lifecycle-20261017.json",
+    "A\tdocs/evidence/production-capacity-20261017.json",
+    "A\tdocs/evidence/profile-jvm-options-20261017.json",
+    "A\tdocs/evidence/profile-location-20261017.json",
+    "A\tdocs/evidence/research-20261017/wasm-probe.json",
+    "A\tdocs/evidence/runtime-notice-inventory-20261017.json",
+    "A\tdocs/evidence/save-variable-snapshots-20261017.json",
+    "A\tdocs/evidence/settings-ownership/live-settings.png",
+    "A\tdocs/evidence/settings-ownership/settings-only-continue.json",
+    "A\tdocs/evidence/settings-ownership/settings-only-new.json",
+    "A\tdocs/evidence/settings-save-followup-20261017.json",
+    "A\tdocs/evidence/slayer-kill-ownership-20261017.json",
+    "A\tdocs/evidence/slayer-task-blocks-20261018.json",
+    "A\tdocs/evidence/summoning-acquisition-20261017.json",
+    "A\tdocs/evidence/summoning-loot-delivery-20261017.json",
+    "A\tdocs/evidence/targeted-dungeoneering-20261017.json",
+    "A\tdocs/evidence/targeted-summoning-20261017.json",
+    "A\tdocs/evidence/update-activation-lab-20261017.json",
+    "A\tdocs/evidence/update-staging-lab-20261017.json",
+    "A\tdocs/evidence/update-staging-special-files-20261018.json",
+    "A\tdocs/evidence/wasm-raster-20261017.json",
+    "A\tdocs/images/launcher-update-fixture-20261017.png",
+    "A\tdocs/images/native-test-build-20261017.png",
+    "A\tdocs/images/native-test-build-48-20261017.png",
+    "A\tdocs/images/native-test-build-50-20261017.png",
+    "A\tdocs/images/native-test-build-51-20261017.png",
+    "A\tdocs/images/native-test-build-52-20261018.png",
+    "A\tdocs/images/prebuilt-native-session-20261017.png",
+    "A\tdocs/images/prebuilt-version-lifecycle-20261017.png",
+    "A\tdocs/images/settings-direct-20261017.png",
+    "A\tdocs/images/wasm-synthetic-edges.png",
+    "A\texperiments/native-grave-boundary/README.md",
+    "A\texperiments/native-grave-boundary/TransientWorldSaveProbe.kt",
+    "A\texperiments/native-grave-boundary/run.py",
+    "A\texperiments/native-grave-checkpoint/GraveCheckpointHelper.java",
+    "A\texperiments/native-grave-checkpoint/README.md",
+    "A\texperiments/native-grave-checkpoint/run.py",
+    "A\texperiments/native-grave-codec/GraveCodecHelper.java",
+    "A\texperiments/native-grave-codec/README.md",
+    "A\texperiments/native-grave-codec/run.py",
+    "A\texperiments/native-grave-receipt/GraveReceiptHelper.java",
+    "A\texperiments/native-grave-receipt/README.md",
+    "A\texperiments/native-grave-receipt/run.py",
+    "A\texperiments/native-lab-token/LabTokenClientProbe.java",
+    "A\texperiments/native-lab-token/LabTokenHelper.java",
+    "A\texperiments/native-lab-token/README.md",
+    "A\texperiments/native-lab-token/run.py",
+    "A\texperiments/native-prebuilt-server/README.md",
+    "A\texperiments/native-prebuilt-server/run.py",
+    "A\texperiments/native-prebuilt-server/runtime_inputs.py",
+    "A\texperiments/native-prebuilt-session/README.md",
+    "A\texperiments/native-prebuilt-session/run.py",
+    "A\texperiments/native-save-batch/README.md",
+    "A\texperiments/native-save-batch/StorageBatchProbe.java",
+    "A\texperiments/native-save-batch/run.py",
+    "A\texperiments/prebuilt-runtime-contract/LauncherProbe.java",
+    "A\texperiments/prebuilt-runtime-contract/README.md",
+    "A\texperiments/prebuilt-runtime-contract/ScreenInput.java",
+    "A\texperiments/prebuilt-runtime-contract/manifest.py",
+    "A\texperiments/prebuilt-runtime-contract/prebuilt_bootstrap.py",
+    "A\texperiments/prebuilt-runtime-contract/prepare.py",
+    "A\texperiments/prebuilt-runtime-contract/probe.py",
+    "A\texperiments/prebuilt-runtime-contract/version_lifecycle.py",
+    "A\texperiments/profile-jvm-options/OwnedProperties.java",
+    "A\texperiments/profile-jvm-options/run.py",
+    "A\texperiments/runtime-inventory/README.md",
+    "A\texperiments/runtime-inventory/artifacts.gradle",
+    "A\texperiments/runtime-inventory/run.py",
+    "A\texperiments/update-activation/README.md",
+    "A\texperiments/update-activation/gate.py",
+    "A\texperiments/update-staging/README.md",
+    "A\texperiments/update-staging/stage.py",
+    "A\texperiments/wasm-kernel/README.md",
+    "A\texperiments/wasm-kernel/build.gradle",
+    "A\texperiments/wasm-kernel/settings.gradle",
+    "A\texperiments/wasm-kernel/src/controller/PortabilityProbe.java",
+    "A\texperiments/wasm-kernel/src/presenter/PortabilityProbe.java",
+    "A\texperiments/wasm-raster/.gitignore",
+    "A\texperiments/wasm-raster/README.md",
+    "A\texperiments/wasm-raster/build.gradle",
+    "A\texperiments/wasm-raster/run.sh",
+    "A\texperiments/wasm-raster/settings.gradle",
+    "A\texperiments/wasm-raster/src/browser/java/RasterProbe.java",
+    "A\texperiments/wasm-raster/src/jvm/java/NativeJar.java",
+    "A\texperiments/wasm-raster/src/jvm/java/VerbatimJvm.java",
+    "A\texperiments/wasm-raster/src/shared/java/Bench.java",
+    "A\texperiments/wasm-raster/src/shared/java/Raster.java",
+    "A\texperiments/wasm-raster/src/shared/java/Scene.java",
+    "A\texperiments/wasm-raster/src/shared/java/VerbatimRaster.java",
+    "A\texperiments/wasm-raster/tools/browser_probe.mjs",
+    "A\texperiments/wasm-raster/tools/check_evidence.py",
+    "A\texperiments/wasm-raster/tools/extract_face_kernel.py",
+    "A\texperiments/wasm-raster/tools/serve_loopback.py",
+    "A\texperiments/wasm-raster/web/index.html",
+    "A\tpatches/client/0054-controller-precision-walking.patch",
+    "A\tpatches/client/0055-launcher-release-discovery.patch",
+    "A\tpatches/client/0056-external-launcher-home.patch",
+    "A\tpatches/server/0023-dungeoneering-real-template-solvability.patch",
+    "A\tpatches/server/0024-controller-corner-running.patch",
+    "A\tpatches/server/0025-targeted-solo-dungeoneering.patch",
+    "A\tpatches/server/0026-targeted-solo-summoning.patch",
+    "A\tpatches/server/0027-earned-lumbridge-progression.patch",
+    "A\tpatches/server/0028-dungeon-native-entrance-validation.patch",
+    "A\tpatches/server/0029-summoning-supply-acquisition.patch",
+    "A\tpatches/server/0030-production-capacity-recovery.patch",
+    "A\tpatches/server/0031-dungeon-boss-trapdoor-contract.patch",
+    "A\tpatches/server/0032-fix-dungeon-room-coordinate-rotation.patch",
+    "A\tpatches/server/0033-dungeon-reward-notice-countdown.patch",
+    "A\tpatches/server/0034-native-primary-save-confirmation.patch",
+    "A\tpatches/server/0035-cooking-target-lifetime.patch",
+    "A\tpatches/server/0036-death-loot-recovery.patch",
+    "A\tpatches/server/0037-slayer-kill-ownership.patch",
+    "A\tpatches/server/0038-familiar-owner-session.patch",
+    "A\tpatches/server/0039-familiar-dismissal-identity.patch",
+    "A\tpatches/server/0040-ground-loot-transaction.patch",
+    "A\tpatches/server/0041-grave-lifecycle-identity.patch",
+    "A\tpatches/server/0042-retain-failed-offline-saves.patch",
+    "A\tpatches/server/0043-npc-deferred-queue-identity.patch",
+    "A\tpatches/server/0044-save-variable-list-snapshots.patch",
+    "A\tpatches/server/0045-gravestone-shop-server-availability.patch",
+    "A\tpatches/server/0046-native-summoning-loot-delivery.patch",
+    "A\tpatches/server/0047-connected-summoning-supply-chain.patch",
+    "A\tpatches/server/0048-kept-item-charge-preservation.patch",
+    "A\tpatches/server/0049-preserve-identical-kept-items.patch",
+    "A\tpatches/server/0050-death-drop-charge-recovery.patch",
+    "A\tpatches/server/0051-gravestone-degrade-phase-and-expiry.patch",
+    "A\tpatches/server/0052-honor-slayer-task-blocks.patch",
+    "A\tscripts/analyse_deck_stall_clusters.py",
+    "A\tscripts/backport_catalogue.py",
+    "A\tscripts/backport_item_codec.py",
+    "A\tscripts/backport_lab_token.py",
+    "M\tscripts/content_coverage.py",
+    "A\tscripts/current_status.py",
+    "A\tscripts/deck-controller-validation.sh",
+    "M\tscripts/dev-run.sh",
+    "M\tscripts/doctor.sh",
+    "M\tscripts/harness/NativeAdventureProbe.java",
+    "A\tscripts/harness/NativeCoopSmoke.java",
+    "M\tscripts/harness/NativeDeckRouteProbe.java",
+    "A\tscripts/harness/NativeLauncherUpdateProbe.java",
+    "M\tscripts/launcher.sh",
+    "M\tscripts/launcher_backend.py",
+    "M\tscripts/local_dev.py",
+    "M\tscripts/prepare-build.sh",
+    "M\tscripts/profile_session.py",
+    "M\tscripts/profiles.py",
+    "A\tscripts/release_updates.py",
+    "M\tscripts/session_recovery.py",
+    "A\tscripts/smoke-coop.sh",
+    "M\tscripts/smoke-launcher.py",
+    "M\tscripts/smoke-profile.sh",
+    "M\tscripts/smoke-recovery.py",
+    "A\tscripts/smoke_coop.py",
+    "M\tscripts/smoke_profile.py",
+    "M\tscripts/test-content-coverage.sh",
+    "A\tscripts/test_backport_catalogue.py",
+    "A\tscripts/test_backport_lab_token.py",
+    "A\tscripts/test_cache_location.py",
+    "A\tscripts/test_content_coverage.py",
+    "A\tscripts/test_current_status.py",
+    "A\tscripts/test_deck_stall_clusters.py",
+    "A\tscripts/test_env_wrappers.py",
+    "M\tscripts/test_launcher_backend.py",
+    "A\tscripts/test_launcher_location.py",
+    "M\tscripts/test_local_dev.py",
+    "A\tscripts/test_prebuilt_bootstrap.py",
+    "A\tscripts/test_prebuilt_manifest.py",
+    "A\tscripts/test_profile_location.py",
+    "M\tscripts/test_profiles.py",
+    "A\tscripts/test_release_updates.py",
+    "A\tscripts/test_runtime_inputs.py",
+    "A\tscripts/test_runtime_inventory.py",
+    "M\tscripts/test_session_recovery.py",
+    "A\tscripts/test_smoke_coop.py",
+    "A\tscripts/test_update_activation.py",
+    "A\tscripts/test_update_staging.py"
+  ],
+  "merged_prs": [
+    {
+      "number": 24,
+      "title": "Own the Settings probe through a scoped virtual pad; add --settings",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/24",
+      "merged_at_utc": "2026-10-14T11:47:37Z",
+      "merge_commit": "d14a97d1bde038d05979aa0045a8b0ad87ab3471",
+      "classification": "Harness fix",
+      "report_summary": "Settings probe now owns a scoped connected virtual pad, drives real input per tick, checks B ancestry and restores SDL polling on success/failure; adds --settings. The earlier second-tick failure was harness ownership, not a product fix.",
+      "changed_files": [
+        {
+          "status": "A",
+          "paths": [
+            "docs/SETTINGS_HARNESS_OWNERSHIP_20261014.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/settings-ownership/live-settings.png"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/settings-ownership/settings-only-continue.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/settings-ownership/settings-only-new.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/harness/NativeAdventureProbe.java"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/smoke_profile.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 22,
+      "title": "Make Deck probes portable and capture controller and loading diagnostics",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/22",
+      "merged_at_utc": "2026-10-14T11:48:36Z",
+      "merge_commit": "502df960241d2dbc7eae4d0985273a7db9dcef28",
+      "classification": "Validation / diagnostics",
+      "report_summary": "Explicit UTF-8 fixes Steam C-locale probe compilation; portable quick/shop/cooking/Settings/launcher/route runner. Real Deck shop persistence passed. Added region/renderer/GC instrumentation: 709\u20131,041 ms logic deltas versus 82\u2013150 ms GC deltas suggest GC alone does not explain crossings. Historical 36.14-minute powered run averaged 59.04 FPS but missed tails; later mixed-power ~30 FPS diagnostic is not comparable. Preserved the valid owner save while archiving an ended unverified record; did not infer clean closure.",
+      "changed_files": [
+        {
+          "status": "A",
+          "paths": [
+            "docs/CONTROLLER_INTERACTION_ACCEPTANCE.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/DECK_CONTROLLER_VALIDATION_20261014.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/DECK_STALL_DIAGNOSIS_20261014.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/NEXT_DECK_SESSION_SPRINT.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/deck-controller-20261014/r29-gaming-mode.png"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/deck-controller-20261014/r29-present.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/deck-controller-20261014/r29-quick.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/deck-controller-20261014/r29-route.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/deck-controller-20261014/r30-settings.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/deck-controller-20261014/r30-shop-approach.png"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/deck-controller-20261014/r30-shop.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/deck-controller-20261014/r31-settings.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/deck-controller-20261014/r32-map.png"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/deck-controller-20261014/r32-route-diagnostic.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/analyse_deck_stall_clusters.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/deck-controller-validation.sh"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/harness/NativeAdventureProbe.java"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/harness/NativeDeckRouteProbe.java"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/smoke-launcher.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/smoke_profile.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_deck_stall_clusters.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 25,
+      "title": "Review native playtest priorities, backport compatibility and WASM feasibility",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/25",
+      "merged_at_utc": "2026-10-17T13:17:56Z",
+      "merge_commit": "e47f8e1ce52ee16a641308adf04dc4082ed23033",
+      "classification": "Research / infrastructure",
+      "report_summary": "Added physical-playtest direction, architecture review, backport architecture/example and WASM feasibility/spike plan, plus pinned source research. Introduced generated CURRENT_STATUS ledger/check and GitHub human-playtest issue form. StickMath compiled unchanged to TeaVM WasmGC and ran in Chromium; native AWT presenter compilation failed as expected. No gameplay/runtime port.",
+      "changed_files": [
+        {
+          "status": "A",
+          "paths": [
+            ".github/ISSUE_TEMPLATE/playtest.yml"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            ".github/workflows/tooling.yml"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            ".gitignore"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "README-SOLOSCAPE.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "backport/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "backport/manifests/superior-slayer.example.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ARCHITECTURE.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/BACKPORT_ARCHITECTURE.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/BACKPORT_MANIFEST_EXAMPLE.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/PLAYTEST_DIRECTION.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/RESEARCH_SOURCES_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/WASM_FEASIBILITY.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/WASM_SPIKE_PLAN.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/research-20261017/wasm-probe.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-kernel/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-kernel/build.gradle"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-kernel/settings.gradle"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-kernel/src/controller/PortabilityProbe.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-kernel/src/presenter/PortabilityProbe.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/current_status.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_current_status.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 26,
+      "title": "Add corner running and precision walking; audit solo progression and probe WASM raster",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/26",
+      "merged_at_utc": "2026-10-17T13:19:03Z",
+      "merge_commit": "0d51a488131e19ed6793eb3cb7862bc8132dde8f",
+      "classification": "Gameplay fix / audit / experiment",
+      "report_summary": "Server resolves both running steps from their actual tiles, enabling legal L-shaped turns. Optional RT forces precision walking at full tilt; both features reversible. Replaced null-passing dungeon solvability tests with real-template cases; added M6, Summoning, Dungeoneering, MMO and AI audits. Isolated native masked-edge WASM proof matched JVM/browser hashes at two sizes; naive presentation missed host 60 FPS budget. Validated 98 server movement cases, 254 client cases (one optional SDL skip), 273 selected content cases and 130 tooling cases; groups overlap historically and are not additive.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "README-SOLOSCAPE.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/AI_ADVENTURERS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/CONTROLLER_CORNER_MOVEMENT.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/DUNGEONEERING_AUDIT.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/MMO_DEPENDENCY_AUDIT.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/SOLO_CONTENT_AUDIT.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/SUMMONING_AUDIT.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/WASM_FEASIBILITY.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/WASM_RASTER_POC.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/WASM_SPIKE_PLAN.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/controller-corners-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/m6-content-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/wasm-raster-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/images/wasm-synthetic-edges.png"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/.gitignore"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/build.gradle"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/run.sh"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/settings.gradle"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/src/browser/java/RasterProbe.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/src/jvm/java/NativeJar.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/src/jvm/java/VerbatimJvm.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/src/shared/java/Bench.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/src/shared/java/Raster.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/src/shared/java/Scene.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/src/shared/java/VerbatimRaster.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/tools/browser_probe.mjs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/tools/check_evidence.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/tools/extract_face_kernel.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/tools/serve_loopback.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/wasm-raster/web/index.html"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/client/0054-controller-precision-walking.patch"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0023-dungeoneering-real-template-solvability.patch"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0024-controller-corner-running.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test-content-coverage.sh"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 28,
+      "title": "Validate bounded solo dungeon and spirit wolf lifecycles",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/28",
+      "merged_at_utc": "2026-10-17T13:20:38Z",
+      "merge_commit": "3787a0c97281eacd98432c8b18ddbeebfb61dff8",
+      "classification": "Native validation",
+      "report_summary": "Bounded solo small-c1 floor-1 entry/supplies/binding/leave/logout and level-1 spirit-wolf infusion/summon/dismiss/disk restore; 43 selected cases. Initial dungeon test called the registered handler directly; #30 supersedes that entry evidence. Materials supplied and restore in same JVM.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/DUNGEONEERING_TARGETED_PASS_20261017.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/SUMMONING_TARGETED_PASS_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/targeted-dungeoneering-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/targeted-summoning-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0025-targeted-solo-dungeoneering.patch"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0026-targeted-solo-summoning.patch"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 29,
+      "title": "Validate an earned Lumbridge quest, food, combat and save journey",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/29",
+      "merged_at_utc": "2026-10-17T13:53:54Z",
+      "merge_commit": "2d0ff0322d74459621a27a89a5912d060a8f4461",
+      "classification": "Native validation",
+      "report_summary": "Connected actual starter-kit Cook quest ingredients/mill, shrimp fishing, woodcutting, player-lit fire Use cooking, chicken combat/food, castle bank and disk restore. Three actual-map journeys pass; bounded ordinary retries follow roaming targets. Earned journey, but fresh-player restore is in-process and physical controller play remains open.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/EARNED_LUMBRIDGE_SLICE_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/earned-lumbridge-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0027-earned-lumbridge-progression.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 30,
+      "title": "Replace dungeon entry handler bypass with native instruction coverage",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/30",
+      "merged_at_utc": "2026-10-17T14:10:21Z",
+      "merge_commit": "9a473c392a291d83d41b070f4657a6c7d23f83a2",
+      "classification": "Native validation",
+      "report_summary": "Replaced dungeon handler bypass with native InteractObject instructions through both mirrored legal entrance sides. Added blocked-side negative; 41 selected cases. Supplied ring/start location; full floor still unproven.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/DUNGEONEERING_NATIVE_ENTRY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/dungeon-native-entry-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0028-dungeon-native-entrance-validation.patch"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 31,
+      "title": "Keep healthy characters usable when profile metadata is damaged",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/31",
+      "merged_at_utc": "2026-10-17T14:22:40Z",
+      "merge_commit": "7cf8c1f7bc1b25d9fde2eca9b95e8afddb73e2a1",
+      "classification": "Recovery fix",
+      "report_summary": "Malformed profile account metadata becomes an isolated recovery entry instead of crashing all character listing. Six malformed values preserve damaged bytes, previous generation and healthy profiles; verified restore works.",
+      "changed_files": [
+        {
+          "status": "A",
+          "paths": [
+            "docs/PROFILE_METADATA_RECOVERY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/profiles.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_profiles.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 32,
+      "title": "Validate Summoning supply acquisition and expose a bounded regression group",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/32",
+      "merged_at_utc": "2026-10-17T14:25:32Z",
+      "merge_commit": "60e6cb580026f69d92d900e6c3796576473d6f1f",
+      "classification": "Native validation",
+      "report_summary": "Pikkupstix native dialogue/shop supply quantities, prices, stock, insufficient funds and controlled members-only wolf charm roll; added --group summoning. Four new contracts, 14 selected cases; supplied coins/NPC placement, not earned travel/combat.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/SUMMONING_ACQUISITION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/summoning-acquisition-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0029-summoning-supply-acquisition.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 33,
+      "title": "Validate inventory-full production recovery through native actions",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/33",
+      "merged_at_utc": "2026-10-17T14:30:05Z",
+      "merge_commit": "8bf0e23e5a8b9de2e3e6d15650bcb63de3f9592f",
+      "classification": "Native validation",
+      "report_summary": "Full-inventory fishing grants no catch/XP; three-output bread recipe preserves inputs when space is short. Native Drop then retry succeeds with exact accounting/timers. Added --group capacity; seven selected cases, no gameplay change.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/PRODUCTION_CAPACITY_RECOVERY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/production-capacity-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0030-production-capacity-recovery.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 34,
+      "title": "Validate session ownership metadata before offering recovery",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/34",
+      "merged_at_utc": "2026-10-17T14:36:05Z",
+      "merge_commit": "898847c9952ab43142a3bca91fe79629f743ad56",
+      "classification": "Recovery fix",
+      "report_summary": "Validate session ownership metadata before recovery/archive. Eleven malformed forms no longer crash listing or qualify as recoverable; preserve record bytes and healthy metadata, send no signals and create no backups. Real process identity checks remain required.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/SESSION_RECORD_VALIDATION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/session_recovery.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_session_recovery.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 35,
+      "title": "Verify character identity as well as checksums in profile backups",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/35",
+      "merged_at_utc": "2026-10-17T14:38:10Z",
+      "merge_commit": "005ba355f1a784e03940a9fc2ea904a6b5053446",
+      "classification": "Backup fix",
+      "report_summary": "Verify primary account identity as well as hashes when creating/reading/restoring backups. A self-consistent wrong-character archive is rejected without changing save/generation/archive; multi-account world copies still supported.",
+      "changed_files": [
+        {
+          "status": "A",
+          "paths": [
+            "docs/BACKUP_ACCOUNT_VALIDATION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/profiles.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_profiles.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 36,
+      "title": "Prove dungeon boss trapdoor unlock against the cached room",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/36",
+      "merged_at_utc": "2026-10-17T14:45:57Z",
+      "merge_commit": "aa266a380eb6ba280469d3bb93b9189df06f8068",
+      "classification": "Native validation / audit",
+      "report_summary": "Actual cached boss room spawns configured boss and locked trapdoor; controlled native death unlocks that same object. Five selected cases; room opening/lethal damage are fixtures, not earned full-floor traversal. Identified rotation bug for #37.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/DUNGEONEERING_COMPLETION_AUDIT_20261017.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/DUNGEON_BOSS_TRAPDOOR_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/dungeon-boss-trapdoor-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0031-dungeon-boss-trapdoor-contract.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 37,
+      "title": "Fix rotated dungeon room coordinates and key-marker scans",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/37",
+      "merged_at_utc": "2026-10-17T14:51:06Z",
+      "merge_commit": "efc5ea075b995cf231d5116ca39a1d46e5a992d4",
+      "classification": "Gameplay fix",
+      "report_summary": "Rotated dungeon Y now uses original X. At 90/270 degrees the old code collapsed 256 room coordinates onto 16 positions. Full 16\u00d716 geometry checks plus cached trapdoor scan pass; 26 selected cases.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/DUNGEON_ROOM_ROTATION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/dungeon-room-rotation-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0032-fix-dungeon-room-coordinate-rotation.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 38,
+      "title": "Do not report a clean save when failed-write artifacts remain",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/38",
+      "merged_at_utc": "2026-10-17T15:01:08Z",
+      "merge_commit": "96e64d21a2633e0bc732b113991e0aaf1b905918",
+      "classification": "Save/lifecycle fix",
+      "report_summary": "Normal shutdown refuses clean-save status and verified after-shutdown backup if failed-save/unfinished atomic-write artifacts remain. Two reproduced failures fixed; earlier valid TOML no longer masks failure. Explicit native primary-success receipt follows in #40.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/SAVE_ARTIFACT_CLOSURE_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/profile_session.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/session_recovery.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_launcher_backend.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 39,
+      "title": "Preserve solo dungeon rewards while players read completion notices",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/39",
+      "merged_at_utc": "2026-10-17T15:07:25Z",
+      "merge_commit": "e8942f826521fa18046499e6fb169111a2d44b11",
+      "classification": "Gameplay fix",
+      "report_summary": "Next-floor countdown starts after queued rewards finish, so reading completion notice longer than 30 seconds no longer cancels XP/tokens/floor credit. Reproduced missing 201 XP/20 tokens/floor credit; 28 selected dungeon cases pass. Full earned floor and group completion remain separate.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/DUNGEON_REWARD_NOTICE_FIX_20261017.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/DUNGEON_REWARD_NOTICE_INVESTIGATION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/dungeon-reward-notice-fix-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0033-dungeon-reward-notice-countdown.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 40,
+      "title": "Require confirmed current-session native world saves before reporting success",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/40",
+      "merged_at_utc": "2026-10-17T15:30:46Z",
+      "merge_commit": "1fcb0d1846ccce7ca2aa94f072e627113cc5f9dd",
+      "classification": "Save/lifecycle fix",
+      "report_summary": "Native save queue reports actual primary success; owned shutdown emits exact current-session confirmation only after world/exchange shutdown. Launcher normal/orphan paths require it before clean closure/backup. Ten native queue cases plus real copied New/Continue/cancel and unwritable primary+fallback negative prove readable old save/JVM exit are insufficient.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/NATIVE_SAVE_CONFIRMATION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/native-save-confirmation-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0034-native-primary-save-confirmation.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/profile_session.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/session_recovery.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/smoke_profile.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_launcher_backend.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_local_dev.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_session_recovery.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 41,
+      "title": "Keep healthy recovery options visible beside damaged compressed backups",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/41",
+      "merged_at_utc": "2026-10-17T15:36:00Z",
+      "merge_commit": "e4b62c7cc374c44b8acc62cc7769d49b384ba684",
+      "classification": "Backup fix",
+      "report_summary": "Corrupt DEFLATE metadata/save streams are classified invalid rather than crashing backup discovery. Healthy recovery stays available; failed restore preserves all bytes/generations; two real compressed-payload regressions.",
+      "changed_files": [
+        {
+          "status": "A",
+          "paths": [
+            "docs/BACKUP_DEFLATE_RECOVERY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/profiles.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_profiles.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 42,
+      "title": "Stop stale cooking activity after target or input disappears",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/42",
+      "merged_at_utc": "2026-10-17T15:39:00Z",
+      "merge_commit": "88e9e3659fec864850a3bc589c0048edea69194c",
+      "classification": "Gameplay fix",
+      "report_summary": "Clear cooking activity marker when queued fire target or convertible input disappears, allowing fresh-action retry. Two reproduced exits fixed; eight selected cases. Does not prove all expiry/movement cancellation paths.",
+      "changed_files": [
+        {
+          "status": "A",
+          "paths": [
+            "docs/COOKING_TARGET_LIFETIME_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/cooking-target-lifetime-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0035-cooking-target-lifetime.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 43,
+      "title": "Start Backport Lab with a read-only native definition-slot catalogue",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/43",
+      "merged_at_utc": "2026-10-17T15:46:33Z",
+      "merge_commit": "ff8e296a003cdcdd8c1910ed1f845554b3f560f7",
+      "classification": "Backport lab",
+      "report_summary": "Read-only item/NPC/object/sequence occupancy catalogue using native reference tables; two deterministic runs independently match complete ID arrays from pinned Displee parser on a copy. Includes unnamed entries and unchanged input hashes. Reserves no IDs and imports no content.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "backport/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "backport/tooling/CacheSlots.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "backport/tooling/CacheSlotsOracle.java"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/BACKPORT_ARCHITECTURE.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/BACKPORT_CATALOGUE_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/backport-catalogue-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/backport_catalogue.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_backport_catalogue.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 44,
+      "title": "Validate death loot capacity recovery and fresh-player save restore",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/44",
+      "merged_at_utc": "2026-10-17T15:50:03Z",
+      "merge_commit": "5f87038698a552a3ec920821c79b5d224d087707",
+      "classification": "Native validation",
+      "report_summary": "Real death/respawn, walk back, full-inventory Take refusal, walk off grave, native Drop/retry and recovered-inventory disk restore without duplication. Ten death-group cases; API damage/supplied items, in-process restore. Does not prove unrecovered world-loot persistence.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/DEATH_LOOT_RECOVERY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/death-loot-recovery-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0036-death-loot-recovery.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 45,
+      "title": "Keep unrecovered grave and ground loot persistence as an explicit save gate",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/45",
+      "merged_at_utc": "2026-10-17T16:00:17Z",
+      "merge_commit": "03bc66f9dcf575d6c991935675849b85ff433858",
+      "classification": "Audit / open defect",
+      "report_summary": "Traced saves/shutdown: unrecovered graves/floor loot have no runtime persistence writer and grave marker variables are temporary. Kept this separate from successful recovered-inventory saves; proposed cold-JVM reproduction rather than claiming persistence.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/WORLD_TRANSIENT_SAVE_AUDIT_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 46,
+      "title": "Validate Slayer task credit and saved state across independent accounts",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/46",
+      "merged_at_utc": "2026-10-17T16:09:45Z",
+      "merge_commit": "6ea543cf9a9509b5fe873d90bf5e1b53dfd793a4",
+      "classification": "Native validation",
+      "report_summary": "Single active attacker receives one Slayer credit/XP; passive/off-task neighboring accounts do not. Independent task counts, XP and inventories survive disk restore. Two new cases, 36 selected; tasks/stats/spawns supplied, no contested-kill policy proof.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/SLAYER_KILL_OWNERSHIP_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/slayer-kill-ownership-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0037-slayer-kill-ownership.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 47,
+      "title": "Prove independent native clients survive a shared-world restart",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/47",
+      "merged_at_utc": "2026-10-17T16:25:08Z",
+      "merge_commit": "ba8b1add2b78f02bbabdf4e7bdedc9d370c6d024",
+      "classification": "Compatibility validation / harness fix",
+      "report_summary": "Two actual native client JVMs see each other move; Drop affects only acting account; separate inventories/XP/tiles survive full shared-world restart. Deliberate validator failure cleans all owned processes. Fixed recovery-fixture teardown race using retained verified pidfds and child-exit waits. No hosting UI/guest policy or physical co-op acceptance.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/NATIVE_TWO_CLIENT_COMPATIBILITY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/native-two-client-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/harness/NativeCoopSmoke.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/smoke-coop.sh"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/smoke_coop.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_session_recovery.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_smoke_coop.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 48,
+      "title": "Inspect original item codec compatibility before allocating backport IDs",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/48",
+      "merged_at_utc": "2026-10-17T16:26:46Z",
+      "merge_commit": "12a584a3c7c193058db768c9d3466de6aec5da77",
+      "classification": "Backport lab / negative result",
+      "report_summary": "Original in-memory definition passes encoder and three actual readers at note reference 32767; readers disagree at 32768/65534/65535. Six cases/six malformed controls and deterministic reports. Audited item-ID consumers; blocks unsafe high-ID assumptions, not an allocator or codec fix.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "backport/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "backport/tooling/OriginalItemCodec.java"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/BACKPORT_ARCHITECTURE.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/BACKPORT_ITEM_CODEC_20261017.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/BACKPORT_ITEM_ID_AUDIT_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/backport-item-codec-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/backport_item_codec.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 49,
+      "title": "Keep delayed familiar kill credit with its original player session",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/49",
+      "merged_at_utc": "2026-10-17T16:33:17Z",
+      "merge_commit": "992c4b350c6bad96e75dfa4535a22067237afee0",
+      "classification": "Ownership fix",
+      "report_summary": "Delayed familiar kill credit binds original player object and checks it is still indexed. Prevents another account or same-account replacement session inheriting credit through reused numeric index. Four controlled cases; already-landed hit retains valid online-owner credit after dismissal.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/FAMILIAR_OWNERSHIP_AUDIT_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/familiar-owner-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0038-familiar-owner-session.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 50,
+      "title": "Measure unrecovered grave loss across cold native world JVMs",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/50",
+      "merged_at_utc": "2026-10-17T16:41:20Z",
+      "merge_commit": "1d028505aa575d10d76c19940f9fe9c98c899a36",
+      "classification": "Diagnostic / confirmed P1",
+      "report_summary": "Two cold native world JVMs on the same disposable storage prove kept account fields survive but unexpired grave/drop/map marker disappear after shutdown/reboot. This is a reproduced defect, not a passing persistence implementation.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/GRAVE_COLD_JVM_PROBE_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/grave-cold-jvm-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-grave-boundary/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-grave-boundary/TransientWorldSaveProbe.kt"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-grave-boundary/run.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 51,
+      "title": "Discover GitHub updates and fix launcher modal controller input",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/51",
+      "merged_at_utc": "2026-10-17T16:57:15Z",
+      "merge_commit": "d795debf85b22ba1cae7fbd4b69b14af0685730e",
+      "classification": "Launcher addition / input fixes",
+      "report_summary": "Launcher Settings gains explicit GitHub update metadata/notes check with no-release/offline handling; no download/install. Real Swing probe exposed modal timer blocking, nested-dialog ownership and B focus loss; deferred activation, ancestry checks and parent-focus restoration fix them. Cancelled Settings ignores late response.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CONSOLE_SETUP_UPDATE.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/GITHUB_UPDATE_DISCOVERY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/github-update-discovery-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/images/launcher-update-fixture-20261017.png"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/client/0055-launcher-release-discovery.patch"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/harness/NativeLauncherUpdateProbe.java"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/launcher_backend.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/release_updates.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/smoke-launcher.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_release_updates.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 52,
+      "title": "Keep profiles in an optional stable location across launcher versions",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/52",
+      "merged_at_utc": "2026-10-17T17:05:43Z",
+      "merge_commit": "68f367cea571077cca35dc3a99e71ae8bb714c2f",
+      "classification": "Storage addition",
+      "report_summary": "Optional absolute SOLOSCAPE_PROFILE_HOME shares profiles/generations/backups across code roots without migration; invalid explicit settings fail before writes. Cross-build ownership checks prevent another build signaling/recovering the live world. Existing default retained.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CONSOLE_SETUP_UPDATE.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/PROFILE_LOCATION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/profile-location-20261017.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/profile_session.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/profiles.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/smoke-launcher.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/smoke-recovery.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_launcher_backend.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_profile_location.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_session_recovery.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 53,
+      "title": "Prove asset-free update candidate staging",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/53",
+      "merged_at_utc": "2026-10-17T17:26:01Z",
+      "merge_commit": "0507ad4a750814665eb276257b8c46bcbdfc3434",
+      "classification": "Update lab",
+      "report_summary": "Bounded ZIP freeze/hash/strict manifest/member validation and atomic candidate publication using original dummy bytes. Twenty-four staging cases; CLI refuses existing candidate without mutation. No network, activation or candidate execution; provisional format, not production updater.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/UPDATE_STAGING_LAB_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/update-staging-lab-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/update-staging/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/update-staging/stage.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_update_staging.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 54,
+      "title": "Fix dismissed familiar identity and duplicate NPC removal",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/54",
+      "merged_at_utc": "2026-10-17T17:27:57Z",
+      "merge_commit": "823073397db984824e64f23fc8287ac7702dbd71",
+      "classification": "Ownership / NPC fix",
+      "report_summary": "Dismissal now clears follower index/ID; timer teardown no longer dismisses same NPC twice and corrupts count. Preserves original session reference for landed-hit credit. Native infusion/Summon/dismiss/reused-slot/resummon regressions prevent unrelated rat becoming familiar.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/FAMILIAR_DISMISSAL_IDENTITY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/familiar-dismissal-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0039-familiar-dismissal-identity.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 55,
+      "title": "Keep floor loot when the pickup transaction is refused",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/55",
+      "merged_at_utc": "2026-10-17T17:33:38Z",
+      "merge_commit": "61fa990b9b52989fdff4dba9ec9fb2ca6274b7ed",
+      "classification": "Loot transaction fix",
+      "report_summary": "Perform whole inventory addition before floor removal; failed stack overflow/nonstackable-capacity transactions preserve floor loot, and stale reference rolls back tentative addition. Two reproduced loss bugs; five Take cases plus Telekinetic Grab/death coverage. No suspension between transaction steps.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/GROUND_LOOT_TRANSACTION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/ground-loot-transaction-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0040-ground-loot-transaction.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 56,
+      "title": "Fix repeated grave cleanup, marker search and Demolish removal",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/56",
+      "merged_at_utc": "2026-10-17T17:39:54Z",
+      "merge_commit": "4f2a4c2619c0b773c0ff7e59fbd4e6ccb26ff726",
+      "classification": "Grave lifecycle fix",
+      "report_summary": "Older grave cleanup clears latest owner UI/timer/location only when it owns them, including same-tile cases. Removes each grave marker and scans past unrelated marker slots. Timer teardown owns Demolish removal once, preventing duplicate NPC removal/count corruption.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/GRAVE_LIFECYCLE_IDENTITY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/grave-lifecycle-identity-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0041-grave-lifecycle-identity.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 57,
+      "title": "Define paused-grave persistence gates and probe native batch writes",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/57",
+      "merged_at_utc": "2026-10-17T17:42:58Z",
+      "merge_commit": "20562d76a5fb91ac58d270f76f12e75001b786aa",
+      "classification": "Policy / persistence lab",
+      "report_summary": "Recorded owner policy: grave time pauses while world is closed. Native two-account batch diagnostic proves partial write: first account advances before invalid second target refuses. Defines offline-owner/merged-pile/backup/conservation gates; no production layout chosen.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/GRAVE_PAUSE_PERSISTENCE_PLAN.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/NATIVE_SAVE_BATCH_BOUNDARY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/native-save-batch-boundary-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-save-batch/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-save-batch/StorageBatchProbe.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-save-batch/run.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 58,
+      "title": "Prove isolated native grave checkpoint publication boundaries",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/58",
+      "merged_at_utc": "2026-10-17T17:56:14Z",
+      "merge_commit": "75f7a19714e84e9498386e296a1eb758b1ff58fd",
+      "classification": "Persistence lab",
+      "report_summary": "Immutable fixture generation binds two real native account inventories and original pile ledger behind verified CURRENT pointer. Eight abrupt Runtime.halt boundaries, normal publication and five corruptions across 42 JVMs check coherent state and 12-coin conservation. Invalid active state refuses even with complete orphan candidate. Not live SaveQueue/world/backup/power-loss proof.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/GRAVE_CHECKPOINT_PROCESS_EXIT_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GRAVE_PAUSE_PERSISTENCE_PLAN.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/grave-checkpoint-process-exit-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-grave-checkpoint/GraveCheckpointHelper.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-grave-checkpoint/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-grave-checkpoint/run.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 59,
+      "title": "Keep failed offline saves pending for primary retry and confirmation",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/59",
+      "merged_at_utc": "2026-10-17T18:06:52Z",
+      "merge_commit": "27096a6d7a64d9e77ef286b0d6e9d7a137760c10",
+      "classification": "Save queue fix",
+      "report_summary": "Offline snapshot stays pending until primary storage succeeds, even if primary/fallback both fail or fallback alone succeeds. Keeps retry cooldown and stale-login gate. Three red reproductions; 13 queue/15 engine save cases pass. Added --group save.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/OFFLINE_SAVE_FAILURE_RETENTION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/offline-save-failure-retention-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0042-retain-failed-offline-saves.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 60,
+      "title": "Compare native grave receipt ordering with explicit unsafe controls",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/60",
+      "merged_at_utc": "2026-10-17T18:25:44Z",
+      "merge_commit": "34c7d2107ba6e2abda9630cacc8dd98a7b55aa6a",
+      "classification": "Persistence lab / negative result",
+      "report_summary": "Compared whole-pile durable receipts in existing account files with generation-pointer design. Twenty fixture cases include two deliberately unsafe controls; erased receipt accepts schema-valid lost history and independent oracle detects total 12 instead of 10. Receipt protocol is not established production-safe.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GRAVE_PAUSE_PERSISTENCE_PLAN.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/GRAVE_RECEIPT_MODEL_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/grave-receipt-model-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-grave-receipt/GraveReceiptHelper.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-grave-receipt/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-grave-receipt/run.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 61,
+      "title": "Prove private native server runtime closure for managed updates",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/61",
+      "merged_at_utc": "2026-10-17T18:33:31Z",
+      "merge_commit": "1425509c49a7c20760a422eecfbef68e37e3a9dc",
+      "classification": "Packaging lab",
+      "report_summary": "Actual native server boots/confirms shutdown from read-only source-free jar/data payload with external cache/mutable state. Added explicit runtime allowlist selector; unchanged payload/cache hashes. Empty-world startup 4.210 s/shutdown 0.364 s on host, not game/Deck benchmark.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/PREBUILT_NATIVE_SERVER_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/prebuilt-native-server-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-prebuilt-server/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-prebuilt-server/run.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-prebuilt-server/runtime_inputs.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_runtime_inputs.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 62,
+      "title": "Support external shared cache input for owned launches",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/62",
+      "merged_at_utc": "2026-10-17T18:37:18Z",
+      "merge_commit": "1ec76bf5e09c9ab2c63511da13828337b0d28dce",
+      "classification": "Storage addition",
+      "report_summary": "Optional SOLOSCAPE_CACHE_HOME selects existing external server cache for doctor/source/profile launch paths; invalid explicit setting fails before session/backup. Client cache remains per-profile; no download/migration. Real client-disabled owned-server start/stop preserves 39 input cache files.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "config/local.env.example"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/CACHE_LOCATION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CACHE_SETUP.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/cache-location-20261017.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/local_dev.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/profile_session.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_cache_location.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_launcher_backend.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_local_dev.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 63,
+      "title": "Pass configured storage locations through launcher entrypoints",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/63",
+      "merged_at_utc": "2026-10-17T18:39:32Z",
+      "merge_commit": "c8ad11aff6a8908234f797c8bbaaa80baa9c60fe",
+      "classification": "Entrypoint fix",
+      "report_summary": "Export explicit profile/cache selectors sourced from local.env through all seven shell wrappers. Actual wrappers tested with inert children across unset/empty/configured modes; prevents silently falling back to defaults.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CACHE_LOCATION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/dev-run.sh"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/doctor.sh"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/launcher.sh"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/prepare-build.sh"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/smoke-coop.sh"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/smoke-profile.sh"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test-content-coverage.sh"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_env_wrappers.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 64,
+      "title": "Separate shared launcher settings and art from version-owned runtime",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/64",
+      "merged_at_utc": "2026-10-17T18:43:16Z",
+      "merge_commit": "755adde5d174da151cadbb8beb4ecc97d2060df9",
+      "classification": "Storage / launcher addition",
+      "report_summary": "Optional SOLOSCAPE_LAUNCHER_HOME moves shared launcher settings and locally supplied art outside version-owned runtime. Build locks/stamps/recovery context stay version-local; invalid explicit input refuses before startup. No automatic migration.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "config/local.env.example"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/LAUNCHER_LOCATION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/launcher-location-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/client/0056-external-launcher-home.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/launcher.sh"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/launcher_backend.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/local_dev.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_env_wrappers.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_launcher_location.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 65,
+      "title": "Validate prebuilt native New/Continue with isolated account state",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/65",
+      "merged_at_utc": "2026-10-17T18:51:00Z",
+      "merge_commit": "8de1cd9ffba07e7840e30efbb39c670382fc78b5",
+      "classification": "Packaging lab",
+      "report_summary": "Real copied prebuilt New/Continue with external profiles/cache, same account fields and four verified backups; immutable payload/cache. Private Xvfb/software/no audio; initial audio-enumeration stall retained as failed attempt. Not graphical launcher/clean-machine install.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/PREBUILT_NATIVE_SESSION_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/prebuilt-native-session-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/images/prebuilt-native-session-20261017.png"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-prebuilt-session/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-prebuilt-session/run.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 66,
+      "title": "Prove private prebuilt launcher preflight and version-owned state",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/66",
+      "merged_at_utc": "2026-10-17T19:08:57Z",
+      "merge_commit": "c26b1ca63b09bad8b22662b49fca3f600e30dfe7",
+      "classification": "Packaging lab",
+      "report_summary": "Strict private manifest/preflight adapter runs actual graphical launcher/backend without source doctor requiring Git/Gradle/compilers. Version lock identity includes code root+manifest hash; rejects altered/unlisted/state/asset inputs while retaining legitimate nested exchange definitions. Real launcher New/Continue, four backups; production bootstrap unchanged.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/PREBUILT_LAUNCHER_CONTRACT_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/prebuilt-launcher-contract-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/prebuilt-runtime-contract/LauncherProbe.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/prebuilt-runtime-contract/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/prebuilt-runtime-contract/manifest.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/prebuilt-runtime-contract/prebuilt_bootstrap.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/prebuilt-runtime-contract/prepare.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/prebuilt-runtime-contract/probe.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_prebuilt_bootstrap.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_prebuilt_manifest.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 67,
+      "title": "Fix deferred NPC queue identity and spawn lookup retirement",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/67",
+      "merged_at_utc": "2026-10-17T19:29:40Z",
+      "merge_commit": "4570cedc6145a8d9cc754abe3539a6bdbda357af",
+      "classification": "NPC lifecycle fix",
+      "report_summary": "Reserve pending NPC indices; bind removals to object identity; cancel queued spawns safely; share regional removal guard; clear deferred ownership and retire spawn lookup only if still owned. Fix duplicate allocation/removal, stale replacement retirement and counts. 105 targeted engine/Summoning/death/dungeon cases.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/NPC_QUEUE_LIFECYCLE_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/npc-queue-lifecycle-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0043-npc-deferred-queue-identity.patch"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 68,
+      "title": "Protect owned client home/cache from inherited late JVM overrides",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/68",
+      "merged_at_utc": "2026-10-17T19:33:33Z",
+      "merge_commit": "191cb649eff203945074447ce0c88843234525d9",
+      "classification": "Profile isolation fix",
+      "report_summary": "Remove inherited late HotSpot _JAVA_OPTIONS from owned game environment so it cannot override selected user.home/cache after explicit JVM properties. Actual Java 8 precedence reproduced and unsafe reintroduced control confirms sensitivity; no owner directories created.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/PROFILE_JVM_OPTIONS_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/profile-jvm-options-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/profile-jvm-options/OwnedProperties.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/profile-jvm-options/run.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/profile_session.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_launcher_backend.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_local_dev.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 69,
+      "title": "Isolate persisted list values in native queued save snapshots",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/69",
+      "merged_at_utc": "2026-10-17T19:49:05Z",
+      "merge_commit": "a0aad4996578eca99f0aa49346500fb1aa290d99",
+      "classification": "Save snapshot fix",
+      "report_summary": "Copy native persisted list containers when capturing queued player snapshot; later list edits cannot mutate earlier IO snapshot. Five snapshot cases with real SaveQueue/FileStorage/thread barrier plus save/journey groups. Covers current flat lists, not arbitrary recursive graphs or whole-world transactions.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/SAVE_VARIABLE_SNAPSHOTS_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/save-variable-snapshots-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0044-save-variable-list-snapshots.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 70,
+      "title": "Enforce gravestone quest prerequisites on the server",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/70",
+      "merged_at_utc": "2026-10-17T20:06:03Z",
+      "merge_commit": "3e2a7a89cae4fb4ae138eeb17fce800c45a47c45",
+      "classification": "Server authority fix",
+      "report_summary": "Gravestone confirmation validates native enum selection and existing quest-derived availability mask before charging. Locked royal grave purchase refused despite forged/late UI selection; unlocked/repeat/free-plaque behavior retained. No ownership-model redesign.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/GRAVESTONE_SHOP_AUTHORITY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/gravestone-shop-authority-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0045-gravestone-shop-server-availability.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 71,
+      "title": "Prove native version recovery and rollback with retained progress",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/71",
+      "merged_at_utc": "2026-10-17T20:17:48Z",
+      "merge_commit": "099c776f615627310fa7f5d968636c55f45d1cea",
+      "classification": "Version lifecycle lab",
+      "report_summary": "Two copied native versions prove active-profile exclusion and original-version-only orphan recovery. Candidate client makes real mouse movement; returning to older code retains newer tile progress without restore/generation switch. Ten backups valid. Actual server42/server45 test only; no arbitrary downgrade/installer guarantee.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/PREBUILT_VERSION_LIFECYCLE_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/prebuilt-version-lifecycle-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/images/prebuilt-version-lifecycle-20261017.png"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "experiments/prebuilt-runtime-contract/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/prebuilt-runtime-contract/ScreenInput.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/prebuilt-runtime-contract/version_lifecycle.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 72,
+      "title": "Inventory native runtime artifacts and notice metadata offline",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/72",
+      "merged_at_utc": "2026-10-17T20:21:12Z",
+      "merge_commit": "c70733b3925aa48f2f54a525bd84d4426b86f8ac",
+      "classification": "Packaging / licensing inventory",
+      "report_summary": "Offline scan records 55 server/24 client runtime artifacts, hashes, candidate notices and embedded native libraries, including three unattributed local client jars. Five original archive controls. M13 notice/rights work stays open: inventory is not distribution permission.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/RUNTIME_NOTICE_INVENTORY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/runtime-notice-inventory-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/runtime-inventory/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/runtime-inventory/artifacts.gradle"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/runtime-inventory/run.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_runtime_inventory.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 73,
+      "title": "Validate native Summoning ingredient loot delivery",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/73",
+      "merged_at_utc": "2026-10-17T20:47:16Z",
+      "merge_commit": "94d8f7df6ba99796be9e9a25d93e0b7fa26a072d",
+      "classification": "Native validation",
+      "report_summary": "Actual native wolf death, queued loot and Take deliver one gold charm/one wolf bones to members exactly once; nonmembers filter both as configured. Controlled hit/RNG and position; 22 selected Summoning cases, not earned fight/travel. Test-only patch, production jar unchanged.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/SUMMONING_LOOT_DELIVERY_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/summoning-loot-delivery-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0046-native-summoning-loot-delivery.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 74,
+      "title": "Prove stopped-world update activation and code rollback in an asset-free lab",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/74",
+      "merged_at_utc": "2026-10-17T20:58:34Z",
+      "merge_commit": "dcd4b7a38f91df90e34091c8fe8b57fe7a741247",
+      "classification": "Update lab",
+      "report_summary": "Stopped-world activation pointer/rollback lab uses shared world+inherited-child leases, exclusive switch, pending marker and sealed candidate verification. Fourteen cases/261 root cases; unsafe shared-lock mutation fails four assertions. FIFO/link/publication-cut/fsync-ambiguity controls. Executes no candidate and changes no production launcher.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/UPDATE_ACTIVATION_LAB_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/update-activation-lab-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/update-activation/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/update-activation/gate.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_update_activation.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 75,
+      "title": "Record ready native 46/56 test build, screenshot and fresh session evidence",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/75",
+      "merged_at_utc": "2026-10-17T21:06:58Z",
+      "merge_commit": "c7c6161b12736aba82c1fd958b93d280210b185d",
+      "classification": "Build / evidence",
+      "report_summary": "Prepared private matched 46/56 snapshot: 10,853 manifest entries, actual copied New/confirmed Save & Quit/Continue/cancel, five backups, reviewed screenshot and sampled startup RSS. Sessions 23.338/24.144 s; no physical FPS/audio/Deck acceptance or public payload.",
+      "changed_files": [
+        {
+          "status": "A",
+          "paths": [
+            "docs/NATIVE_TEST_BUILD_20261017.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/native-test-build-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/images/native-test-build-20261017.png"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 76,
+      "title": "Prove one original Lab token in disposable 634 cache copies",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/76",
+      "merged_at_utc": "2026-10-17T21:21:37Z",
+      "merge_commit": "10f11d8906f14c0d58b63b521c3814d4c18f8f1f",
+      "classification": "Backport lab",
+      "report_summary": "Original manifest-defined Lab token at temporary ID 20179 in two disposable cache copies. All 39 files deterministic; 20,178 original item entries/101,204 unrelated archive containers exact. Native+Displee CRC/revision/available Whirlpool checks; occupied slot and real payload corruption refuse. Definition-only, model0/no new art; no live delivery yet.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "README-SOLOSCAPE.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "backport/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "backport/manifests/lab-token.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "backport/tooling/LabTokenCache.java"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/BACKPORT_ARCHITECTURE.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/BACKPORT_LAB_TOKEN_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/backport-lab-token-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/backport_lab_token.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/test_backport_lab_token.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 77,
+      "title": "Validate connected native Summoning supplies, infusion and familiar ownership",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/77",
+      "merged_at_utc": "2026-10-17T21:37:19Z",
+      "merge_commit": "00e1514a350c53147c36d049cf74368ae8283c8e",
+      "classification": "Native validation",
+      "report_summary": "One player/inventory connects wolf-death loot/Take, Pikkupstix supplies, infusion and Summon. Exact resource/coin/stock/XP/point/live-owner/no-duplicate checks; 23 selected Summoning cases. Fatal hit/RNG/coins/travel are fixtures; no earned continuous journey or connected save acceptance.",
+      "changed_files": [
+        {
+          "status": "A",
+          "paths": [
+            "docs/CONNECTED_SUMMONING_SUPPLIES_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/connected-summoning-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0047-connected-summoning-supply-chain.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 78,
+      "title": "Preserve stored charges on equipment protected through native death",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/78",
+      "merged_at_utc": "2026-10-17T21:50:12Z",
+      "merge_commit": "d2bccb2f00589e1b0442435298ef201560b20201",
+      "classification": "Death item-state fix",
+      "report_summary": "Protected instance-charged weapon keeps stored 12,345 charges instead of being recreated with 1. Native regressions preserve quantity/stack merging and 1,000-coin conservation (2 kept/998 dropped). Tested packaged PlayerDeath bytes; does not address dropped charged items until #81.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/KEPT_ITEM_CHARGES_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/kept-item-charges-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0048-kept-item-charge-preservation.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 79,
+      "title": "Record ready native 48/56 build and current snapshot acceptance evidence",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/79",
+      "merged_at_utc": "2026-10-17T21:57:01Z",
+      "merge_commit": "640fef8f21a0f571f9d132c8c1637acccb798df9",
+      "classification": "Build / evidence",
+      "report_summary": "Ready private 48/56 snapshot includes protected-charge fix; 10,870 entries/five backups; fresh copied lifecycle checks, reviewed screenshot and host RSS. Stable current-build link introduced, retaining earlier reports.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "README-SOLOSCAPE.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/NATIVE_TEST_BUILD_48_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/native-test-build-48-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/images/native-test-build-48-20261017.png"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 80,
+      "title": "Protect identical physical item copies correctly on native death",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/80",
+      "merged_at_utc": "2026-10-17T22:07:42Z",
+      "merge_commit": "3c760b4eaa28f00d4aae177c473a3772c5c83956",
+      "classification": "Death item-state fix",
+      "report_summary": "Replace set union with slot-array concatenation before native protection rules so identical physical swords are not collapsed. Four copies protect three; mixed inventory/equipment copies conserved. Two red/green actual death cases; 63 distinct related cases after overlap correction.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/IDENTICAL_KEPT_ITEMS_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/identical-kept-items-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0049-preserve-identical-kept-items.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 81,
+      "title": "Preserve charged weapons through native death loot and recovery",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/81",
+      "merged_at_utc": "2026-10-17T22:12:58Z",
+      "merge_commit": "2c1922647432a59feeaaec3674066ad14150aa4b",
+      "classification": "Death item-state fix",
+      "report_summary": "Pass per-item stored charges into non-PvP native floor loot; recovering dropped partially charged weapon now restores 12,345 rather than 0. Covers full-inventory refusal/Drop/Take/retry/no duplication; preserves PvP conversion and deliberate shield discharge. 64 distinct related cases after overlaps.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/DEATH_DROP_CHARGES_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/death-drop-charges-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0050-death-drop-charge-recovery.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 82,
+      "title": "Record tested native 50/56 snapshot and reviewed screenshot",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/82",
+      "merged_at_utc": "2026-10-17T22:16:30Z",
+      "merge_commit": "a5d93aad0da113f9188b60d773ea251ea5b1b6e3",
+      "classification": "Build / evidence",
+      "report_summary": "Ready private 50/56 snapshot includes identical-item and dropped-charge fixes; 10,881 entries/five backups and reviewed screenshot. Actual copied New/Save & Quit/Continue/cancel and sampled RSS; no physical FPS claim.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "README-SOLOSCAPE.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/NATIVE_TEST_BUILD_50_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/native-test-build-50-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/images/native-test-build-50-20261017.png"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 83,
+      "title": "Fix native grave degradation phases and scheduled expiry",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/83",
+      "merged_at_utc": "2026-10-17T22:25:22Z",
+      "merge_commit": "79e5b3ea89099f1c604c676ad005c1b187a4042a",
+      "classification": "Grave lifecycle fix",
+      "report_summary": "Choose degradation phase by remaining lifetime so collapsed graves cannot regress to broken. Cancel expired timer so scheduler/stop handler removes NPC and owner UI. Two red/green cases including scheduled native cleanup; 31 death-group cases. Poll cadence/loot policy unchanged.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/GRAVESTONE_TIMER_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/gravestone-timer-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0051-gravestone-degrade-phase-and-expiry.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 84,
+      "title": "Record tested native 51/56 snapshot and screenshot",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/84",
+      "merged_at_utc": "2026-10-17T22:29:30Z",
+      "merge_commit": "a97df79da118eec8f3f78265dd9fa535b7ea143c",
+      "classification": "Build / evidence",
+      "report_summary": "Ready private 51/56 snapshot includes grave-phase/expiry fixes; 10,888 entries/five backups and reviewed screenshot. Actual copied lifecycle checks and sampled RSS; earlier reports preserved.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "README-SOLOSCAPE.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/NATIVE_TEST_BUILD_51_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/native-test-build-51-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/images/native-test-build-51-20261017.png"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 85,
+      "title": "Prove original grave record codec through native storage and cold JVM load",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/85",
+      "merged_at_utc": "2026-10-17T22:37:11Z",
+      "merge_commit": "7f64a369d8c60f8076b2a6af57f49e42c5cf27d6",
+      "classification": "Persistence lab",
+      "report_summary": "Bounded immutable original grave/pile record round-trips through actual PlayerSave/FileStorage and cold JVM. Twelve scenarios/22 JVMs, including 53 named codec/immutability checks; actual link/ancestor-link/oversize/FIFO refusals. Charge-loss control exposes limits of schema validity. No production codec choice/live capture/backup integration.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GRAVE_PAUSE_PERSISTENCE_PLAN.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/GRAVE_RECORD_CODEC_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/grave-record-codec-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-grave-codec/GraveCodecHelper.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-grave-codec/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-grave-codec/run.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 86,
+      "title": "Validate Settings saves with an explicit direct-mode fixture",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/86",
+      "merged_at_utc": "2026-10-17T22:55:37Z",
+      "merge_commit": "39fd65b169621d86d1d53a9aa6e3c2070f4f1187",
+      "classification": "Harness / validation",
+      "report_summary": "--settings-direct explicitly enables verified direct features in disposable profile. Default/direct New/Continue require Settings/B/relog/fresh negotiation and strict saved fields; ten backups valid. Passed tile equality at 3221,3219. Historical r30 one-tile anomaly remains unexplained, not fixed.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/SETTINGS_SAVE_FOLLOWUP_20261017.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/settings-save-followup-20261017.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/images/settings-direct-20261017.png"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/harness/NativeAdventureProbe.java"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/smoke_profile.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 87,
+      "title": "Prove original Backport Lab token through live native inventory and saves",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/87",
+      "merged_at_utc": "2026-10-17T23:15:41Z",
+      "merge_commit": "f29c549948318f9b6cfe05a41dc832cf5182bed4",
+      "classification": "Backport lab",
+      "report_summary": "Live native JS5/client inventory widget, server item-dependent transactions, save/cold read and two reconnects prove original token stack of two with starter inventory unchanged. Three real native sessions/six backups; unchanged source cache and other snapshot files. Baseline missing-definition guard refuses before save rewrite; helper-only guard, not production uninstall policy.",
+      "changed_files": [
+        {
+          "status": "A",
+          "paths": [
+            "docs/BACKPORT_NATIVE_TOKEN_20261018.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/backport-native-token-20261018.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-lab-token/LabTokenClientProbe.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-lab-token/LabTokenHelper.java"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-lab-token/README.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "experiments/native-lab-token/run.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 88,
+      "title": "Persist Slayer task blocks and repair native unblock recovery",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/88",
+      "merged_at_utc": "2026-10-17T23:38:25Z",
+      "merge_commit": "5aba982bc3d69c38467c49841a81db1e86ab0a88",
+      "classification": "Slayer fix / build",
+      "report_summary": "Persist all five existing paid block slots, filter blocked task categories, wire existing unblock buttons and refresh block/unblock/paid-skip UI. Exhausted eligible list gives native dialogue preserving task/streak; missing-table configuration error stays visible. Seventeen new/53 total selected cases with real saved-player reconstruction; matched ready 52/56 build, 10,907 entries/five backups and reviewed screenshot.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/NATIVE_TEST_BUILD_52_20261018.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/ROADMAP.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/SLAYER_TASK_BLOCKS_20261018.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/native-test-build-52-20261018.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/slayer-task-blocks-20261018.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/images/native-test-build-52-20261018.png"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "patches/server/0052-honor-slayer-task-blocks.patch"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/content_coverage.py"
+          ]
+        }
+      ]
+    },
+    {
+      "number": 89,
+      "title": "Refuse blocking FIFO inputs and special staging guards",
+      "url": "https://github.com/kannibalk1w1/SoloScape/pull/89",
+      "merged_at_utc": "2026-10-17T23:44:51Z",
+      "merge_commit": "d6925aa7d9df894abf19c9e63d7f38e4e0f3fa21",
+      "classification": "Update lab fix",
+      "report_summary": "Nonblocking input opens reject no-writer FIFO instead of hanging; guard must be regular file before locking; every acquired descriptor closes on refusal. Real FIFO subprocess and FIFO/directory/symlink guard negatives preserve inode/type/input/sentinel/lab. Twenty-six staging/278 root cases (one optional root skip). No production updater integration.",
+      "changed_files": [
+        {
+          "status": "M",
+          "paths": [
+            "docs/CURRENT_STATUS.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/GITHUB_UPDATES.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/UPDATE_STAGING_SPECIAL_FILES_20261018.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/current-status.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/evidence/update-staging-special-files-20261018.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "experiments/update-staging/README.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "experiments/update-staging/stage.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/test_update_staging.py"
+          ]
+        }
+      ]
+    }
+  ],
+  "wasm": {
+    "pr": 27,
+    "state": "OPEN DRAFT / DO NOT MERGE INTO NATIVE MAIN",
+    "head": "3aff4ed5cdf1457e0ee34aea97fbe7298de7ab96",
+    "branch": "kannibalk1w1/wasm-renderer-investigation",
+    "nonmerge_investigation_commits": [
+      {
+        "commit": "be191a3c62101a86ebaf2d50223caaf41ceb7f2d",
+        "title": "Record fresh isolated WebKit WASM compatibility check",
+        "changed_files": [
+          "docs/TAURI_WASM_INVESTIGATION_20261017.md",
+          "docs/evidence/wasm-webkit-20261018.json"
+        ]
+      },
+      {
+        "commit": "ddb4dc083dd286cbf6247e9f9abd9397437e1d32",
+        "title": "Check decoded-face WasmGC compatibility in Linux WebKitGTK",
+        "changed_files": [
+          "docs/CURRENT_STATUS.md",
+          "docs/TAURI_WASM_INVESTIGATION_20261017.md",
+          "docs/WASM_FEASIBILITY.md",
+          "docs/current-status.json",
+          "docs/evidence/wasm-webkit-20261017.json",
+          "experiments/wasm-webkit/README.md",
+          "experiments/wasm-webkit/probe.py"
+        ]
+      },
+      {
+        "commit": "ee71d1169de99417581c842564edfe78cf20fc7c",
+        "title": "Connect original model decoding to native flat-face WasmGC rendering proof",
+        "changed_files": [
+          "docs/CURRENT_STATUS.md",
+          "docs/WASM_DECODED_FACE_PROOF_20261017.md",
+          "docs/WASM_SPIKE_PLAN.md",
+          "docs/current-status.json",
+          "docs/evidence/wasm-decoded-face-20261017.json",
+          "docs/screenshots/wasm-decoded-face-20261017/original-tetra-canvas.png",
+          "experiments/wasm-decoded-face/.gitignore",
+          "experiments/wasm-decoded-face/README.md",
+          "experiments/wasm-decoded-face/build.gradle",
+          "experiments/wasm-decoded-face/run.sh",
+          "experiments/wasm-decoded-face/settings.gradle",
+          "experiments/wasm-decoded-face/src/browser/java/BridgeProbe.java",
+          "experiments/wasm-decoded-face/src/jvm/java/ExtractedBridgeJvm.java",
+          "experiments/wasm-decoded-face/src/jvm/java/NativeBridge.java",
+          "experiments/wasm-decoded-face/src/shared/java/BridgeRun.java",
+          "experiments/wasm-decoded-face/src/shared/java/BridgeScene.java",
+          "experiments/wasm-decoded-face/src/shared/java/DecodeMesh.java",
+          "experiments/wasm-decoded-face/tools/check_bridge_evidence.py",
+          "experiments/wasm-decoded-face/tools/encode_bridge_fixtures.py",
+          "experiments/wasm-decoded-face/tools/record_bridge_provenance.py",
+          "experiments/wasm-decoded-face/tools/serve_bridge.py",
+          "experiments/wasm-decoded-face/web/index.html"
+        ]
+      },
+      {
+        "commit": "9c824df4686885209fce5d2fd07f7c38a3695ff6",
+        "title": "Prove original old-format model decoding across native JVM and WasmGC",
+        "changed_files": [
+          "docs/CURRENT_STATUS.md",
+          "docs/WASM_MODEL_DECODE_PROOF_20261017.md",
+          "docs/WASM_SPIKE_PLAN.md",
+          "docs/current-status.json",
+          "docs/evidence/wasm-model-decode-20261017.json",
+          "experiments/wasm-model-decode/.gitignore",
+          "experiments/wasm-model-decode/README.md",
+          "experiments/wasm-model-decode/build.gradle",
+          "experiments/wasm-model-decode/run.sh",
+          "experiments/wasm-model-decode/settings.gradle",
+          "experiments/wasm-model-decode/src/browser/java/DecodeProbe.java",
+          "experiments/wasm-model-decode/src/jvm/java/ExtractedDecodeJvm.java",
+          "experiments/wasm-model-decode/src/jvm/java/NativeDecode.java",
+          "experiments/wasm-model-decode/src/shared/java/DecodeJson.java",
+          "experiments/wasm-model-decode/tools/check_decode_evidence.py",
+          "experiments/wasm-model-decode/tools/encode_decode_fixtures.py",
+          "experiments/wasm-model-decode/tools/extract_decode_closure.py",
+          "experiments/wasm-model-decode/tools/record_decode_provenance.py",
+          "experiments/wasm-model-decode/tools/serve_decode.py",
+          "experiments/wasm-model-decode/web/index.html"
+        ]
+      },
+      {
+        "commit": "305291dc651bc77105e9e7d8518dc8b2bdd2c48d",
+        "title": "Validate clipped faces under general matrix and adapter inputs",
+        "changed_files": [
+          "docs/WASM_GENERAL_CLIPPING_20261017.md",
+          "docs/WASM_SPIKE_PLAN.md",
+          "docs/evidence/wasm-general-clipping-20261017.json",
+          "experiments/wasm-face/README.md",
+          "experiments/wasm-face/run.sh",
+          "experiments/wasm-face/src/shared/java/ClipScene.java",
+          "experiments/wasm-face/tools/check_clip_evidence.py"
+        ]
+      },
+      {
+        "commit": "dcf8ca036ce745454f3115e80501fb1fb1367be3",
+        "title": "Prove bounded native near-plane clipping and fill dispatch in WasmGC",
+        "changed_files": [
+          "docs/WASM_CLIPPING_PROOF_20261017.md",
+          "docs/WASM_SPIKE_PLAN.md",
+          "docs/evidence/wasm-clipping-20261017.json",
+          "experiments/wasm-face/.gitignore",
+          "experiments/wasm-face/README.md",
+          "experiments/wasm-face/build.gradle",
+          "experiments/wasm-face/run.sh",
+          "experiments/wasm-face/src/browser/java/ClipProbe.java",
+          "experiments/wasm-face/src/jvm/java/NativeFace.java",
+          "experiments/wasm-face/src/jvm/java/VerbatimFaceJvm.java",
+          "experiments/wasm-face/src/shared/java/ClipScene.java",
+          "experiments/wasm-face/src/shared/java/ExtractedRig.java",
+          "experiments/wasm-face/src/shared/java/FaceCounters.java",
+          "experiments/wasm-face/src/shared/java/FaceMesh.java",
+          "experiments/wasm-face/src/shared/java/FaceRig.java",
+          "experiments/wasm-face/tools/check_clip_evidence.py",
+          "experiments/wasm-face/tools/extract_face_closure.py"
+        ]
+      },
+      {
+        "commit": "0572311bec44158af492b871b590211e8b64abfc",
+        "title": "Point the experimental WASM plan to the reviewed clipping gate",
+        "changed_files": [
+          "docs/WASM_SPIKE_PLAN.md"
+        ]
+      },
+      {
+        "commit": "b0f1f2faaa88249691f5b284b64724702b0121ce",
+        "title": "Resolve generated status ledger after native main sync",
+        "changed_files": [
+          "docs/CURRENT_STATUS.md",
+          "docs/current-status.json"
+        ]
+      },
+      {
+        "commit": "cfce93d6f5cbc84ce793cd3534bf8a9f9f03041a",
+        "title": "Audit bounded near-plane clipping spike with camera-space facing",
+        "changed_files": [
+          "docs/WASM_CLIPPING_SPIKE_AUDIT_20261017.md"
+        ]
+      },
+      {
+        "commit": "57c7ecb6e59ccba3cb617966ddf10720b90113cb",
+        "title": "experiment: prove native model projection and face dispatch in WasmGC",
+        "changed_files": [
+          "docs/WASM_FACE_PROOF_20261017.md",
+          "docs/evidence/wasm-face-20261017-coordinator.json",
+          "docs/evidence/wasm-face-20261017.json",
+          "docs/images/wasm-face-20261017-cam1-1280x800.png",
+          "experiments/wasm-face/.gitignore",
+          "experiments/wasm-face/README.md",
+          "experiments/wasm-face/build.gradle",
+          "experiments/wasm-face/run.sh",
+          "experiments/wasm-face/settings.gradle",
+          "experiments/wasm-face/src/browser/java/FaceProbe.java",
+          "experiments/wasm-face/src/jvm/java/NativeFace.java",
+          "experiments/wasm-face/src/jvm/java/VerbatimFaceJvm.java",
+          "experiments/wasm-face/src/shared/java/ExtractedRig.java",
+          "experiments/wasm-face/src/shared/java/FaceCounters.java",
+          "experiments/wasm-face/src/shared/java/FaceMesh.java",
+          "experiments/wasm-face/src/shared/java/FaceRig.java",
+          "experiments/wasm-face/src/shared/java/FaceScene.java",
+          "experiments/wasm-face/tools/browser_probe.mjs",
+          "experiments/wasm-face/tools/check_evidence.py",
+          "experiments/wasm-face/tools/extract_face_closure.py",
+          "experiments/wasm-face/tools/serve_loopback.py",
+          "experiments/wasm-face/web/index.html"
+        ]
+      },
+      {
+        "commit": "6902a3c09d18253ba01387d42d51112953910b3a",
+        "title": "docs: audit bounded model projection seam for WASM",
+        "changed_files": [
+          "docs/WASM_FACE_BOUNDARY_AUDIT_20261017.md"
+        ]
+      },
+      {
+        "commit": "4c79b3f3d8e88bed7f267a9b37a397efaf3469e5",
+        "title": "Independently verify material raster paths and retain measured performance limits",
+        "changed_files": [
+          "docs/CURRENT_STATUS.md",
+          "docs/WASM_MATERIAL_INVESTIGATION.md",
+          "docs/current-status.json",
+          "docs/evidence/wasm-material-20261017-coordinator.json",
+          "experiments/wasm-material/src/shared/java/Bench.java",
+          "experiments/wasm-material/tools/check_evidence.py",
+          "experiments/wasm-material/tools/extract_material_closure.py"
+        ]
+      },
+      {
+        "commit": "0075b9485bbebf2d1fccc9908dfde89eacf3d749",
+        "title": "Tighten material evidence checks and record three load-contaminated runs",
+        "changed_files": [
+          "docs/WASM_MATERIAL_INVESTIGATION.md",
+          "docs/evidence/wasm-material-20261017-second-run.json",
+          "docs/evidence/wasm-material-20261017.json",
+          "experiments/wasm-material/tools/check_evidence.py"
+        ]
+      },
+      {
+        "commit": "ee48586845e5ae8e4978e69481731a1d41565218",
+        "title": "Prove native shaded and textured triangle fills in WasmGC against the real jar",
+        "changed_files": [
+          "docs/WASM_MATERIAL_INVESTIGATION.md",
+          "docs/WASM_RENDERER_INVESTIGATION.md",
+          "docs/WASM_SPIKE_PLAN.md",
+          "docs/evidence/wasm-material-20261017-first-run.json",
+          "docs/evidence/wasm-material-20261017-mixed.png",
+          "docs/evidence/wasm-material-20261017.json",
+          "experiments/wasm-material/.gitignore",
+          "experiments/wasm-material/README.md",
+          "experiments/wasm-material/build.gradle",
+          "experiments/wasm-material/run.sh",
+          "experiments/wasm-material/settings.gradle",
+          "experiments/wasm-material/src/browser/java/MaterialProbe.java",
+          "experiments/wasm-material/src/jvm/java/NativeJar.java",
+          "experiments/wasm-material/src/jvm/java/VerbatimJvm.java",
+          "experiments/wasm-material/src/shared/java/Bench.java",
+          "experiments/wasm-material/src/shared/java/Fill.java",
+          "experiments/wasm-material/src/shared/java/Scene.java",
+          "experiments/wasm-material/src/shared/java/SynthAssets.java",
+          "experiments/wasm-material/src/shared/java/VerbatimFill.java",
+          "experiments/wasm-material/tools/browser_probe.mjs",
+          "experiments/wasm-material/tools/check_evidence.py",
+          "experiments/wasm-material/tools/extract_material_closure.py",
+          "experiments/wasm-material/tools/serve_loopback.py",
+          "experiments/wasm-material/web/index.html"
+        ]
+      },
+      {
+        "commit": "4b27d9641733d093f93c915c418fce955930d300",
+        "title": "Compare bulk framebuffer transfer and independently verify native WASM triangle results",
+        "changed_files": [
+          "docs/CURRENT_STATUS.md",
+          "docs/WASM_FEASIBILITY.md",
+          "docs/WASM_RENDERER_INVESTIGATION.md",
+          "docs/WASM_SPIKE_PLAN.md",
+          "docs/WASM_TRANSFER_INVESTIGATION.md",
+          "docs/current-status.json",
+          "docs/evidence/wasm-transfer-20261017.json",
+          "docs/evidence/wasm-triangle-20261017.json",
+          "experiments/wasm-raster/README.md",
+          "experiments/wasm-raster/build.gradle",
+          "experiments/wasm-raster/run.sh",
+          "experiments/wasm-raster/src/browser/java/TransferProbe.java",
+          "experiments/wasm-raster/tools/check_evidence.py",
+          "experiments/wasm-triangle/tools/check_evidence.py"
+        ]
+      },
+      {
+        "commit": "f7e3e700a8ad4edcdbf9cb5c46bfc814db81b577",
+        "title": "Prove native flat-colour triangle fill through TeaVM WasmGC with matched native-jar hashes",
+        "changed_files": [
+          "docs/WASM_RENDERER_INVESTIGATION.md",
+          "docs/evidence/wasm-triangle-20261017-mesh.png",
+          "docs/evidence/wasm-triangle-20261017.json",
+          "experiments/wasm-triangle/.gitignore",
+          "experiments/wasm-triangle/README.md",
+          "experiments/wasm-triangle/build.gradle",
+          "experiments/wasm-triangle/run.sh",
+          "experiments/wasm-triangle/settings.gradle",
+          "experiments/wasm-triangle/src/browser/java/TriangleProbe.java",
+          "experiments/wasm-triangle/src/jvm/java/NativeJar.java",
+          "experiments/wasm-triangle/src/jvm/java/VerbatimJvm.java",
+          "experiments/wasm-triangle/src/shared/java/Bench.java",
+          "experiments/wasm-triangle/src/shared/java/Fill.java",
+          "experiments/wasm-triangle/src/shared/java/Scene.java",
+          "experiments/wasm-triangle/src/shared/java/VerbatimFill.java",
+          "experiments/wasm-triangle/tools/browser_probe.mjs",
+          "experiments/wasm-triangle/tools/check_evidence.py",
+          "experiments/wasm-triangle/tools/extract_triangle_closure.py",
+          "experiments/wasm-triangle/tools/serve_loopback.py",
+          "experiments/wasm-triangle/web/index.html"
+        ]
+      },
+      {
+        "commit": "e44af90b8f4c4370b1b6e979213249547158515c",
+        "title": "Verify browser raster with real clocks and record matched native session evidence",
+        "changed_files": [
+          "README-SOLOSCAPE.md",
+          "docs/CONTROLLER_CORNER_MOVEMENT.md",
+          "docs/CURRENT_STATUS.md",
+          "docs/WASM_FEASIBILITY.md",
+          "docs/WASM_RASTER_POC.md",
+          "docs/WASM_SPIKE_PLAN.md",
+          "docs/current-status.json",
+          "docs/evidence/controller-corners-20261017.json",
+          "docs/evidence/wasm-raster-20261017.json",
+          "docs/images/wasm-synthetic-edges.png",
+          "experiments/wasm-raster/README.md",
+          "experiments/wasm-raster/run.sh",
+          "experiments/wasm-raster/tools/browser_probe.mjs",
+          "experiments/wasm-raster/tools/check_evidence.py"
+        ]
+      },
+      {
+        "commit": "25508b55f4d55faff853fe6343d94e4eb8321bc6",
+        "title": "Fail wasm raster runs on browser or validation errors",
+        "changed_files": [
+          "experiments/wasm-raster/README.md",
+          "experiments/wasm-raster/run.sh",
+          "experiments/wasm-raster/tools/check_evidence.py",
+          "experiments/wasm-raster/tools/serve_loopback.py"
+        ]
+      },
+      {
+        "commit": "2e495117ef148ce95aa1cbefaea73a1c9c0761ea",
+        "title": "Make WASM raster wrapper portable and state the triangle gate as unproven",
+        "changed_files": [
+          "docs/WASM_RASTER_POC.md",
+          "experiments/wasm-raster/run.sh"
+        ]
+      }
+    ],
+    "note": "Native foundation source commits corresponding to squashed PR25/26 are excluded from this investigation-only list; main-sync merge commits are maintenance, not additional features."
+  }
+}
