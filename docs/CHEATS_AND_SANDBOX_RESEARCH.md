@@ -2,7 +2,7 @@
 
 Research only. No runtime code, saves, settings, patches, indexes or commits were changed. Date of research: 18 October 2026 (refinement pass).
 
-Scope: optional sandbox conveniences for solo and co-op play of a pre-EoC/2011-style RuneScape-like product, and what the current SoloScape code can support cheaply. The owner's principle governs every entry: the product should not impose a playstyle. Game capability limits and overflow validation are necessary. Arbitrary restrictive caps, mandatory backups, achievement penalties, permanent taint flags, compulsory difficulty, cloud accounts and anti-cheat services are not recommended. Backups are offered, not required. Irreversible clear or reset actions stay available behind an explicit player choice.
+Scope: optional sandbox conveniences for solo and co-op play of a pre-EoC/2011-style RuneScape-like product, and what the current SoloScape code can support cheaply. The owner's principle governs every entry: the product should not impose a playstyle. Game capability limits and overflow validation are necessary. Arbitrary restrictive caps, mandatory backups, achievement penalties, permanent taint flags, compulsory difficulty, cloud accounts and anti-cheat services are not recommended. Offer manual backup/restore without adding a compulsory manual backup before each sandbox action. Preserve the existing automatic prelaunch/post-save backup and verified recovery lifecycle. Irreversible clear or reset actions stay available behind an explicit player choice.
 
 Line numbers were read on 18 October 2026 from a working tree that other workers are actively editing (`scripts/profiles.py` and the death-loot code are modified). Treat them as approximate and re-check symbols before implementation.
 
@@ -79,7 +79,7 @@ Cheap optional toggle, and what it touches:
 1. **Keep the three existing world settings unchanged and document them.** LOW, no state risk.
 2. **Add an opt-in per-profile sandbox flag, read server-side at execution.** Gate only self-scope controls: restore (4), god mode (5), item and coin spawn (6), and charge top-up (7). Pass it through `scripts/profiles.py:245-250`. Rights are unchanged. LOW–MEDIUM.
 3. **Offer a per-profile death-keep option (8) after root's death-loot work lands.** Limit changes to `ItemsKeptOnDeath.kept`. Let the owner pick the rule. LOW–MEDIUM.
-4. **Offer backup and restore as a visible option, never a precondition.** The existing actions are `Profile.backup` (`scripts/profiles.py:276`), `list_backups` (`:525`), `restore_profile` (`:540`), and retention (`:623`, `:651`), exposed through `scripts/launcher_backend.py:85-91`. Nothing is blocked if the player does not use them.
+4. **Offer manual backup and restore without requiring a manual action before each sandbox command.** Existing automatic lifecycle backups remain unchanged. The existing actions are `Profile.backup` (`scripts/profiles.py:276`), `list_backups` (`:525`), `restore_profile` (`:540`), and retention (`:623`, `:651`), exposed through `scripts/launcher_backend.py:85-91`. Players need not create a manual backup to use the sandbox controls.
 
 ## Defer
 
