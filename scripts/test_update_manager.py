@@ -66,6 +66,44 @@ def io_bytes(data):
     return io.BytesIO(data)
 
 
+class LocalBuild(ManagerCase):
+    """A release that ships only scripts: the jars and data come from the player's own registered build."""
+
+    def setUp(self):
+        super().setUp()
+        path, digest, self.files = fx.make_code_only_package(self.tmp, 'r2')
+        self.payload = path.read_bytes()
+        self.package.update(size=len(self.payload), sha256=digest)
+
+    def test_download_uses_the_registered_build_and_stages_a_complete_version(self):
+        mi.set_supply_roots(self.root, [fx.make_checkout(self.tmp, self.files)])
+        manager = self.manager()
+        manager.check()
+        manager.download()
+        status = self.wait(manager, 'staged')
+        self.assertTrue(status['can_apply'])
+        staged = mi.verify_version(self.root, status['candidate']['id'])
+        self.assertEqual(staged['release'], 'r2')
+        self.assertEqual((self.root / 'versions' / status['candidate']['id'] / fx.SERVER).read_bytes(), self.files[fx.SERVER])
+
+    def test_download_without_a_registered_build_explains_what_to_do_and_stages_nothing(self):
+        manager = self.manager()
+        manager.check()
+        manager.download()
+        status = self.wait(manager, 'error')
+        self.assertIn('Build SoloScape from source', status['message'])
+        self.assertFalse(status['can_apply'])
+        self.assertEqual(os.listdir(self.root / 'versions'), [self.current])
+
+    def test_download_with_a_build_of_other_source_stages_nothing(self):
+        mi.set_supply_roots(self.root, [fx.make_checkout(self.tmp, self.files, patches={**fx.PATCHES, 'patches/server/0001-test.patch': 'f' * 64})])
+        manager = self.manager()
+        manager.check()
+        manager.download()
+        self.assertIn('different source', self.wait(manager, 'error')['message'])
+        self.assertEqual(os.listdir(self.root / 'versions'), [self.current])
+
+
 class Flow(ManagerCase):
     def test_check_download_apply_request_end_to_end(self):
         manager = self.manager()

@@ -67,3 +67,31 @@ def make_real_package(directory, release, storage=(0, 1)):
     manifest = package_builder.build_manifest(files, release, storage, 'c' * 40, pins, PATCHES)
     path = Path(directory) / ('real-' + release + '.zip')
     return path, package_builder.write_zip(files, manifest, path), files
+
+
+DATA = 'upstream/game-server/data/test/items.toml'
+LOCAL_PATHS = (SERVER, CLIENT, DATA)
+
+
+def make_checkout(directory, files, pins=PINS, patches=PATCHES, name='checkout'):
+    """A synthetic built source folder: the local files plus the build record local_dev.prepare writes."""
+    root = Path(directory) / name
+    for path in LOCAL_PATHS:
+        target = root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(files[path])
+    (root / '.runtime').mkdir(exist_ok=True)
+    (root / '.runtime/build-stamp.json').write_text(json.dumps({
+        'format': 1, 'pins': pins, 'patches': patches,
+        'jars': {'server': hashlib.sha256(files[SERVER]).hexdigest(), 'client': hashlib.sha256(files[CLIENT]).hexdigest()}}))
+    return root
+
+
+def make_code_only_package(directory, release, storage=(0, 1), **options):
+    """A package that ships only the scripts; the jars and data are left to the player's own build.
+    Returns (path, sha256, files) where files is the full logical payload including the local bytes."""
+    files = payload_files(release, storage=storage, **options)
+    released = {path: data for path, data in files.items() if path not in LOCAL_PATHS}
+    manifest = package_builder.build_manifest(released, release, storage, 'c' * 40, PINS, PATCHES, local=LOCAL_PATHS)
+    path = Path(directory) / ('code-only-' + release + '.zip')
+    return path, package_builder.write_zip(released, manifest, path), files

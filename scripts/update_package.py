@@ -10,6 +10,7 @@ cancelled run removes its scratch directory and leaves every existing version un
 """
 import fcntl
 import hashlib
+import json
 import hmac
 import http.client
 import os
@@ -38,6 +39,10 @@ REDIRECT_HOSTS = frozenset({'objects.githubusercontent.com', 'release-assets.git
 STAGING = 'staging'
 LOCK = '.lock'
 EXECUTABLE = {'scripts/launcher.sh'}
+STAMP = '.runtime/build-stamp.json'  # written by local_dev.prepare in a source folder after a successful local build
+DIR_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+NO_BUILD = ('This release does not include the game programs or game data. Build SoloScape from source on this computer, '
+            'then register that source folder with the managed_install.py supply-root command.')
 
 
 class PackageError(Exception):
@@ -240,12 +245,13 @@ def _extract(zip_path, scratch, job):
             manifest = runtime_manifest.parse(raw)
         except (ValueError, RecursionError) as exc:
             raise PackageError('The package manifest was refused: ' + str(exc)) from None
-        files = manifest['files']
+        listed = manifest['files']
+        files = {path: meta for path, meta in listed.items() if 'size' in meta}
         if set(infos) != set(files) | {name}:
-            raise PackageError('The package entries must be exactly the manifest plus its listed files.')
-        for path in files:
+            raise PackageError('The package entries must be exactly the manifest plus its released files.')
+        for path in listed:
             parts = path.split('/')
-            if any('/'.join(parts[:i]) in files for i in range(1, len(parts))):
+            if any('/'.join(parts[:i]) in listed for i in range(1, len(parts))):
                 raise PackageError('A listed file is nested under another listed file.')
         total = sum(meta['size'] for meta in files.values())
         if sum(info.file_size for info in infos.values()) > MAX_RATIO_BYTES + runtime_manifest.MANIFEST_MAX_BYTES:
@@ -280,13 +286,113 @@ def _seal(scratch, manifest):
         os.chmod(base, 0o555)
 
 
-def install_zip(root, zip_path, sha256, expected_release=None, job=None):
+def _read_stamp(source):
+    try:
+        fd = _open_below(source, STAMP.split('/'))
+        with os.fdopen(fd, 'rb') as handle:
+            stamp = json.loads(handle.read(runtime_manifest.MANIFEST_MAX_BYTES).decode('utf-8'))
+    except (OSError, ValueError):
+        raise PackageError('The source folder ' + source.name + ' has no usable local build record. Build SoloScape there first.') from None
+    jars = stamp.get('jars') if isinstance(stamp, dict) else None
+    if (not isinstance(jars, dict) or set(jars) != {'server', 'client'}
+            or not all(isinstance(v, str) and re.fullmatch('[0-9a-f]{64}', v) for v in jars.values())):
+        raise PackageError('The local build record in ' + source.name + ' is not supported.')
+    return stamp
+
+
+def _open_below(source, parts):
+    """Open a regular file below `source` without following any link on the way."""
+    fds = [os.open(source, DIR_FLAGS)]
+    try:
+        for part in parts[:-1]:
+            fds.append(os.open(part, DIR_FLAGS, dir_fd=fds[-1]))
+        fd = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fds[-1])
+    finally:
+        for opened in fds:
+            os.close(opened)
+    if not stat.S_ISREG(os.fstat(fd).st_mode):
+        os.close(fd)
+        raise OSError('not an ordinary file')
+    return fd
+
+
+def _supply(scratch, manifest, roots, job):
+    """Fill the manifest's locally supplied paths from the first registered source folder whose build matches it."""
+    local = runtime_manifest.local_paths(manifest)
+    if not local:
+        return
+    if not roots:
+        raise PackageError(NO_BUILD)
+    refusal = None
+    for root in roots:
+        source = Path(root)
+        try:
+            stamp = _read_stamp(source)
+            if stamp.get('pins') != manifest['pins'] or stamp.get('patches') != manifest['patches']:
+                raise PackageError('Your local build in ' + source.name + ' was made from different source than release '
+                                   + manifest['release'] + '. Update that source folder, rebuild, and try again.')
+            return _copy_local(source, scratch, manifest, stamp, local, job)
+        except PackageError as exc:
+            if isinstance(exc, Cancelled):
+                raise
+            refusal = refusal or exc
+    raise refusal
+
+
+def _copy_local(source, scratch, manifest, stamp, local, job):
+    sizes = {}
+    for path in local:
+        try:
+            fd = _open_below(source, path.split('/'))
+        except OSError:
+            raise PackageError('Your local build in ' + source.name + ' is missing a file this release needs: ' + path) from None
+        with os.fdopen(fd, 'rb') as handle:
+            sizes[path] = os.fstat(handle.fileno()).st_size
+        if sizes[path] > runtime_manifest.FILE_MAX_BYTES:
+            raise PackageError('A local build file is larger than the supported maximum: ' + path)
+    total = sum(sizes.values())
+    if total + sum(m['size'] for m in manifest['files'].values() if 'size' in m) > runtime_manifest.TOTAL_MAX_BYTES:
+        raise PackageError('The local build is larger than the supported maximum.')
+    if shutil.disk_usage(scratch).free < total + (64 << 20):
+        raise PackageError('Not enough free disk space to copy your local build (' + str(total >> 20) + ' MiB needed).')
+    roles = {manifest['roles']['server']: stamp['jars']['server'], manifest['roles']['client']: stamp['jars']['client']}
+    record, counter = {}, [0, total]
+    for path in local:
+        target = scratch / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        digest, copied = hashlib.sha256(), 0
+        with os.fdopen(_open_below(source, path.split('/')), 'rb') as src:
+            out_fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+            with os.fdopen(out_fd, 'wb') as out:
+                while True:
+                    job.check()
+                    chunk = src.read(CHUNK)
+                    if not chunk:
+                        break
+                    copied += len(chunk)
+                    if copied > sizes[path]:
+                        raise PackageError('A local build file changed while it was being copied: ' + path)
+                    digest.update(chunk)
+                    out.write(chunk)
+                    counter[0] += len(chunk)
+                    job.report('copying local build', counter[0], counter[1])
+        if copied != sizes[path]:
+            raise PackageError('A local build file changed while it was being copied: ' + path)
+        if path in roles and digest.hexdigest() != roles[path]:
+            raise PackageError('The program in your local build changed after it was built. Rebuild SoloScape and try again.')
+        record[path] = {'sha256': digest.hexdigest(), 'size': copied}
+    fd = os.open(scratch / runtime_manifest.SUPPLIED_NAME, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'wb') as out:
+        out.write((json.dumps({'format': runtime_manifest.SUPPLIED_FORMAT, 'files': record}, indent=2, sort_keys=True) + '\n').encode())
+
+
+def install_zip(root, zip_path, sha256, expected_release=None, job=None, supply_roots=()):
     """Verify, unpack and seal a local package as versions/<id>. Returns {id, release, already_present}."""
     with _StagingLock(Path(root)):
-        return _install_locked(Path(root), zip_path, sha256, expected_release, job or Job())
+        return _install_locked(Path(root), zip_path, sha256, expected_release, job or Job(), supply_roots)
 
 
-def _install_locked(root, zip_path, sha256, expected_release, job):
+def _install_locked(root, zip_path, sha256, expected_release, job, supply_roots=()):
     """The staging lock is held by the caller."""
     if not isinstance(sha256, str) or not re.fullmatch('[0-9a-f]{64}', sha256):
         raise PackageError('The package digest must be 64 lowercase hex characters.')
@@ -316,6 +422,7 @@ def _install_locked(root, zip_path, sha256, expected_release, job):
         manifest, raw = _extract(zip_path, scratch, job)
         if expected_release is not None and manifest['release'] != expected_release:
             raise PackageError('The package is release ' + manifest['release'] + ', not the announced ' + expected_release + '.')
+        _supply(scratch, manifest, supply_roots, job)
         try:
             _, version = runtime_manifest.validate_with_id(scratch)
         except (ValueError, OSError) as exc:
@@ -338,7 +445,7 @@ def _install_locked(root, zip_path, sha256, expected_release, job):
         raise
 
 
-def fetch_and_install(root, package, job=None, transport=_open):
+def fetch_and_install(root, package, job=None, transport=_open, supply_roots=()):
     """Download the one declared release package (see _validate_package for the metadata), then install it."""
     _validate_package(package)
     job = job or Job()
@@ -348,6 +455,6 @@ def fetch_and_install(root, package, job=None, transport=_open):
         try:
             archive = part / 'package.zip'
             download(package['url'], package['size'], package['sha256'], archive, job, transport)
-            return _install_locked(root, archive, package['sha256'], package['tag'], job)
+            return _install_locked(root, archive, package['sha256'], package['tag'], job, supply_roots)
         finally:
             _remove(part)

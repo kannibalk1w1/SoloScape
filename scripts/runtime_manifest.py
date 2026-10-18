@@ -9,6 +9,13 @@ them against a source checkout, a cache or a licence record.
 
 Format 2 adds a release label and the explicit set of logical save-storage versions this
 payload can read. The version id used by the installer is the SHA-256 of the manifest bytes.
+
+A listed file is either released (sha256 and size, shipped in the package) or locally supplied
+(`{"supply": "local"}`): the server jar, the client jar and server data files may be left out of a package
+and copied at install time from a build the player made on this computer. The manifest then pins only the
+path. The installer records what it copied in `supplied.json` at the version root, and validation checks
+the copies against that record. That protects against accidental damage, not against the local user: a
+locally supplied file is trusted exactly as far as the player's own build is.
 """
 import hashlib
 import json
@@ -18,6 +25,9 @@ import stat
 from pathlib import Path
 
 MANIFEST_NAME = 'soloscape-runtime.json'
+SUPPLIED_NAME = 'supplied.json'
+SUPPLIED_FORMAT = 'soloscape-supplied-1'
+LOCAL = {'supply': 'local'}
 MANIFEST_MAX_BYTES = 4 * 1024 * 1024
 FILE_MAX_BYTES = 512 * 1024 * 1024
 TOTAL_MAX_BYTES = 2 * 1024 * 1024 * 1024
@@ -74,16 +84,23 @@ def validate_with_id(root):
         manifest = _parse(raw)
         _check_schema(manifest)
         files = manifest['files']
-        walk = _Walk(set(files))
+        local = local_paths(manifest)
+        walk = _Walk(set(files), bool(local))
         walk.scan(root_fd, '', 0)
         missing = sorted(set(files) - walk.seen)
         if missing:
             raise ValueError(f'listed file is missing from the payload: {missing[0]!r}')
+        supplied = _read_supplied(root_fd, local, sum(e['size'] for e in files.values() if 'size' in e)) if local else {}
         for path, entry in files.items():
-            _verify(root_fd, path, entry)
+            _verify(root_fd, path, supplied[path] if path in supplied else entry)
     finally:
         os.close(root_fd)
     return manifest, hashlib.sha256(raw).hexdigest()
+
+
+def local_paths(manifest):
+    """The sorted payload paths this manifest leaves to be supplied from a local build."""
+    return sorted(path for path, entry in manifest['files'].items() if 'supply' in entry)
 
 
 def _open_root(root):
@@ -106,12 +123,16 @@ def _require_dir(path):
 
 
 def _read_manifest(root_fd):
-    mode = os.stat(MANIFEST_NAME, dir_fd=root_fd, follow_symlinks=False).st_mode
+    return _read_small(root_fd, MANIFEST_NAME)
+
+
+def _read_small(root_fd, name):
+    mode = os.stat(name, dir_fd=root_fd, follow_symlinks=False).st_mode
     if stat.S_ISLNK(mode):
-        raise ValueError(f'{MANIFEST_NAME} must not be a symbolic link')
-    fd = os.open(MANIFEST_NAME, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=root_fd)
+        raise ValueError(f'{name} must not be a symbolic link')
+    fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=root_fd)
     try:
-        _require_regular(os.fstat(fd), MANIFEST_NAME)
+        _require_regular(os.fstat(fd), name)
         data = bytearray()
         while len(data) <= MANIFEST_MAX_BYTES:
             chunk = os.read(fd, MANIFEST_MAX_BYTES + 1 - len(data))
@@ -121,22 +142,47 @@ def _read_manifest(root_fd):
     finally:
         os.close(fd)
     if len(data) > MANIFEST_MAX_BYTES:
-        raise ValueError(f'{MANIFEST_NAME} exceeds the 4 MiB limit')
+        raise ValueError(f'{name} exceeds the 4 MiB limit')
     return bytes(data)
 
 
-def _parse(data):
+def _parse(data, label=MANIFEST_NAME):
     try:
         text = data.decode('utf-8')
     except UnicodeDecodeError as error:
-        raise ValueError(f'{MANIFEST_NAME} is not valid UTF-8') from error
+        raise ValueError(f'{label} is not valid UTF-8') from error
     try:
         value = json.loads(text, object_pairs_hook=_no_duplicate_keys, parse_constant=_refuse_constant)
     except RecursionError as error:
-        raise ValueError(f'{MANIFEST_NAME} is nested too deeply') from error
+        raise ValueError(f'{label} is nested too deeply') from error
     if not isinstance(value, dict):
-        raise ValueError(f'{MANIFEST_NAME} must contain a JSON object')
+        raise ValueError(f'{label} must contain a JSON object')
     return value
+
+
+def _read_supplied(root_fd, local, released_bytes):
+    """The installer's record of the locally supplied copies; must describe exactly the manifest's local paths."""
+    try:
+        raw = _read_small(root_fd, SUPPLIED_NAME)
+    except FileNotFoundError:
+        raise ValueError(f'{SUPPLIED_NAME} is missing; the locally supplied files cannot be checked') from None
+    record = _parse(raw, SUPPLIED_NAME)
+    _exact(record, {'format', 'files'}, SUPPLIED_NAME)
+    if record['format'] != SUPPLIED_FORMAT:
+        raise ValueError(f'{SUPPLIED_NAME} has an unsupported format')
+    files = record['files']
+    if not isinstance(files, dict) or set(files) != set(local):
+        raise ValueError(f'{SUPPLIED_NAME} must record exactly the locally supplied files')
+    total = released_bytes
+    for path, entry in files.items():
+        _exact(entry, {'sha256', 'size'}, f'{SUPPLIED_NAME}[{path!r}]')
+        _check_hex(entry['sha256'], 64, f'{SUPPLIED_NAME}[{path!r}].sha256')
+        if type(entry['size']) is not int or not 0 <= entry['size'] <= FILE_MAX_BYTES:
+            raise ValueError(f'{SUPPLIED_NAME}[{path!r}].size is not an allowed file size')
+        total += entry['size']
+    if total > TOTAL_MAX_BYTES:
+        raise ValueError(f'declared total of {total} bytes exceeds the 2 GiB cap')
+    return files
 
 
 def _no_duplicate_keys(pairs):
@@ -172,6 +218,9 @@ def _check_schema(manifest):
     for path in roles.values():
         if path not in files:
             raise ValueError(f'role path is not listed in files: {path!r}')
+    for path in local_paths(manifest):
+        if path not in (roles['server'], roles['client']) and not _is_data_path(path):
+            raise ValueError(f'only the server and client jars and server data may be locally supplied: {path!r}')
     required = RUNTIME_SCRIPT_PATHS | {LAUNCHER, roles['server'], roles['client']}
     for path in files:
         if path not in required and not _is_data_path(path):
@@ -228,6 +277,8 @@ def _check_files(files):
     total = 0
     for path, entry in files.items():
         _check_relative(path, 'file path')
+        if entry == LOCAL:
+            continue
         _exact(entry, {'sha256', 'size'}, f'files[{path!r}]')
         _check_hex(entry['sha256'], 64, f'files[{path!r}].sha256')
         size = entry['size']
@@ -292,8 +343,9 @@ def _check_hex(value, length, label):
 class _Walk:
     """Scan the payload with directory fds so nothing outside the supplied root is followed."""
 
-    def __init__(self, listed):
+    def __init__(self, listed, supplied=False):
         self.listed = listed
+        self.supplied = supplied
         self.seen = set()
         self.dirs = 0
 
@@ -317,7 +369,7 @@ class _Walk:
                     os.close(fd)
             elif not stat.S_ISREG(mode):
                 raise ValueError(f'special file is not allowed in the payload: {child!r}')
-            elif not rel and name == MANIFEST_NAME:
+            elif not rel and (name == MANIFEST_NAME or (name == SUPPLIED_NAME and self.supplied)):
                 continue
             elif child in self.listed:
                 self.seen.add(child)

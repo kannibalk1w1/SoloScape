@@ -2,7 +2,8 @@
 
 An install root holds, outside every replaceable version directory:
 
-  install.json            fixed configuration: external profile/cache/launcher homes (strict, private)
+  install.json            fixed configuration: external profile/cache/launcher homes and the optional source
+                          folders whose local build supplies a package's jars and data (strict, private)
   install.guard           the one lock file; a launched version holds a shared lease, apply needs exclusive
   active.json             {current, previous} version ids, replaced atomically
   versions/<id>/          sealed read-only payloads; <id> is the SHA-256 of the payload's manifest bytes
@@ -150,13 +151,17 @@ def _publish(root, name, record, cutpoint=None):
 def load_config(root):
     root = _ordinary_dir(root, 'The install folder')
     value = _strict_json(_read_limited(root / CONFIG, MAX_RECORD), 'install.json')
-    allowed = {'format', 'profile_home', 'cache_home', 'launcher_home', 'server_java', 'client_java'}
+    allowed = {'format', 'profile_home', 'cache_home', 'launcher_home', 'server_java', 'client_java', 'supply_roots'}
     if (not isinstance(value, dict) or value.get('format') != FORMAT_CONFIG
             or not {'format', 'profile_home', 'cache_home', 'launcher_home'} <= set(value) <= allowed):
         raise InstallError('install.json is not a supported configuration.')
-    for key in set(value) - {'format'}:
+    for key in set(value) - {'format', 'supply_roots'}:
         if not isinstance(value[key], str) or not value[key].startswith('/') or '\0' in value[key]:
             raise InstallError('install.json ' + key + ' must be an absolute path.')
+    roots = value.get('supply_roots', [])
+    if (not isinstance(roots, list) or len(roots) > 4 or any(not isinstance(r, str) or not r.startswith('/') or '\0' in r
+                                                              or '..' in Path(r).parts for r in roots)):
+        raise InstallError('install.json supply_roots must be up to four absolute folders.')
     return value
 
 
@@ -598,8 +603,10 @@ def _absolute(value, what):
     return str(path)
 
 
-def install_first(root, package, sha256, profile_home, cache_home, launcher_home, release=None, **options):
-    """Create a new install root from one local package zip whose SHA-256 the caller supplies."""
+def install_first(root, package, sha256, profile_home, cache_home, launcher_home, release=None, supply_roots=(), **options):
+    """Create a new install root from one local package zip whose SHA-256 the caller supplies.
+
+    A code-only package takes its jars and data from the first of supply_roots whose local build matches it."""
     import update_package
     root = Path(root)
     if root.exists() and (root.is_symlink() or not root.is_dir() or any(root.iterdir())):
@@ -612,18 +619,36 @@ def install_first(root, package, sha256, profile_home, cache_home, launcher_home
     root.mkdir(parents=True, exist_ok=True)
     for name in (VERSIONS, 'staging', BOOTSTRAP):
         (root / name).mkdir(mode=0o700)
-    version = update_package.install_zip(root, package, sha256, expected_release=release)['id']
+    roots = [_absolute(r, 'supply folder') for r in supply_roots]
+    version = update_package.install_zip(root, package, sha256, expected_release=release, supply_roots=roots)['id']
     here = Path(__file__).resolve().parent
     for name in BOOTSTRAP_FILES:
         shutil.copyfile(here / name, root / BOOTSTRAP / name)
         os.chmod(root / BOOTSTRAP / name, 0o444)
     config = {'format': FORMAT_CONFIG, 'profile_home': str(homes[0]), 'cache_home': str(homes[1]), 'launcher_home': str(homes[2])}
     config.update({k: _absolute(v, k) for k, v in options.items() if v})
+    if roots:
+        config['supply_roots'] = roots
     _publish(root, CONFIG, config)
     fd = os.open(root / GUARD, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     os.close(fd)
     _publish(root, POINTER, {'format': FORMAT_POINTER, 'current': version, 'previous': None})
     return version
+
+
+def set_supply_roots(root, folders):
+    """Replace the registered source folders. Needs the exclusive lease, so no launcher is reading the configuration."""
+    roots = [_absolute(f, 'supply folder') for f in folders]
+    if len(roots) > 4:
+        raise InstallError('At most four source folders can be registered.')
+    with acquire(root, 'exclusive'):
+        config = load_config(root)
+        if roots:
+            config['supply_roots'] = roots
+        else:
+            config.pop('supply_roots', None)
+        _publish(root, CONFIG, config)
+    return roots
 
 
 def status(root):
@@ -646,6 +671,10 @@ def main(argv=None):
     init.add_argument('--launcher-home', required=True)
     init.add_argument('--server-java')
     init.add_argument('--client-java')
+    init.add_argument('--supply-root', action='append', default=[], help='built source folder that supplies a code-only package')
+    supply = sub.add_parser('supply-root', help='replace the registered source folders (none clears them)')
+    supply.add_argument('root')
+    supply.add_argument('folders', nargs='*')
     for name in ('run', 'status', 'rollback'):
         sub.add_parser(name).add_argument('root')
     act = sub.add_parser('activate', help='switch to an already staged candidate (headless apply)')
@@ -655,7 +684,10 @@ def main(argv=None):
     try:
         if args.command == 'init':
             print(install_first(args.root, args.package, args.sha256, args.profile_home, args.cache_home,
-                                args.launcher_home, server_java=args.server_java, client_java=args.client_java))
+                                args.launcher_home, supply_roots=args.supply_root, server_java=args.server_java,
+                                client_java=args.client_java))
+        elif args.command == 'supply-root':
+            print(json.dumps(set_supply_roots(args.root, args.folders)))
         elif args.command == 'run':
             return run(args.root)
         elif args.command == 'status':

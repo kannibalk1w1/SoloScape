@@ -18,6 +18,7 @@ import signal
 import subprocess
 import sys
 import time
+import zipfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -28,6 +29,7 @@ import death_loot_state  # noqa: E402
 import managed_install as mi  # noqa: E402
 import package_builder  # noqa: E402
 import profiles  # noqa: E402
+import runtime_manifest  # noqa: E402
 import update_package  # noqa: E402
 import build_packages  # noqa: E402
 
@@ -83,19 +85,26 @@ def main():
     try:
         # ---- packages and install root ----------------------------------------------------------------------
         files = build_packages.collect(snapshot, options.client_jar)
-        patches = {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((ROOT / 'patches').glob('*/*.patch'))}
+        released, local = build_packages.split(files)
+        build = run / 'build'
+        patches = build_packages.write_build_folder(files, local, build)
         import local_dev
         packages = {}
         for label in ('a', 'b'):
             release = 'private-test-' + label
-            manifest = package_builder.build_manifest(files, release, (0, 1), '0' * 40, dict(local_dev.PINNED), patches)
+            manifest = package_builder.build_manifest(released, release, (0, 1), '0' * 40, dict(local_dev.PINNED), patches, local=local)
             path = run / 'packages' / ('soloscape-package-' + release + '.zip')
-            packages[release] = {'path': path, 'sha256': package_builder.write_zip(files, manifest, path), 'size': path.stat().st_size}
+            packages[release] = {'path': path, 'sha256': package_builder.write_zip(released, manifest, path), 'size': path.stat().st_size}
+        checks['packages_are_scripts_only'] = all(v['size'] < 1 << 20 for v in packages.values()) and not any(
+            n.endswith('.jar') or '/data/' in n for v in packages.values() for n in zipfile.ZipFile(v['path']).namelist())
         shutil.copytree(cache_source, run / 'cache')
         cache_before = support.tree(run / 'cache')
         root = run / 'install'
         a = mi.install_first(root, packages['private-test-a']['path'], packages['private-test-a']['sha256'], run / 'profiles',
-                             run / 'cache', run / 'launcher', release='private-test-a')
+                             run / 'cache', run / 'launcher', release='private-test-a', supply_roots=[build])
+        checks['local_files_copied_from_the_build_and_verified'] = all(
+            (root / 'versions' / a / path).read_bytes() == files[path] for path in local) and runtime_manifest.local_paths(
+            mi.verify_version(root, a)) == local
         result['package_bytes'] = {k: v['size'] for k, v in packages.items()}
         result['version_a'] = a
         checks['install_a_sealed'] = mi.read_pointer(root) == {'current': a, 'previous': None}
@@ -103,7 +112,7 @@ def main():
         b_package = packages['private-test-b']
         fake.write_text(json.dumps({'mode': 'serve', 'tag': 'private-test-b', 'name': 'soloscape-package-private-test-b.zip',
                                     'size': b_package['size'], 'sha256': b_package['sha256'], 'path': str(b_package['path']),
-                                    'rate': 6 << 20}))
+                                    'rate': max(b_package['size'] // 10, 2048)}))
         # ---- wrappers ------------------------------------------------------------------------------------------------
         sessions = load(ROOT / 'experiments/native-prebuilt-session/run.py', 'acceptance_sessions')
         harness = run / 'harness'
@@ -207,11 +216,10 @@ os.execv(java,[java]+args)
         # The launcher showed the apply result to the player once (the probe asserted its text) and then cleared it.
         checks['result_shown_once_then_cleared'] = mi.read_result(root) is None
         # ---- save-format refusal and rollback ---------------------------------------------------------------------------
-        old_only = dict(files)
-        manifest_c = package_builder.build_manifest(old_only, 'private-test-c', (0,), '0' * 40, dict(local_dev.PINNED), patches)
+        manifest_c = package_builder.build_manifest(released, 'private-test-c', (0,), '0' * 40, dict(local_dev.PINNED), patches, local=local)
         c_zip = run / 'packages/soloscape-package-private-test-c.zip'
-        c_digest = package_builder.write_zip(old_only, manifest_c, c_zip)
-        c_id = update_package.install_zip(root, c_zip, c_digest, expected_release='private-test-c')['id']
+        c_digest = package_builder.write_zip(released, manifest_c, c_zip)
+        c_id = update_package.install_zip(root, c_zip, c_digest, expected_release='private-test-c', supply_roots=[build])['id']
         try:
             mi.activate(root, c_id)
             checks['incompatible_save_format_refused'] = False

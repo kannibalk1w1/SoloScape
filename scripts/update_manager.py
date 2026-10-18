@@ -102,7 +102,8 @@ class UpdateManager:
     def _download(self, package, cancelled):
         job = update_package.Job(cancelled=cancelled, deadline=self.deadline, progress=self._progress, clock=self.clock)
         try:
-            found = update_package.fetch_and_install(self.root, package, job=job, transport=self.transport)
+            roots = self.install.load_config(self.root).get('supply_roots', [])
+            found = update_package.fetch_and_install(self.root, package, job=job, transport=self.transport, supply_roots=roots)
             self.install.write_candidate(self.root, found['id'], found['release'], found['zip_sha256'])
             self._set(stage='staged', message='Release ' + found['release'] + ' is downloaded and verified. '
                       'Choose Install and Restart when you are ready.', done=0, total=0)

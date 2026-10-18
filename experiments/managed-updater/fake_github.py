@@ -45,7 +45,7 @@ class Throttled:
         self.stream, self.rate = io.BytesIO(data), rate
 
     def read(self, count):
-        chunk = self.stream.read(min(count, 256 * 1024))
+        chunk = self.stream.read(min(count, 4096))  # small reads so a small package still shows progress
         if chunk:
             time.sleep(len(chunk) / self.rate)
         return chunk
