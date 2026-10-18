@@ -1,6 +1,6 @@
 {
   "reviewed_on": "2026-10-18",
-  "reviewed_base": "5aba982",
+  "reviewed_base": "99f044a",
   "entries": [
     {
       "id": "controls",
@@ -537,6 +537,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "SLAYER_TASK_BLOCKS_20261018.md",
       "note": "53 selected native cases pass, including 17 new cases. All five block/unblock slots survive native disk restore and full account spawn; paid/refused UI actions, account isolation and empty-task streak preservation pass. Supplied stats/tasks/points; earned journey and physical controller acceptance remain open."
+    },
+    {
+      "id": "native-account-batch-draft",
+      "scope": "Draft native account batch recovery prerequisite for death-loot persistence",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "DEFERRED",
+      "evidence": "NATIVE_ACCOUNT_BATCH_20261018.md",
+      "note": "Draft branch only: 38 native storage/save cases pass, including 8 abrupt-exit boundaries and interrupted replay. No live grave/pile snapshot or backup/older-build journal integration; P1 remains open. Not merged or deployed."
     }
   ]
 }

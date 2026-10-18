@@ -74,6 +74,8 @@ def main():
     suites = {
         'snapshot': ('content.entity.player.SaveVariableSnapshotTest',),
         'save': (
+            'world.gregs.voidps.engine.data.file.AccountBatchRecoveryTest',
+            'world.gregs.voidps.engine.data.file.FileStorageTest',
             'world.gregs.voidps.engine.data.SaveQueueTest',
             'world.gregs.voidps.engine.data.PlayerSaveTest',
         ),
