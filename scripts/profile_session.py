@@ -40,11 +40,16 @@ def _run(profile, cancelled, notify, port=43594, client_enabled=True, checked=Tr
     client_jar = local_dev.jar(local_dev.CLIENT / 'client', 'void-client-*.jar')
     local_dev.verify_build_stamp(server_jar, client_jar)
     environment = owned_environment(profile, port)
-    with profile.lock(descriptor=True) as profile_guard:
+    install_guard = None
+    if os.environ.get('SOLOSCAPE_MANAGED_ROOT'):
+        import managed_runtime
+        install_guard = managed_runtime.open_guard()  # own description: orphaned JVMs keep blocking activation
+    with profile.lock(descriptor=True) as profile_guard, (install_guard or nullcontext()):
         # Children keep these same flock descriptions alive if the launcher dies.
         # Closing the parent's descriptors must not permit a live world to be
         # restored/rebuilt underneath an orphaned JVM.
-        guards = (profile_guard.fileno(),) + (() if build_guard is None else (build_guard.fileno(),))
+        guards = ((profile_guard.fileno(),) + (() if build_guard is None else (build_guard.fileno(),))
+                  + (() if install_guard is None else (install_guard.fileno(),)))
         metadata = profile.metadata()
         if metadata['error']:
             raise ValueError('Character save needs recovery: ' + metadata['error'])

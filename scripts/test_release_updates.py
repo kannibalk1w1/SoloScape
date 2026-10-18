@@ -85,7 +85,11 @@ class ReleaseUpdatesTests(unittest.TestCase):
             self.assertEqual(backend.dispatch({'action': 'update_check', 'url': 'https://elsewhere.invalid'})['state'], 'no_public_release')
             fetch.assert_called_once_with()
         with self.assertRaisesRegex(ValueError, 'Unknown launcher action'):
-            backend.dispatch({'action': 'update_apply'})
+            backend.dispatch({'action': 'update_feed', 'url': 'https://elsewhere.invalid'})
+        with self.assertRaisesRegex(RuntimeError, 'cannot install updates'):
+            backend.dispatch({'action': 'update_apply'})  # a source copy is never an install target
+        with self.assertRaisesRegex(RuntimeError, 'cannot install updates'):
+            backend.dispatch({'action': 'update_download', 'url': 'https://elsewhere.invalid'})
 
 
 if __name__ == '__main__':

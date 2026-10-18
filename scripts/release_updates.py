@@ -12,8 +12,10 @@ MAX_RESPONSE = 256 * 1024
 TIMEOUT = 4
 TAG = re.compile(r'[A-Za-z0-9][A-Za-z0-9._-]{0,63}\Z')
 BUNDLE_NAME = re.compile(r'soloscape-update-[A-Za-z0-9._-]{1,64}\.zip\Z')
+PACKAGE_NAME = re.compile(r'soloscape-package-[A-Za-z0-9._-]{1,64}\.zip\Z')
 DIGEST = re.compile(r'sha256:([0-9a-f]{64})\Z')
 MAX_BUNDLE = 8 << 20  # matches the staging lab's archive bound
+MAX_PACKAGE = 768 << 20  # managed package archive bound; see update_package
 
 
 class NoRedirects(urllib.request.HTTPRedirectHandler):
@@ -40,8 +42,13 @@ def parse_release(value):
     notes = '' if notes is None else notes
     if not isinstance(title, str) or len(title) > 200 or not isinstance(notes, str) or len(notes) > 128 * 1024:
         raise ValueError('Unsupported release text.')
-    return result('release_available', 'Published release: ' + tag + '. Automatic installation is not available yet.',
-                  tag=tag, title=title, notes=notes, url=url, bundle=parse_bundle(tag, value.get('assets')))
+    package = parse_package(tag, value.get('assets'))
+    message = ('Published release: ' + tag + '. An installable package is attached.' if package
+               else 'Published release: ' + tag + '. Automatic installation is not available yet.')
+    found = result('release_available', message, tag=tag, title=title, notes=notes, url=url,
+                   bundle=parse_bundle(tag, value.get('assets')), package=package)
+    found['install_available'] = package is not None
+    return found
 
 
 def asset_url(tag, name):
@@ -74,6 +81,28 @@ def parse_bundle(tag, assets):
     if asset.get('browser_download_url') != asset_url(tag, name):
         raise ValueError('Update bundle URL does not match the project.')
     return dict(name=name, size=size, sha256=digest[len('sha256:'):], url=asset_url(tag, name))
+
+
+def parse_package(tag, assets):
+    """Return the one declared managed package, or None. Other assets are ignored, never fetched."""
+    if assets is None:
+        return None
+    if not isinstance(assets, list) or len(assets) > 64:
+        raise ValueError('Unsupported release assets.')
+    found = [a for a in assets if isinstance(a, dict) and isinstance(a.get('name'), str) and PACKAGE_NAME.fullmatch(a['name'])]
+    if not found:
+        return None
+    if len(found) > 1:
+        raise ValueError('More than one update package is published.')
+    asset = found[0]
+    name, size, digest = asset['name'], asset.get('size'), asset.get('digest')
+    if type(size) is not int or not 1 <= size <= MAX_PACKAGE:
+        raise ValueError('Update package size is not acceptable.')
+    if not isinstance(digest, str) or not DIGEST.fullmatch(digest):
+        raise ValueError('Update package has no sha256 digest.')
+    if asset.get('browser_download_url') != asset_url(tag, name):
+        raise ValueError('Update package URL does not match the project.')
+    return dict(name=name, size=size, sha256=digest[len('sha256:'):], url=asset_url(tag, name), tag=tag)
 
 
 def check():
