@@ -76,6 +76,77 @@
     "launch 2: continued after update",
     "launch 3: continued"
   ],
+  "real_checkout_round": {
+    "attempts": "5 complete runs: 2 failed on harness defects (bookkeeping assertion; fake download finished before scripted Cancel navigation), 3 passed (the last 2 on the final harness, 37 checks each)",
+    "backup_count": 8,
+    "checks": {
+      "activation_refused_while_launcher_runs": true,
+      "backups_all_valid": true,
+      "bootstrap_exit_clean": true,
+      "both_versions_verify": true,
+      "cache_unchanged": true,
+      "cancel_left_no_partial_or_version": true,
+      "continue_after_java_change_fields_equal": true,
+      "continue_after_rollback_fields_equal": true,
+      "continue_after_update_fields_equal": true,
+      "incompatible_save_format_refused": true,
+      "install_a_sealed": true,
+      "java_change_activated_pointer_only": true,
+      "java_change_downloaded_after_rebuild": true,
+      "java_change_launch_clean": true,
+      "java_change_rebuilt_with_the_supported_command": true,
+      "java_change_refusal_left_install_untouched": true,
+      "java_change_refused_with_actionable_message": true,
+      "java_change_version_carries_the_players_own_new_jars": true,
+      "launcher_ran_without_optional_artwork": true,
+      "local_files_copied_from_the_build_and_verified": true,
+      "login_json_byte_identical_throughout": true,
+      "maintainer_folder_prepared_by_real_prepare_build": true,
+      "native_second_session_capabilities_verified": true,
+      "no_staging_leftovers": true,
+      "packages_are_scripts_only": true,
+      "password_never_in_install_launcher_probe_or_bootstrap_log": true,
+      "player_folder_prepared_by_real_prepare_build": true,
+      "pointer_after_update": true,
+      "result_shown_once_then_cleared": true,
+      "rollback_kept_saves": true,
+      "rollback_launch_clean": true,
+      "rollback_pointer_only": true,
+      "round0_account_valid_storage_version": 1,
+      "round0_native_capabilities_verified": true,
+      "saves_untouched_by_refusal": true,
+      "superseded_version_pruned_current_and_previous_kept": true,
+      "version_contexts_one_per_launched_version": true
+    },
+    "jar_hashes_after_rebuild": {
+      "maintainer": {
+        "client": "ab5f47e70dd1c120",
+        "server": "68734009827f237b"
+      },
+      "player": {
+        "client": "8c5f7f3f298deb59",
+        "server": "68734009827f237b"
+      }
+    },
+    "jar_hashes_first_build": {
+      "client": "8c5f7f3f298deb59",
+      "server": "ba1d3c5eb9c71a2e"
+    },
+    "note": "Build records, jars and data are genuine output of scripts/prepare-build.sh in disposable copies; the Java change is an inert comment-only server patch.",
+    "package_bytes": {
+      "private-test-a": 92349,
+      "private-test-b": 92349
+    },
+    "probe_log": [
+      "launch 1: world played and verified",
+      "progress string while downloading: downloading 0.0 MiB of 0.1 MiB",
+      "launch 1: requesting install and restart",
+      "launch 2: continued after update",
+      "launch 3: continued",
+      "launch 4: continued"
+    ],
+    "rebuild_refusal_message": "Release private-test-j needs a different build than the one in <disposable>/1792343282230580260/player (differs: patches/server/0999-acceptance-inert-rebuild.patch). Update that folder to the source of release private-test-j, run scripts/prepare-build.sh in it, then press Download again. Your installed version keeps working."
+  },
   "round": "code-only packages (scripts, pins, patch hashes); jars and data copied from a registered private build folder",
   "scope": "Private disposable native acceptance with mapped AWT Robot input on owned Xvfb; fake GitHub at the backend network seams; no SDL, hardware, audio or owner install.",
   "server_stack": "54 (deck-export snapshot read as an immutable input)",
