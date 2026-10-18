@@ -1,6 +1,6 @@
 # SoloScape 2011+
 
-Latest prepared private native test build: [51/56 snapshot, screenshot, New/Continue and sampled resource evidence](docs/NATIVE_TEST_BUILD_51_20261017.md). The local payload is for owner testing; it is not a public release or an installed Deck update.
+Latest prepared private native test build: [52/56 snapshot, screenshot, New/Continue and sampled resource evidence](docs/NATIVE_TEST_BUILD_52_20261018.md). The local payload is for owner testing; it is not a public release or an installed Deck update.
 
 Development source build for a local RuneScape revision-634 experience with native controller support and eventual Steam Deck delivery. The controller build includes reversible direct movement, target/movement feedback, native UI navigation, Home and quick-action radials, optional custom inventory/equipment/bank/shop screens, shared menu back navigation, active-pane right-stick scrolling, remapped physical hints, exclusive in-game text ownership and a reversible classic controller UI theme.
 
@@ -12,7 +12,9 @@ The current work batch adds [corner running and RT precision walking](docs/CONTR
 The [Steam Deck player guide](docs/SOLOSCAPE_STEAM_DECK_PLAYER_GUIDE.md) is standalone Markdown for first-time play and Obsidian.
 The [10 October handoff](docs/PROJECT_HANDOFF.md) is a historical discussion snapshot; branch/build/test-count claims there are superseded by the current status index.
 
-The completed controller/Deck work is integrated into the GitHub default branch `main`. Source checkouts under `upstream/` are
+The controller work is merged into the GitHub default branch `main`, which is the
+source baseline for new contributions. Merged work still requires the physical
+acceptance recorded in [CURRENT_STATUS](docs/CURRENT_STATUS.md). Source checkouts under `upstream/` are
 ignored; tracked SoloScape patches reproduce the client changes and the server
 directional movement extension. See [reconnaissance](docs/UPSTREAM_RECON.md),
 [architecture](docs/ARCHITECTURE.md) and the original [brief](docs/KICKOFF.md).

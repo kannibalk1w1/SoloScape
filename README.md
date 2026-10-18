@@ -4,7 +4,7 @@ A local, single-player-first RuneScape revision-634 project, exploring native
 controller play and a console-style experience for Steam Deck. Built as a tracked
 patch layer over the pinned 2011Scape/Void server and RuneLite-style client.
 
-**Stage: playable console alpha on the development branch.** Local gameplay works and the owner
+**Stage: playable console alpha on `main`.** Local gameplay works and the owner
 has confirmed camera, movement feedback and optional direct movement feel good.
 There is no packaged release yet. Steam Deck performance, full interface coverage,
 upstream content completeness and physical interface play still need acceptance. Isolated native save/reload and a gathering–production–combat route are verified.
@@ -50,7 +50,7 @@ and SDL2 2.0.22+ for controller support. The scripts install project-local JDKs;
 first builds need network access to resolve Gradle dependencies.
 
 ```bash
-git clone --branch overnight/controller-sprint https://github.com/kannibalk1w1/SoloScape.git
+git clone --branch main https://github.com/kannibalk1w1/SoloScape.git
 cd SoloScape
 ```
 
@@ -76,25 +76,30 @@ The patched server defaults to IPv4 loopback; the profile launcher always binds 
 
 ## Current state and proposed work
 
-- [Project handoff / current state](docs/PROJECT_HANDOFF.md): self-contained overview
-  suitable for discussion in ChatGPT.
+- [Current status and evidence](docs/CURRENT_STATUS.md): reviewed implementation and acceptance index.
+- [Project handoff](docs/PROJECT_HANDOFF.md): historical discussion snapshot; its branch, build and test-count claims are superseded by the current status index.
 - [Proposed roadmap](docs/ROADMAP.md): checkbox task list, dependencies and acceptance.
 - [Validation evidence](docs/VALIDATION.md) and [Claude's independent review](docs/CLAUDE_REVIEW.md).
 - [Architecture](docs/ARCHITECTURE.md), [controller design](docs/CONTROLLER_DESIGN.md)
   and [upstream reconnaissance](docs/UPSTREAM_RECON.md).
 
-The overnight sprint is on [`overnight/controller-sprint`](https://github.com/kannibalk1w1/SoloScape/tree/overnight/controller-sprint); see the [morning report](docs/MORNING_REPORT.md). Public `main` retains the earlier baseline until review.
+The controller work is merged into the GitHub default branch `main`, which is the
+source baseline for new contributions. Older sprint branches and the
+[morning report](docs/MORNING_REPORT.md) are historical references. Use
+[README-SOLOSCAPE.md](README-SOLOSCAPE.md) for setup and
+[CURRENT_STATUS.md](docs/CURRENT_STATUS.md) for current evidence and acceptance gaps.
+The latest prepared private test build is [52/56](docs/NATIVE_TEST_BUILD_52_20261018.md);
+it is not a public release or an installed Deck update.
 
 Next: physically accept the custom-screen/profile build, fix recorded usability issues, then measure Deck performance and suspend behavior. Larger ambitions—solo adaptations, original graphics, persistent AI
 adventurers, a local economy, selected backports and private co-op—remain proposals,
 not implemented features or promised releases.
 
-Latest journeys checkpoint: **176 client cases** (zero failures/errors, one optional SDL skip),
-**62 root tooling/profile/lifecycle/recovery cases** and **20 selected game cases** pass.
-Actual-map Restless Ghost, Cook’s Assistant and Rune Mysteries routes include native save/load.
-Actual Swing character entry, real owned-server recovery and repeated graphical New/Continue pass;
-physical controller/Deck acceptance remains open. See the [journeys task list](docs/CONTROLLER_JOURNEYS_TASKS.md),
-[combined report](docs/MORNING_REPORT.md) and [journeys validation](docs/CONTROLLER_JOURNEYS_VALIDATION.md).
+Historical journeys validation covers actual-map Restless Ghost, Cook’s Assistant
+and Rune Mysteries routes, native save/load, Swing character entry and owned-server
+recovery. Its dated test counts are retained in the
+[journeys validation](docs/CONTROLLER_JOURNEYS_VALIDATION.md); use the
+[current evidence index](docs/CURRENT_STATUS.md) for later work and physical acceptance limits.
 
 ## Repository contents and contributions
 
@@ -108,4 +113,8 @@ Upstream licence notices and the current original-material licensing status are
 in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). SoloScape is independent and
 not affiliated with Jagex, RuneLite or upstream maintainers.
 
-Steam Deck checkpoint: private Desktop deployment/native save and recovery probes now pass. See [combined report](docs/MORNING_REPORT.md), [Deck setup](docs/DECK_SETUP.md) and [evidence/limits](docs/DECK_VALIDATION.md). Launcher keyboard ownership is implemented after physical feedback; Gaming Mode and in-game keyboard ownership remain acceptance/follow-up work.
+Historical Steam Deck checkpoints record private Desktop deployment, native save
+and recovery probes. See [Deck setup](docs/DECK_SETUP.md) and the
+[current evidence index](docs/CURRENT_STATUS.md) for dated hardware results and
+remaining physical controller, Gaming Mode and lifecycle acceptance. A prepared
+host build does not establish what is installed on the Deck.
