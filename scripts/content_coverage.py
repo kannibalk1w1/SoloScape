@@ -74,6 +74,9 @@ def main():
     suites = {
         'snapshot': ('content.entity.player.SaveVariableSnapshotTest',),
         'save': (
+            'world.gregs.voidps.engine.data.file.AccountBatchRecoveryTest',
+            'world.gregs.voidps.engine.data.file.DeathLootStorageTest',
+            'world.gregs.voidps.engine.data.file.FileStorageTest',
             'world.gregs.voidps.engine.data.SaveQueueTest',
             'world.gregs.voidps.engine.data.PlayerSaveTest',
         ),
@@ -89,6 +92,7 @@ def main():
         'death': (
             'content.entity.player.inv.TakeTest',
             'content.area.misthalin.lumbridge.church.DeathLootRecoveryTest',
+            'content.area.misthalin.lumbridge.church.DeathLootRestartTest',
             'content.area.misthalin.lumbridge.church.KeptItemChargePreservationTest',
             'content.area.misthalin.lumbridge.church.IdenticalItemsKeptOnDeathTest',
             'content.area.misthalin.lumbridge.church.DeathDropChargeRecoveryTest',

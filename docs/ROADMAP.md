@@ -1,41 +1,34 @@
 # SoloScape 2011+ — proposed project roadmap and task list
 
-Reviewed working order: 17 October 2026. [Current evidence/status](CURRENT_STATUS.md); [historical 10 October handoff](PROJECT_HANDOFF.md).
+Reviewed working order: 18 October 2026. [Current evidence/status](CURRENT_STATUS.md); [historical 10 October handoff](PROJECT_HANDOFF.md).
 This is a proposal to review, reorder and use as the working backlog. Later tasks
 are not automatic authorization to build them. No dates or effort estimates are
 promised before the relevant subsystem has been inspected.
 
 ## Owner priority — 18 October 2026
 
-**The open P1 for unrecovered death loot lost on restart is the primary correctness
-blocker and takes precedence over the development tracks below.** Native account
-save confirmation does not persist the world-owned grave/floor state. The existing
-checkpoint, receipt and codec experiments are prerequisites, not an integrated fix.
+**Native unrecovered death loot now has an integrated account-and-world checkpoint
+and startup recovery path.** See [implementation and qualification](DEATH_LOOT_PERSISTENCE_20261018.md).
+The historical checkpoint/receipt/codec reports remain prerequisite evidence; they
+are no longer the only persistence implementation.
 
-The next persistence sprint must integrate the live death/pickup/timer paths with
-coherent account-and-loot publication, startup recovery and verified backup/restore.
-Preserve the agreed [pause-while-closed policy](GRAVE_PAUSE_PERSISTENCE_PLAN.md),
-item quantities/charges, native private/public loot rules and private co-op compatibility.
-Do not close the issue with a shutdown-only dump or independent account/world writes:
-a crash between those writes can lose or duplicate items.
+The native fix preserves remaining lifetime while closed, charges, private/public
+loot, merged piles, offline owners and guest pickups. Real cold-process death and
+partial recovery, interrupted commits, archive restore and compatibility refusal
+are qualified with disposable worlds. Physical Deck controller acceptance remains
+required before owner deployment; no owner save was migrated by this work.
 
-Acceptance requires actual native death and partial recovery followed by clean and
-forced process restarts, exact item conservation across both players and remaining
-loot, offline-owner/public pickup, repeated restart without duplication, retained
-running-world versus stopped-world lifetime, and backup/corruption recovery. Use
-fresh processes and disposable worlds; retain the existing cold-JVM loss reproducer
-as a regression. Follow with physical controller acceptance before owner deployment.
-
-Defer new content, further backport expansion, updater feature work and WASM expansion
-until this integrated boundary is resolved. Do not substitute additional disconnected
-lab proofs or test-count growth for the production restart acceptance above. The P1
-remains open until that evidence passes; no runtime fix is delivered by this priority update.
+Keep save/lifecycle regressions as gates for further work. Do not replace the
+coherent checkpoint with independent account/world writes, or treat a fallback
+account dump as a verified world save. Native/deck acceptance remains ahead of
+content expansion. The separately requested GitHub-updater work may proceed in
+its own branch and must preserve the same world/save compatibility contract.
 
 ## Reviewed working order — 17 October 2026
 
 Keep the existing milestone IDs and dated checkpoints below. Checkboxes record scoped implementation, not physical acceptance; [CURRENT_STATUS](CURRENT_STATUS.md) indexes newer evidence without rewriting historical reports. This research does not authorize substantial feature implementation.
 
-1. **Physical native session and P0/P1 fixes (M0–M4):** save/closure truth (including [unrecovered grave/floor loot at restart](GRAVE_COLD_JVM_PROBE_20261017.md), with [pause-while-closed policy and persistence gates](GRAVE_PAUSE_PERSISTENCE_PLAN.md)), controller ownership/B/neutral, Steam text input and a single representative production/commerce/combat loop. Unverified ended owner sessions remain explicit follow-ups. The historical Settings one-tile difference remains unexplained; [current strict host 51/56 checks pass in both default and direct-configured fixtures](SETTINGS_SAVE_FOLLOWUP_20261017.md), without establishing a cause or fix. Do not run every quest as a substitute for human acceptance.
+1. **Physical native session and P0/P1 fixes (M0–M4):** save/closure truth (including [integrated grave/floor checkpoint and remaining physical acceptance](DEATH_LOOT_PERSISTENCE_20261018.md), with [pause-while-closed policy and persistence gates](GRAVE_PAUSE_PERSISTENCE_PLAN.md)), controller ownership/B/neutral, Steam text input and a single representative production/commerce/combat loop. Unverified ended owner sessions remain explicit follow-ups. The historical Settings one-tile difference remains unexplained; [current strict host 51/56 checks pass in both default and direct-configured fixtures](SETTINGS_SAVE_FOLLOWUP_20261017.md), without establishing a cause or fix. Do not run every quest as a substitute for human acceptance.
 2. **Bounded M6 audit alongside lifecycle/performance diagnosis:** inspect what actually works, including Slayer, Summoning/Dungeoneering and solo bottlenecks. Audit one proposed progression slice before expanding content. Continue measured region rebuild/map-renderer diagnosis; keep current 60 FPS criteria open.
 3. **One enjoyable complete solo slice (M7), with M3/M4 as concurrent gates:** freshness, readability, progression, persistence and failure recovery on real Deck. Challenge the idea that lifecycle/performance can wait until after content: fix P0/P1 and measure them now; final acceptance can accompany the slice. Do not relax performance targets or claim pause/suspend support implicitly.
 4. **Close Deck lifecycle/performance acceptance (M4) before release/expansion:** controlled comparable power/renderer traces, suspend or explicit safe fallback, reconnect and save/reload; use measured changes, not an architectural rewrite.

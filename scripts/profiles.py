@@ -6,6 +6,7 @@ manifest pointer and retains the old generation rather than rewriting live files
 """
 from contextlib import contextmanager
 from datetime import datetime, timezone
+import death_loot_state
 import fcntl
 import hashlib
 import json
@@ -118,6 +119,9 @@ def validate_save(data, expected_account=None):
         raise ValueError('Character save has an invalid location.')
     if type(tile.get('level', 0)) is not int or not 0 <= tile.get('level', 0) <= 3:
         raise ValueError('Character save has an invalid plane.')
+    version = save.get('storage_version', 0)
+    if type(version) is not int or version not in (0, 1):
+        raise ValueError('Character save has an unsupported storage version.')
     inventories = save.get('inventories', {})
     if not isinstance(inventories, dict):
         raise ValueError('Character inventories are invalid.')
@@ -217,14 +221,27 @@ class Profile:
         result['save_bytes'] = sum(p.stat().st_size for root in (self.state / 'saves', self.state / 'errors') for p in root.rglob('*') if p.is_file() and not p.is_symlink())
         result['cache_bytes'] = sum(p.stat().st_size for root in (self.directory / 'client-home/native-cache', self.state / 'temp') for p in root.rglob('*') if p.is_file() and not p.is_symlink())
         result['retention'] = 'Backups and previous generations are kept until explicitly removed.'
-        if save_path.exists():
-            try:
+        pending = self.state / 'saves/.soloscape-account-save'
+        try:
+            if pending.exists() or pending.is_symlink():
+                # Startup replays this commit before reading accounts. Inspect the
+                # same logical state without mutating evidence or replaying in Python.
+                contents = {p.relative_to(self.state).as_posix(): p.read_bytes() for p in self._files()}
+                logical = death_loot_state.validate_state(contents, validate_save, self.manifest['account'])
+                save = logical['accounts'].get(self.manifest['account'].lower())
+                candidate = pending / save_path.name
+                stamp = candidate if candidate.is_file() else save_path
+            elif save_path.exists():
                 if save_path.is_symlink():
                     raise ValueError('Character save cannot be a symbolic link.')
                 save = validate_save(save_path.read_bytes(), self.manifest['account'])
-                result.update(saved=True, location=save['tile'], saved_at=datetime.fromtimestamp(save_path.stat().st_mtime, timezone.utc).isoformat(timespec='seconds'))
-            except (OSError, ValueError) as exc:
-                result['error'] = str(exc)
+                stamp = save_path
+            else:
+                save = None
+            if save is not None:
+                result.update(saved=True, location=save['tile'], saved_at=datetime.fromtimestamp(stamp.stat().st_mtime, timezone.utc).isoformat(timespec='seconds'))
+        except (OSError, ValueError) as exc:
+            result['error'] = str(exc)
         return result
 
     def environment(self, port=43594):
@@ -255,6 +272,7 @@ class Profile:
         atomic_json(self.directory / 'profile.json', self.manifest)
 
     def _files(self):
+        death_loot_state.validate_journal_layout(self.state / "saves")
         files = []
         for path in self.state.rglob('*'):
             if path.is_symlink():
@@ -284,10 +302,8 @@ class Profile:
         for path in files:
             relative = path.relative_to(self.state).as_posix()
             data = path.read_bytes()
-            if relative.startswith('saves/') and relative.endswith('.toml') and '/' not in relative[6:]:
-                primary = 'saves/' + self.manifest['account'].lower() + '.toml'
-                validate_save(data, self.manifest['account'] if relative == primary else None)
             contents[relative] = data
+        death_loot_state.validate_state(contents, validate_save, self.manifest['account'])
         manifest = {'format': FORMAT, 'profile': self.manifest['id'], 'account': self.manifest['account'],
                     'metadata': {k: self.manifest[k] for k in ('label', 'created', 'last_played', 'tutorial')},
                     'world': world_settings(self.manifest.get('world')),
@@ -342,10 +358,8 @@ class Profile:
                     data = archive.read(member)
                     if len(data) != record['size'] or hash_bytes(data) != record['sha256']:
                         raise ValueError('Backup checksum does not match.')
-                    if relative.startswith('saves/') and relative.endswith('.toml') and '/' not in relative[6:]:
-                        primary = 'saves/' + self.manifest['account'].lower() + '.toml'
-                        validate_save(data, self.manifest['account'] if relative == primary else None)
                     result[relative] = data
+                death_loot_state.validate_state(result, validate_save, self.manifest['account'])
                 return manifest, result
         except (zipfile.BadZipFile, zlib.error, KeyError, TypeError, json.JSONDecodeError) as exc:
             raise ValueError('Backup is corrupt or has an invalid manifest.') from exc
@@ -559,6 +573,7 @@ def import_world_copy(source, label, account, password='', world=None):
     if not isinstance(password, str) or len(password) > 20 or any(ord(c) < 32 or ord(c) > 126 for c in password):
         raise ValueError('Optional login password must use up to 20 printable ASCII characters.')
     files = []
+    death_loot_state.validate_journal_layout(source)
     for path in source.rglob('*'):
         if path.is_symlink():
             raise ValueError('World copy contains a symbolic link.')
@@ -568,9 +583,6 @@ def import_world_copy(source, label, account, password='', world=None):
             files.append(path)
     if len(files) > MAX_FILES or sum(p.stat().st_size for p in files) > MAX_BACKUP:
         raise ValueError('World copy exceeds the backup size limit.')
-    primary = source / (account.lower() + '.toml')
-    if not primary.is_file():
-        raise ValueError('The selected account is missing from this world copy.')
     contents = {}
     fingerprints = {}
     for path in files:
@@ -580,11 +592,12 @@ def import_world_copy(source, label, account, password='', world=None):
         if len(data) != stat.st_size or path.stat().st_mtime_ns != stat.st_mtime_ns:
             raise ValueError('World copy changed during import; use a stopped, stable copy.')
         relative = path.relative_to(source)
-        if len(relative.parts) == 1 and relative.suffix == '.toml':
-            validate_save(data, account if path == primary else None)
         contents[relative] = data
     if any((path.stat().st_size, path.stat().st_mtime_ns) != saved for path, saved in fingerprints.items()):
         raise ValueError('World copy changed during import; use a stopped, stable copy.')
+    logical = death_loot_state.validate_state({'saves/' + relative.as_posix(): data for relative, data in contents.items()}, validate_save, account)
+    if account.lower() not in logical['accounts']:
+        raise ValueError('The selected account is missing from this world copy.')
     profile = create(label, account, password=password, _staging=True, world=world)
     try:
         with profile.lock():

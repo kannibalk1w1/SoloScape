@@ -1,0 +1,278 @@
+{
+  "date": "2026-10-18",
+  "baseline": "99f044a917b08391f63d20f824b0048a4071681e",
+  "implementation_source_commit": "84cc428dbd923ae734cf49bdbd9a8639e129c44c",
+  "native_stack": {
+    "server": 54,
+    "client": 56
+  },
+  "status": "Integrated native persistence qualified; reviewed matched private build ready; physical Deck acceptance required",
+  "patches_sha256": {
+    "patches/server/0053-recover-native-account-save-batches.patch": "640f02426d20850b545fc40dbe9253b47d7f4943adf82e493a686da85cf17552",
+    "patches/server/0054-persist-death-loot-world-checkpoints.patch": "288d9d361a07932946fcbd0fbee089d6bcc59cbf6b59714fa1f72562d37276c8"
+  },
+  "native_sources_sha256": {
+    "engine/src/main/kotlin/world/gregs/voidps/engine/data/DeathLootSnapshot.kt": "e926c4ba9269b395cad6aee3f23d3d44825ebba1090a79ec8df87561e00d68f8",
+    "engine/src/main/kotlin/world/gregs/voidps/engine/data/PlayerSave.kt": "73db44e6b942cbf366b999fbf5ca4f5a810f79f4e744e004a0d79f52fbd4cfa6",
+    "engine/src/main/kotlin/world/gregs/voidps/engine/data/SaveQueue.kt": "1c936a6ffb0aa0228006719ba8f1e6800de28b3f1431e74dfb0eddaa2e019871",
+    "engine/src/main/kotlin/world/gregs/voidps/engine/data/Storage.kt": "a3ee41330465517f69248fa897cefa1227a2ba7b0e50701d73725a6c5dc4f2d7",
+    "engine/src/main/kotlin/world/gregs/voidps/engine/data/file/AccountSaveBatch.kt": "5a5a91b65ec42c82b966bb8338b2192876ca00c53ad6ab0631575e5df92b5194",
+    "engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt": "da26322c4a8dae27e4479e967d77128bd3741301e22a5a64efb753d2c4de5fa1",
+    "engine/src/main/kotlin/world/gregs/voidps/engine/entity/character/npc/NPCs.kt": "cad5bbb09b92df853ef45c1e0ef2c98f5af3be4be93be0a1f72817ce18d23500",
+    "engine/src/main/kotlin/world/gregs/voidps/engine/entity/item/floor/FloorItem.kt": "6a3c30579846b0bf50ec39c556e56df7c385957389a1912bbb3ce21e8051e774",
+    "engine/src/main/kotlin/world/gregs/voidps/engine/entity/item/floor/FloorItems.kt": "fca64ec6aea83dbd7fb42a789b034bdeb625951afa2404e542bbb626168e7006",
+    "engine/src/test/kotlin/world/gregs/voidps/engine/data/SaveQueueTest.kt": "63f4ddab5f65d3cc79239bcbba7fd8f8cb0e07e91e890ca717feaeac9d14d667",
+    "engine/src/test/kotlin/world/gregs/voidps/engine/data/file/DeathLootStorageTest.kt": "369605a0b0d0bdc06e1ab7b925049a30bd9223a76a3d2a5812e3d57966e18cc3",
+    "game/src/main/kotlin/content/area/misthalin/lumbridge/church/DeathLootPersistence.kt": "acdeb3fc43fe692fdef8bc1b012bf26193f5766fa2f21fa81e221a3f52c8a0e9",
+    "game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestone.kt": "2f1aa0bdaff3e719630699c02486ba22c17532b09ec87ea355c36136de507486",
+    "game/src/main/kotlin/content/area/misthalin/lumbridge/church/Gravestones.kt": "067a181aad8462ca33e2e20dbad8560812f955e5c02da291f13f3a4fd0336837",
+    "game/src/main/kotlin/content/entity/death/PlayerDeath.kt": "a50db15113d04bf44fa8c3d604f983f9490646bc863ef74c8a1babce7af1b2ca",
+    "game/src/main/kotlin/content/skill/summoning/BeastOfBurden.kt": "d1df9addcd739813d5f6c3b26ee05404a195f204bedbf38f56f73be6c6c74808",
+    "game/src/test/kotlin/WorldTest.kt": "44527350c7008178cfa0a5009805987a2261f24e93cfc4d2d2c4df239eb7c921",
+    "game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathLootRestartTest.kt": "c9bee580140ca3047649148fc3472993abaffbc64190db2b9aaea868064a510a"
+  },
+  "storage_validation": {
+    "summary": ".runtime/content-coverage/1792315288004757695/summary.json",
+    "summary_sha256": "c6dbcaa57e0584e9cd3aa6a8c068f6fbc97fb6adbddb8c07f0f7d40582d558ba",
+    "tests": 42,
+    "suites": [
+      {
+        "suite": "world.gregs.voidps.engine.data.file.AccountBatchRecoveryTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "world.gregs.voidps.engine.data.file.DeathLootStorageTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "world.gregs.voidps.engine.data.file.FileStorageTest",
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "world.gregs.voidps.engine.data.SaveQueueTest",
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "world.gregs.voidps.engine.data.PlayerSaveTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "death_validation": {
+    "summary": ".runtime/content-coverage/1792315844445179774/summary.json",
+    "summary_sha256": "36c84d8154e0da94dab70e89182895b05c896f190cef3b4f3035e3ee09f232da",
+    "tests": 40,
+    "suites": [
+      {
+        "suite": "content.entity.player.inv.TakeTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.DeathLootRecoveryTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.DeathLootRestartTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.KeptItemChargePreservationTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.IdenticalItemsKeptOnDeathTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.DeathDropChargeRecoveryTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.GravestonesTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.GravestoneDegradePhaseTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.GravestoneShopAuthorityTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "suite": "content.area.misthalin.lumbridge.church.RepeatedGraveIdentityTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "cold_world_child_jvms_in_death_suite": 49,
+  "cold_world_scenarios": 9,
+  "forced_world_commit_exit_boundaries": [
+    "prepared",
+    "published",
+    "installed:.soloscape-death-loot.v1",
+    "installed:deathguest.toml",
+    "materialized",
+    "retired"
+  ],
+  "outcome": "Before publication: previous complete checkpoint. After publication/recovery: new complete checkpoint. Owner offline file is byte-identical; original 1000 coins conserved across owner/guest inventories, guest bank and floor. Charged rapier retains12345; private/public and grave clocks pause while closed.",
+  "backup_validation": {
+    "clean_and_pending_import_backup_restore": true,
+    "native_replay_after_restore": true,
+    "archive_bytes_preserved": true,
+    "covered_corrupt_canonical_recovered": true,
+    "child_jvms": 7,
+    "owner_state_access": false
+  },
+  "frozen_previous_jar_guard": "PASS frozen server52 refuses storage_version before accepting account",
+  "root_tooling": {
+    "tests": 294,
+    "skipped": 1,
+    "failures": 0,
+    "errors": 0
+  },
+  "logs_sha256": {
+    "save-coverage.log": "c2d563ac2a252e5867d2afda260115c2f5a322c9818fe9345e3bf7d5d20d1262",
+    "death-final-coverage-3.log": "60d8e06d8d5e1b507dcfb61ca9a3bb5b42bf72c9581768044c68cf2587670ca5",
+    "python-full-final.log": "f74681ced7cc44a456cc2dcd739737850d45321676a30ab934953e1bcc8ec2fc",
+    "backup-native-3.log": "abaff72a23fbf55d56d737b73b4666a05d3453f5866522b6b84c305efcf8a891",
+    "frozen52-guard.log": "7c746e4edade43abac616ccd28ae523f7e91147f4c89ca79bb47493bf13865d5",
+    "review-regressions-red.log": "d801b656b59750d9ea4bb2f137a49f162eca0226fa355567d23ed0914b2413ae",
+    "prepare-build-final.log": "bb231c3e82dc9314cf99ace2435bd3113254568211b95eed04fac3c86ed22e67",
+    "packaged-check.log": "28de15977f4919b1d79976365ce14bad7fea67906e5f3e20f53919c68f1a4b4e",
+    "packaged-native-main.log": "40bd17a8548df88c54932ab95d70a9e3512df5407ee630abc69933fff094c0d0",
+    "packaged-world-recovery.log": "ef562ddae77e0168ee220a0c7a4fe048eb356234b2c8dd042e2d5c988d8f62c0"
+  },
+  "limits": [
+    "Original/disposable fixtures, user-supplied compatible cache read locally.",
+    "Independent JVMs/WorldTest boot and production handlers; no hardware power-cut durability claim.",
+    "Engine42 suite preceded final game-only instance/relog test changes; engine files are unchanged.",
+    "No human Deck acceptance, suspend/resume, audible-audio, performance or owner-deployment claim."
+  ],
+  "owner_state_or_deck_changed": false,
+  "packaged_native_acceptance": {
+    "snapshot": "/home/kannibalkiwi/orca/projects/SoloScape/.runtime/deck-exports/1792316178568187369",
+    "verified_files": 10928,
+    "source_commit": "84cc428dbd923ae734cf49bdbd9a8639e129c44c",
+    "native_new_continue_savequit_and_failure": true,
+    "owner_deployment": false
+  },
+  "packaged_world_recovery": [
+    {
+      "case": "clean",
+      "native_Main_world_restore_and_confirmed_shutdown": true,
+      "record_identities_and_quantities_preserved": true,
+      "covered_corrupt_primary_replayed": false,
+      "validated_backups": 3
+    },
+    {
+      "case": "pending",
+      "native_Main_world_restore_and_confirmed_shutdown": true,
+      "record_identities_and_quantities_preserved": true,
+      "covered_corrupt_primary_replayed": true,
+      "validated_backups": 3
+    }
+  ],
+  "native_session_summary": {
+    "new_session_seconds": 23.036,
+    "continue_session_seconds": 23.134,
+    "native_save_failure": {
+      "primary_and_fallback_write_failures_observed": true,
+      "error_artifacts_absent": true,
+      "current_session_receipt_absent": true,
+      "launcher_refused_clean_status": true,
+      "previous_primary_bytes_preserved": true,
+      "unverified_record_retained_then_archived": true,
+      "verified_backup_restored": true,
+      "failed_generation_retained": true
+    },
+    "native_startup_cancel_preserved": true,
+    "original_mutable_paths_unchanged": true,
+    "session_environment": {
+      "XDG_SESSION_DESKTOP": "KDE",
+      "XDG_CURRENT_DESKTOP": "KDE",
+      "DISPLAY": ":1",
+      "SteamAppId": null,
+      "SteamGameId": null
+    },
+    "adventure": [],
+    "settings_direct_fixture": false,
+    "text_focused": false,
+    "playable_journey": false,
+    "playtest_two": false,
+    "fullscreen_probe": false,
+    "fullscreen_renderers": null,
+    "sidebar_probe": false,
+    "sidebar_baseline": false,
+    "display": "private-xvfb",
+    "precondition": "Owned private display.",
+    "screenshots": "Private evidence only; desktop overlays may appear or Wayland capture may be unavailable. Review before publishing.",
+    "note": "Native session totals and overlay-render intervals; not physical controller or Gaming Mode acceptance."
+  },
+  "host_software_observations": {
+    "new": {
+      "world_ready_seconds": 4.204,
+      "peak_rss_mib": {
+        "server": 1624.6,
+        "client": 1216.2
+      }
+    },
+    "continue": {
+      "world_ready_seconds": 3.098,
+      "peak_rss_mib": {
+        "server": 1295.2,
+        "client": 1620.3
+      }
+    }
+  },
+  "jars_sha256": {
+    "server": "71ea5d1a2b142fe8318d1e48bff1385b3093a5a5156fac2963252ebc2b883396",
+    "client": "c4addc7c930398aa63c4321843015450ebde73f66b031260e2a083d90fb9606b"
+  },
+  "snapshot_manifest_sha256": "61eb72859778fffc17092695d0d26ff20bc8cc9aef2102e3f0cc8363084c190c"
+}

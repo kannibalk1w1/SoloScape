@@ -65,7 +65,7 @@ def prepare(cache):
                 if support.digest(destination) != item['sha256']:
                     raise RuntimeError('Data changed during copying: '+item['path'])
             source_map = {name:'scripts/'+name for name in
-                          ('local_dev.py','profiles.py','profile_session.py','session_recovery.py',
+                          ('local_dev.py','profiles.py','death_loot_state.py','profile_session.py','session_recovery.py',
                            'release_updates.py','deck_awake.py','launcher.sh')}
             source_map.update({'owned_launcher_backend.py':'scripts/launcher_backend.py',
                                'prebuilt_bootstrap.py':'experiments/prebuilt-runtime-contract/prebuilt_bootstrap.py',

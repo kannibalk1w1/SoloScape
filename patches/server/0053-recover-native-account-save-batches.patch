@@ -1,0 +1,459 @@
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt
+--- a/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/FileStorage.kt
+@@ -20,8 +20,11 @@
+ ) : Storage {
+ 
+     private val logger = InlineLogger()
+-
++    internal val accountBatch = AccountSaveBatch(directory)
++
++    @Synchronized
+     override fun names(): Map<String, AccountDefinition> {
++        accountBatch.recover()
+         val files = directory.listFiles { _, b -> b.endsWith(".toml") } ?: return emptyMap()
+         val definitions: MutableMap<String, AccountDefinition> = Object2ObjectOpenHashMap()
+         for (save in files) {
+@@ -43,7 +46,9 @@
+         return definitions
+     }
+ 
++    @Synchronized
+     override fun clans(): Map<String, Clan> {
++        accountBatch.recover()
+         val files = directory.listFiles { _, b -> b.endsWith(".toml") } ?: return emptyMap()
+         val clans: MutableMap<String, Clan> = Object2ObjectOpenHashMap()
+         for (save in files) {
+@@ -336,16 +341,20 @@
+         }
+     }
+ 
+-    override fun exists(accountName: String): Boolean = directory.resolve("${accountName.lowercase()}.toml").exists()
+-
++    @Synchronized
++    override fun exists(accountName: String): Boolean {
++        accountBatch.recover()
++        return directory.resolve("${accountName.lowercase()}.toml").exists()
++    }
++
++    @Synchronized
+     override fun save(accounts: List<PlayerSave>) {
+-        for (account in accounts) {
+-            val file = directory.resolve("${account.name.lowercase()}.toml")
+-            account.save(file)
+-        }
+-    }
+-
++        accountBatch.save(accounts)
++    }
++
++    @Synchronized
+     override fun load(accountName: String): PlayerSave? {
++        accountBatch.recover()
+         val file = directory.resolve("${accountName.lowercase()}.toml")
+         if (!file.exists()) {
+             return null
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/FileStorageTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/FileStorageTest.kt
+--- a/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/FileStorageTest.kt
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/FileStorageTest.kt
+@@ -22,6 +22,20 @@
+     @BeforeEach
+     fun setup() {
+         storage = FileStorage(directory)
++    }
++
++    @Test
++    fun `Refused second account cannot partially advance the first account`() {
++        val first = save.copy(name = "batchone")
++        storage.save(listOf(first))
++        val before = directory.resolve("batchone.toml").readBytes()
++        val refused = directory.resolve("batchtwo.toml").apply { mkdir() }
++        refused.resolve("sentinel").writeText("retain original")
++        kotlin.test.assertFails {
++            storage.save(listOf(first.copy(tile = world.gregs.voidps.type.Tile(3200, 3201)), save.copy(name = "batchtwo")))
++        }
++        kotlin.test.assertContentEquals(before, directory.resolve("batchone.toml").readBytes())
++        assertEquals("retain original", refused.resolve("sentinel").readText())
+     }
+ 
+     @Test
+diff --git a/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/AccountSaveBatch.kt b/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/AccountSaveBatch.kt
+new file mode 100644
+--- /dev/null
++++ b/engine/src/main/kotlin/world/gregs/voidps/engine/data/file/AccountSaveBatch.kt
+@@ -0,0 +1,179 @@
++package world.gregs.voidps.engine.data.file
++
++import world.gregs.voidps.engine.data.PlayerSave
++import java.io.File
++import java.nio.channels.FileChannel
++import java.nio.file.Files
++import java.nio.file.LinkOption.NOFOLLOW_LINKS
++import java.nio.file.Path
++import java.nio.file.StandardCopyOption.ATOMIC_MOVE
++import java.nio.file.StandardCopyOption.REPLACE_EXISTING
++import java.nio.file.StandardOpenOption.READ
++import java.security.MessageDigest
++import java.util.UUID
++
++/**
++ * A recoverable redo batch for the native account files. The pending directory is
++ * the commit decision: before publication no canonical file changes; afterwards
++ * every account must be installed before an account reader may proceed.
++ *
++ * One owned server/Storage instance is required, as with the existing save path.
++ * This does not capture world entities or make arbitrary account snapshots coherent.
++ */
++internal class AccountSaveBatch(private val directory: File) {
++    private val root = directory.toPath().toAbsolutePath().normalize()
++
++    // Test-only observation seam; no setting, packet or environment variable enables it.
++    internal var boundary: (String) -> Unit = {}
++
++    fun save(accounts: List<PlayerSave>) {
++        recover()
++        if (accounts.isEmpty()) return
++        require(accounts.size <= MAX_ACCOUNTS) { "Account save batch is too large" }
++        val byName = accounts.associateBy { filename(it.name) }
++        require(byName.size == accounts.size) { "Duplicate account in save batch" }
++        safeAncestors(root)
++        Files.createDirectories(root)
++        for (name in byName.keys) target(root.resolve(name))
++        val stage = Files.createDirectory(root.resolve(".account-save-stage-${UUID.randomUUID()}"))
++        var published = false
++        try {
++            val records = byName.toSortedMap().map { (name, account) ->
++                val path = stage.resolve(name)
++                account.save(path.toFile())
++                val record = inspect(path, name)
++                force(path)
++                boundary("staged:$name")
++                record
++            }
++            require(records.sumOf { it.size } <= MAX_TOTAL) { "Account save batch is too large" }
++            val text = HEADER + "\n" + records.joinToString("") { "${it.name}\t${it.size}\t${it.digest}\n" }
++            Files.writeString(stage.resolve(MANIFEST), text)
++            force(stage.resolve(MANIFEST))
++            force(stage)
++            boundary("prepared")
++            Files.move(stage, root.resolve(PENDING), ATOMIC_MOVE)
++            published = true
++            force(root)
++            boundary("published")
++            recover()
++        } finally {
++            // A published decision is retained on failure for deterministic replay.
++            if (!published && Files.exists(stage, NOFOLLOW_LINKS)) {
++                // Only our own freshly created, bounded stage is eligible for cleanup.
++                for (name in byName.keys + MANIFEST) Files.deleteIfExists(stage.resolve(name))
++                // Native atomic-writer failure artifacts remain as evidence, if any.
++                if (Files.list(stage).use { !it.findAny().isPresent }) Files.delete(stage)
++            }
++        }
++    }
++
++    fun recover() {
++        val pending = root.resolve(PENDING)
++        if (!Files.exists(pending, NOFOLLOW_LINKS)) return
++        safeAncestors(root)
++        check(Files.isDirectory(pending, NOFOLLOW_LINKS)) { "Account batch journal is not a directory; preserve it for recovery" }
++        val manifest = pending.resolve(MANIFEST)
++        regular(manifest, MAX_MANIFEST)
++        val text = Files.readString(manifest)
++        val lines = text.split('\n')
++        check(lines.first() == HEADER && lines.last() == "") { "Unsupported or damaged account batch journal" }
++        val records = lines.drop(1).dropLast(1).map { row ->
++            val parts = row.split('\t')
++            check(parts.size == 3 && NAME.matches(parts[0]) && HASH.matches(parts[2])) { "Invalid account batch member" }
++            val size = parts[1].toLongOrNull()
++            check(size != null && size in 1..MAX_FILE && size.toString() == parts[1]) { "Invalid account batch member size" }
++            Record(parts[0], size, parts[2])
++        }
++        check(records.size in 1..MAX_ACCOUNTS && records.map { it.name } == records.map { it.name }.distinct().sorted()) { "Invalid account batch member order/count" }
++        check(records.sumOf { it.size } <= MAX_TOTAL) { "Account batch exceeds size limit" }
++        val members = Files.list(pending).use { paths -> paths.map { it.fileName.toString() }.toList().toSet() }
++        check(members == records.map { it.name }.toSet() + MANIFEST) { "Account batch contains missing or unknown files" }
++        // Validate the complete batch before touching any canonical account file.
++        for (record in records) {
++            check(inspect(pending.resolve(record.name), record.name) == record) { "Account batch checksum mismatch; preserve it for recovery" }
++            target(root.resolve(record.name))
++            target(installPath(record.name))
++        }
++        for (record in records) {
++            val install = installPath(record.name)
++            Files.copy(pending.resolve(record.name), install, REPLACE_EXISTING)
++            check(inspect(install, record.name) == record) { "Account batch changed during replay" }
++            force(install)
++            Files.move(install, root.resolve(record.name), ATOMIC_MOVE, REPLACE_EXISTING)
++            boundary("installed:${record.name}")
++        }
++        force(root)
++        boundary("materialized")
++        // Atomic retirement avoids leaving a half-deleted authoritative journal.
++        val complete = root.resolve(".account-save-complete-${UUID.randomUUID()}")
++        Files.move(pending, complete, ATOMIC_MOVE)
++        force(root)
++        boundary("retired")
++        // Cleanup is optional once the durable decision has retired. A crash or IO
++        // refusal here leaves inert evidence, never a partially authoritative journal.
++        runCatching {
++            for (record in records) Files.delete(complete.resolve(record.name))
++            Files.delete(complete.resolve(MANIFEST))
++            Files.delete(complete)
++        }
++    }
++
++    private fun installPath(name: String) = root.resolve(".save-account-batch-$name.tmp")
++
++    private fun filename(account: String): String = "${account.lowercase()}.toml".also {
++        require(NAME.matches(it)) { "Unsupported account filename" }
++    }
++
++    private fun inspect(path: Path, expectedName: String): Record {
++        regular(path, MAX_FILE)
++        val size = Files.size(path)
++        val hash = MessageDigest.getInstance("SHA-256")
++        Files.newInputStream(path, NOFOLLOW_LINKS).use { input ->
++            val buffer = ByteArray(8192)
++            var total = 0L
++            while (true) {
++                val n = input.read(buffer)
++                if (n < 0) break
++                total += n
++                check(total <= MAX_FILE) { "Account batch member exceeds size limit" }
++                hash.update(buffer, 0, n)
++            }
++            check(total == size) { "Account batch member changed while reading" }
++        }
++        check(filename(PlayerSave.load(path.toFile()).name) == expectedName) { "Account batch identity mismatch" }
++        return Record(expectedName, size, hash.digest().joinToString("") { "%02x".format(it) })
++    }
++
++    private fun target(path: Path) {
++        check(!Files.exists(path, NOFOLLOW_LINKS) || Files.isRegularFile(path, NOFOLLOW_LINKS)) { "Account target is not a regular file: ${path.fileName}" }
++    }
++
++    private fun regular(path: Path, limit: Long) {
++        check(Files.isRegularFile(path, NOFOLLOW_LINKS) && Files.size(path) in 1..limit) { "Invalid account batch file: ${path.fileName}" }
++    }
++
++    private fun safeAncestors(path: Path) {
++        var parent: Path? = path
++        while (parent != null) {
++            check(!Files.isSymbolicLink(parent)) { "Linked account storage is unsupported" }
++            parent = parent.parent
++        }
++    }
++
++    private fun force(path: Path) = FileChannel.open(path, READ).use { it.force(true) }
++
++    private data class Record(val name: String, val size: Long, val digest: String)
++
++    companion object {
++        const val PENDING = ".soloscape-account-save"
++        const val MANIFEST = "manifest.tsv"
++        const val HEADER = "SOLOSCAPE_ACCOUNT_BATCH_V1"
++        private val NAME = Regex("[a-z0-9 _-]{1,64}\\.toml")
++        private val HASH = Regex("[0-9a-f]{64}")
++        private const val MAX_ACCOUNTS = 2048
++        private const val MAX_FILE = 32L * 1024 * 1024
++        private const val MAX_TOTAL = 512L * 1024 * 1024
++        private const val MAX_MANIFEST = 512L * 1024
++    }
++}
+diff --git a/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/AccountBatchRecoveryTest.kt b/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/AccountBatchRecoveryTest.kt
+new file mode 100644
+--- /dev/null
++++ b/engine/src/test/kotlin/world/gregs/voidps/engine/data/file/AccountBatchRecoveryTest.kt
+@@ -0,0 +1,191 @@
++package world.gregs.voidps.engine.data.file
++
++import org.junit.jupiter.api.Test
++import org.junit.jupiter.api.io.TempDir
++import world.gregs.voidps.engine.data.PlayerSave
++import world.gregs.voidps.engine.entity.item.Item
++import world.gregs.voidps.type.Tile
++import java.io.File
++import java.io.IOException
++import java.net.URLClassLoader
++import java.nio.file.Files
++import java.nio.file.Path
++import java.security.MessageDigest
++import java.util.concurrent.TimeUnit
++import kotlin.test.*
++
++class AccountBatchRecoveryTest {
++    @TempDir
++    lateinit var directory: Path
++
++    private fun initial(root: Path): FileStorage = FileStorage(root.toFile()).also {
++        it.save(listOf(snapshot("batchone", 10), snapshot("batchtwo", 0)))
++    }
++
++    @Test
++    fun `Cold process exits select all old or all new native account files`() {
++        val boundaries = listOf("staged:batchone.toml", "staged:batchtwo.toml", "prepared", "published", "installed:batchone.toml", "installed:batchtwo.toml", "materialized", "retired")
++        for ((index, boundary) in boundaries.withIndex()) {
++            val root = Files.createDirectory(directory.resolve("case$index"))
++            initial(root)
++            val beforeCommit = index < 3
++            child(root, "write", boundary, 73)
++            child(root, "read", if (beforeCommit) "10,0" else "2,8", 0)
++            assertFalse(Files.exists(root.resolve(AccountSaveBatch.PENDING)), boundary)
++            assertEquals(10, amount(FileStorage(root.toFile()).load("batchone")!!) + amount(FileStorage(root.toFile()).load("batchtwo")!!))
++        }
++    }
++
++    @Test
++    fun `A second process exit during replay is idempotently recovered`() {
++        initial(directory)
++        child(directory, "write", "published", 73)
++        child(directory, "read-crash", "installed:batchone.toml", 73)
++        child(directory, "read", "2,8", 0)
++        child(directory, "read", "2,8", 0)
++    }
++
++    @Test
++    fun `Corrupt journal refuses every account entrypoint before mutation`() {
++        val storage = initial(directory)
++        storage.accountBatch.boundary = { if (it == "published") throw IOException("fixture cut") }
++        assertFails { storage.save(listOf(snapshot("batchone", 2), snapshot("batchtwo", 8))) }
++        val journal = directory.resolve(AccountSaveBatch.PENDING)
++        Files.writeString(journal.resolve("batchtwo.toml"), "invalid original fixture")
++        val before = fingerprint(directory)
++        val fresh = FileStorage(directory.toFile())
++        for (read in listOf<() -> Any?>({ fresh.names() }, { fresh.clans() }, { fresh.exists("batchone") }, { fresh.load("batchone") }, { fresh.save(emptyList()) })) {
++            assertFails { read() }
++            assertEquals(before, fingerprint(directory))
++        }
++    }
++
++    @Test
++    fun `Corruption after one installation refuses mixed state instead of serving it`() {
++        val storage = initial(directory)
++        storage.accountBatch.boundary = { if (it == "installed:batchone.toml") throw IOException("fixture cut") }
++        assertFails { storage.save(listOf(snapshot("batchone", 2), snapshot("batchtwo", 8))) }
++        // These direct disk reads demonstrate the exact mixed state which the guarded
++        // Storage readers must never expose. They do not use the recovery entrypoint.
++        assertEquals(2, amount(PlayerSave.load(directory.resolve("batchone.toml").toFile())))
++        assertEquals(0, amount(PlayerSave.load(directory.resolve("batchtwo.toml").toFile())))
++        Files.writeString(directory.resolve("${AccountSaveBatch.PENDING}/batchtwo.toml"), "corrupt")
++        val before = fingerprint(directory)
++        assertFails { FileStorage(directory.toFile()).load("batchone") }
++        assertEquals(before, fingerprint(directory))
++    }
++
++    @Test
++    fun `Linked journal member refuses without touching external sentinel`() {
++        val storage = initial(directory)
++        storage.accountBatch.boundary = { if (it == "published") throw IOException("fixture cut") }
++        assertFails { storage.save(listOf(snapshot("batchone", 2), snapshot("batchtwo", 8))) }
++        val member = directory.resolve("${AccountSaveBatch.PENDING}/batchone.toml")
++        val sentinel = directory.resolve("sentinel")
++        Files.writeString(sentinel, "external original fixture")
++        Files.delete(member)
++        Files.createSymbolicLink(member, sentinel)
++        assertFails { FileStorage(directory.toFile()).load("batchone") }
++        assertEquals("external original fixture", Files.readString(sentinel))
++        assertTrue(Files.isSymbolicLink(member))
++        assertEquals(10, amount(PlayerSave.load(directory.resolve("batchone.toml").toFile())))
++    }
++
++    @Test
++    fun `Identity mismatch refuses even with a matching new manifest digest`() {
++        val storage = initial(directory)
++        storage.accountBatch.boundary = { if (it == "published") throw IOException("fixture cut") }
++        assertFails { storage.save(listOf(snapshot("batchone", 2), snapshot("batchtwo", 8))) }
++        val journal = directory.resolve(AccountSaveBatch.PENDING)
++        val member = journal.resolve("batchone.toml")
++        snapshot("other", 2).save(member.toFile())
++        val manifest = journal.resolve(AccountSaveBatch.MANIFEST)
++        val lines = Files.readAllLines(manifest).map {
++            if (it.startsWith("batchone.toml\t")) "batchone.toml\t${Files.size(member)}\t${digest(Files.readAllBytes(member))}" else it
++        }
++        Files.writeString(manifest, lines.joinToString("\n") + "\n")
++        val before = fingerprint(directory)
++        assertFails { FileStorage(directory.toFile()).load("batchone") }
++        assertEquals(before, fingerprint(directory))
++    }
++
++    @Test
++    fun `Unexpected or absent journal members refuse and retain all evidence`() {
++        for (extra in listOf(true, false)) {
++            val root = Files.createDirectory(directory.resolve(if (extra) "extra" else "absent"))
++            val storage = initial(root)
++            storage.accountBatch.boundary = { if (it == "published") throw IOException("fixture cut") }
++            assertFails { storage.save(listOf(snapshot("batchone", 2), snapshot("batchtwo", 8))) }
++            val journal = root.resolve(AccountSaveBatch.PENDING)
++            if (extra) Files.writeString(journal.resolve("unlisted"), "fixture") else Files.delete(journal.resolve("batchtwo.toml"))
++            val before = fingerprint(root)
++            assertFails { FileStorage(root.toFile()).load("batchone") }
++            assertEquals(before, fingerprint(root))
++        }
++    }
++
++    @Test
++    fun `Case equivalent duplicate names cannot publish a batch`() {
++        val storage = initial(directory)
++        val before = fingerprint(directory)
++        assertFails { storage.save(listOf(snapshot("BatchOne", 2), snapshot("batchone", 8))) }
++        assertEquals(before, fingerprint(directory))
++    }
++
++    private fun child(root: Path, mode: String, value: String, expected: Int) {
++        val urls = generateSequence(javaClass.classLoader) { it.parent }.filterIsInstance<URLClassLoader>()
++            .flatMap { it.urLs.asSequence() }.map { File(it.toURI()).path }.toList()
++        val classpath = (urls + System.getProperty("java.class.path").split(File.pathSeparator)).distinct().joinToString(File.pathSeparator)
++        val log = root.resolve("$mode-${value.replace(':', '-')}.log").toFile()
++        val process = ProcessBuilder(File(System.getProperty("java.home"), "bin/java").path, "-cp", classpath, AccountBatchCrashProcess::class.java.name, root.toString(), mode, value)
++            .redirectErrorStream(true).redirectOutput(log).start()
++        if (!process.waitFor(20, TimeUnit.SECONDS)) {
++            process.destroyForcibly().waitFor()
++            fail("Owned fixture child timed out: $mode $value")
++        }
++        assertEquals(expected, process.exitValue(), "Child $mode/$value failed: ${log.readText().takeLast(2500)}")
++    }
++
++    private fun fingerprint(root: Path): Map<String, String> = Files.walk(root).use { paths ->
++        paths.filter { Files.isRegularFile(it) }.toList().associate { root.relativize(it).toString() to digest(Files.readAllBytes(it)) }
++    }
++
++    companion object {
++        fun snapshot(name: String, coins: Int) = PlayerSave(
++            name = name, password = "original-fixture", tile = Tile(3200, 3201),
++            experience = IntArray(25), blocked = emptyList(), levels = IntArray(25) { 1 },
++            male = true, looks = IntArray(7), colours = IntArray(5), variables = emptyMap(),
++            inventories = mapOf("inventory" to arrayOf(if (coins == 0) Item.EMPTY else Item("coins", coins))),
++            friends = emptyMap(), ignores = emptyList(), offers = emptyArray(), history = emptyList(),
++            kills = emptyMap(), records = emptyMap(), recentEvents = emptyList(),
++        )
++        fun amount(save: PlayerSave) = save.inventories.getValue("inventory").filter { it.id == "coins" }.sumOf { it.value }
++        fun digest(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
++    }
++}
++
++/** Original native storage fixture, run only by the test in a disposable subprocess. */
++object AccountBatchCrashProcess {
++    @JvmStatic
++    fun main(args: Array<String>) {
++        val storage = FileStorage(File(args[0]))
++        when (args[1]) {
++            "write", "read-crash" -> {
++                storage.accountBatch.boundary = { if (it == args[2]) Runtime.getRuntime().halt(73) }
++                if (args[1] == "write") storage.save(listOf(AccountBatchRecoveryTest.snapshot("batchone", 2), AccountBatchRecoveryTest.snapshot("batchtwo", 8)))
++                else storage.load("batchone")
++                error("Requested native crash boundary was not observed")
++            }
++            "read" -> {
++                val expected = args[2].split(',').map { it.toInt() }
++                // names/clans are startup consumers, before an actual account load.
++                check(storage.names().keys == setOf("batchone", "batchtwo"))
++                check(storage.clans().keys == setOf("batchone", "batchtwo"))
++                val actual = listOf("batchone", "batchtwo").map { AccountBatchRecoveryTest.amount(storage.load(it)!!) }
++                check(actual == expected && actual.sum() == 10) { "Nonconserving or mixed native accounts: $actual" }
++                check(!File(args[0], AccountSaveBatch.PENDING).exists())
++            }
++            else -> error("Unknown fixture mode")
++        }
++    }
++}
