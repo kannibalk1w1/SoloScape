@@ -53,6 +53,7 @@ FORMAT_CANDIDATE = 'soloscape-staged-candidate-1'
 VERSIONS = 'versions'
 BOOTSTRAP = 'bootstrap'
 BOOTSTRAP_FILES = ('managed_install.py', 'runtime_manifest.py', 'update_package.py')
+ROLLBACK = 'rollback'  # what _take_request returns for a rollback request (never a valid version id)
 RESTART_CODE = 75  # a stopped launcher asks the bootstrap to apply its recorded request
 TRIAL_SECONDS = 60
 MAX_RECORD = 16 * 1024
@@ -389,6 +390,20 @@ def preflight(root, candidate):
     return blockers(cfg, manifest)
 
 
+def rollback_preflight(root):
+    """Advisory, lock-free: the previous version and every plain reason a roll back would be refused. The bootstrap
+    repeats the checks under the lease after the launcher exits."""
+    cfg = load_config(root)
+    previous = read_pointer(root)['previous']
+    if previous is None:
+        return {'previous': None, 'reasons': ['There is no earlier version to return to.']}
+    try:
+        manifest = verify_version(root, previous)
+    except InstallError as exc:
+        return {'previous': {'release': None, 'id': previous}, 'reasons': [str(exc)]}
+    return {'previous': {'release': manifest['release'], 'id': previous}, 'reasons': blockers(cfg, manifest)}
+
+
 def identity(root):
     pointer = read_pointer(root)
     manifest = verify_version(root, pointer['current'])
@@ -397,6 +412,11 @@ def identity(root):
 
 
 # ---- requests, results, activation -----------------------------------------------------------------
+
+def request_rollback(root):
+    """A stopped launcher asks the bootstrap to return to the previous version (same gates; saves are never restored)."""
+    _publish(root, REQUEST, {'format': FORMAT_REQUEST, 'rollback': True})
+
 
 def request_activation(root, candidate):
     if not isinstance(candidate, str) or not HEX64.match(candidate):
@@ -413,6 +433,8 @@ def _take_request(root):
         if (isinstance(value, dict) and set(value) == {'format', 'candidate'} and value['format'] == FORMAT_REQUEST
                 and isinstance(value['candidate'], str) and HEX64.match(value['candidate'])):
             return value['candidate']
+        if isinstance(value, dict) and value == {'format': FORMAT_REQUEST, 'rollback': True}:
+            return ROLLBACK
         return None
     except InstallError:
         return None
@@ -610,6 +632,17 @@ def run(root, trial_seconds=TRIAL_SECONDS, base_env=None, launcher=None, output=
                     return code
             Path(root, TRIAL).unlink(missing_ok=True)
         request = _take_request(root)
+        if code == RESTART_CODE and request == ROLLBACK:
+            try:
+                target = rollback(root)
+                label = verify_version(root, target)['release']
+                record_result(root, True, 'Rolled back to release ' + label + '. Only the program version changed: your characters, '
+                                          'backups and settings were kept, and nothing was restored from a backup, so your current '
+                                          'progress stays.', target)
+            except (InstallError, OSError) as exc:
+                record_result(root, False, 'Roll back not applied: ' + str(exc))
+                output('Roll back not applied: ' + str(exc))
+            continue
         if code == RESTART_CODE and request is not None:
             try:
                 activate(root, request)

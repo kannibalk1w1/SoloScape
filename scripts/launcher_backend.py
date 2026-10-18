@@ -79,6 +79,12 @@ class Backend:
             if self.current()['running']:
                 raise RuntimeError('Save & Quit before downloading an update.')
             return self.updates.download()
+        if action == 'update_rebuild':
+            if self.current()['running']:
+                raise RuntimeError('Save & Quit before rebuilding an update.')
+            return self.updates.rebuild()
+        if action == 'update_rollback':
+            return self.updates.rollback(world_running=self.current()['running'])
         if action == 'update_cancel':
             return self.updates.cancel()
         if action == 'update_apply':

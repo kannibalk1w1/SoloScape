@@ -230,28 +230,45 @@ def _copy(archive, info, size, out, job, stage, counter):
     return digest.hexdigest()
 
 
+def _read_manifest(archive):
+    """The members and strictly parsed manifest of an open package; nothing is extracted."""
+    infos = _members(archive)
+    name = runtime_manifest.MANIFEST_NAME
+    if name not in infos:
+        raise PackageError('The package has no ' + name + '.')
+    if infos[name].file_size > runtime_manifest.MANIFEST_MAX_BYTES:
+        raise PackageError('The package manifest is too large.')
+    raw = bytearray()
+    with archive.open(infos[name]) as source:
+        raw += source.read(runtime_manifest.MANIFEST_MAX_BYTES + 1)
+    raw = bytes(raw)
+    if len(raw) > runtime_manifest.MANIFEST_MAX_BYTES or len(raw) != infos[name].file_size:
+        raise PackageError('The package manifest is too large or inconsistent.')
+    try:
+        manifest = runtime_manifest.parse(raw)
+    except (ValueError, RecursionError) as exc:
+        raise PackageError('The package manifest was refused: ' + str(exc)) from None
+    return infos, manifest, raw
+
+
+def read_manifest(zip_path):
+    """Parse only the manifest of a package whose digest the caller has already verified."""
+    try:
+        archive = zipfile.ZipFile(zip_path)
+    except (zipfile.BadZipFile, NotImplementedError, zlib.error, OSError) as exc:
+        raise PackageError('The package is not a readable ZIP file.') from exc
+    with archive:
+        return _read_manifest(archive)[1]
+
+
 def _extract(zip_path, scratch, job):
     try:
         archive = zipfile.ZipFile(zip_path)
     except (zipfile.BadZipFile, NotImplementedError, zlib.error, OSError) as exc:
         raise PackageError('The package is not a readable ZIP file.') from exc
     with archive:
-        infos = _members(archive)
+        infos, manifest, raw = _read_manifest(archive)
         name = runtime_manifest.MANIFEST_NAME
-        if name not in infos:
-            raise PackageError('The package has no ' + name + '.')
-        if infos[name].file_size > runtime_manifest.MANIFEST_MAX_BYTES:
-            raise PackageError('The package manifest is too large.')
-        raw = bytearray()
-        with archive.open(infos[name]) as source:
-            raw += source.read(runtime_manifest.MANIFEST_MAX_BYTES + 1)
-        raw = bytes(raw)
-        if len(raw) > runtime_manifest.MANIFEST_MAX_BYTES or len(raw) != infos[name].file_size:
-            raise PackageError('The package manifest is too large or inconsistent.')
-        try:
-            manifest = runtime_manifest.parse(raw)
-        except (ValueError, RecursionError) as exc:
-            raise PackageError('The package manifest was refused: ' + str(exc)) from None
         listed = manifest['files']
         files = {path: meta for path, meta in listed.items() if 'size' in meta}
         if set(infos) != set(files) | {name}:
@@ -471,8 +488,12 @@ def _install_locked(root, zip_path, sha256, expected_release, job, supply_roots=
         raise
 
 
-def fetch_and_install(root, package, job=None, transport=_open, supply_roots=()):
-    """Download the one declared release package (see _validate_package for the metadata), then install it."""
+def fetch_and_install(root, package, job=None, transport=_open, supply_roots=(), rebuild=None):
+    """Download the one declared release package (see _validate_package for the metadata), then install it.
+
+    `rebuild(manifest, job)`, when given (an explicit player request), runs after the package is verified and before it
+    is installed; it returns extra supply folders (a finished local build of the release's own source). The install
+    step then gets a fresh whole-job deadline, since a build can outlast the download's."""
     _validate_package(package)
     job = job or Job()
     root = Path(root)
@@ -481,6 +502,13 @@ def fetch_and_install(root, package, job=None, transport=_open, supply_roots=())
         try:
             archive = part / 'package.zip'
             download(package['url'], package['size'], package['sha256'], archive, job, transport)
+            if rebuild is not None:
+                manifest = read_manifest(archive)
+                if manifest['release'] != package['tag']:
+                    raise PackageError('The package is release ' + manifest['release'] + ', not the announced ' + package['tag'] + '.')
+                extra = rebuild(manifest, job)
+                job = Job(cancelled=job.cancelled, progress=job.progress, clock=job.clock)
+                supply_roots = list(supply_roots) + list(extra)
             return _install_locked(root, archive, package['sha256'], package['tag'], job, supply_roots)
         finally:
             _remove(part)

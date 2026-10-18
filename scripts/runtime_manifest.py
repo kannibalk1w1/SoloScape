@@ -46,7 +46,9 @@ ROLE_FIELDS = {'server', 'client', 'launcher'}
 RUNTIME_SCRIPTS = (
     'local_dev.py', 'profiles.py', 'death_loot_state.py', 'profile_session.py', 'session_recovery.py', 'launcher_backend.py',
     'release_updates.py', 'deck_awake.py', 'runtime_manifest.py', 'managed_runtime.py', 'managed_install.py',
-    'update_package.py', 'update_manager.py',
+    'update_package.py', 'update_manager.py', 'source_build.py',
+    # the build entrypoints a local rebuild runs, so a fetched commit can be checked against the release before it is built
+    'prepare-build.sh', 'apply-client-patches.sh', 'apply-server-patches.sh', 'apply_client_patches.py',
 )
 RUNTIME_SCRIPT_PATHS = frozenset(f'scripts/{name}' for name in RUNTIME_SCRIPTS)
 LAUNCHER = 'scripts/launcher.sh'
