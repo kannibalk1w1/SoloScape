@@ -5,6 +5,32 @@ This is a proposal to review, reorder and use as the working backlog. Later task
 are not automatic authorization to build them. No dates or effort estimates are
 promised before the relevant subsystem has been inspected.
 
+## Owner priority — 18 October 2026
+
+**The open P1 for unrecovered death loot lost on restart is the primary correctness
+blocker and takes precedence over the development tracks below.** Native account
+save confirmation does not persist the world-owned grave/floor state. The existing
+checkpoint, receipt and codec experiments are prerequisites, not an integrated fix.
+
+The next persistence sprint must integrate the live death/pickup/timer paths with
+coherent account-and-loot publication, startup recovery and verified backup/restore.
+Preserve the agreed [pause-while-closed policy](GRAVE_PAUSE_PERSISTENCE_PLAN.md),
+item quantities/charges, native private/public loot rules and private co-op compatibility.
+Do not close the issue with a shutdown-only dump or independent account/world writes:
+a crash between those writes can lose or duplicate items.
+
+Acceptance requires actual native death and partial recovery followed by clean and
+forced process restarts, exact item conservation across both players and remaining
+loot, offline-owner/public pickup, repeated restart without duplication, retained
+running-world versus stopped-world lifetime, and backup/corruption recovery. Use
+fresh processes and disposable worlds; retain the existing cold-JVM loss reproducer
+as a regression. Follow with physical controller acceptance before owner deployment.
+
+Defer new content, further backport expansion, updater feature work and WASM expansion
+until this integrated boundary is resolved. Do not substitute additional disconnected
+lab proofs or test-count growth for the production restart acceptance above. The P1
+remains open until that evidence passes; no runtime fix is delivered by this priority update.
+
 ## Reviewed working order — 17 October 2026
 
 Keep the existing milestone IDs and dated checkpoints below. Checkboxes record scoped implementation, not physical acceptance; [CURRENT_STATUS](CURRENT_STATUS.md) indexes newer evidence without rewriting historical reports. This research does not authorize substantial feature implementation.
