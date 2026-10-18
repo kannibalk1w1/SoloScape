@@ -53,6 +53,16 @@ def write_zip(files, manifest_bytes, destination):
     return digest.hexdigest()
 
 
+def _commit(source):
+    """The source tree's commit when it is a git checkout (named in rebuild instructions); zeros otherwise."""
+    import subprocess
+    try:
+        out = subprocess.run(['git', '-C', str(source), 'rev-parse', 'HEAD'], capture_output=True, text=True, timeout=10).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return '0' * 40
+    return out if len(out) == 40 and all(c in '0123456789abcdef' for c in out) else '0' * 40
+
+
 def checkout_package(checkout, release, storage_versions, destination, source=None):
     """Code-only package for a built source folder: this tool's runtime scripts are released; the server and
     client jars and the server data stay local and are copied from the player's own build at install time.
@@ -87,7 +97,7 @@ def checkout_package(checkout, release, storage_versions, destination, source=No
     scripts = source / 'scripts'
     files = {'scripts/' + name: (scripts / name).read_bytes() for name in runtime_manifest.RUNTIME_SCRIPTS}
     files[LAUNCHER] = (scripts / 'launcher.sh').read_bytes()
-    manifest = build_manifest(files, release, storage_versions, '0' * 40, pins, patches, local=local)
+    manifest = build_manifest(files, release, storage_versions, _commit(source), pins, patches, local=local)
     return write_zip(files, manifest, destination)
 
 

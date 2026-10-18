@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 import time
 import local_dev
 
@@ -94,6 +95,9 @@ def export():
             artwork = local_dev.RUNTIME / 'launcher-art' / name
             if artwork.is_file():
                 copy_file(artwork, destination / '.runtime/launcher-art' / name)
+            else:
+                print('NOTE: optional launcher artwork ' + name + ' is missing from ' + str(artwork.parent)
+                      + '; this export will show the launcher without it (run setup_launcher_art.py first to include it).', file=sys.stderr)
         cache = local_dev.SERVER / 'data/cache'
         if any(path.is_symlink() for path in cache.rglob('*')) or cache.is_symlink():
             raise ValueError('Cache symlinks are refused; supply ordinary compatible cache files.')

@@ -15,3 +15,5 @@ python3 experiments/managed-updater/acceptance.py \
 ```
 
 The snapshot and cache are only read; the run copies the cache and works under `.runtime/managed-acceptance/<id>/`. Input is synthetic keyboard mapped to controller actions on a private display: it is not SDL, Steam Input or physical hardware acceptance, and audio is excluded.
+
+`--real-checkout` builds the player and maintainer source folders with the real `scripts/prepare-build.sh` (see `real_checkout.py`: disposable copies of this checkout's sources, shared Gradle cache) and adds a Java-changing release (`private-test-j`, an inert comment-only server patch) that must be refused with an actionable message, then rebuilt with `managed_install.py rebuild`, downloaded, installed and continued. It takes about 25 minutes and three Gradle builds. It also checks that `login.json` stays byte-identical and the generated password never reaches the install root, launcher home, probe output or bootstrap log.

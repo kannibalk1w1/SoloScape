@@ -71,6 +71,8 @@ def main():
     parser.add_argument('--client-jar', type=Path, default=ROOT / 'upstream/runelite-client/client/build/libs/void-client-0.2.0_a2.jar')
     parser.add_argument('--server-java', type=Path, required=True)
     parser.add_argument('--client-java', type=Path, required=True)
+    parser.add_argument('--real-checkout', action='store_true',
+                        help='build the packages\' source folders with the real scripts/prepare-build.sh and add a Java-changing release')
     options = parser.parse_args()
     snapshot, cache_source = options.snapshot.resolve(strict=True), options.cache.resolve(strict=True)
     run = ROOT / '.runtime/managed-acceptance' / str(time.time_ns())
@@ -84,26 +86,48 @@ def main():
     display = bootstrap = None
     try:
         # ---- packages and install root ----------------------------------------------------------------------
-        files = build_packages.collect(snapshot, options.client_jar)
-        released, local = build_packages.split(files)
-        build = run / 'build'
-        patches = build_packages.write_build_folder(files, local, build)
         import local_dev
         packages = {}
-        for label in ('a', 'b'):
-            release = 'private-test-' + label
-            manifest = package_builder.build_manifest(released, release, (0, 1), '0' * 40, dict(local_dev.PINNED), patches, local=local)
-            path = run / 'packages' / ('soloscape-package-' + release + '.zip')
-            packages[release] = {'path': path, 'sha256': package_builder.write_zip(released, manifest, path), 'size': path.stat().st_size}
-        checks['packages_are_scripts_only'] = all(v['size'] < 1 << 20 for v in packages.values()) and not any(
-            n.endswith('.jar') or '/data/' in n for v in packages.values() for n in zipfile.ZipFile(v['path']).namelist())
         shutil.copytree(cache_source, run / 'cache')
         cache_before = support.tree(run / 'cache')
         root = run / 'install'
+        if options.real_checkout:
+            import real_checkout
+            player = real_checkout.copy_source(ROOT, run / 'player')
+            checks['player_folder_prepared_by_real_prepare_build'] = real_checkout.prepare(player, run / 'cache', run / 'prepare-player.log') == 0
+            if not checks['player_folder_prepared_by_real_prepare_build']:
+                raise RuntimeError('prepare-build.sh failed in the player folder; see prepare-player.log')
+            stamp_one = json.loads((player / '.runtime/build-stamp.json').read_text())
+            result['jar_hashes_player_first_build'] = {k: v[:16] for k, v in stamp_one['jars'].items()}
+            build = player
+            for label in ('a', 'b'):
+                release = 'private-test-' + label
+                path = run / 'packages' / ('soloscape-package-' + release + '.zip')
+                packages[release] = {'path': path, 'sha256': package_builder.checkout_package(player, release, (0, 1), path, source=player),
+                                     'size': path.stat().st_size}
+            with zipfile.ZipFile(packages['private-test-a']['path']) as archive:
+                base = json.loads(archive.read(runtime_manifest.MANIFEST_NAME))
+                released = {n: archive.read(n) for n in archive.namelist() if n != runtime_manifest.MANIFEST_NAME}
+            local = runtime_manifest.local_paths(base)
+            patches = base['patches']
+            expected = {path: (player / path).read_bytes() for path in local}
+        else:
+            files = build_packages.collect(snapshot, options.client_jar)
+            released, local = build_packages.split(files)
+            build = run / 'build'
+            patches = build_packages.write_build_folder(files, local, build)
+            for label in ('a', 'b'):
+                release = 'private-test-' + label
+                manifest = package_builder.build_manifest(released, release, (0, 1), '0' * 40, dict(local_dev.PINNED), patches, local=local)
+                path = run / 'packages' / ('soloscape-package-' + release + '.zip')
+                packages[release] = {'path': path, 'sha256': package_builder.write_zip(released, manifest, path), 'size': path.stat().st_size}
+            expected = {path: files[path] for path in local}
+        checks['packages_are_scripts_only'] = all(v['size'] < 1 << 20 for v in packages.values()) and not any(
+            n.endswith('.jar') or '/data/' in n for v in packages.values() for n in zipfile.ZipFile(v['path']).namelist())
         a = mi.install_first(root, packages['private-test-a']['path'], packages['private-test-a']['sha256'], run / 'profiles',
                              run / 'cache', run / 'launcher', release='private-test-a', supply_roots=[build])
         checks['local_files_copied_from_the_build_and_verified'] = all(
-            (root / 'versions' / a / path).read_bytes() == files[path] for path in local) and runtime_manifest.local_paths(
+            (root / 'versions' / a / path).read_bytes() == expected[path] for path in local) and runtime_manifest.local_paths(
             mi.verify_version(root, a)) == local
         result['package_bytes'] = {k: v['size'] for k, v in packages.items()}
         result['version_a'] = a
@@ -112,7 +136,7 @@ def main():
         b_package = packages['private-test-b']
         fake.write_text(json.dumps({'mode': 'serve', 'tag': 'private-test-b', 'name': 'soloscape-package-private-test-b.zip',
                                     'size': b_package['size'], 'sha256': b_package['sha256'], 'path': str(b_package['path']),
-                                    'rate': max(b_package['size'] // 10, 2048)}))
+                                    'rate': max(b_package['size'] // 30, 1024)}))
         # ---- wrappers ------------------------------------------------------------------------------------------------
         sessions = load(ROOT / 'experiments/native-prebuilt-session/run.py', 'acceptance_sessions')
         harness = run / 'harness'
@@ -179,6 +203,8 @@ os.execv(java,[java]+args)
         if setup.returncode or len(replies) != 2 or not all(r.get('ok') for r in replies):
             raise RuntimeError('Fixture setup failed: ' + setup.stdout[:600] + setup.stderr[-600:])
         profile_dir = run / 'profiles' / replies[1]['result']['id']
+        login_before = (profile_dir / 'login.json').read_bytes()
+        password = json.loads(login_before)['password']
         # ---- launch 1 and 2 via the real bootstrap ---------------------------------------------------------------------
         probe = run / 'probe'
         log = (run / 'bootstrap.log').open('w')
@@ -236,16 +262,100 @@ os.execv(java,[java]+args)
         checks['continue_after_rollback_fields_equal'] = fields(logical_account(profile_dir)) == before_update
         (probe / 'round2.ack').write_text('verified\n')
         checks['rollback_launch_clean'] = bootstrap.wait(timeout=240) == 0 and (probe / 'passed3').exists()
+        extra_versions = []
+        if options.real_checkout:
+            # ---- a release that changes Java: needs a local rebuild first ------------------------------------------------
+            import release_updates
+            import update_manager
+            maintainer = real_checkout.copy_source(player, run / 'maintainer')
+            real_checkout.add_inert_patch(maintainer)
+            checks['maintainer_folder_prepared_by_real_prepare_build'] = real_checkout.prepare(
+                maintainer, run / 'cache', run / 'prepare-maintainer.log') == 0
+            if not checks['maintainer_folder_prepared_by_real_prepare_build']:
+                raise RuntimeError('prepare-build.sh failed in the maintainer folder; see prepare-maintainer.log')
+            j_zip = run / 'packages/soloscape-package-private-test-j.zip'
+            j_digest = package_builder.checkout_package(maintainer, 'private-test-j', (0, 1), j_zip, source=maintainer)
+            j_package = dict(name=j_zip.name, size=j_zip.stat().st_size, sha256=j_digest, tag='private-test-j',
+                             url=release_updates.asset_url('private-test-j', j_zip.name))
+            j_release = release_updates.result('release_available', 'Published release: private-test-j.', tag='private-test-j',
+                                               title='private-test-j', notes='PRIVATE TEST METADATA', bundle=None, package=j_package,
+                                               url='https://github.com/kannibalk1w1/SoloScape/releases/tag/private-test-j') | {'install_available': True}
+            os.environ['SOLOSCAPE_MANAGED_ROOT'] = str(root)
+            managed_now = {'release': 'private-test-a', 'version': a, 'storage_versions': [0, 1]}
+
+            def offer():
+                manager = update_manager.UpdateManager(managed_now, transport=lambda url: open(j_zip, 'rb'), check=lambda: j_release)
+                manager.check()
+                manager.download()
+                end = time.monotonic() + 300
+                while manager.status()['stage'] not in ('error', 'staged') and time.monotonic() < end:
+                    time.sleep(0.1)
+                return manager.status()
+            versions_before = sorted(os.listdir(root / 'versions'))
+            candidate_before = mi.read_candidate(root)
+            refused = offer()
+            result['rebuild_refusal_message'] = refused['message']
+            checks['java_change_refused_with_actionable_message'] = (
+                refused['stage'] == 'error' and refused['needs_build'] == 'needs-rebuild' and real_checkout.INERT_PATCH.split('/')[-1] in refused['message']
+                and 'scripts/prepare-build.sh' in refused['message'] and str(player) in refused['message'])
+            checks['java_change_refusal_left_install_untouched'] = (sorted(os.listdir(root / 'versions')) == versions_before
+                and mi.read_pointer(root)['current'] == a and mi.read_candidate(root) == candidate_before)
+            # The player updates the source folder to the release's source, then rebuilds with the supported command.
+            shutil.copy2(maintainer / real_checkout.INERT_PATCH, player / real_checkout.INERT_PATCH)
+            rebuild_env = dict(os.environ, SOLOSCAPE_CACHE_HOME=str(run / 'cache'))
+            for key in ('SOLOSCAPE_PROFILE_HOME', 'SOLOSCAPE_LAUNCHER_HOME'):
+                rebuild_env.pop(key, None)
+            rebuild_env.pop('SOLOSCAPE_MANAGED_ROOT', None)
+            with open(run / 'rebuild.log', 'w') as rebuild_log:
+                code = subprocess.run([sys.executable, '-B', str(root / 'bootstrap/managed_install.py'), 'rebuild', str(root)],
+                                      env=rebuild_env, stdout=rebuild_log, stderr=subprocess.STDOUT).returncode
+            stamp_two = json.loads((player / '.runtime/build-stamp.json').read_text())
+            checks['java_change_rebuilt_with_the_supported_command'] = code == 0 and stamp_two['jars'] != stamp_one['jars']
+            stamp_maintainer = json.loads((maintainer / '.runtime/build-stamp.json').read_text())
+            result['jar_hashes_after_rebuild'] = {'player': {k: v[:16] for k, v in stamp_two['jars'].items()},
+                                                  'maintainer': {k: v[:16] for k, v in stamp_maintainer['jars'].items()}}
+            staged_j = offer()
+            os.environ.pop('SOLOSCAPE_MANAGED_ROOT', None)
+            checks['java_change_downloaded_after_rebuild'] = staged_j['stage'] == 'staged' and staged_j['can_apply']
+            j_id = staged_j['candidate']['id']
+            extra_versions.append(j_id)
+            j_dir = root / 'versions' / j_id
+            checks['java_change_version_carries_the_players_own_new_jars'] = (
+                hashlib.sha256((j_dir / 'upstream/game-server/game/build/libs/void-server-dev.jar').read_bytes()).hexdigest() == stamp_two['jars']['server']
+                and stamp_two['jars']['server'] != stamp_one['jars']['server'])
+            mi.activate(root, j_id)
+            checks['java_change_activated_pointer_only'] = mi.read_pointer(root) == {'current': j_id, 'previous': a}
+            bootstrap = subprocess.Popen([sys.executable, '-B', str(root / 'bootstrap/managed_install.py'), 'run', str(root)], env=env,
+                                         stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+            wait_for(probe / 'round3.json', 400, bootstrap, 'round 3 (Continue after the Java-changing update)')
+            checks['continue_after_java_change_fields_equal'] = fields(logical_account(profile_dir)) == before_update
+            (probe / 'round3.ack').write_text('verified\n')
+            checks['java_change_launch_clean'] = bootstrap.wait(timeout=240) == 0 and (probe / 'passed4').exists()
+        # ---- remembered login and secrets ----------------------------------------------------------------------------------
+        checks['login_json_byte_identical_throughout'] = (profile_dir / 'login.json').read_bytes() == login_before
+        leaked = []
+        for tree in (root, run / 'launcher', probe):
+            for base, _, names in os.walk(tree):
+                for name in names:
+                    if password.encode() in (Path(base) / name).read_bytes():
+                        leaked.append(str(Path(base) / name))
+        if password.encode() in (run / 'bootstrap.log').read_bytes():
+            leaked.append('bootstrap.log')
+        checks['password_never_in_install_launcher_probe_or_bootstrap_log'] = not leaked
+        checks['launcher_ran_without_optional_artwork'] = mi.status(root)['launcher_art'] == {'brazier.jpg': False, 'brazier-flames.png': False}
         # ---- inventories -----------------------------------------------------------------------------------------------------
         with profiles_home(run / 'profiles'):
             backups = profiles.list_backups(profile_dir.name)
         checks['backups_all_valid'] = bool(backups) and all(row['valid'] for row in backups)
         result['backup_count'] = len(backups)
         checks['cache_unchanged'] = support.tree(run / 'cache') == cache_before
-        for version in (a, candidate['id']):
+        kept = [a] + extra_versions if extra_versions else [a, candidate['id']]
+        for version in kept:
             mi.verify_version(root, version)
+        if extra_versions:  # the update to private-test-b was superseded: only current and previous remain
+            checks['superseded_version_pruned_current_and_previous_kept'] = sorted(os.listdir(root / 'versions')) == sorted(kept)
         checks['both_versions_verify'] = True
-        checks['two_version_contexts'] = len(list((run / 'launcher/version-contexts').iterdir())) == 2
+        checks['version_contexts_one_per_launched_version'] = len(list((run / 'launcher/version-contexts').iterdir())) == 2 + len(extra_versions)
         checks['no_staging_leftovers'] = [n for n in os.listdir(root / 'staging') if n != update_package.LOCK] == []
         result['probe_log'] = (probe / 'probe.log').read_text().splitlines()
         result['passed'] = all(v is True or (isinstance(v, int) and not isinstance(v, bool)) for v in checks.values())
