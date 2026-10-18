@@ -51,3 +51,20 @@ def make_profile(home, label='Tester', storage_version=1, world=True, session=Fa
     if session:
         (directory / 'session.json').write_text('{}')
     return directory, saves / (account + '.toml')
+
+
+def real_script_files(release, launcher='exit 0\n', storage=(0, 1)):
+    """Payload with this checkout's real runtime scripts and synthetic jars, so the real backend can start."""
+    import local_dev
+    scripts = Path(__file__).resolve().parent
+    files = payload_files(release, launcher=launcher, storage=storage)
+    for name in runtime_manifest.RUNTIME_SCRIPTS:
+        files['scripts/' + name] = (scripts / name).read_bytes()
+    return files, dict(local_dev.PINNED)
+
+
+def make_real_package(directory, release, storage=(0, 1)):
+    files, pins = real_script_files(release)
+    manifest = package_builder.build_manifest(files, release, storage, 'c' * 40, pins, PATCHES)
+    path = Path(directory) / ('real-' + release + '.zip')
+    return path, package_builder.write_zip(files, manifest, path), files

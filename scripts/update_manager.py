@@ -161,6 +161,7 @@ class UpdateManager:
         if self.managed and not self.reported_result:
             self.reported_result = True
             result['last_result'] = self.install.read_result(self.root)
+            self.install.clear_result(self.root)
         return result
 
     def close(self, timeout=20):

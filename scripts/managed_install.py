@@ -402,6 +402,11 @@ def read_result(root):
     return None
 
 
+def clear_result(root):
+    """The player has been shown the last apply result; do not repeat it at every later launch."""
+    Path(root, RESULT).unlink(missing_ok=True)
+
+
 def _discard(path):
     for base, dirs, _ in os.walk(path):
         for name in dirs:

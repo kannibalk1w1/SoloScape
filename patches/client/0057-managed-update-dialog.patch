@@ -1,0 +1,136 @@
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -103,6 +103,11 @@
+         worldSettings.addActionListener(e -> worldSettings());
+         frame.setVisible(true); list.requestFocusInWindow();
+         refresh = new javax.swing.Timer(1000, e -> poll()); refresh.start(); request(command("settings"), result -> {port=result.getAsJsonObject().get("port").getAsInt();poll();});
++        request(command("update_status"), result -> {
++            JsonElement last = result.getAsJsonObject().get("last_result");
++            if (last != null && !last.isJsonNull())
++                SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(frame, last.getAsJsonObject().get("message").getAsString(), "SoloScape updates", JOptionPane.INFORMATION_MESSAGE));
++        }, failure -> {});
+         startController();
+     }
+ 
+@@ -279,23 +284,96 @@
+         JSpinner number = new JSpinner(new SpinnerNumberModel(port, 1, 65535, 1));
+         JPanel fields = new JPanel(new GridLayout(0, 1, 6, 6)); fields.add(new JLabel("Local game port (use another free port for an independent world)")); fields.add(number);
+         fields.add(new JLabel("Gameplay controller settings remain in the SoloScape Controller plugin."));
+-        JButton updates = new LauncherButton("Check for updates"); fields.add(updates);
+-        updates.addActionListener(e -> {
+-            updates.setEnabled(false);
+-            request(command("update_check"), result -> {
+-                updates.setEnabled(true);
+-                JsonObject data = result.getAsJsonObject();
+-                String message = data.get("message").getAsString();
+-                if (!fields.isShowing()) { status.setText(message); return; }
+-                if (data.has("notes") && !data.get("notes").getAsString().isEmpty())
+-                    message += "\n\n" + data.get("notes").getAsString();
+-                JTextArea text = new JTextArea(message, 14, 60); text.setEditable(false);
+-                text.setLineWrap(true); text.setWrapStyleWord(true); text.setCaretPosition(0);
+-                JOptionPane.showMessageDialog(fields, new JScrollPane(text), "SoloScape updates", JOptionPane.INFORMATION_MESSAGE);
+-            }, failure -> updates.setEnabled(true));
+-        });
++        JButton updates = new LauncherButton("Updates…"); fields.add(updates);
++        updates.addActionListener(e -> updates(fields));
+         if (JOptionPane.showConfirmDialog(frame, fields, "Launcher Settings", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
+         { JsonObject cmd=command("settings");cmd.addProperty("port",(Integer)number.getValue());cmd.addProperty("save",true);request(cmd,result -> {port=result.getAsJsonObject().get("port").getAsInt();status.setText("Launcher settings saved.");}); }
++    }
++    /** Exit status asking the managed bootstrap to apply the update request this launcher recorded. */
++    static final int RESTART_EXIT = 75;
++    private boolean restartRequested;
++    private static String shortId(JsonObject identity)
++    {
++        return identity.has("id") && !identity.get("id").isJsonNull() ? identity.get("id").getAsString().substring(0, 12) : "";
++    }
++    private static String mib(long bytes) { return String.format(java.util.Locale.ROOT, "%.1f MiB", bytes / (1024.0 * 1024)); }
++    /** Manual check, download and install-or-restart flow. Closing it (B) never cancels a download in progress. */
++    private void updates(Component anchor)
++    {
++        final JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(anchor), "SoloScape updates", Dialog.ModalityType.APPLICATION_MODAL);
++        final JLabel installed = new JLabel("Installed: checking…"), candidate = new JLabel(" ");
++        final JTextArea text = new JTextArea("Choose Check for updates. Checking never changes your game, and you can keep playing the installed version.", 10, 58);
++        text.setEditable(false); text.setLineWrap(true); text.setWrapStyleWord(true);
++        final JProgressBar bar = new JProgressBar(0, 1000); bar.setStringPainted(true); bar.setString(" ");
++        final JButton check = new LauncherButton("Check for updates"), download = new LauncherButton("Download"),
++            install = new LauncherButton("Install and Restart"), cancel = new LauncherButton("Cancel Download"), close = new LauncherButton("Close");
++        final String[] checked = {""};
++        final String[] shown = {null};
++        final Runnable[] poll = {null};
++        JPanel buttons = new JPanel(new GridLayout(1, 0, 8, 8));
++        for (JButton button : new JButton[]{check, download, install, cancel, close}) buttons.add(button);
++        JPanel body = new JPanel(new BorderLayout(8, 8));
++        JPanel top = new JPanel(new GridLayout(0, 1, 4, 4)); top.add(installed); top.add(candidate); body.add(top, BorderLayout.NORTH);
++        body.add(new JScrollPane(text), BorderLayout.CENTER);
++        JPanel bottom = new JPanel(new BorderLayout(8, 8)); bottom.add(bar, BorderLayout.NORTH); bottom.add(buttons, BorderLayout.SOUTH);
++        body.add(bottom, BorderLayout.SOUTH);
++        body.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
++        dialog.setContentPane(body);
++        final Reply render = result -> {
++            JsonObject data = result.getAsJsonObject();
++            boolean managed = data.get("managed").getAsBoolean();
++            JsonObject now = data.getAsJsonObject("installed");
++            installed.setText(managed ? "Installed: release " + now.get("release").getAsString() + " (" + shortId(now) + ")"
++                : "Installed: source or development copy");
++            JsonElement staged = data.get("candidate");
++            candidate.setText(staged == null || staged.isJsonNull() ? " " : "Downloaded and verified: release "
++                + staged.getAsJsonObject().get("release").getAsString() + " (" + shortId(staged.getAsJsonObject()) + ")");
++            String stage = data.get("stage").getAsString();
++            long done = data.get("done").getAsLong(), total = data.get("total").getAsLong();
++            boolean active = data.get("can_cancel").getAsBoolean();
++            bar.setValue(total > 0 ? (int)(done * 1000 / total) : 0);
++            bar.setString(active && total > 0 ? stage + " " + mib(done) + " of " + mib(total) : " ");
++            String message = data.get("message").getAsString();
++            if (data.has("last_result") && !data.get("last_result").isJsonNull())
++                message = data.getAsJsonObject("last_result").get("message").getAsString() + "\n\n" + message;
++            String full = (checked[0].isEmpty() ? "" : checked[0] + "\n\n") + message;
++            if (!full.equals(shown[0])) { shown[0] = full; text.setText(full); text.setCaretPosition(0); }
++            check.setEnabled(!active && !running);
++            download.setEnabled(data.get("can_download").getAsBoolean());
++            install.setEnabled(data.get("can_apply").getAsBoolean());
++            cancel.setEnabled(active);
++            Component focus = dialog.getFocusOwner();
++            if (focus instanceof AbstractButton && !focus.isEnabled()) close.requestFocusInWindow();
++        };
++        poll[0] = () -> request(command("update_status"), render, failure -> {});
++        check.addActionListener(e -> {
++            check.setEnabled(false); checked[0] = "Checking GitHub…";
++            request(command("update_check"), result -> {
++                JsonObject data = result.getAsJsonObject();
++                checked[0] = data.get("message").getAsString();
++                if (data.has("notes") && !data.get("notes").getAsString().isEmpty()) checked[0] += "\n\n" + data.get("notes").getAsString();
++                poll[0].run();
++            }, failure -> { checked[0] = failure; check.setEnabled(true); });
++        });
++        download.addActionListener(e -> { download.setEnabled(false); request(command("update_download"), result -> poll[0].run(),
++            failure -> { checked[0] = failure; poll[0].run(); }); });
++        cancel.addActionListener(e -> request(command("update_cancel"), result -> poll[0].run()));
++        install.addActionListener(e -> {
++            install.setEnabled(false);
++            request(command("update_apply"), result -> {
++                restartRequested = true; text.setText(result.getAsJsonObject().get("message").getAsString());
++                Window settingsDialog = dialog.getOwner(); dialog.dispose();
++                if (settingsDialog instanceof JDialog) settingsDialog.dispose();
++                close();
++            }, failure -> { checked[0] = failure; poll[0].run(); });
++        });
++        close.addActionListener(e -> dialog.dispose());
++        final javax.swing.Timer timer = new javax.swing.Timer(400, e -> poll[0].run());
++        dialog.addWindowListener(new WindowAdapter() {
++            @Override public void windowOpened(WindowEvent e) { check.requestFocusInWindow(); poll[0].run(); timer.start(); }
++            @Override public void windowClosed(WindowEvent e) { timer.stop(); }
++        });
++        dialog.pack(); dialog.setLocationRelativeTo(dialog.getOwner()); dialog.setVisible(true);
+     }
+     private void close()
+     {
+@@ -304,7 +382,7 @@
+         requests.execute(() -> {
+             try { input.close(); backend.waitFor(); }
+             catch (Exception ex) { System.err.println("Launcher shutdown: " + ex.getMessage()); }
+-            finally { requests.shutdown(); SwingUtilities.invokeLater(frame::dispose); }
++            finally { requests.shutdown(); SwingUtilities.invokeLater(() -> { frame.dispose(); if (restartRequested) System.exit(RESTART_EXIT); }); }
+         });
+     }
+     private boolean ownsWindow(Window window)
