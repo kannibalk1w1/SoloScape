@@ -41,12 +41,19 @@ LOCK = '.lock'
 EXECUTABLE = {'scripts/launcher.sh'}
 STAMP = '.runtime/build-stamp.json'  # written by local_dev.prepare in a source folder after a successful local build
 DIR_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
-NO_BUILD = ('This release does not include the game programs or game data. Build SoloScape from source on this computer, '
-            'then register that source folder with the managed_install.py supply-root command.')
+BUILD_SCRIPT = 'scripts/prepare-build.sh'
 
 
 class PackageError(Exception):
-    """A refusal or unavailability. Its message is shown to the player as-is."""
+    """A refusal or unavailability. Its message is shown to the player as-is.
+
+    `code` marks the refusals a player can fix by building locally: 'needs-build' (nothing registered or no build
+    record) and 'needs-rebuild' (the registered build is of other source or changed after it was made).
+    """
+
+    def __init__(self, message, code=None):
+        super().__init__(message)
+        self.code = code
 
 
 class Cancelled(PackageError):
@@ -292,11 +299,12 @@ def _read_stamp(source):
         with os.fdopen(fd, 'rb') as handle:
             stamp = json.loads(handle.read(runtime_manifest.MANIFEST_MAX_BYTES).decode('utf-8'))
     except (OSError, ValueError):
-        raise PackageError('The source folder ' + source.name + ' has no usable local build record. Build SoloScape there first.') from None
+        stamp = None
     jars = stamp.get('jars') if isinstance(stamp, dict) else None
     if (not isinstance(jars, dict) or set(jars) != {'server', 'client'}
             or not all(isinstance(v, str) and re.fullmatch('[0-9a-f]{64}', v) for v in jars.values())):
-        raise PackageError('The local build record in ' + source.name + ' is not supported.')
+        raise PackageError('The source folder ' + str(source) + ' has no usable build record. Run ' + BUILD_SCRIPT
+                           + ' in it, then press Download again. Nothing was installed.', 'needs-build')
     return stamp
 
 
@@ -316,21 +324,37 @@ def _open_below(source, parts):
     return fd
 
 
-def _supply(scratch, manifest, roots, job):
+def _differences(stamp, manifest):
+    """Short, plain list of what differs between a local build record and a release manifest."""
+    names = [f'{kind} {key}' for kind in ('pin',) for key in sorted(manifest['pins']) if stamp.get('pins', {}).get(key) != manifest['pins'][key]]
+    recorded = stamp.get('patches') if isinstance(stamp.get('patches'), dict) else {}
+    names += sorted(key for key in set(manifest['patches']) | set(recorded) if recorded.get(key) != manifest['patches'].get(key))
+    shown = ', '.join(names[:3]) + (' and ' + str(len(names) - 3) + ' more' if len(names) > 3 else '')
+    return shown or 'the build record'
+
+
+def _supply(scratch, manifest, roots, job, install=None):
     """Fill the manifest's locally supplied paths from the first registered source folder whose build matches it."""
     local = runtime_manifest.local_paths(manifest)
     if not local:
         return
     if not roots:
-        raise PackageError(NO_BUILD)
+        command = 'python3 ' + str(Path(install) / 'bootstrap/managed_install.py') + ' supply-root ' + str(install) + ' <source folder>' if install else 'supply-root'
+        raise PackageError('Release ' + manifest['release'] + ' does not include the game programs or game data; they come from a '
+                           'build made on this computer. Build SoloScape from source (' + BUILD_SCRIPT + ' in your source folder), '
+                           'register that folder with: ' + command + ' and press Download again. Nothing was installed.', 'needs-build')
     refusal = None
     for root in roots:
         source = Path(root)
         try:
             stamp = _read_stamp(source)
             if stamp.get('pins') != manifest['pins'] or stamp.get('patches') != manifest['patches']:
-                raise PackageError('Your local build in ' + source.name + ' was made from different source than release '
-                                   + manifest['release'] + '. Update that source folder, rebuild, and try again.')
+                commit = manifest['source_commit']
+                where = '' if set(commit) == {'0'} else ' (source commit ' + commit[:12] + ')'
+                raise PackageError('Release ' + manifest['release'] + ' needs a different build than the one in ' + str(source)
+                                   + ' (differs: ' + _differences(stamp, manifest) + '). Update that folder to the source of release '
+                                   + manifest['release'] + where + ', run ' + BUILD_SCRIPT + ' in it, then press Download again. '
+                                   'Your installed version keeps working.', 'needs-rebuild')
             return _copy_local(source, scratch, manifest, stamp, local, job)
         except PackageError as exc:
             if isinstance(exc, Cancelled):
@@ -345,7 +369,8 @@ def _copy_local(source, scratch, manifest, stamp, local, job):
         try:
             fd = _open_below(source, path.split('/'))
         except OSError:
-            raise PackageError('Your local build in ' + source.name + ' is missing a file this release needs: ' + path) from None
+            raise PackageError('The build in ' + str(source) + ' is missing a file this release needs: ' + path + '. Run ' + BUILD_SCRIPT
+                               + ' in it again, then press Download.', 'needs-rebuild') from None
         with os.fdopen(fd, 'rb') as handle:
             sizes[path] = os.fstat(handle.fileno()).st_size
         if sizes[path] > runtime_manifest.FILE_MAX_BYTES:
@@ -379,7 +404,8 @@ def _copy_local(source, scratch, manifest, stamp, local, job):
         if copied != sizes[path]:
             raise PackageError('A local build file changed while it was being copied: ' + path)
         if path in roles and digest.hexdigest() != roles[path]:
-            raise PackageError('The program in your local build changed after it was built. Rebuild SoloScape and try again.')
+            raise PackageError('The programs in ' + str(source) + ' changed after they were built. Run ' + BUILD_SCRIPT
+                               + ' in it again, then press Download.', 'needs-rebuild')
         record[path] = {'sha256': digest.hexdigest(), 'size': copied}
     fd = os.open(scratch / runtime_manifest.SUPPLIED_NAME, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, 'wb') as out:
@@ -422,7 +448,7 @@ def _install_locked(root, zip_path, sha256, expected_release, job, supply_roots=
         manifest, raw = _extract(zip_path, scratch, job)
         if expected_release is not None and manifest['release'] != expected_release:
             raise PackageError('The package is release ' + manifest['release'] + ', not the announced ' + expected_release + '.')
-        _supply(scratch, manifest, supply_roots, job)
+        _supply(scratch, manifest, supply_roots, job, root)
         try:
             _, version = runtime_manifest.validate_with_id(scratch)
         except (ValueError, OSError) as exc:

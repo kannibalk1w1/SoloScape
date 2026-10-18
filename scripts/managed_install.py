@@ -24,6 +24,7 @@ import fcntl
 import json
 import os
 import re
+import shlex
 import shutil
 import stat
 import subprocess
@@ -289,6 +290,33 @@ def _logical_storage_version(state):
     return version
 
 
+def login_state(profile_directory):
+    """Whether a profile remembers its login: 'remembered', 'empty' (no password), 'missing' or 'unreadable'.
+
+    Reads login.json only to classify it. The account name and password are never returned, logged or copied; the
+    updater never creates, repairs or rewrites this file (an empty password stays empty until the player supplies it).
+    """
+    path = Path(profile_directory) / 'login.json'
+    if not os.path.lexists(path):
+        return 'missing'
+    try:
+        value = _strict_json(_read_limited(path, 4096), 'login.json')
+    except InstallError:
+        return 'unreadable'
+    password = value.get('password') if isinstance(value, dict) else None
+    return 'remembered' if isinstance(password, str) and password else 'empty'
+
+
+ART = ('brazier.jpg', 'brazier-flames.png')
+ART_DIR = 'launcher-art'
+
+
+def art_state(launcher_home):
+    """Which optional launcher artwork files exist. Absence is allowed: the launcher then shows no braziers."""
+    base = Path(launcher_home) / ART_DIR
+    return {name: os.path.isfile(base / name) and not os.path.islink(base / name) for name in ART}
+
+
 def scan_profiles(profile_home):
     """One row per profile: {id, label, problem, storage_version}. Read-only; never opens a save for writing."""
     home = Path(profile_home)
@@ -300,9 +328,10 @@ def scan_profiles(profile_home):
     for entry in sorted(os.scandir(home), key=lambda e: e.name):
         if not SAFE_ID.match(entry.name):
             continue
-        row = {'id': entry.name, 'label': entry.name[:8], 'problem': None, 'storage_version': None}
+        row = {'id': entry.name, 'label': entry.name[:8], 'problem': None, 'storage_version': None, 'login': 'missing'}
         rows.append(row)
         directory = Path(entry.path)
+        row['login'] = login_state(directory)
         try:
             if entry.is_symlink() or not entry.is_dir():
                 raise InstallError('the profile folder is a link')
@@ -621,6 +650,14 @@ def install_first(root, package, sha256, profile_home, cache_home, launcher_home
         (root / name).mkdir(mode=0o700)
     roots = [_absolute(r, 'supply folder') for r in supply_roots]
     version = update_package.install_zip(root, package, sha256, expected_release=release, supply_roots=roots)['id']
+    reasons = blockers({'profile_home': str(homes[0])}, verify_version(root, version))
+    if reasons:  # existing characters this first version cannot read or that are mid-session: leave no install behind
+        for entry in list(root.iterdir()):
+            if entry.is_dir() and not entry.is_symlink():
+                _discard(entry)
+            else:
+                entry.unlink()
+        raise InstallError(' '.join(reasons))
     here = Path(__file__).resolve().parent
     for name in BOOTSTRAP_FILES:
         shutil.copyfile(here / name, root / BOOTSTRAP / name)
@@ -641,6 +678,9 @@ def set_supply_roots(root, folders):
     roots = [_absolute(f, 'supply folder') for f in folders]
     if len(roots) > 4:
         raise InstallError('At most four source folders can be registered.')
+    for folder in roots:
+        if os.path.islink(folder) or not os.path.isfile(Path(folder) / 'scripts/local_dev.py'):
+            raise InstallError(folder + ' is not a SoloScape source folder (it has no scripts/local_dev.py).')
     with acquire(root, 'exclusive'):
         config = load_config(root)
         if roots:
@@ -651,30 +691,161 @@ def set_supply_roots(root, folders):
     return roots
 
 
+# ---- adopting an existing source or Deck-export install -----------------------------------------------------
+
+LOCAL_ENV_KEYS = ('SOLOSCAPE_PROFILE_HOME', 'SOLOSCAPE_CACHE_HOME', 'SOLOSCAPE_LAUNCHER_HOME', 'SERVER_JAVA', 'CLIENT_JAVA')
+MAX_ART = 64 * 1024 * 1024
+MAX_SETTINGS = 64 * 1024
+
+
+def read_local_env(path):
+    """The few path selectors of a source install's config/local.env, read as data. Nothing is executed or expanded."""
+    if not os.path.lexists(path):
+        return {}
+    values = {}
+    for line in _read_limited(path, 16 * 1024).decode('utf-8', 'replace').splitlines():
+        line = line.strip()
+        if line.startswith('export '):
+            line = line[7:].strip()
+        key, equals, value = line.partition('=')
+        if not equals or key not in LOCAL_ENV_KEYS or '$' in value or '`' in value:
+            continue
+        try:
+            parts = shlex.split(value)
+        except ValueError:
+            continue
+        if len(parts) == 1 and parts[0].startswith('/') and '\0' not in parts[0]:
+            values[key] = parts[0]
+    return values
+
+
+def inspect_source(old):
+    """Where an existing source or Deck-export install keeps its state. Read-only; creates and changes nothing."""
+    old = Path(old).absolute()
+    if '..' in old.parts or old.is_symlink() or not (old / 'scripts/local_dev.py').is_file():
+        raise InstallError('That folder is not a SoloScape source or Deck install.')
+    env = read_local_env(old / 'config/local.env')
+    runtime = old / '.runtime'
+    found = {
+        'profile_home': env.get('SOLOSCAPE_PROFILE_HOME', str(runtime / 'profiles')),
+        'cache_home': env.get('SOLOSCAPE_CACHE_HOME', str(old / 'upstream/game-server/data/cache')),
+        'launcher_home': env.get('SOLOSCAPE_LAUNCHER_HOME', str(runtime)),
+    }
+    for key, variable, default in (('server_java', 'SERVER_JAVA', 'jdk21'), ('client_java', 'CLIENT_JAVA', 'jdk8')):
+        java = env.get(variable) or str(runtime / 'jdks' / default / 'bin/java')
+        if os.path.isfile(java):
+            found[key] = java
+    for key in ('profile_home', 'cache_home', 'launcher_home'):
+        if os.path.islink(found[key]):
+            raise InstallError('The old install ' + key.replace('_', ' ') + ' is a link; adopt it manually.')
+    if (old / '.runtime/build-stamp.json').is_file():
+        found['supply_root'] = str(old)
+    return found
+
+
+def copy_launcher_state(old_home, new_home):
+    """Copy launcher-settings.json and the optional artwork into a new launcher home. Never overwrites, never follows
+    links, never alters the source. Returns plain notes for the player, including which optional artwork is absent."""
+    old_home, new_home = Path(old_home), Path(new_home)
+    notes = []
+    private = new_home / ART_DIR
+    private.mkdir(parents=True, exist_ok=True, mode=0o700)
+    jobs = [('launcher-settings.json', Path('launcher-settings.json'), MAX_SETTINGS)] + [
+        (name, Path(ART_DIR) / name, MAX_ART) for name in ART]
+    for label, relative, limit in jobs:
+        source, target = old_home / relative, new_home / relative
+        if not os.path.lexists(source):
+            if relative.parent.name == ART_DIR:
+                notes.append('Optional artwork ' + label + ' was not found in the old install; the launcher will show without '
+                             'it. Copy it into ' + str(new_home / ART_DIR) + ' (or run setup_launcher_art.py) to restore it.')
+            continue
+        if os.path.lexists(target):
+            notes.append(label + ' already exists in the new launcher folder and was kept.')
+            continue
+        data = _read_limited(source, limit)  # refuses links, special files and oversize files
+        fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(fd, 'wb') as out:
+            out.write(data)
+            out.flush()
+            os.fsync(out.fileno())
+    return notes
+
+
+def adopt(root, old, package, sha256, launcher_home=None, supply_roots=(), release=None):
+    """First managed install that keeps an existing source/Deck install's profiles, cache and Java in place.
+
+    The old install is only read. Profiles (saves, backups, remembered login, client preferences) and the cache are
+    referenced where they are; settings and artwork are copied into a separate launcher home because the old one
+    sits inside the old tree beside the profiles. Characters this first version cannot read, or that are mid-session,
+    stop the adoption. Returns {version, notes, profiles}; notes never contain secrets.
+    """
+    found = inspect_source(old)
+    launcher = launcher_home or found['launcher_home']
+    nested = [Path(found[k]) for k in ('profile_home', 'cache_home')]
+    if launcher_home is None and any(Path(launcher) == n or Path(launcher).is_relative_to(n) or n.is_relative_to(launcher) for n in nested):
+        raise InstallError('The old launcher folder holds the profiles, so choose a separate launcher folder; '
+                           'your settings and artwork will be copied into it.')
+    roots = list(supply_roots) or ([found['supply_root']] if 'supply_root' in found else [])
+    options = {k: found[k] for k in ('server_java', 'client_java') if k in found}
+    version = install_first(root, package, sha256, found['profile_home'], found['cache_home'], launcher, release=release,
+                            supply_roots=roots, **options)
+    notes = []
+    if Path(launcher) != Path(found['launcher_home']):
+        notes += copy_launcher_state(found['launcher_home'], launcher)
+    rows = scan_profiles(found['profile_home'])
+    for row in rows:
+        if row['login'] != 'remembered':
+            notes.append('Character ' + row['label'] + ' has no remembered password (' + row['login'] + '); automatic login '
+                         'will stop at the login screen until it is entered. Nothing was changed.')
+    return {'version': version, 'notes': notes, 'profiles': [{k: r[k] for k in ('label', 'storage_version', 'login')} for r in rows]}
+
+
+def rebuild(root, run=subprocess.run):
+    """Run the registered source folder's own scripts/prepare-build.sh. The updater never builds by itself.
+
+    This is the supported way to make the build a Java-changing release needs: update that folder to the release's
+    source first, then rebuild, then press Download again. Refused inside a launcher session or while none is registered.
+    """
+    if os.environ.get('SOLOSCAPE_MANAGED_ROOT'):
+        raise InstallError('Run the rebuild from a normal terminal, not from inside the launcher.')
+    roots = load_config(root).get('supply_roots', [])
+    if not roots:
+        raise InstallError('No source folder is registered. Register one first with the supply-root command.')
+    folder = Path(roots[0])
+    script = folder / 'scripts/prepare-build.sh'
+    if os.path.islink(script) or not script.is_file():
+        raise InstallError(str(folder) + ' has no scripts/prepare-build.sh.')
+    return run(['bash', str(script)], cwd=folder).returncode
+
+
 def status(root):
     pointer = read_pointer(root)
-    rows = scan_profiles(load_config(root)['profile_home'])
+    cfg = load_config(root)
+    rows = scan_profiles(cfg['profile_home'])
     return {'pointer': pointer, 'identity': identity(root), 'versions': sorted(os.listdir(Path(root) / VERSIONS)),
-            'profiles': rows, 'last_result': read_result(root)}
+            'profiles': rows, 'last_result': read_result(root), 'launcher_art': art_state(cfg['launcher_home']),
+            'supply_roots': cfg.get('supply_roots', [])}
 
 
 def main(argv=None):
     import argparse
-    parser = argparse.ArgumentParser(description='SoloScape managed install: init, run, status, activate, rollback.')
+    parser = argparse.ArgumentParser(description='SoloScape managed install: init, run, status, activate, rollback, supply-root, rebuild.')
     sub = parser.add_subparsers(dest='command', required=True)
     init = sub.add_parser('init', help='create an install root from a local package zip')
     init.add_argument('root')
     init.add_argument('--package', required=True)
     init.add_argument('--sha256', required=True)
-    init.add_argument('--profile-home', required=True)
-    init.add_argument('--cache-home', required=True)
-    init.add_argument('--launcher-home', required=True)
+    init.add_argument('--profile-home')
+    init.add_argument('--cache-home')
+    init.add_argument('--launcher-home')
     init.add_argument('--server-java')
     init.add_argument('--client-java')
     init.add_argument('--supply-root', action='append', default=[], help='built source folder that supplies a code-only package')
+    init.add_argument('--adopt', help='existing source or Deck install whose profiles, cache and Java stay where they are')
     supply = sub.add_parser('supply-root', help='replace the registered source folders (none clears them)')
     supply.add_argument('root')
     supply.add_argument('folders', nargs='*')
+    sub.add_parser('rebuild', help="run the registered source folder's scripts/prepare-build.sh").add_argument('root')
     for name in ('run', 'status', 'rollback'):
         sub.add_parser(name).add_argument('root')
     act = sub.add_parser('activate', help='switch to an already staged candidate (headless apply)')
@@ -682,10 +853,19 @@ def main(argv=None):
     act.add_argument('candidate')
     args = parser.parse_args(argv)
     try:
-        if args.command == 'init':
+        if args.command == 'init' and args.adopt:
+            if args.profile_home or args.cache_home:
+                raise InstallError('--adopt keeps the old install\'s profile and cache folders; do not name them again.')
+            report = adopt(args.root, args.adopt, args.package, args.sha256, args.launcher_home, args.supply_root)
+            print(json.dumps(report, indent=2, sort_keys=True))
+        elif args.command == 'init':
+            if not (args.profile_home and args.cache_home and args.launcher_home):
+                raise InstallError('init needs --profile-home, --cache-home and --launcher-home (or --adopt).')
             print(install_first(args.root, args.package, args.sha256, args.profile_home, args.cache_home,
                                 args.launcher_home, supply_roots=args.supply_root, server_java=args.server_java,
                                 client_java=args.client_java))
+        elif args.command == 'rebuild':
+            return rebuild(args.root)
         elif args.command == 'supply-root':
             print(json.dumps(set_supply_roots(args.root, args.folders)))
         elif args.command == 'run':

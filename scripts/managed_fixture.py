@@ -80,6 +80,8 @@ def make_checkout(directory, files, pins=PINS, patches=PATCHES, name='checkout')
         target = root / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(files[path])
+    (root / 'scripts').mkdir(exist_ok=True)
+    (root / 'scripts/local_dev.py').write_text('# stand-in for a source folder\n')
     (root / '.runtime').mkdir(exist_ok=True)
     (root / '.runtime/build-stamp.json').write_text(json.dumps({
         'format': 1, 'pins': pins, 'patches': patches,

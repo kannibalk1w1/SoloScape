@@ -111,16 +111,16 @@ class Supplying(SupplyCase):
             stamp = json.loads((self.checkout / '.runtime/build-stamp.json').read_text())
             stamp[key] = value
             (self.checkout / '.runtime/build-stamp.json').write_text(json.dumps(stamp))
-            self.refused('different source than release ' + TAG)
+            self.refused('needs a different build than the one in')
 
     def test_missing_or_damaged_build_record_is_refused(self):
         stamp = self.checkout / '.runtime/build-stamp.json'
         stamp.write_text('{broken')
-        self.refused('no usable local build record')
+        self.refused('no usable build record')
         stamp.unlink()
-        self.refused('no usable local build record')
+        self.refused('no usable build record')
         stamp.write_text(json.dumps({'pins': fx.PINS, 'patches': fx.PATCHES, 'jars': {'server': 'nope'}}))
-        self.refused('not supported')
+        self.refused('no usable build record')
 
     def test_a_missing_local_file_names_the_path(self):
         (self.checkout / fx.DATA).unlink()
@@ -149,7 +149,7 @@ class Supplying(SupplyCase):
 
     def test_a_jar_that_changed_after_the_build_is_refused(self):
         (self.checkout / fx.CLIENT).write_bytes(b'rebuilt later, stamp not refreshed')
-        self.refused('changed after it was built')
+        self.refused('changed after they were built')
 
     def test_the_second_registered_folder_is_used_when_the_first_does_not_match(self):
         stale = fx.make_checkout(self.tmp, self.files, patches={**fx.PATCHES, 'patches/client/0001-test.patch': 'f' * 64}, name='stale')
@@ -306,9 +306,15 @@ class ThroughTheInstaller(SupplyCase):
             mi.install_first(self.root, self.path, self.digest, self.home, self.tmp / 'cache', self.tmp / 'launcher')
         self.assertFalse(os.path.lexists(self.root / mi.POINTER))
 
+    def source_folder(self, name):
+        folder = self.tmp / name
+        (folder / 'scripts').mkdir(parents=True)
+        (folder / 'scripts/local_dev.py').write_text('# stand-in\n')
+        return folder
+
     def test_registered_folders_are_replaced_only_under_the_exclusive_lease(self):
         self.first()
-        other = self.tmp / 'other'
+        other = self.source_folder('other')
         self.assertEqual(mi.set_supply_roots(self.root, [other]), [str(other)])
         self.assertEqual(mi.load_config(self.root)['supply_roots'], [str(other)])
         with mi.acquire(self.root, 'shared'):
@@ -317,12 +323,39 @@ class ThroughTheInstaller(SupplyCase):
         mi.set_supply_roots(self.root, [])
         self.assertNotIn('supply_roots', mi.load_config(self.root))
 
-    def test_relative_or_excessive_folders_are_refused(self):
+    def test_relative_excessive_or_unrelated_folders_are_refused(self):
         self.first()
         with self.assertRaises(mi.InstallError):
             mi.set_supply_roots(self.root, ['relative'])
+        with self.assertRaises(mi.InstallError) as caught:
+            mi.set_supply_roots(self.root, [str(self.tmp)])
+        self.assertIn('not a SoloScape source folder', str(caught.exception))
         with self.assertRaises(mi.InstallError):
             mi.set_supply_roots(self.root, ['/a', '/b', '/c', '/d', '/e'])
+
+    def test_rebuild_runs_the_registered_folders_own_script_only_outside_the_launcher(self):
+        self.first()
+        folder = self.source_folder('has-script')
+        (folder / 'scripts/prepare-build.sh').write_text('echo built > "$(dirname "$0")/../rebuilt.marker"\n')
+        mi.set_supply_roots(self.root, [folder])
+        self.assertEqual(mi.rebuild(self.root), 0)
+        self.assertEqual((folder / 'rebuilt.marker').read_text(), 'built\n')
+        (folder / 'scripts/prepare-build.sh').write_text('exit 3\n')
+        self.assertEqual(mi.rebuild(self.root), 3)
+        os.environ['SOLOSCAPE_MANAGED_ROOT'] = str(self.root)
+        self.addCleanup(os.environ.pop, 'SOLOSCAPE_MANAGED_ROOT', None)
+        with self.assertRaises(mi.InstallError):
+            mi.rebuild(self.root)
+
+    def test_rebuild_needs_a_registered_folder_with_a_script(self):
+        self.first()
+        mi.set_supply_roots(self.root, [])
+        with self.assertRaises(mi.InstallError) as caught:
+            mi.rebuild(self.root)
+        self.assertIn('No source folder is registered', str(caught.exception))
+        mi.set_supply_roots(self.root, [self.source_folder('no-script')])
+        with self.assertRaises(mi.InstallError):
+            mi.rebuild(self.root)
 
     def test_an_update_with_local_files_activates_and_rolls_back_over_the_same_saves(self):
         first = self.first()

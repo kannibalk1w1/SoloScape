@@ -100,7 +100,10 @@ class LocalBuild(ManagerCase):
         manager = self.manager()
         manager.check()
         manager.download()
-        self.assertIn('different source', self.wait(manager, 'error')['message'])
+        status = self.wait(manager, 'error')
+        self.assertIn('differs: patches/server/0001-test.patch', status['message'])
+        self.assertIn('scripts/prepare-build.sh', status['message'])
+        self.assertEqual(status['needs_build'], 'needs-rebuild')
         self.assertEqual(os.listdir(self.root / 'versions'), [self.current])
 
 

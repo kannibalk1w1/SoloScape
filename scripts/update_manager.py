@@ -30,7 +30,7 @@ class UpdateManager:
         self.cancel_event = threading.Event()
         self.worker = None
         self.release = None
-        self.state = {'stage': 'idle', 'message': '', 'done': 0, 'total': 0}
+        self.state = {'stage': 'idle', 'message': '', 'done': 0, 'total': 0, 'needs_build': None}
         self.reported_result = False
         if managed:
             import managed_install
@@ -94,7 +94,7 @@ class UpdateManager:
             self._set(stage='staged', message='Release ' + staged['release'] + ' is downloaded and verified.', done=0, total=0)
             return dict(self.state)
         self.cancel_event = threading.Event()
-        self._set(stage='downloading', message='Downloading release ' + package['tag'] + '…', done=0, total=package['size'])
+        self._set(stage='downloading', message='Downloading release ' + package['tag'] + '…', done=0, total=package['size'], needs_build=None)
         self.worker = threading.Thread(target=self._download, args=(package, self.cancel_event), name='update-download', daemon=True)
         self.worker.start()
         return dict(self.state)
@@ -110,7 +110,7 @@ class UpdateManager:
         except update_package.Cancelled as exc:
             self._set(stage='cancelled', message=str(exc), done=0, total=0)
         except update_package.PackageError as exc:
-            self._set(stage='error', message=str(exc), done=0, total=0)
+            self._set(stage='error', message=str(exc), done=0, total=0, needs_build=exc.code)
         except Exception as exc:  # never leave the dialog waiting on a dead worker
             traceback.print_exc(file=sys.stderr)
             self._set(stage='error', message='The update could not be prepared: ' + type(exc).__name__, done=0, total=0)
@@ -152,7 +152,7 @@ class UpdateManager:
         candidate = self._candidate()
         result = {'managed': bool(self.managed), 'installed': self._installed(), 'candidate': candidate,
                   'stage': state['stage'], 'message': state['message'] or ('' if self.managed else NOT_MANAGED),
-                  'done': state['done'], 'total': state['total'],
+                  'done': state['done'], 'total': state['total'], 'needs_build': state['needs_build'],
                   'release': None if release is None else {'tag': release['tag'], 'title': release['title']},
                   'can_download': bool(self.managed and not active and not world_running and release is not None
                                        and release.get('package') and release['package']['tag'] != self.managed['release']
