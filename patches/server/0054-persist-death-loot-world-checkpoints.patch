@@ -778,16 +778,17 @@ diff --git a/game/src/main/kotlin/content/area/misthalin/lumbridge/church/Graves
 diff --git a/game/src/main/kotlin/content/entity/death/PlayerDeath.kt b/game/src/main/kotlin/content/entity/death/PlayerDeath.kt
 --- a/game/src/main/kotlin/content/entity/death/PlayerDeath.kt
 +++ b/game/src/main/kotlin/content/entity/death/PlayerDeath.kt
-@@ -16,7 +16,7 @@
+@@ -16,7 +16,8 @@
  import content.entity.player.logEvent
  import content.entity.proj.shoot
  import content.quest.instance
 -import content.quest.instanceLogout
 +import content.quest.instanceOrigin
++import content.quest.clearInstance
  import content.skill.prayer.getActivePrayerVarKey
  import content.skill.prayer.praying
  import content.skill.summoning.dismissFamiliar
-@@ -54,25 +54,49 @@
+@@ -54,25 +55,56 @@
          get() = Tile(Settings["world.home.x", 0], Settings["world.home.y", 0], Settings["world.home.level", 0])
  
      init {
@@ -821,7 +822,14 @@ diff --git a/game/src/main/kotlin/content/entity/death/PlayerDeath.kt b/game/src
 +                    if (onDeath.dropItems) dropItems(this, killer, dropPosition)
 +                    levels.clear()
 +                    runEnergy = MAX_RUN_ENERGY
-+                    tele(onDeath.teleport ?: respawnTile)
++                    val destination = onDeath.teleport ?: respawnTile
++                    val currentInstance = instance()
++                    if (currentInstance != null && destination.region.toLevel(0) != currentInstance.toLevel(0)) {
++                        // Do not let logout apply the old offset to a normal-world respawn.
++                        // Custom deaths that respawn inside the same instance keep it alive.
++                        clearInstance()
++                    }
++                    tele(destination)
 +                    face(Direction.SOUTH, update = false)
 +                    dead = false
 +                    clear("death_drop_tile")
@@ -848,7 +856,7 @@ diff --git a/game/src/main/kotlin/content/entity/death/PlayerDeath.kt b/game/src
                  retribution(this)
                  wrath(this)
                  message("Oh dear, you are dead!")
-@@ -80,29 +104,7 @@
+@@ -80,29 +112,7 @@
                  queue.clear()
                  clearHinted()
                  delay(5)
@@ -879,7 +887,7 @@ diff --git a/game/src/main/kotlin/content/entity/death/PlayerDeath.kt b/game/src
              }
          }
      }
-@@ -176,12 +178,13 @@
+@@ -176,12 +186,13 @@
              // Real players keep the standard 180-tick private window before becoming public loot.
              val reveal = if (player.isBot) FloorItems.NEVER else 180
              if (item.tradeable) {
@@ -949,10 +957,12 @@ diff --git a/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathL
 new file mode 100644
 --- /dev/null
 +++ b/game/src/test/kotlin/content/area/misthalin/lumbridge/church/DeathLootRestartTest.kt
-@@ -0,0 +1,337 @@
+@@ -0,0 +1,397 @@
 +package content.area.misthalin.lumbridge.church
 +
 +import WorldTest
++import content.quest.smallInstance
++import content.quest.instanceOffset
 +import content.entity.combat.hit.damage
 +import content.skill.summoning.summonFamiliar
 +import content.skill.summoning.follower
@@ -1058,6 +1068,21 @@ new file mode 100644
 +        child(directory, "unrecovered-read", "", 0)
 +    }
 +
++    @Test
++    fun `Instance death normalizes loot before cold restore`() {
++        child(directory, "seed", "instance", 0)
++        child(directory, "unrecovered-read", "", 0)
++        child(directory, "unrecovered-read", "", 0)
++    }
++
++    @Test
++    fun `Same JVM relog repair and demolition update the same persisted records`() {
++        child(directory, "seed", "", 0)
++        child(directory, "lifecycle", "", 0)
++        child(directory, "demolished-read", "", 0)
++        child(directory, "demolished-read", "", 0)
++    }
++
 +    private fun child(root: Path, mode: String, cut: String, expected: Int) {
 +        val urls = generateSequence(javaClass.classLoader) { it.parent }.filterIsInstance<URLClassLoader>()
 +            .flatMap { it.urLs.asSequence() }.map { File(it.toURI()).path }.toList()
@@ -1116,6 +1141,11 @@ new file mode 100644
 +                    tick(3)
 +                    assertNotNull(owner.follower)
 +                    assertTrue(owner.beastOfBurden.add("coins", 20))
++                }
++                if (cut == "instance") {
++                    owner.smallInstance(deathTile.region)
++                    owner.tele(deathTile.add(owner.instanceOffset()))
++                    assertNotEquals(deathTile, owner.tile)
 +                }
 +                owner.skullCounter = 20
 +                owner.damage(101)
@@ -1255,6 +1285,44 @@ new file mode 100644
 +                assertEquals(1020, FloorItems.deathLoot().filter { it.id == "coins" }.sumOf { it.amount })
 +                assertTrue(FloorItems.deathLoot().all { "deathowner" in it.deathSources })
 +                assertEquals(1, markerCount(owner))
++            }
++            "lifecycle" -> {
++                var owner = restore("deathowner")
++                val before = DeathLootSnapshot.decode(DeathLootPersistence.capture())
++                runBlocking { get<AccountManager>().logout(owner, false) }
++                tick(3)
++                settings["storage.disabled"] = "false"
++                tick()
++                runBlocking { get<SaveQueue>().awaitInFlight() }
++                settings["storage.disabled"] = "true"
++                owner = restore("deathowner")
++                val after = DeathLootSnapshot.decode(DeathLootPersistence.capture())
++                assertEquals(before.graves.map { it.id }, after.graves.map { it.id })
++                assertEquals(before.piles.map { it.id }.toSet(), after.piles.map { it.id }.toSet())
++                assertEquals(1, markerCount(owner))
++                val guest = restore("deathguest")
++                guest.experience.set(Skill.Prayer, Level.experience(2))
++                guest.levels.set(Skill.Prayer, 2)
++                clock += 190000
++                tick(120) // Let the native grave poll expose the damaged Repair option.
++                guest.npcOption(NPCs.first(deathTile) { it.id.startsWith("gravestone_") }, "Repair")
++                tick(4)
++                assertEquals(300, DeathLootSnapshot.decode(DeathLootPersistence.capture()).graves.single().remaining)
++                assertEquals(before.graves.single().id, DeathLootSnapshot.decode(DeathLootPersistence.capture()).graves.single().id)
++                owner.tele(deathTile)
++                owner.npcOption(NPCs.first(deathTile) { it.id.startsWith("gravestone_") }, "Demolish")
++                tick(4)
++                assertTrue(DeathLootSnapshot.decode(DeathLootPersistence.capture()).graves.isEmpty())
++                assertEquals(0, markerCount(owner))
++                assertEquals(1000, FloorItems.deathLoot().filter { it.id == "coins" }.sumOf { it.amount })
++                World.shutdown()
++            }
++            "demolished-read" -> {
++                val owner = restore("deathowner")
++                assertTrue(DeathLootSnapshot.decode(DeathLootPersistence.capture()).graves.isEmpty())
++                assertEquals(0, markerCount(owner))
++                assertEquals(1000, FloorItems.deathLoot().filter { it.id == "coins" }.sumOf { it.amount })
++                assertEquals(12345, FloorItems.deathLoot().single { it.id == "chaotic_rapier" }.charges)
 +            }
 +            "verify" -> {
 +                val owner = restore("deathowner")

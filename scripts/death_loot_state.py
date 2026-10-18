@@ -186,14 +186,14 @@ def _batch(files, validate_save):
     return accounts, world
 
 
-def validate_state(contents, validate_save):
+def validate_state(contents, validate_save, primary_account=None):
     """Validate a state-relative file map and its logical post-replay accounts.
 
     contents maps paths such as 'saves/tester.toml' to bytes. validate_save(data, expected_account)
     must return the parsed native save or raise ValueError. Returns the logical accounts (journal
     members override same-named canonical files) and the parsed world payload, or None.
     """
-    accounts, root_world, pending = {}, None, {}
+    raw_accounts, root_world, pending = {}, None, {}
     for path, data in contents.items():
         parts = path.split('/')
         if parts[:2] == ['saves', '.soloscape-account-save'] and len(parts) > 2:
@@ -203,13 +203,18 @@ def validate_state(contents, validate_save):
         elif len(parts) == 2 and parts[0] == 'saves' and parts[1] == WORLD_FILE:
             root_world = data
         elif len(parts) == 2 and parts[0] == 'saves' and parts[1].endswith('.toml'):
-            accounts[parts[1][:-len('.toml')]] = validate_save(data, None)
+            raw_accounts[parts[1][:-len('.toml')]] = data
     world = root_world
+    batch_accounts = {}
     if pending:
         batch_accounts, batch_world = _batch(pending, validate_save)
-        accounts.update(batch_accounts)
         if batch_world is not None:
             world = batch_world
+    # Native readers replay the verified commit before parsing canonical accounts.
+    # A covered stale/damaged canonical file is evidence, not the logical record.
+    accounts = {name: validate_save(data, primary_account if primary_account and name == primary_account.lower() else None)
+                for name, data in raw_accounts.items() if name not in batch_accounts}
+    accounts.update(batch_accounts)
     payload = validate_world(world) if world is not None else None
     if any(_storage_version(save) for save in accounts.values()) and payload is None:
         raise ValueError('Storage version 1 accounts require a validated death-loot world file.')

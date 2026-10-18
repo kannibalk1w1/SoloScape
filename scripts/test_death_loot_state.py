@@ -92,6 +92,19 @@ class DeathLootStateTests(unittest.TestCase):
         self.assertEqual(sorted(result['accounts']), ['other', 'tester'])
         self.assertEqual(len(result['world']['graves']), 1)
 
+    def test_valid_commit_overrides_damaged_canonical_account_before_validation(self):
+        contents = {'saves/tester.toml': b'invalid canonical account'}
+        contents.update(batch({'tester.toml': native(version=1), state.WORLD_FILE: envelope()}))
+        self.assertEqual(validate(contents)['accounts']['tester']['storage_version'], 1)
+        # Only a verified, covering journal can make that canonical record irrelevant.
+        contents[state.JOURNAL + '/tester.toml'] += b'corruption'
+        with self.assertRaises(ValueError):
+            validate(contents)
+        contents = {'saves/tester.toml': b'invalid uncovered account'}
+        contents.update(batch({'other.toml': native('Other', version=1), state.WORLD_FILE: envelope()}))
+        with self.assertRaises(ValueError):
+            validate(contents)
+
     def test_legacy_only_batch_is_valid_without_world(self):
         result = validate(batch({'tester.toml': native()}))
         self.assertIsNone(result['world'])

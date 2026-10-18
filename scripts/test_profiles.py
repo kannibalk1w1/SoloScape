@@ -46,6 +46,30 @@ class ProfileTests(unittest.TestCase):
     def tearDown(self):
         self.patch.stop();self.temp.cleanup()
 
+    def test_pending_first_checkpoint_imports_without_a_canonical_primary_account(self):
+        source = Path(self.temp.name) / 'stopped'
+        source.mkdir()
+        members = pending_batch({'tester.toml': versioned_save(1), '.soloscape-death-loot.v1': world_file()})
+        for name, data in members.items():
+            target = source / name.removeprefix('saves/')
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+        imported = profiles.import_world_copy(source, 'Committed first save', 'Tester')
+        self.assertFalse((imported.state / 'saves/tester.toml').exists())
+        self.assertTrue(imported.metadata()['saved'])
+        self.assertIsNone(imported.metadata()['error'])
+        archive = imported.backup('pending-first-save')
+        _, copied = imported.validate_backup(archive)
+        self.assertEqual(copied, members)
+        # The same exact pending decision covers a damaged old canonical primary.
+        (imported.state / 'saves/tester.toml').write_bytes(b'corrupt canonical')
+        archive = imported.backup('covered-damage')
+        imported.restore(archive.name)
+        self.assertEqual((imported.state / 'saves/tester.toml').read_bytes(), b'corrupt canonical')
+        self.assertTrue(imported.metadata()['saved'])
+        self.assertIsNone(imported.metadata()['error'])
+        self.assertTrue((imported.state / 'saves/.soloscape-account-save/manifest.tsv').is_file())
+
     def test_malformed_pending_layout_refuses_backup_without_changing_saved_world(self):
         healthy = self.profile.backup()
         original = self.save.read_bytes()
