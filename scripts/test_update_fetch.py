@@ -148,6 +148,28 @@ class BundleFetchTests(unittest.TestCase):
         self.refused(bundle=dict(self.bundle, url='https://evil.invalid/' + NAME), message='not a file of this project')
         self.assertEqual(self.calls, [])
 
+    def test_direct_fetch_rejects_malformed_metadata_before_transport_or_files(self):
+        changes = [dict(size=True), dict(size=0), dict(size=-1), dict(size='100'),
+                   dict(size=release_updates.MAX_BUNDLE + 1), dict(tag=None), dict(tag='../v1'),
+                   dict(name='../bad.zip'), dict(sha256='A' * 64), dict(sha256=None)]
+        for change in changes:
+            with self.subTest(change=change):
+                self.refused(bundle=dict(self.bundle, **change), message='metadata')
+                self.assertEqual(self.calls, [])
+        for value in (None, {}, dict(self.bundle, unexpected=True)):
+            with self.subTest(value=value):
+                with self.assertRaises(update_fetch.FetchError):
+                    update_fetch.fetch_bundle(self.lab, value, transport=self.transport())
+                self.assertEqual(self.calls, [])
+                self.assertEqual(self.lab_names(), [])
+
+    def test_http_error_response_is_closed_and_partial_removed(self):
+        response = io.BytesIO(b'not a release asset')
+        def unavailable(url):
+            raise urllib.error.HTTPError(url, 404, 'Not found', {}, response)
+        self.refused(transport=unavailable, message='unavailable')
+        self.assertTrue(response.closed)
+
     def test_linked_lab_is_refused_before_any_request(self):
         link = Path(self.tmp.name) / 'link'
         link.symlink_to(self.lab, target_is_directory=True)

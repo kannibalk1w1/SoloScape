@@ -10,6 +10,7 @@ import http.client
 import importlib.util
 import os
 import tempfile
+import urllib.error
 import urllib.request
 import urllib.parse
 from pathlib import Path
@@ -51,8 +52,18 @@ def _open(url):
 
 def fetch_bundle(lab_root, bundle, transport=_open):
     """Download exactly the declared bytes into a temporary file, verify them, then stage them."""
-    if not isinstance(bundle, dict) or bundle.get('url') != release_updates.asset_url(
-            bundle.get('tag', ''), bundle.get('name', '')):
+    # This entrypoint is also callable without fetch_latest(). Validate its full
+    # hand-off before creating files or opening a connection.
+    fields = {'tag', 'name', 'url', 'size', 'sha256'}
+    if not isinstance(bundle, dict) or set(bundle) != fields:
+        raise FetchError('The update bundle metadata is incomplete or unsupported.')
+    if (not isinstance(bundle['tag'], str) or not release_updates.TAG.fullmatch(bundle['tag'])
+            or not isinstance(bundle['name'], str) or not release_updates.BUNDLE_NAME.fullmatch(bundle['name'])
+            or type(bundle['size']) is not int or not 1 <= bundle['size'] <= release_updates.MAX_BUNDLE
+            or not isinstance(bundle['sha256'], str)
+            or not release_updates.DIGEST.fullmatch('sha256:' + bundle['sha256'])):
+        raise FetchError('The update bundle metadata is invalid.')
+    if bundle['url'] != release_updates.asset_url(bundle['tag'], bundle['name']):
         raise FetchError('The update bundle is not a file of this project’s release.')
     lab = Path(lab_root)
     if lab.is_symlink() or not lab.is_dir():
@@ -79,6 +90,9 @@ def fetch_bundle(lab_root, bundle, transport=_open):
         return stage.stage(partial, bundle['sha256'], lab)
     except stage.StageError as exc:
         raise FetchError('The update was refused: ' + str(exc)) from None
+    except urllib.error.HTTPError as exc:
+        exc.close()
+        raise FetchError('The download is unavailable. You can keep using your installed version.') from exc
     except (OSError, http.client.HTTPException) as exc:
         raise FetchError('The download is unavailable. You can keep using your installed version.') from exc
     finally:
