@@ -540,11 +540,19 @@
     },
     {
       "id": "native-account-batch-draft",
-      "scope": "Draft native account batch recovery prerequisite for death-loot persistence",
+      "scope": "Native account-batch recovery foundation (historical prerequisite)",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "DEFERRED",
       "evidence": "NATIVE_ACCOUNT_BATCH_20261018.md",
-      "note": "Draft branch only: 38 native storage/save cases pass, including 8 abrupt-exit boundaries and interrupted replay. No live grave/pile snapshot or backup/older-build journal integration; P1 remains open. Not merged or deployed."
+      "note": "Initial prerequisite report: 38 native storage/save cases passed, including abrupt exits and interrupted replay. Its live-world limitation is superseded by the integrated death-loot persistence entry; retain this report as the earlier scoped evidence."
+    },
+    {
+      "id": "death-loot-persistence",
+      "scope": "Integrated native grave/floor loot, coherent account/world checkpoints and cold recovery",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "DEATH_LOOT_PERSISTENCE_20261018.md",
+      "note": "42 native storage/save and40 death/loot cases pass, including9 cold-world scenarios/49 child JVMs, six actual checkpoint exit boundaries, offline-owner banked guest pickup, instance death, relog, repair/demolish, charges and paused clocks. Real native output survives managed backup/import/restore and pending/corrupt canonical replay; frozen52 refuses guarded accounts.294 root cases, one optional skip. Matched54/56 private package passes graphical New/Continue, Save & Quit, failure/cancellation handling and two real Main clean/pending restore sessions. No owner or Deck deployment; physical controller/lifecycle acceptance remains open."
     }
   ]
 }
