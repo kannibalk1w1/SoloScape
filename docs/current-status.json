@@ -304,7 +304,7 @@
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "MANAGED_UPDATER_20261018.md",
-      "note": "Tooling cases on original fixtures plus a private native run (real graphical launcher, mapped key input on Xvfb, real server54/client57 and real-sized 58.6 MiB packages): played world, cancel, download, Install and Restart, Continue after update, refused save-incompatible candidate, rollback and Continue again. Fake GitHub at the backend network seams; no public release or package exists and packaging/licence review is unresolved. No SDL/Deck hardware, audio, owner install or power-loss proof."
+      "note": "Tooling cases on original fixtures plus a private native run (real graphical launcher, mapped key input on Xvfb, real server54/client57 and code-only ~87 KiB packages with jars and data copied from a registered private build folder): played world, cancel, download, Install and Restart, Continue after update, refused save-incompatible candidate, rollback and Continue again. Fake GitHub at the backend network seams; no public release or package exists and packaging/licence review is unresolved (a code-only package removes the jars and data from what would be uploaded, not the open questions). No SDL/Deck hardware, audio, owner install or power-loss proof."
     },
     {
       "id": "familiar-dismissal-identity",

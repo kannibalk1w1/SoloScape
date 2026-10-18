@@ -1,5 +1,6 @@
 {
   "backup_count": 6,
+  "build_record": "synthesized from the snapshot, not produced by a Gradle rebuild",
   "checks": {
     "activation_refused_while_launcher_runs": true,
     "backups_all_valid": true,
@@ -11,8 +12,10 @@
     "continue_after_update_fields_equal": true,
     "incompatible_save_format_refused": true,
     "install_a_sealed": true,
+    "local_files_copied_from_the_build_and_verified": true,
     "native_second_session_capabilities_verified": true,
     "no_staging_leftovers": true,
+    "packages_are_scripts_only": true,
     "pointer_after_update": true,
     "result_shown_once_then_cleared": true,
     "rollback_kept_saves": true,
@@ -24,6 +27,7 @@
     "two_version_contexts": true
   },
   "client_stack": "57 (0057-managed-update-dialog.patch)",
+  "consecutive_passes_on_current_code": 3,
   "controller_modal_probe": "smoke-launcher.py --updates passed 15 of 15 after lengthening synthetic key holds",
   "date": "2026-10-18",
   "harness_history": "Four earlier attempts failed on harness/orchestration defects (python3 PATH shim, launcher focus without a window manager, a lost synthetic navigation press, a bookkeeping assertion); the final harness passed on consecutive runs, the last on the committed code.",
@@ -46,18 +50,33 @@
   },
   "not_a_release": true,
   "package_bytes": {
-    "private-test-a": 61440945,
-    "private-test-b": 61440945
+    "private-test-a": 88958,
+    "private-test-b": 88957
   },
   "passed": true,
+  "previous_round": {
+    "note": "first round: two full private packages, nothing supplied locally",
+    "package_bytes": {
+      "private-test-a": 61440945,
+      "private-test-b": 61440945
+    },
+    "probe_log": [
+      "launch 1: world played and verified",
+      "progress string while downloading: downloading 4.5 MiB of 58.6 MiB",
+      "launch 1: requesting install and restart",
+      "launch 2: continued after update",
+      "launch 3: continued"
+    ]
+  },
   "private": true,
   "probe_log": [
     "launch 1: world played and verified",
-    "progress string while downloading: downloading 4.5 MiB of 58.6 MiB",
+    "progress string while downloading: downloading 0.0 MiB of 0.1 MiB",
     "launch 1: requesting install and restart",
     "launch 2: continued after update",
     "launch 3: continued"
   ],
+  "round": "code-only packages (scripts, pins, patch hashes); jars and data copied from a registered private build folder",
   "scope": "Private disposable native acceptance with mapped AWT Robot input on owned Xvfb; fake GitHub at the backend network seams; no SDL, hardware, audio or owner install.",
   "server_stack": "54 (deck-export snapshot read as an immutable input)",
   "title": "Managed updater private native acceptance",
