@@ -1,0 +1,89 @@
+{
+  "backup_count": 6,
+  "checks": {
+    "activation_refused_while_launcher_runs": true,
+    "backups_all_valid": true,
+    "bootstrap_exit_clean": true,
+    "both_versions_verify": true,
+    "cache_unchanged": true,
+    "cancel_left_no_partial_or_version": true,
+    "continue_after_rollback_fields_equal": true,
+    "continue_after_update_fields_equal": true,
+    "incompatible_save_format_refused": true,
+    "install_a_sealed": true,
+    "native_second_session_capabilities_verified": true,
+    "no_staging_leftovers": true,
+    "pointer_after_update": true,
+    "result_shown_once_then_cleared": true,
+    "rollback_kept_saves": true,
+    "rollback_launch_clean": true,
+    "rollback_pointer_only": true,
+    "round0_account_valid_storage_version": 1,
+    "round0_native_capabilities_verified": true,
+    "saves_untouched_by_refusal": true,
+    "two_version_contexts": true
+  },
+  "client_stack": "57 (0057-managed-update-dialog.patch)",
+  "controller_modal_probe": "smoke-launcher.py --updates passed 15 of 15 after lengthening synthetic key holds",
+  "date": "2026-10-18",
+  "harness_history": "Four earlier attempts failed on harness/orchestration defects (python3 PATH shim, launcher focus without a window manager, a lost synthetic navigation press, a bookkeeping assertion); the final harness passed on consecutive runs, the last on the committed code.",
+  "incompatible_message": "Character Managed updater fixture uses save storage version 1, which release private-test-c cannot read. Saves were left unchanged.",
+  "manifest": {
+    "client_jar_sha256": "33a3884d33567372f41d29087c5f2a6f8dce9f6f70e9e4cf52527d6519cb85e6",
+    "files": 3859,
+    "format": 2,
+    "pins": {
+      "634-client": "b39d45f49a0480f3f200fe3e31ad0798faf163ab",
+      "game-server": "9f9113559eb686abd917893b5dca16404be07f93",
+      "runelite-client": "297bc8a4861755b676855664d32859054779c067"
+    },
+    "release": "private-test-b",
+    "server_jar_sha256": "71ea5d1a2b142fe8318d1e48bff1385b3093a5a5156fac2963252ebc2b883396",
+    "storage_versions": [
+      0,
+      1
+    ]
+  },
+  "not_a_release": true,
+  "package_bytes": {
+    "private-test-a": 61440945,
+    "private-test-b": 61440945
+  },
+  "passed": true,
+  "private": true,
+  "probe_log": [
+    "launch 1: world played and verified",
+    "progress string while downloading: downloading 4.5 MiB of 58.6 MiB",
+    "launch 1: requesting install and restart",
+    "launch 2: continued after update",
+    "launch 3: continued"
+  ],
+  "scope": "Private disposable native acceptance with mapped AWT Robot input on owned Xvfb; fake GitHub at the backend network seams; no SDL, hardware, audio or owner install.",
+  "server_stack": "54 (deck-export snapshot read as an immutable input)",
+  "title": "Managed updater private native acceptance",
+  "tool_sha256": {
+    "experiments/managed-updater/acceptance.py": "b972b96ae35b44763607675d32591b1485cced1bdfef39311c00d7d1891a0bc9",
+    "experiments/managed-updater/build_packages.py": "d334e94cde643a25117097e0b33d0af72c5081425a9f40278d3fc5355eda7367",
+    "experiments/managed-updater/fake_github.py": "ed64868f2aabbe92aec59fc8629b49eee01315dfdd34da6e8ad3876423094902",
+    "patches/client/0057-managed-update-dialog.patch": "83e7a6225b16943f70026f34e1ba02ed74358a407e066a6778453ae7a3e796c5",
+    "scripts/harness/NativeLauncherUpdateProbe.java": "97f044cae4c91521ce8e3f14915fc2c8ad3305770a1a7f201a765f0d074b7212",
+    "scripts/harness/NativeManagedUpdateProbe.java": "7b95f6fe511daa0c22238b40f27598ea6a442693dcb25ff9835db43d628ebb85",
+    "scripts/launcher_backend.py": "291914ef530f6ff16950d017dd019a5e735ed612e581740c24cc2e7186029827",
+    "scripts/managed_install.py": "8a85eaafa3afb3c25f483cf64abb7b48d402abc901ad21a3514f114b6f439a13",
+    "scripts/managed_runtime.py": "074e741172696cb77802015abce0564c43c6c49e9fd6c44398a17e64fdb5c5ed",
+    "scripts/package_builder.py": "aa25e7e06b2c716d83e583e7db9b0bc48d68296008cd461993ea950921906b8a",
+    "scripts/profile_session.py": "82a65e30bbb5f7cd0a892259241000bac1cd8bcd9b53288c9b9a16f592958561",
+    "scripts/release_updates.py": "e2e5adc8403ba9df944612f5ca494db847adb89a998419ad99d75e85c6c7c303",
+    "scripts/runtime_manifest.py": "179ba66e41f5d6ddcba05f68394db8f9f1f03ed686ac5f91e2020df07f821590",
+    "scripts/update_manager.py": "eab8675656d4c01207af958588d06a492577753528b578fcf0441632c3323730",
+    "scripts/update_package.py": "a390ada343e5c6943addcdf99351c33cbcd38a2eb0fe1937d2929c5c2599a952"
+  },
+  "tooling_tests": "376 cases, 1 optional skip",
+  "version_ids": {
+    "private-test-a": "9f99cb273212f4c79873c85ee91af5246d3c97cf66df31439a7b9778042d8c88",
+    "private-test-b": "9cfa546f72c2bf28c38b51b010df684c94195aecd84f90a92ce3551f4320b581"
+  },
+  "zip_sha256": {
+    "private-test-b": "6c49e3967c4be6be98bf88f30314ae43741c4d8a80fe18d9471c04ebaf8da1cd"
+  }
+}

@@ -299,6 +299,14 @@
       "note": "26 staging cases and 278 root cases (one optional skip). FIFO archive and FIFO/directory/symlink guards now refuse without publication or input changes; prior exact dummy ZIP/CLI checks still pass. No production download/apply, real package, publisher authentication or power-loss proof."
     },
     {
+      "id": "managed-updater",
+      "scope": "Managed launcher updater: Check, bounded Download with cancel, Install and Restart, pointer-only rollback",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "MANAGED_UPDATER_20261018.md",
+      "note": "Tooling cases on original fixtures plus a private native run (real graphical launcher, mapped key input on Xvfb, real server54/client57 and real-sized 58.6 MiB packages): played world, cancel, download, Install and Restart, Continue after update, refused save-incompatible candidate, rollback and Continue again. Fake GitHub at the backend network seams; no public release or package exists and packaging/licence review is unresolved. No SDL/Deck hardware, audio, owner install or power-loss proof."
+    },
+    {
       "id": "familiar-dismissal-identity",
       "scope": "Familiar dismissal clears binding and removes the NPC once",
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
