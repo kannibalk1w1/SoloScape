@@ -32,6 +32,23 @@
   "date": "2026-10-18",
   "harness_history": "Four earlier attempts failed on harness/orchestration defects (python3 PATH shim, launcher focus without a window manager, a lost synthetic navigation press, a bookkeeping assertion); the final harness passed on consecutive runs, the last on the committed code.",
   "incompatible_message": "Character Managed updater fixture uses save storage version 1, which release private-test-c cannot read. Saves were left unchanged.",
+  "installer_round": {
+    "archive_path_recheck": "current code: an archive with a non-pinned hash is refused before unpacking; with the test archive hash pinned, the real pinned 7-Zip was downloaded, hash-checked and unpacked it, and all 39 files verified",
+    "date": "2026-10-18",
+    "found": "GitHub no longer serves the pinned 634-client commit; made reference-only",
+    "no_python_no_git_run": "second cold run with PATH holding only basic coreutils, curl and sha256sum (no python3, no git, no 7z): the installer script downloaded micromamba and 42 pinned conda-forge packages, built a private Python 3.12 and git, then completed the whole install; the launcher opened from it on Xvfb",
+    "not_tested": [
+      "stock SteamOS (git, python and SDL availability unverified)",
+      "physical Deck",
+      "the real MEGA archive (a locally made archive of the same files stood in; its hash is not the pinned one, so it was unpacked through the folder path check not the archive-hash path)",
+      "update and rollback from an installer-made install",
+      "power loss during install",
+      "dependency hash verification (not implemented)"
+    ],
+    "resume_checked": "removed install.guard; rerun rebuilt the damaged install from the verified package and reused downloads, cache and build",
+    "unit_tests": "scripts/test_installer.py, 50 tests",
+    "what": "cold install from a clean data folder with the real installer: pinned JDK 21 and 8, pinned 7-Zip, cache unpacked from a locally made test archive (earlier code, which warned instead of refusing an archive with another hash) and verified against 39 pinned file hashes, SoloScape source fetched from GitHub by commit id, upstream game-server and runelite-client fetched at their pins, real online Gradle build, managed install, launcher opened on a virtual X display"
+  },
   "manifest": {
     "client_jar_sha256": "33a3884d33567372f41d29087c5f2a6f8dce9f6f70e9e4cf52527d6519cb85e6",
     "files": 3859,

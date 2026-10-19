@@ -42,6 +42,7 @@ PLATFORM = 'linux-x86_64'
 CACHE_REVISION = 634
 TOP_FIELDS = {'format', 'release', 'storage_versions', 'source_commit', 'platform', 'cache_revision', 'pins', 'patches', 'roles', 'files'}
 PIN_FIELDS = {'game-server', '634-client', 'runelite-client'}
+REFERENCE_PINS = frozenset({'634-client'})  # recorded for provenance; no patch or build step reads them (see local_dev.REFERENCE_ONLY)
 ROLE_FIELDS = {'server', 'client', 'launcher'}
 RUNTIME_SCRIPTS = (
     'local_dev.py', 'profiles.py', 'death_loot_state.py', 'profile_session.py', 'session_recovery.py', 'launcher_backend.py',

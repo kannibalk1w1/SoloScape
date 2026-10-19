@@ -44,6 +44,25 @@ acceptance remains pending.*
 
 ## Get started
 
+### First-time install (no building by hand)
+
+For Linux x86_64 with a graphical session, including a Steam Deck in Desktop Mode. You do not need Python, git or Java installed: the installer brings its own pinned copies into one folder, with no root access.
+
+1. **Download the installer**, `soloscape-installer.sh`, from the [latest release](https://github.com/kannibalk1w1/SoloScape/releases/latest).
+2. **Download the game cache yourself.** It is not included and the installer never downloads it, like a recompiled game needing a copy of the original. Get `2026-08-02-void-634-cache.7z` from the folder the 2011Scape/Void maintainers link: [MEGA folder](https://mega.nz/folder/ZMN2AQaZ#4rJgfzbVW0_mWsr1oPLh1A) (see the [cache guide](docs/CACHE_SETUP.md)). The installer checks it against pinned hashes; any other archive is refused.
+3. **Open a terminal** (on a Deck: Desktop Mode, then Konsole) in the folder with both files and run:
+
+   ```bash
+   sh soloscape-installer.sh --plan     # optional: shows everything it will download
+   sh soloscape-installer.sh --cache ~/Downloads/2026-08-02-void-634-cache.7z
+   ```
+
+   It asks `Continue? [y/N]`, then downloads Java and the project source and builds the game on your own computer. Allow roughly 20 to 40 minutes and 8 GB of free space for the first run. If it stops (network, Ctrl-C), run the same command again: finished steps are reused.
+4. **Start SoloScape** from the application menu entry it adds, or `~/.local/share/soloscape/soloscape`. On a Deck you can add that file as a non-Steam game yourself in Desktop Mode; the installer does not touch Steam.
+5. **Updates:** use the launcher's Updates dialog (Check, Download, Install and Restart, Update Source and Rebuild, Roll Back). Your characters, login and settings stay in `~/.local/share/soloscape/profiles` and `launcher`.
+
+Everything lives under `~/.local/share/soloscape` (use `--data DIR` to choose another place). Details, limits and what is and is not verified: [installer notes](docs/INSTALLER_20261018.md). This installer has been tested on a clean folder on a desktop Linux machine with Python and git removed from the path; it has **not** yet been tested on a physical Steam Deck. The steps below are the manual developer route.
+
 The current development path is Linux x86_64 with a graphical X11/XWayland session.
 You need Git, Python 3, Bash, curl, tar, util-linux/flock, 7-Zip for the cache archive,
 and SDL2 2.0.22+ for controller support. The scripts install project-local JDKs;

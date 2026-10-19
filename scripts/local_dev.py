@@ -25,6 +25,9 @@ PINNED = {
     "634-client": "b39d45f49a0480f3f200fe3e31ad0798faf163ab",
     "runelite-client": "297bc8a4861755b676855664d32859054779c067",
 }
+# Pinned for provenance only: no patch targets it and no build step reads it. GitHub no longer serves its pinned commit
+# by id, so a fresh setup cannot always fetch it. When it is present it must still be at its pin.
+REFERENCE_ONLY = frozenset({"634-client"})
 
 
 CACHE_HOME_ENV = "SOLOSCAPE_CACHE_HOME"
@@ -92,6 +95,9 @@ def doctor(port=PORT, require_display=True, output=print, check_port=True):
         errors.append("Install util-linux (flock) for safe client patch application.")
     for name, expected in PINNED.items():
         repo = ROOT / "upstream" / name
+        if name in REFERENCE_ONLY and not (repo / ".git").is_dir():
+            output(f"NOTE: optional reference checkout upstream/{name} is absent; the build does not use it.")
+            continue
         if not (repo / ".git").is_dir():
             errors.append(f"Missing {repo}; clone https://github.com/2011Scape/{name}.git and checkout {expected}.")
             continue
@@ -122,7 +128,7 @@ def doctor(port=PORT, require_display=True, output=print, check_port=True):
         for name in ("main_file_cache.dat2", "main_file_cache.idx255"):
             path = cache / name
             if not path.is_file() or path.stat().st_size == 0:
-                errors.append(f"Supply the compatible modified revision-634 cache: missing/empty {path}.")
+                errors.append(f"Supply the compatible modified revision-634 cache: missing/empty {path}. See docs/CACHE_SETUP.md, or run the SoloScape installer again with --cache <archive or folder>.")
     for name in ("clientlibs.jar", "graphics.jar", "trident-1.5.00.jar"):
         if not (CLIENT / "libs" / name).is_file():
             errors.append(f"Missing upstream client library {name}.")
