@@ -1,0 +1,85 @@
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -38,6 +38,19 @@
+     private LauncherKeyboard keyboard;
+     private final JCheckBox nativeNavigation=new JCheckBox("Desktop keyboard navigation (disables launcher controller)");
+     private final JButton recover=new LauncherButton("Recover Session");
++    private final java.util.Map<Window,Component> dialogReturnFocus=new java.util.IdentityHashMap<>();
++    private final AWTEventListener dialogFocus=event->{
++        WindowEvent change=(WindowEvent)event;
++        Window dialog=change.getWindow();
++        if(!(dialog instanceof JDialog)||!ownsWindow(dialog))return;
++        if(change.getID()==WindowEvent.WINDOW_OPENED){
++            Window parent=dialog.getOwner();
++            dialogReturnFocus.put(dialog,parent==null?null:parent.getMostRecentFocusOwner());
++        }else if(change.getID()==WindowEvent.WINDOW_CLOSED){
++            Component previous=dialogReturnFocus.remove(dialog);
++            SwingUtilities.invokeLater(()->restoreDialogFocus(dialog.getOwner(),previous));
++        }
++    };
+ 
+     public static void main(String[] args) throws Exception
+     {
+@@ -101,6 +114,7 @@
+         retention.addActionListener(e -> retention());
+         recover.addActionListener(e -> recoverSession());
+         worldSettings.addActionListener(e -> worldSettings());
++        Toolkit.getDefaultToolkit().addAWTEventListener(dialogFocus,AWTEvent.WINDOW_EVENT_MASK);
+         frame.setVisible(true); list.requestFocusInWindow();
+         refresh = new javax.swing.Timer(1000, e -> poll()); refresh.start(); request(command("settings"), result -> {port=result.getAsJsonObject().get("port").getAsInt();poll();});
+         request(command("update_status"), result -> {
+@@ -415,6 +429,8 @@
+     private void close()
+     {
+         if (closing) return; closing = true; refresh.stop(); frame.setEnabled(false);
++        Toolkit.getDefaultToolkit().removeAWTEventListener(dialogFocus);
++        dialogReturnFocus.clear();
+         status.setText("Saving and closing… Please wait for save hooks."); progress.setIndeterminate(true);
+         requests.execute(() -> {
+             try { input.close(); backend.waitFor(); }
+@@ -427,6 +443,20 @@
+         for (Window current=window; current!=null; current=current.getOwner())
+             if (current==frame) return true;
+         return false;
++    }
++    /** Every dialog exit (OK, Cancel, B, mouse or title bar) returns to its parent. */
++    private void restoreDialogFocus(Window parent,Component previous)
++    {
++        if(closing||parent==null||!parent.isShowing()||!parent.isEnabled())return;
++        Window active=KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
++        // Do not steal focus from another app, a running game, or a newer/nested dialog.
++        if(active!=null&&active!=parent)return;
++        for(Window child:parent.getOwnedWindows())if(child.isShowing()&&child instanceof Dialog&&((Dialog)child).isModal())return;
++        parent.requestFocus();
++        Component target=previous;
++        if(target==null||!target.isShowing()||!target.isEnabled()||!target.isFocusable()||SwingUtilities.getWindowAncestor(target)!=parent)
++            target=parent==frame?list:parent.getFocusTraversalPolicy().getDefaultComponent(parent);
++        if(target!=null&&target.isShowing()&&target.isEnabled())target.requestFocusInWindow();
+     }
+     private void startController()
+     {
+@@ -456,6 +486,10 @@
+             if(keyboard!=null&&active==keyboard.owner&&keyboard.active()){navigation.clear();keyboard.update(state,System.nanoTime());armed[0]=false;return;}
+             if (!armed[0]) { armed[0] = state.buttonsHeld == 0 && Math.abs(state.leftX) < .3 && Math.abs(state.leftY) < .3; return; }
+             Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
++            if(focus==null){
++                restoreDialogFocus(active,active.getMostRecentFocusOwner());
++                armed[0]=false;return;
++            }
+             if(keyboard!=null&&active==keyboard.owner){
+                 if((state.buttonsPressed&1)!=0&&keyboard.accepts(focus)){keyboard.activate((JTextField)focus);return;}
+             }
+@@ -481,13 +515,7 @@
+             });
+             if ((state.buttonsPressed & 2) != 0) {
+                 if (active instanceof JDialog) {
+-                    Window parent=active.getOwner();
+-                    Component priorFocus=parent==null?null:parent.getMostRecentFocusOwner();
+                     active.dispose();
+-                    if (parent!=null && parent.isShowing()) SwingUtilities.invokeLater(() -> {
+-                        parent.toFront(); parent.requestFocus();
+-                        if (priorFocus!=null && priorFocus.isShowing()) priorFocus.requestFocusInWindow();
+-                    });
+                 } else list.requestFocusInWindow();
+             }
+             if ((state.buttonsPressed & (1<<9)) != 0 && focus != null) focus.transferFocusBackward();

@@ -14,6 +14,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--desktop',action='store_true',help='Use the authorized current DISPLAY; never terminate it.')
     parser.add_argument('--updates', action='store_true', help='Test release discovery dialogs with private deterministic metadata, no downloads.')
+    parser.add_argument('--focus', action='store_true', help='Test controller focus after dialog exits and missing component focus.')
     options=parser.parse_args()
     root=local_dev.ROOT/'.runtime/launcher-tests'/str(time.time_ns())
     (root/'scripts').mkdir(parents=True)
@@ -30,7 +31,7 @@ def main():
                           'def check():\n    import time\n    from pathlib import Path\n'
                           '    data=json.loads((Path(__file__).parent.parent/"update-response.json").read_text())\n'
                           '    time.sleep(data.pop("delay") / 1000)\n    return data\n')
-    probe = 'NativeLauncherUpdateProbe' if options.updates else 'NativeLauncherProbe'
+    probe = 'NativeLauncherFocusProbe' if options.focus else 'NativeLauncherUpdateProbe' if options.updates else 'NativeLauncherProbe'
     java=Path(os.environ.get('CLIENT_JAVA','java')).resolve()
     javac=java.with_name('javac')
     classes=root/'classes';classes.mkdir()
