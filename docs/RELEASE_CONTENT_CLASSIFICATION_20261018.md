@@ -1,6 +1,6 @@
 # Release content classification — 18 October 2026
 
-This sorts everything in a managed SoloScape version into what a public release could carry and what each player supplies from a build made on their own computer. It records facts and open questions. **It is not a licence review, and it decides nothing about what may be published.** No release or package has been uploaded.
+This sorts everything in a managed SoloScape version into what a public release could carry and what each player supplies from a build made on their own computer. It records facts and open questions. **It is not a licence review.** It records what a release could carry; the owner decides what is published.
 
 ## Why a "locally supplied" kind of file exists
 
@@ -12,7 +12,7 @@ Counts are from the private test payload built from the deck-export snapshot (3 
 
 | Group | Files | Bytes | In a code-only package | Open questions |
 | --- | ---: | ---: | --- | --- |
-| Runtime scripts and `launcher.sh` | 14 | 178 603 | **Released** (`scripts/*.py`, `launcher.sh`) | The repository has no licence file for its own code. Publishing it needs a licence statement from the owner; none is assumed here. |
+| Runtime scripts and `launcher.sh` | 14 | 178 603 | **Released** (`scripts/*.py`, `launcher.sh`) | SoloScape's own code is MIT licensed (see `LICENSE`, added 19 October 2026 by the owner). |
 | Server jar `void-server-*.jar` | 1 | 49 860 585 | **Local** | Fat jar of the 2011Scape/Void game server (BSD 3-Clause per the retained notice) plus its dependencies. 52 server runtime artifacts have no detected notice file, and 15 native entries (Jansi) are embedded. |
 | Client jar `void-client-*.jar` | 1 | 14 362 417 | **Local** | Includes three local file dependencies with no recorded source or terms (`clientlibs.jar`, `graphics.jar`, `trident-1.5.00.jar`), 17 artifacts with no detected notice file, and 25 embedded JNA native entries. |
 | Server data (`upstream/game-server/data/**.toml, .txt`) | 3 843 | 8 530 507 | **Local** | Inherited game-server data; its provenance relative to the original game is not established anywhere in this repository. |
