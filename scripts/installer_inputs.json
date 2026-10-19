@@ -1,0 +1,504 @@
+{
+ "cache": {
+  "archive": "2026-08-02-void-634-cache.7z",
+  "archive_sha256": "3d68394915bfbc717182d4924a9bd7c307ed070622853c4936333c75e345cc71",
+  "files": {
+   "main_file_cache.dat2": {
+    "sha256": "fdbc283ad2e8fa164c7c1879f2c0de79852f94a309d028b4be42a456f93952d2",
+    "size": 193062497
+   },
+   "main_file_cache.idx0": {
+    "sha256": "f765b8d8f44579a0765ccdbb44cb4585f03b869d8f73d593bb807d517d369b89",
+    "size": 21024
+   },
+   "main_file_cache.idx1": {
+    "sha256": "d73dd05e422024e8d06fdf63a2bc65d0c020c691fb38e2d00e780a0532b466bc",
+    "size": 18534
+   },
+   "main_file_cache.idx10": {
+    "sha256": "b30ef6c971a1f97177ff436283b29f7d0dc1a7ee6ce6e1fec0bd856f99233175",
+    "size": 12
+   },
+   "main_file_cache.idx11": {
+    "sha256": "a1d5409bb676fc5899ce15efcd0b32ddf6e6fb85c5e2965ec6464d28d5b0b931",
+    "size": 2646
+   },
+   "main_file_cache.idx12": {
+    "sha256": "12e6d0414dcba1312c3428afb99c54b2fc5537515f957c060f17d4886b573304",
+    "size": 24636
+   },
+   "main_file_cache.idx13": {
+    "sha256": "8778ab5f03aebdba2c81d1166835b6e018005ee7375c065d3583f7ae428b7104",
+    "size": 24246
+   },
+   "main_file_cache.idx14": {
+    "sha256": "e245cbc0a8286987e61dba3bb2c83994b5061487c95e068959eaf9137db998da",
+    "size": 20406
+   },
+   "main_file_cache.idx15": {
+    "sha256": "4bdd15754f790101812bf25c9a17631a310d684eec758be6259d1da7cc5bf062",
+    "size": 1758
+   },
+   "main_file_cache.idx16": {
+    "sha256": "c78e1546eb1d3d350c929ff6278f0650564cbcc74351ebb688fe3f8a35b001d8",
+    "size": 1344
+   },
+   "main_file_cache.idx17": {
+    "sha256": "1b48d1421966a087458b0a49a356fc681fb62fed12f1198e30dd66fbec21b85d",
+    "size": 84
+   },
+   "main_file_cache.idx18": {
+    "sha256": "79f2e77e04dfb72c6c6c858b4e518f90f37fd2b0abb8fc51bea03086ca107b86",
+    "size": 732
+   },
+   "main_file_cache.idx19": {
+    "sha256": "4a0bcc989cd46b75a647b1fe088e2b2579ea424c0854586eeb4d68496f93bb81",
+    "size": 474
+   },
+   "main_file_cache.idx2": {
+    "sha256": "9a5c55d943afe700dbc68be93f3aee7687b88d7463f5f4256b2121911aa9dedf",
+    "size": 282
+   },
+   "main_file_cache.idx20": {
+    "sha256": "ff3115a7a02f73782d5e7bc8a851824ec9a134f4b50cbdf15409938eeb7f3d57",
+    "size": 720
+   },
+   "main_file_cache.idx21": {
+    "sha256": "b04a1202b6572d4371ca1b0d63e7541b368e03b9be3f246a1636d3816f2543d1",
+    "size": 72
+   },
+   "main_file_cache.idx22": {
+    "sha256": "f91ba6c99b3168ea304c54e155af9f3875965dd7cb59f246f0da56bea5c25b4f",
+    "size": 54
+   },
+   "main_file_cache.idx23": {
+    "sha256": "7df6e58b9e4f0ee0a4a323598c5a6768c31967ad792baa369a44f8e50b7007ed",
+    "size": 570
+   },
+   "main_file_cache.idx24": {
+    "sha256": "4f8092e02b77bc05a439b4e3e88c5b90784b07ab1e0ede5a59687dec050b3c3d",
+    "size": 12
+   },
+   "main_file_cache.idx25": {
+    "sha256": "79312c68d417718a2076c01903bcc4458cbd729009f474d12c71474f2282d906",
+    "size": 12
+   },
+   "main_file_cache.idx255": {
+    "sha256": "332f7750abe0a65d1defa3c745cd4328b239ade5042a68526515b20095716116",
+    "size": 222
+   },
+   "main_file_cache.idx26": {
+    "sha256": "bc061029813d9823d1467dfd71b20b3b7c47ce100b53412baad7ab3ece4d6540",
+    "size": 6
+   },
+   "main_file_cache.idx27": {
+    "sha256": "35ae3df5f3501e1da9cf94f577f97e218b104d5fef81a65f802fd4466fb99e1b",
+    "size": 12
+   },
+   "main_file_cache.idx28": {
+    "sha256": "869545dc910c4be41ad43acfaa9bbf40962b34f644931a529f5ddf39740156f7",
+    "size": 24
+   },
+   "main_file_cache.idx29": {
+    "sha256": "1a8a52ed4bbf2296e00483d50c461add23d5c0fcb0a48c40a5c08b398d0fc893",
+    "size": 6
+   },
+   "main_file_cache.idx3": {
+    "sha256": "8dc2fc20856ee4531c10cc49cff166b39a2429f259a001fa505a1ef3526e5aff",
+    "size": 6420
+   },
+   "main_file_cache.idx30": {
+    "sha256": "97e3bfdb82d0b2f8fd569a0d9ca69a4b6104b89bdfa85670aa83f8ed362e5fca",
+    "size": 216
+   },
+   "main_file_cache.idx31": {
+    "sha256": "5e13ba18ed54a583ce54e01cd7dac5160980671b3c7007a2eb74dab97bc31730",
+    "size": 24
+   },
+   "main_file_cache.idx32": {
+    "sha256": "88e01d2e992a54c8f8766aba448709b138620f406a9df1877d65367487624b4f",
+    "size": 22770
+   },
+   "main_file_cache.idx33": {
+    "sha256": "9f421061ec8158c87213450dbabf36a87cee6fd7d6c29506f6e9db5b366fecb1",
+    "size": 12
+   },
+   "main_file_cache.idx34": {
+    "sha256": "b32434b565065e81dfe0decd90f48dbcd925482e800e2ee42a1c9890b4d59eba",
+    "size": 22770
+   },
+   "main_file_cache.idx35": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+   },
+   "main_file_cache.idx36": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+   },
+   "main_file_cache.idx4": {
+    "sha256": "ccdc44c0909d3322bf726a4918d9cccd6fa8392c2cab1fd6027ea6fc21989e70",
+    "size": 61428
+   },
+   "main_file_cache.idx5": {
+    "sha256": "722df453adec40d1dfaba19f312b29cbdd68fc9885b9b152b33f8a2b604ae255",
+    "size": 31062
+   },
+   "main_file_cache.idx6": {
+    "sha256": "88df95680d99eaca6754e86362e786a58914ce55e28e2eff21359b425eb397d5",
+    "size": 5766
+   },
+   "main_file_cache.idx7": {
+    "sha256": "30cc00c3dbb5a15bc3ac13e6962d482a58887bc5d1dddb2ca46e827c248e4f3b",
+    "size": 376788
+   },
+   "main_file_cache.idx8": {
+    "sha256": "a3eeb37f48df9cfe30d3d7e018280caf54867eaddd635e6a77a85ca40e061819",
+    "size": 27276
+   },
+   "main_file_cache.idx9": {
+    "sha256": "745ce3b377ace71c919bd73f0c5943163969753c7402f0d000b9a0917e55f20c",
+    "size": 5460
+   }
+  },
+  "guide": "docs/CACHE_SETUP.md",
+  "where": "https://mega.nz/folder/ZMN2AQaZ#4rJgfzbVW0_mWsr1oPLh1A"
+ },
+ "format": 1,
+ "jdks": {
+  "21": {
+   "max_bytes": 400000000,
+   "publisher": "Eclipse Adoptium (Temurin 21.0.12.1+1)",
+   "sha256": "ce79869e1307ed8ee1e2baa86a412b1eb5b75d10a01006d788a6f968bcfaee94",
+   "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jdk_x64_linux_hotspot_21.0.12.1_1.tar.gz"
+  },
+  "8": {
+   "max_bytes": 400000000,
+   "publisher": "Eclipse Adoptium (Temurin 8u504-b01)",
+   "sha256": "9c70e102f527ac674ac2fe9c7d47b9a04e2d19842ba5ab8e9b33f368bbadfaea",
+   "url": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u504-b01/OpenJDK8U-jdk_x64_linux_hotspot_8u504b01.tar.gz"
+  }
+ },
+ "note": "Every external input the installer fetches or asks for. SoloScape hosts none of these bytes; the player's own computer fetches each one from the publisher named here. JDKs and 7-Zip are checked against the hashes pinned here; upstream sources against pinned commit ids; Gradle dependencies are not hash-pinned. The cache hashes identify the copy this project tested, not an upstream signature or a grant of permission.",
+ "platform": {
+  "machine": "x86_64",
+  "system": "Linux"
+ },
+ "sevenzip": {
+  "max_bytes": 10000000,
+  "member": "7zzs",
+  "member_sha256": "b81c37aca9b7af945916d84235dcb27beaef519417130a594915b6583a5b1710",
+  "publisher": "7-Zip 23.01 (static Linux x64 build)",
+  "sha256": "23babcab045b78016e443f862363e4ab63c77d75bc715c0b3463f6134cbcf318",
+  "url": "https://www.7-zip.org/a/7z2301-linux-x64.tar.xz"
+ },
+ "tools": {
+  "micromamba": {
+   "publisher": "mamba-org micromamba 2.9.0 (static Linux x64)",
+   "sha256": "366cd9cd8be14df1ab8ed50352a82111082a36686b2d389fdb79a92c3fafb3e3",
+   "size": 18292808,
+   "url": "https://github.com/mamba-org/micromamba-releases/releases/download/2.9.0-0/micromamba-linux-64"
+  },
+  "packages": [
+   {
+    "name": "7zip",
+    "sha256": "e4edfb068420590320b2b7d8ed638405b2bc9582ece25944d704f0930f9cd970",
+    "size": 2167122,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/7zip-26.04-h4dbf13b_0.conda",
+    "version": "26.04"
+   },
+   {
+    "name": "_openmp_mutex",
+    "sha256": "1dd3fffd892081df9726d7eb7e0dea6198962ba775bd88842135a4ddb4deb3c9",
+    "size": 28948,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda",
+    "version": "4.5"
+   },
+   {
+    "name": "bzip2",
+    "sha256": "1a0d382c515ebf55f8ee1f38c8b81bc95af5c2acc42ad53b66bc5df932032f96",
+    "size": 257808,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_10.conda",
+    "version": "1.0.8"
+   },
+   {
+    "name": "c-ares",
+    "sha256": "9c37cc233238adf366ea75b0e845662a5be07ceadf62e458183516369340274b",
+    "size": 228700,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/c-ares-1.34.8-hebe6cf0_2.conda",
+    "version": "1.34.8"
+   },
+   {
+    "name": "ca-certificates",
+    "sha256": "d65aa0c8990f34e1e86e6b505c8a149fea6cfbfcccef087a77c0bcb0b4fbe159",
+    "size": 129191,
+    "url": "https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.10.18-hbd8a1cb_0.conda",
+    "version": "2026.10.18"
+   },
+   {
+    "name": "git",
+    "sha256": "d5654608f2bed18580fa05e22d80093fc746cc70dea1d6a208e7a9f65b1888e0",
+    "size": 11920563,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/git-2.56.0-pl5440h3795e67_0.conda",
+    "version": "2.56.0"
+   },
+   {
+    "name": "icu",
+    "sha256": "9f07834f0c546ab14d885ce0366285f61f44e326c0edd1fc63b8294e113ae432",
+    "size": 14459115,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/icu-78.3-py310h44b86e0_2.conda",
+    "version": "78.3"
+   },
+   {
+    "name": "keyutils",
+    "sha256": "dd053c96dcb0dcfd59422aefea9d2fe937a190167f34fba7893ec1e10a7e8963",
+    "size": 135295,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/keyutils-1.6.3-h7cc23a3_1.conda",
+    "version": "1.6.3"
+   },
+   {
+    "name": "krb5",
+    "sha256": "2a5c38c85e63df84c4e69ee71439841ce570d259ae3060627bb9a49a938d66f4",
+    "size": 1394333,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/krb5-1.22.2-hbc21106_2.conda",
+    "version": "1.22.2"
+   },
+   {
+    "name": "ld_impl_linux-64",
+    "sha256": "901649b1edbe841fd4ee7e2d491a05184ed540eb01cdae506872f344babc1d28",
+    "size": 742109,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.46.1-default_hbd61a6d_103.conda",
+    "version": "2.46.1"
+   },
+   {
+    "name": "libcurl",
+    "sha256": "d2db14d80efb4f2e76e76561c633f1767f7543987f2bcb54a067a9d264d432ab",
+    "size": 505683,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libcurl-8.23.0-ha042cf0_0.conda",
+    "version": "8.23.0"
+   },
+   {
+    "name": "libedit",
+    "sha256": "45301f14f4eb66da57cfaf2d265f3eeee73f8b07e99614ee3afc5b26eea91126",
+    "size": 135877,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libedit-3.1.20260512-pl5321h373387f_0.conda",
+    "version": "3.1.20260512"
+   },
+   {
+    "name": "libev",
+    "sha256": "e4418f68d01a6307c4431b585c71b584f40189877364e542ee87deb777f5e85b",
+    "size": 43220,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libev-4.33-h280c20c_3.conda",
+    "version": "4.33"
+   },
+   {
+    "name": "libexpat",
+    "sha256": "6de73033a7c5f712c9c5a54124e4581e025691029835e5bceaf10a333a7e7bc0",
+    "size": 77893,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libexpat-2.8.5-hd2095e1_0.conda",
+    "version": "2.8.5"
+   },
+   {
+    "name": "libffi",
+    "sha256": "c8c7583ef063bc3c430f1d48298e5ad24f796a35c22ed5b14183325825a61106",
+    "size": 68004,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libffi-3.7.0-h81df57d_1.conda",
+    "version": "3.7.0"
+   },
+   {
+    "name": "libgcc",
+    "sha256": "e031634c3a928f9594eba868bc46ef5230d6571a364a0c63215b06c4563bfcea",
+    "size": 1058444,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libgcc-16.2.0-ha9f2e26_7.conda",
+    "version": "16.2.0"
+   },
+   {
+    "name": "libgomp",
+    "sha256": "92a0bb350c7be6a4eedcb4e111c60aefd176018e6b1c009a6e025dbe9bbcd758",
+    "size": 640566,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libgomp-16.2.0-he0feb66_7.conda",
+    "version": "16.2.0"
+   },
+   {
+    "name": "libiconv",
+    "sha256": "f943117edb9cd4d9c61cc972eee5a34291dc55ea7a6e9e38da104995841cbcb6",
+    "size": 789471,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libiconv-1.18-h0cb94f2_3.conda",
+    "version": "1.18"
+   },
+   {
+    "name": "liblzma",
+    "sha256": "9787df8c22a59c9a70d3e5a10db9ad663485e75e9ccc3f09bd092cb7b95e0dab",
+    "size": 112995,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/liblzma-5.8.3-hb03c661_1.conda",
+    "version": "5.8.3"
+   },
+   {
+    "name": "libnghttp2",
+    "sha256": "11a2f54a6f391e25738bce0023e6ef499600147bbcf21c1fa69d2e251b03cc6a",
+    "size": 649974,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libnghttp2-1.68.1-h74cf4be_1.conda",
+    "version": "1.68.1"
+   },
+   {
+    "name": "libnsl",
+    "sha256": "927fe72b054277cde6cb82597d0fcf6baf127dcbce2e0a9d8925a68f1265eef5",
+    "size": 33731,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libnsl-2.0.1-hb9d3cd8_1.conda",
+    "version": "2.0.1"
+   },
+   {
+    "name": "libpsl",
+    "sha256": "09e8effdc89bc5d021349318d32b85594f5b8d8e3ab8f90a85b81f8fe695a566",
+    "size": 72519,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libpsl-0.23.1-hd9e3e90_1.conda",
+    "version": "0.23.1"
+   },
+   {
+    "name": "libpython",
+    "sha256": "37017ac4a784c50f1fc73c7b0eb090c7f29f4541c9014c4b4e10daa275488fdd",
+    "size": 8775924,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libpython-3.12.15-ha57cdbe_2_cpython.conda",
+    "version": "3.12.15"
+   },
+   {
+    "name": "libsqlite",
+    "sha256": "07b3c98282022f05781122d073f84e944bfb4299946e8457ece3ce6c384ff78e",
+    "size": 983668,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libsqlite-3.54.1-h13e7031_0.conda",
+    "version": "3.54.1"
+   },
+   {
+    "name": "libssh2",
+    "sha256": "7e463000fa1cba3f3a6597b776f6ab301d425a96e3bc20d0d9d76a3b9f237aa3",
+    "size": 306045,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libssh2-1.11.1-h6154650_1.conda",
+    "version": "1.11.1"
+   },
+   {
+    "name": "libstdcxx",
+    "sha256": "fa7018298629fc429971fffd6ecba3d27a7b02e4e890d6a93ea01ffebe8cb745",
+    "size": 6615436,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-16.2.0-h934c35e_7.conda",
+    "version": "16.2.0"
+   },
+   {
+    "name": "libuuid",
+    "sha256": "f34b8d1de9a2bf62476d8608057d9b8a918d97444236dc53a47128f2fae79041",
+    "size": 34442,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.42.4-hcfc3c73_0.conda",
+    "version": "2.42.4"
+   },
+   {
+    "name": "libxcrypt",
+    "sha256": "f7e9292dd219a6435bbb1223da9586c3e70d66d169c5a92f08db3f2127df04e9",
+    "size": 101957,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libxcrypt-4.4.38-h280c20c_0.conda",
+    "version": "4.4.38"
+   },
+   {
+    "name": "libzlib",
+    "sha256": "eb8a0db0aa570124f7d2a93d7c7f596e3390df5e047818d873baad32985fc736",
+    "size": 63713,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.3.2-h25fd6f3_3.conda",
+    "version": "1.3.2"
+   },
+   {
+    "name": "ncurses",
+    "sha256": "5d46557214ed184381dafe835b7c94a474a1c3b307a08a250b1ea4779b44ffb3",
+    "size": 911196,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.6-hdb14827_1.conda",
+    "version": "6.6"
+   },
+   {
+    "name": "openssl",
+    "sha256": "9c1533f1cf784f0e250919c0c9762d0b0e6bc727a79290ffb7cea1ceca1d038c",
+    "size": 3195299,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/openssl-3.6.5-h781a0a9_0.conda",
+    "version": "3.6.5"
+   },
+   {
+    "name": "packaging",
+    "sha256": "c432626b16768b8dab228bfb706f7060c2d462a21c516d240f68f2f902b5a044",
+    "size": 116363,
+    "url": "https://conda.anaconda.org/conda-forge/noarch/packaging-26.3-pyhc364b38_0.conda",
+    "version": "26.3"
+   },
+   {
+    "name": "pcre2",
+    "sha256": "9ebb10a4eb3be51ae67d85c679f5a7a50cb040ed25c783e6331a225ea09991d4",
+    "size": 1218833,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/pcre2-10.47-h8b3dc9c_1.conda",
+    "version": "10.47"
+   },
+   {
+    "name": "perl",
+    "sha256": "43afad1c27c24ccc40d98461ab7e1648ccac876421a8783167861ae19c4edc83",
+    "size": 11438995,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/perl-5.44.0-1_h7cc23a3_perl5.conda",
+    "version": "5.44.0"
+   },
+   {
+    "name": "pip",
+    "sha256": "c205bae42eb11b364fe3663a817cbcbc20a8ef544c6b2ff6f391013487117259",
+    "size": 1199593,
+    "url": "https://conda.anaconda.org/conda-forge/noarch/pip-26.2.1-pyh8b19718_0.conda",
+    "version": "26.2.1"
+   },
+   {
+    "name": "python",
+    "sha256": "f8a38c33f627c68e35d02cc5a11eff25eadb853791ac40bf9cc569315d25bc54",
+    "size": 23065587,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/python-3.12.15-h5f976f7_2_cpython.conda",
+    "version": "3.12.15"
+   },
+   {
+    "name": "readline",
+    "sha256": "01b3fe073a66e321970d09e04b388708f8cbdca5cdfbfcb7c9eeb470ad10383d",
+    "size": 348899,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/readline-8.3-hd6e31c0_1.conda",
+    "version": "8.3"
+   },
+   {
+    "name": "setuptools",
+    "sha256": "9e200ee5f9ff19a4d94e4b51c4856d53dec849f91032f345cf0c6bc3d51a7183",
+    "size": 524488,
+    "url": "https://conda.anaconda.org/conda-forge/noarch/setuptools-84.0.0-pyh332efcf_0.conda",
+    "version": "84.0.0"
+   },
+   {
+    "name": "tk",
+    "sha256": "a1a241d172c1ccab067ba245206dd048bc3c2d1b84504b53c9468e99adfc16a1",
+    "size": 3566806,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_h1df4ec4_4.conda",
+    "version": "8.6.13"
+   },
+   {
+    "name": "tzdata",
+    "sha256": "b928c30ddcb0e3f544c6eade8352737e6e610e263276b90232db6a578ef899d8",
+    "size": 118849,
+    "url": "https://conda.anaconda.org/conda-forge/noarch/tzdata-2026c-h151e31d_0.conda",
+    "version": "2026c"
+   },
+   {
+    "name": "wheel",
+    "sha256": "ba64b29b6d418024cb565081a1799262cb2780d2534ff4c14f76aa858c4286cd",
+    "size": 34528,
+    "url": "https://conda.anaconda.org/conda-forge/noarch/wheel-0.48.0-pyhd8ed1ab_0.conda",
+    "version": "0.48.0"
+   },
+   {
+    "name": "zstd",
+    "sha256": "47d682b9f6d6ec9eb1a6e6c3e75ea6273e899e78fb7fc59f81d39745009fbc60",
+    "size": 601301,
+    "url": "https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_7.conda",
+    "version": "1.5.7"
+   }
+  ],
+  "publisher": "conda-forge (python, git, 7zip and their dependencies)",
+  "specs": [
+   "python=3.12",
+   "git",
+   "7zip"
+  ]
+ }
+}

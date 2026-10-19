@@ -82,6 +82,8 @@ def export():
                     copy_file(source, destination / name)
         for name, pin in local_dev.PINNED.items():
             repo = local_dev.ROOT / 'upstream' / name
+            if name in local_dev.REFERENCE_ONLY and not (repo / '.git').is_dir():
+                continue
             actual = subprocess.check_output(['git', '-C', str(repo), 'rev-parse', 'HEAD'], text=True).strip()
             if actual != pin:
                 raise ValueError('Upstream pin mismatch: ' + name)

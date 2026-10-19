@@ -110,6 +110,26 @@ class Building(SourceCase):
         built = self.build(folders=[str(only_cache)])
         self.assertEqual(sf.git(built / 'upstream/runelite-client', 'rev-parse', 'HEAD'), self.source.pins['runelite-client'])
 
+    def test_an_unservable_reference_pin_is_skipped_but_a_needed_one_is_not(self):
+        only_cache = self.tmp / 'only-cache2'
+        (only_cache / '.gradle').mkdir(parents=True)
+        (only_cache / '.gradle/modules.bin').write_bytes(b'x')
+        origins = dict(sb.ORIGINS)
+        origins['634-client'] = str(self.tmp / 'gone')  # the host no longer serves the pinned reference commit
+        self.patch(sb, 'ORIGINS', origins)
+        built = self.build(folders=[str(only_cache)])
+        self.assertFalse((built / 'upstream/634-client').exists())
+        self.assertEqual(sf.git(built / 'upstream/game-server', 'rev-parse', 'HEAD'), self.source.pins['game-server'])
+
+    def test_an_unservable_needed_pin_still_fails_plainly(self):
+        only_cache = self.tmp / 'only-cache3'
+        (only_cache / '.gradle').mkdir(parents=True)
+        (only_cache / '.gradle/modules.bin').write_bytes(b'x')
+        origins = dict(sb.ORIGINS)
+        origins['runelite-client'] = str(self.tmp / 'gone')
+        self.patch(sb, 'ORIGINS', origins)
+        self.refused('source-unavailable', 'upstream runelite-client', folders=[str(only_cache)])
+
     def test_a_previous_workspace_is_replaced_and_one_is_kept(self):
         self.build()
         other = self.source.manifest(commit=self.source.commit)[0]

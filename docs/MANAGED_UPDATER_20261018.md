@@ -194,3 +194,7 @@ Client patch stack 0001–0057 applies cleanly to a fresh clone of the pinned cl
 - Physical Deck, SDL controller, Steam Gaming Mode and audio acceptance were not run; the native probe uses synthetic AWT key events on a private Xvfb display.
 - Disk-full and power-loss behaviour is not proven. The fsync/atomic-replace sequence and process-kill cut tests model a crashed coordinator only.
 - Concurrent installs sharing profiles but not an install guard are not coordinated.
+
+## First install
+
+The [one-command installer](INSTALLER_20261018.md) now creates the first managed install (JDKs, source, verified cache, build, registration), so a player no longer has to run `prepare-build.sh` and `managed_install.py init` by hand. A cold run on a clean data folder fetched the pinned JDKs and 7-Zip, unpacked a locally made cache archive (the real MEGA archive was not used) and built the game from the pushed commit with real Gradle downloads; the installed launcher then opened. The 634-client pin cannot be fetched from GitHub any more and is now a reference-only pin that is skipped when unavailable.

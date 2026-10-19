@@ -234,6 +234,9 @@ def provision_upstream(workspace, manifest, local_folders, runner):
         else:
             if _git(runner, ['init', '-q', str(target)], workspace) or _git(
                     runner, ['fetch', '--quiet', '--depth=1', '--no-tags', '--no-recurse-submodules', ORIGINS[name], pin], target):
+                if name in runtime_manifest.REFERENCE_PINS:  # provenance-only pin the build never reads; the host may no longer serve it
+                    shutil.rmtree(target, ignore_errors=True)
+                    continue
                 _fail_git(runner, 'fetch upstream ' + name)
             if _git(runner, ['checkout', '--quiet', '--detach', 'FETCH_HEAD'], target):
                 _fail_git(runner, 'check out upstream ' + name)
