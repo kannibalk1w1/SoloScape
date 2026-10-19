@@ -1,0 +1,98 @@
+diff --git a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+--- a/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
++++ b/client/src/net/runelite/client/soloscape/launcher/SoloScapeLauncher.java
+@@ -301,20 +301,23 @@
+     private void updates(Component anchor)
+     {
+         final JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(anchor), "SoloScape updates", Dialog.ModalityType.APPLICATION_MODAL);
+-        final JLabel installed = new JLabel("Installed: checking…"), candidate = new JLabel(" ");
+-        final String intro = "Choose Check for updates. Checking never changes your game, and you can keep playing the installed version.";
++        final JLabel installed = new JLabel("Installed: checking…"), previous = new JLabel("Previous version: none"), candidate = new JLabel(" ");
++        final String intro = "Choose Check for updates. Checking never changes your game, and you can keep playing the installed version.\n\n"
++            + "Roll Back returns to the previous program version. Only the program changes: your characters keep their current progress, and no save or backup is restored.";
+         final JTextArea text = new JTextArea(intro, 10, 58);
+         text.setEditable(false); text.setLineWrap(true); text.setWrapStyleWord(true);
+         final JProgressBar bar = new JProgressBar(0, 1000); bar.setStringPainted(true); bar.setString(" ");
+         final JButton check = new LauncherButton("Check for updates"), download = new LauncherButton("Download"),
+-            install = new LauncherButton("Install and Restart"), cancel = new LauncherButton("Cancel Download"), close = new LauncherButton("Close");
++            install = new LauncherButton("Install and Restart"), cancel = new LauncherButton("Cancel"), close = new LauncherButton("Close"),
++            rebuild = new LauncherButton("Update Source and Rebuild"), rollback = new LauncherButton("Roll Back");
++        final String[] rollbackAsk = {""};
+         final String[] checked = {""};
+         final String[] shown = {null};
+         final Runnable[] poll = {null};
+-        JPanel buttons = new JPanel(new GridLayout(1, 0, 8, 8));
+-        for (JButton button : new JButton[]{check, download, install, cancel, close}) buttons.add(button);
++        JPanel buttons = new JPanel(new GridLayout(0, 4, 8, 8));
++        for (JButton button : new JButton[]{check, download, rebuild, install, rollback, cancel, close}) buttons.add(button);
+         JPanel body = new JPanel(new BorderLayout(8, 8));
+-        JPanel top = new JPanel(new GridLayout(0, 1, 4, 4)); top.add(installed); top.add(candidate); body.add(top, BorderLayout.NORTH);
++        JPanel top = new JPanel(new GridLayout(0, 1, 4, 4)); top.add(installed); top.add(previous); top.add(candidate); body.add(top, BorderLayout.NORTH);
+         body.add(new JScrollPane(text), BorderLayout.CENTER);
+         JPanel bottom = new JPanel(new BorderLayout(8, 8)); bottom.add(bar, BorderLayout.NORTH); bottom.add(buttons, BorderLayout.SOUTH);
+         body.add(bottom, BorderLayout.SOUTH);
+@@ -326,23 +329,40 @@
+             JsonObject now = data.getAsJsonObject("installed");
+             installed.setText(managed ? "Installed: release " + now.get("release").getAsString() + " (" + shortId(now) + ")"
+                 : "Installed: source or development copy");
++            JsonElement earlier = data.get("previous");
++            if (managed && earlier != null && !earlier.isJsonNull())
++            {
++                JsonObject before = earlier.getAsJsonObject();
++                String label = before.get("release").isJsonNull() ? "unknown release" : "release " + before.get("release").getAsString();
++                previous.setText("Previous version: " + label + " (" + shortId(before) + ")");
++                rollbackAsk[0] = "Return to " + label + " (" + shortId(before) + ")?\n\nOnly the program version changes. Your characters keep their "
++                    + "current progress, and no save or backup is restored. The launcher restarts.";
++            }
++            else { previous.setText("Previous version: none"); rollbackAsk[0] = ""; }
+             JsonElement staged = data.get("candidate");
+             candidate.setText(staged == null || staged.isJsonNull() ? " " : "Downloaded and verified: release "
+                 + staged.getAsJsonObject().get("release").getAsString() + " (" + shortId(staged.getAsJsonObject()) + ")");
+             String stage = data.get("stage").getAsString();
+             long done = data.get("done").getAsLong(), total = data.get("total").getAsLong();
+             boolean active = data.get("can_cancel").getAsBoolean();
++            String detail = data.has("detail") ? data.get("detail").getAsString() : "";
++            bar.setIndeterminate(active && total == 0);
+             bar.setValue(total > 0 ? (int)(done * 1000 / total) : 0);
+-            bar.setString(active && total > 0 ? stage + " " + mib(done) + " of " + mib(total) : " ");
++            bar.setString(active ? (total > 0 ? stage + " " + mib(done) + " of " + mib(total) : stage + (detail.isEmpty() ? "" : ": " + detail)) : " ");
+             String message = data.get("message").getAsString();
+             if (data.has("last_result") && !data.get("last_result").isJsonNull())
+                 message = data.getAsJsonObject("last_result").get("message").getAsString() + "\n\n" + message;
+             String full = (checked[0].isEmpty() ? "" : checked[0] + "\n\n") + message;
++            String blocked = data.has("rollback_message") ? data.get("rollback_message").getAsString() : "";
++            if (!blocked.isEmpty() && !active && !data.get("can_rollback").getAsBoolean())
++                full += (full.isEmpty() ? "" : "\n\n") + "Roll Back is unavailable: " + blocked;
+             if (full.isEmpty()) full = intro;
+             if (!full.equals(shown[0])) { shown[0] = full; text.setText(full); text.setCaretPosition(0); }
+             check.setEnabled(!active && !running);
+             download.setEnabled(data.get("can_download").getAsBoolean());
+             install.setEnabled(data.get("can_apply").getAsBoolean());
++            rebuild.setEnabled(data.get("can_rebuild").getAsBoolean());
++            rollback.setEnabled(data.get("can_rollback").getAsBoolean());
+             cancel.setEnabled(active);
+             Component focus = dialog.getFocusOwner();
+             if (focus instanceof AbstractButton && !focus.isEnabled()) close.requestFocusInWindow();
+@@ -359,7 +379,22 @@
+         });
+         download.addActionListener(e -> { download.setEnabled(false); request(command("update_download"), result -> poll[0].run(),
+             failure -> { checked[0] = failure; poll[0].run(); }); });
++        rebuild.addActionListener(e -> { rebuild.setEnabled(false); request(command("update_rebuild"), result -> poll[0].run(),
++            failure -> { checked[0] = failure; poll[0].run(); }); });
+         cancel.addActionListener(e -> request(command("update_cancel"), result -> poll[0].run()));
++        rollback.addActionListener(e -> {
++            if (rollbackAsk[0].isEmpty()) return;
++            int choice = JOptionPane.showOptionDialog(dialog, rollbackAsk[0], "Roll back", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
++                null, new Object[]{"Roll Back", "Cancel"}, "Cancel");
++            if (choice != 0) return;
++            rollback.setEnabled(false);
++            request(command("update_rollback"), result -> {
++                restartRequested = true; text.setText(result.getAsJsonObject().get("message").getAsString());
++                Window settingsDialog = dialog.getOwner(); dialog.dispose();
++                if (settingsDialog instanceof JDialog) settingsDialog.dispose();
++                close();
++            }, failure -> { checked[0] = failure; poll[0].run(); });
++        });
+         install.addActionListener(e -> {
+             install.setEnabled(false);
+             request(command("update_apply"), result -> {

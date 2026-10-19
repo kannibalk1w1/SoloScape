@@ -7,7 +7,7 @@ import java.nio.file.*;
 import java.util.concurrent.*;
 import javax.swing.*;
 
-/** Real Swing/controller adapter and real backend, with private deterministic release metadata. */
+/** Real Swing/controller adapter and real backend, with private deterministic release metadata (unmanaged source copy). */
 public final class NativeLauncherUpdateProbe {
     static Object launcher; static Path root; static Robot robot;
     static <T>T edt(Callable<T> call)throws Exception { FutureTask<T> task=new FutureTask<>(call);SwingUtilities.invokeAndWait(task);return task.get(); }
@@ -18,20 +18,29 @@ public final class NativeLauncherUpdateProbe {
     static JDialog dialog(String title) { for(Window w:Window.getWindows())if(w instanceof JDialog&&w.isShowing()&&title.equals(((JDialog)w).getTitle()))return (JDialog)w;return null; }
     static JButton button(Component component,String title) { if(component instanceof JButton&&title.equals(((JButton)component).getText()))return (JButton)component;if(component instanceof Container)for(Component c:((Container)component).getComponents()){JButton found=button(c,title);if(found!=null)return found;}return null; }
     static JTextArea notes(Component component) { if(component instanceof JTextArea)return (JTextArea)component;if(component instanceof Container)for(Component c:((Container)component).getComponents()){JTextArea found=notes(c);if(found!=null)return found;}return null; }
-    static void key(int code)throws Exception { robot.keyPress(code);Thread.sleep(120);robot.keyRelease(code);Thread.sleep(250); }
+    static void key(int code)throws Exception { robot.keyPress(code);Thread.sleep(400);robot.keyRelease(code);Thread.sleep(350); }
+    /** Mapped press, retried while the previous window's asynchronous focus restoration settles; fails if it never lands. */
+    static void pressUntil(int code,Callable<Boolean> done,String message)throws Exception {
+        for(int attempt=0;attempt<4;attempt++){
+            key(code);
+            long end=System.currentTimeMillis()+2500;
+            while(System.currentTimeMillis()<end){if(edt(done))return;Thread.sleep(40);}
+        }
+        throw new IllegalStateException(message);
+    }
     static void openSettings()throws Exception {
         edt(()->{((JButton)field("settings")).requestFocusInWindow();return null;});
         waitFor(()->KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()==field("settings"),"Settings did not receive seed focus");
-        key(KeyEvent.VK_ENTER);waitFor(()->dialog("Launcher Settings")!=null,"Mapped A did not open Settings");
-        require(edt(()->button(dialog("Launcher Settings"),"Check for updates")!=null),"Check button is absent from built launcher");
+        pressUntil(KeyEvent.VK_ENTER,()->dialog("Launcher Settings")!=null,"Mapped A did not open Settings");
+        require(edt(()->button(dialog("Launcher Settings"),"Updates…")!=null),"Updates button is absent from built launcher");
         for(int i=0;i<16;i++){
-            if(edt(()->KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()==button(dialog("Launcher Settings"),"Check for updates")))return;
+            if(edt(()->KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()==button(dialog("Launcher Settings"),"Updates…")))return;
             key(KeyEvent.VK_DOWN);
         }
-        throw new IllegalStateException("Mapped navigation did not reach Check for updates");
+        throw new IllegalStateException("Mapped navigation did not reach Updates");
     }
     static void fixture(int delay)throws Exception {
-        Files.write(root.resolve("update-response.json"),("{\"delay\":"+delay+",\"state\":\"release_available\",\"message\":\"Published release: v0.1.0. Automatic installation is not available yet.\",\"notes\":\"Original fixture notes: <html> stays plain text.\",\"install_available\":false}").getBytes("UTF-8"));
+        Files.write(root.resolve("update-response.json"),("{\"delay\":"+delay+",\"state\":\"release_available\",\"message\":\"Published release: v0.1.0. Automatic installation is not available yet.\",\"notes\":\"Original fixture notes: <html> stays plain text.\",\"install_available\":false,\"package\":null}").getBytes("UTF-8"));
     }
     public static void main(String[] args)throws Exception {
         root=Paths.get(args[0]);robot=new Robot();System.setProperty("soloscape.launcher.steamKeyboard","true");
@@ -39,15 +48,22 @@ public final class NativeLauncherUpdateProbe {
             fixture(0);
             launcher=edt(()->{Constructor<?> ctor=SoloScapeLauncher.class.getDeclaredConstructor(Path.class);ctor.setAccessible(true);return ctor.newInstance(root);});
             waitFor(()->((JFrame)field("frame")).isActive(),"Launcher not active");Thread.sleep(400);
-            openSettings();key(KeyEvent.VK_ENTER);waitFor(()->dialog("SoloScape updates")!=null,"Mapped A did not check updates");
-            edt(()->{JDialog update=dialog("SoloScape updates");require(update.getOwner()==dialog("Launcher Settings"),"Expected nested Settings ownership");require(notes(update).getText().contains("<html> stays plain text."),"Notes did not remain plain text");return null;});
+            openSettings();pressUntil(KeyEvent.VK_ENTER,()->dialog("SoloScape updates")!=null,"Mapped A did not open updates");
+            edt(()->{JDialog update=dialog("SoloScape updates");require(update.getOwner()==dialog("Launcher Settings"),"Expected nested Settings ownership");return null;});
+            waitFor(()->KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()==button(dialog("SoloScape updates"),"Check for updates"),"Updates dialog did not seed focus on Check");
+            pressUntil(KeyEvent.VK_ENTER,()->notes(dialog("SoloScape updates")).getText().contains("<html> stays plain text."),"Mapped A did not check updates, or notes were not plain text");
+            edt(()->{JDialog update=dialog("SoloScape updates");
+                require(!button(update,"Download").isEnabled()&&!button(update,"Install and Restart").isEnabled(),"A source copy must not offer download or install");
+                require(notes(update).getText().contains("cannot install updates"),"Source copy did not explain why it cannot install");return null;});
             Rectangle bounds=edt(()->{JDialog update=dialog("SoloScape updates");return new Rectangle(update.getLocationOnScreen(),update.getSize());});
             javax.imageio.ImageIO.write(robot.createScreenCapture(bounds),"png",root.resolve("launcher-update-check.png").toFile());
-            key(KeyEvent.VK_ESCAPE);waitFor(()->dialog("SoloScape updates")==null,"Mapped B did not close nested update dialog");
+            pressUntil(KeyEvent.VK_ESCAPE,()->dialog("SoloScape updates")==null,"Mapped B did not close nested update dialog");
             require(edt(()->dialog("Launcher Settings")!=null),"B also dismissed the parent Settings dialog");
             waitFor(()->KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow()==dialog("Launcher Settings"),"Nested B did not restore parent focus");
-            key(KeyEvent.VK_ESCAPE);waitFor(()->dialog("Launcher Settings")==null,"Mapped B did not return from Settings");
-            fixture(1000);openSettings();key(KeyEvent.VK_ENTER);key(KeyEvent.VK_ESCAPE);
+            pressUntil(KeyEvent.VK_ESCAPE,()->dialog("Launcher Settings")==null,"Mapped B did not return from Settings");
+            fixture(1000);openSettings();pressUntil(KeyEvent.VK_ENTER,()->dialog("SoloScape updates")!=null,"Mapped A did not open updates");
+            waitFor(()->KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()==button(dialog("SoloScape updates"),"Check for updates"),"Updates dialog did not seed focus on Check");key(KeyEvent.VK_ENTER);
+            pressUntil(KeyEvent.VK_ESCAPE,()->dialog("SoloScape updates")==null,"B did not close updates while a check was pending");key(KeyEvent.VK_ESCAPE);
             waitFor(()->dialog("Launcher Settings")==null,"Could not cancel Settings while check pending");Thread.sleep(1400);
             require(edt(()->dialog("SoloScape updates")==null),"Late response reopened a cancelled dialog");
             edt(()->{invoke("close");return null;});waitFor(()->!((JFrame)field("frame")).isDisplayable(),"Launcher did not close");

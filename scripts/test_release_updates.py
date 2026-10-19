@@ -85,7 +85,20 @@ class ReleaseUpdatesTests(unittest.TestCase):
             self.assertEqual(backend.dispatch({'action': 'update_check', 'url': 'https://elsewhere.invalid'})['state'], 'no_public_release')
             fetch.assert_called_once_with()
         with self.assertRaisesRegex(ValueError, 'Unknown launcher action'):
-            backend.dispatch({'action': 'update_apply'})
+            backend.dispatch({'action': 'update_feed', 'url': 'https://elsewhere.invalid'})
+        with self.assertRaisesRegex(RuntimeError, 'cannot install updates'):
+            backend.dispatch({'action': 'update_apply'})  # a source copy is never an install target
+        with self.assertRaisesRegex(RuntimeError, 'cannot install updates'):
+            backend.dispatch({'action': 'update_download', 'url': 'https://elsewhere.invalid'})
+        for action in ('update_rebuild', 'update_rollback'):  # neither takes a source, URL or command from the request
+            with self.assertRaisesRegex(RuntimeError, 'cannot install updates'):
+                backend.dispatch({'action': action, 'url': 'https://elsewhere.invalid', 'command': 'touch /tmp/x', 'commit': 'a' * 40})
+
+    def test_rebuild_and_rollback_refuse_to_start_while_a_world_runs(self):
+        backend = launcher_backend.Backend()
+        backend.worker = type('Alive', (), {'is_alive': lambda self: True})()
+        with self.assertRaisesRegex(RuntimeError, 'Save & Quit before rebuilding'):
+            backend.dispatch({'action': 'update_rebuild'})
 
 
 if __name__ == '__main__':

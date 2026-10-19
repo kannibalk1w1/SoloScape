@@ -2,6 +2,10 @@
 
 Requested17 October2026. The first implemented increment is **manual release discovery**, under Launcher Settings → Check for updates. Receiving and applying a complete playable update remains separate work. No GitHub release has been published by this workflow; the live public check on17 October returns `no_public_release`.
 
+## Managed updater (18 October 2026)
+
+The launcher now has a complete manual path: Launcher Settings → **Updates…** → Check, Download (progress, cancel), **Install and Restart**, run by a small trusted outer bootstrap that owns the install guard and the current/previous pointer. It refuses to switch while any launcher, world or inherited process holds the guard, while any profile has an unresolved session record, or when the candidate cannot read the existing logical save-storage version; rollback is pointer-only and never restores an older save. It consumes one declared fixed-project release package, uses realistic bounded sizes (768 MiB archive, 512 MiB per file, 2 GiB total), a whole-job deadline and cancellation, and keeps the GitHub HTTPS repository trust boundary explicit. See [MANAGED_UPDATER_20261018.md](MANAGED_UPDATER_20261018.md) for the design, evidence and limits. **No public release or public package exists**; building one is blocked on the unresolved distribution/licence questions listed there, not on the updater. The sections below record the earlier staged increments; where they say activation, UI or limits are "not done", the managed updater supersedes them as described in the new document.
+
 ## What works now
 
 The launcher requests metadata only from `kannibalk1w1/SoloScape`'s stable latest-release endpoint. It displays published release text as plain text, or a clear no-public-release/offline result. It never downloads an asset, pulls Git, executes release instructions or changes a profile. There is no installed release identity yet, so a published tag is not presented as proof that an installed development build is older or current.

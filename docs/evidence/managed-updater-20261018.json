@@ -1,0 +1,272 @@
+{
+  "backup_count": 6,
+  "build_record": "synthesized from the snapshot, not produced by a Gradle rebuild",
+  "checks": {
+    "activation_refused_while_launcher_runs": true,
+    "backups_all_valid": true,
+    "bootstrap_exit_clean": true,
+    "both_versions_verify": true,
+    "cache_unchanged": true,
+    "cancel_left_no_partial_or_version": true,
+    "continue_after_rollback_fields_equal": true,
+    "continue_after_update_fields_equal": true,
+    "incompatible_save_format_refused": true,
+    "install_a_sealed": true,
+    "local_files_copied_from_the_build_and_verified": true,
+    "native_second_session_capabilities_verified": true,
+    "no_staging_leftovers": true,
+    "packages_are_scripts_only": true,
+    "pointer_after_update": true,
+    "result_shown_once_then_cleared": true,
+    "rollback_kept_saves": true,
+    "rollback_launch_clean": true,
+    "rollback_pointer_only": true,
+    "round0_account_valid_storage_version": 1,
+    "round0_native_capabilities_verified": true,
+    "saves_untouched_by_refusal": true,
+    "two_version_contexts": true
+  },
+  "client_stack": "57 (0057-managed-update-dialog.patch)",
+  "consecutive_passes_on_current_code": 3,
+  "controller_modal_probe": "smoke-launcher.py --updates passed 15 of 15 after lengthening synthetic key holds",
+  "date": "2026-10-18",
+  "harness_history": "Four earlier attempts failed on harness/orchestration defects (python3 PATH shim, launcher focus without a window manager, a lost synthetic navigation press, a bookkeeping assertion); the final harness passed on consecutive runs, the last on the committed code.",
+  "incompatible_message": "Character Managed updater fixture uses save storage version 1, which release private-test-c cannot read. Saves were left unchanged.",
+  "manifest": {
+    "client_jar_sha256": "33a3884d33567372f41d29087c5f2a6f8dce9f6f70e9e4cf52527d6519cb85e6",
+    "files": 3859,
+    "format": 2,
+    "pins": {
+      "634-client": "b39d45f49a0480f3f200fe3e31ad0798faf163ab",
+      "game-server": "9f9113559eb686abd917893b5dca16404be07f93",
+      "runelite-client": "297bc8a4861755b676855664d32859054779c067"
+    },
+    "release": "private-test-b",
+    "server_jar_sha256": "71ea5d1a2b142fe8318d1e48bff1385b3093a5a5156fac2963252ebc2b883396",
+    "storage_versions": [
+      0,
+      1
+    ]
+  },
+  "not_a_release": true,
+  "package_bytes": {
+    "private-test-a": 88958,
+    "private-test-b": 88957
+  },
+  "passed": true,
+  "previous_round": {
+    "note": "first round: two full private packages, nothing supplied locally",
+    "package_bytes": {
+      "private-test-a": 61440945,
+      "private-test-b": 61440945
+    },
+    "probe_log": [
+      "launch 1: world played and verified",
+      "progress string while downloading: downloading 4.5 MiB of 58.6 MiB",
+      "launch 1: requesting install and restart",
+      "launch 2: continued after update",
+      "launch 3: continued"
+    ]
+  },
+  "private": true,
+  "probe_log": [
+    "launch 1: world played and verified",
+    "progress string while downloading: downloading 0.0 MiB of 0.1 MiB",
+    "launch 1: requesting install and restart",
+    "launch 2: continued after update",
+    "launch 3: continued"
+  ],
+  "real_checkout_round": {
+    "attempts": "5 complete runs: 2 failed on harness defects (bookkeeping assertion; fake download finished before scripted Cancel navigation), 3 passed (the last 2 on the final harness, 37 checks each)",
+    "backup_count": 8,
+    "checks": {
+      "activation_refused_while_launcher_runs": true,
+      "backups_all_valid": true,
+      "bootstrap_exit_clean": true,
+      "both_versions_verify": true,
+      "cache_unchanged": true,
+      "cancel_left_no_partial_or_version": true,
+      "continue_after_java_change_fields_equal": true,
+      "continue_after_rollback_fields_equal": true,
+      "continue_after_update_fields_equal": true,
+      "incompatible_save_format_refused": true,
+      "install_a_sealed": true,
+      "java_change_activated_pointer_only": true,
+      "java_change_downloaded_after_rebuild": true,
+      "java_change_launch_clean": true,
+      "java_change_rebuilt_with_the_supported_command": true,
+      "java_change_refusal_left_install_untouched": true,
+      "java_change_refused_with_actionable_message": true,
+      "java_change_version_carries_the_players_own_new_jars": true,
+      "launcher_ran_without_optional_artwork": true,
+      "local_files_copied_from_the_build_and_verified": true,
+      "login_json_byte_identical_throughout": true,
+      "maintainer_folder_prepared_by_real_prepare_build": true,
+      "native_second_session_capabilities_verified": true,
+      "no_staging_leftovers": true,
+      "packages_are_scripts_only": true,
+      "password_never_in_install_launcher_probe_or_bootstrap_log": true,
+      "player_folder_prepared_by_real_prepare_build": true,
+      "pointer_after_update": true,
+      "result_shown_once_then_cleared": true,
+      "rollback_kept_saves": true,
+      "rollback_launch_clean": true,
+      "rollback_pointer_only": true,
+      "round0_account_valid_storage_version": 1,
+      "round0_native_capabilities_verified": true,
+      "saves_untouched_by_refusal": true,
+      "superseded_version_pruned_current_and_previous_kept": true,
+      "version_contexts_one_per_launched_version": true
+    },
+    "jar_hashes_after_rebuild": {
+      "maintainer": {
+        "client": "ab5f47e70dd1c120",
+        "server": "68734009827f237b"
+      },
+      "player": {
+        "client": "8c5f7f3f298deb59",
+        "server": "68734009827f237b"
+      }
+    },
+    "jar_hashes_first_build": {
+      "client": "8c5f7f3f298deb59",
+      "server": "ba1d3c5eb9c71a2e"
+    },
+    "note": "Build records, jars and data are genuine output of scripts/prepare-build.sh in disposable copies; the Java change is an inert comment-only server patch.",
+    "package_bytes": {
+      "private-test-a": 92349,
+      "private-test-b": 92349
+    },
+    "probe_log": [
+      "launch 1: world played and verified",
+      "progress string while downloading: downloading 0.0 MiB of 0.1 MiB",
+      "launch 1: requesting install and restart",
+      "launch 2: continued after update",
+      "launch 3: continued",
+      "launch 4: continued"
+    ],
+    "rebuild_refusal_message": "Release private-test-j needs a different build than the one in <disposable>/1792343282230580260/player (differs: patches/server/0999-acceptance-inert-rebuild.patch). Update that folder to the source of release private-test-j, run scripts/prepare-build.sh in it, then press Download again. Your installed version keeps working."
+  },
+  "rebuild_and_rollback_round": {
+    "attempt_history": "Seven attempts: failures were a maintainer folder without JDK configuration, a nested EDT call and unsafe repeated key presses in the new probe, a download throttle that outlasted the scripted navigation, a latent apply_client_patches.py bug (scratch folder inside a git checkout made every patch look already applied; fixed with a regression test), and one lost navigation press on the rollback confirmation (retry added). The last two runs passed on final code.",
+    "fresh_run": {
+      "backup_count": 6,
+      "checks": {
+        "activation_refused_while_launcher_runs": true,
+        "backups_all_valid": true,
+        "bootstrap_exit_clean": true,
+        "both_versions_verify_and_are_the_only_ones_kept": true,
+        "cache_unchanged": true,
+        "cancel_ended_every_owned_build_process": true,
+        "cancel_kept_the_private_dependency_cache": true,
+        "cancel_left_no_workspace_or_version": true,
+        "continue_after_rollback_fields_equal": true,
+        "continue_after_update_fields_equal": true,
+        "install_a_sealed": true,
+        "launcher_ran_without_optional_artwork": true,
+        "launcher_still_running_after_cancel": true,
+        "login_json_byte_identical_throughout": true,
+        "maintainer_built_by_real_prepare": true,
+        "native_session_after_rollback_verified": true,
+        "native_session_after_update_verified": true,
+        "no_staging_leftovers": true,
+        "no_work_folders_left": true,
+        "one_version_context_per_launched_version": true,
+        "password_never_in_install_launcher_probe_build_log_or_bootstrap_log": true,
+        "player_built_by_real_prepare": true,
+        "player_folder_byte_identical_after_rebuild_and_cancel": true,
+        "pointer_after_rollback": true,
+        "pointer_after_update": true,
+        "rebuild_runs_in_an_isolated_workspace_inside_the_install": true,
+        "rebuild_started_owned_build_processes": true,
+        "rebuilt_release_staged_and_verified": true,
+        "release_declares_the_exact_source_commit": true,
+        "release_package_is_scripts_only": true,
+        "results_shown_once_then_cleared": true,
+        "rollback_kept_current_progress_byte_identical": true,
+        "round0_account_storage_version": 1,
+        "staged_version_carries_the_new_jars": true,
+        "workspace_build_record_matches_the_release": true,
+        "workspace_is_the_declared_commit": true
+      },
+      "jar_hashes": {
+        "launcher_rebuild": {
+          "client": "dbf2f1fd00137110",
+          "server": "68734009827f237b"
+        },
+        "maintainer": {
+          "client": "82d5c7a15a949c27",
+          "server": "68734009827f237b"
+        },
+        "player_first_build": {
+          "client": "a29676a6dca3fdd9",
+          "server": "ba1d3c5eb9c71a2e"
+        }
+      },
+      "package_bytes": {
+        "a": 103584,
+        "j": 103638
+      },
+      "passed": true,
+      "probe_log": [
+        "launch 1: world played and verified",
+        "refusal: Published release: private-test-j. An installable package is attached.  PRIVATE TEST METADATA: this is not a published SoloScape release.  Release private-test-j needs a different build than the one in <disposable>/",
+        "progress string while building: building: starting",
+        "launch 1: requesting install and restart",
+        "launch 2: continued after the Java-changing update",
+        "confirmation: Return to release private-test-a (8df608525e30)?  Only the program version changes. Your characters keep their current progress, and no save or backup is restored. The launcher restarts.",
+        "launch 2: confirming roll back",
+        "launch 3: continued after the rollback"
+      ]
+    },
+    "not_exercised": "the real github.com project and upstream remotes (a disposable local git repository stands in for the fixed origin via the acceptance shim; upstream pins came from the registered folder)",
+    "scope": "Private disposable native acceptance with mapped AWT Robot input on owned Xvfb; real prepare-build.sh builds in disposable folders; a disposable local git repository stands in for the fixed project repository and fake_github.py for GitHub metadata at the backend seams; no SDL, hardware, audio or owner install.",
+    "second_run_reusing_the_first_runs_real_builds": {
+      "checks": 36,
+      "jar_hashes": {
+        "launcher_rebuild": {
+          "client": "14b6e975d2bb7f42",
+          "server": "68734009827f237b"
+        },
+        "maintainer": {
+          "client": "2e6cf9c6def9c895",
+          "server": "68734009827f237b"
+        },
+        "player_first_build": {
+          "client": "47d0c722f269b953",
+          "server": "ba1d3c5eb9c71a2e"
+        }
+      },
+      "passed": true
+    }
+  },
+  "round": "code-only packages (scripts, pins, patch hashes); jars and data copied from a registered private build folder",
+  "scope": "Private disposable native acceptance with mapped AWT Robot input on owned Xvfb; fake GitHub at the backend network seams; no SDL, hardware, audio or owner install.",
+  "server_stack": "54 (deck-export snapshot read as an immutable input)",
+  "title": "Managed updater private native acceptance",
+  "tool_sha256": {
+    "experiments/managed-updater/acceptance.py": "b972b96ae35b44763607675d32591b1485cced1bdfef39311c00d7d1891a0bc9",
+    "experiments/managed-updater/build_packages.py": "d334e94cde643a25117097e0b33d0af72c5081425a9f40278d3fc5355eda7367",
+    "experiments/managed-updater/fake_github.py": "ed64868f2aabbe92aec59fc8629b49eee01315dfdd34da6e8ad3876423094902",
+    "patches/client/0057-managed-update-dialog.patch": "83e7a6225b16943f70026f34e1ba02ed74358a407e066a6778453ae7a3e796c5",
+    "scripts/harness/NativeLauncherUpdateProbe.java": "97f044cae4c91521ce8e3f14915fc2c8ad3305770a1a7f201a765f0d074b7212",
+    "scripts/harness/NativeManagedUpdateProbe.java": "7b95f6fe511daa0c22238b40f27598ea6a442693dcb25ff9835db43d628ebb85",
+    "scripts/launcher_backend.py": "291914ef530f6ff16950d017dd019a5e735ed612e581740c24cc2e7186029827",
+    "scripts/managed_install.py": "8a85eaafa3afb3c25f483cf64abb7b48d402abc901ad21a3514f114b6f439a13",
+    "scripts/managed_runtime.py": "074e741172696cb77802015abce0564c43c6c49e9fd6c44398a17e64fdb5c5ed",
+    "scripts/package_builder.py": "aa25e7e06b2c716d83e583e7db9b0bc48d68296008cd461993ea950921906b8a",
+    "scripts/profile_session.py": "82a65e30bbb5f7cd0a892259241000bac1cd8bcd9b53288c9b9a16f592958561",
+    "scripts/release_updates.py": "e2e5adc8403ba9df944612f5ca494db847adb89a998419ad99d75e85c6c7c303",
+    "scripts/runtime_manifest.py": "179ba66e41f5d6ddcba05f68394db8f9f1f03ed686ac5f91e2020df07f821590",
+    "scripts/update_manager.py": "eab8675656d4c01207af958588d06a492577753528b578fcf0441632c3323730",
+    "scripts/update_package.py": "a390ada343e5c6943addcdf99351c33cbcd38a2eb0fe1937d2929c5c2599a952"
+  },
+  "tooling_tests": "376 cases, 1 optional skip",
+  "version_ids": {
+    "private-test-a": "9f99cb273212f4c79873c85ee91af5246d3c97cf66df31439a7b9778042d8c88",
+    "private-test-b": "9cfa546f72c2bf28c38b51b010df684c94195aecd84f90a92ce3551f4320b581"
+  },
+  "zip_sha256": {
+    "private-test-b": "6c49e3967c4be6be98bf88f30314ae43741c4d8a80fe18d9471c04ebaf8da1cd"
+  }
+}

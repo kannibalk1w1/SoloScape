@@ -45,6 +45,18 @@ class PatchStackTest(unittest.TestCase):
         self.assertEqual(2, result.stdout.count("Already applied:"))
         self.assertEqual(expected, (self.repo / "input.txt").read_bytes())
 
+    def test_a_temp_folder_inside_a_git_checkout_does_not_make_every_patch_look_applied(self):
+        outer = self.root / "outer"
+        scratch = outer / "tmp"
+        scratch.mkdir(parents=True)
+        subprocess.run(["git", "init", "-q", str(outer)], check=True)
+        result = subprocess.run(["python3", str(SCRIPT), str(self.repo), *map(str, self.patches)], capture_output=True, text=True,
+                                env={**__import__("os").environ, "TMPDIR": str(scratch)})
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(2, result.stdout.count("Applied:"))
+        self.assertNotIn("Already applied", result.stdout)
+        self.assertEqual("camera\nmovement\n", (self.repo / "input.txt").read_text())
+
     def test_upgrades_existing_camera_build(self):
         (self.repo / "input.txt").write_text("camera\n")
         result = self.run_stack()

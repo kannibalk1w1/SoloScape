@@ -5,6 +5,7 @@ running until Save & Quit, game exit, or stdin closes; then waits for normal sav
 """
 import io
 import json
+import os
 import sys
 import threading
 import traceback
@@ -15,8 +16,36 @@ import session_recovery
 import release_updates
 import signal
 
+if os.environ.get('SOLOSCAPE_MANAGED_ROOT'):
+    # Started by the managed installer: bind to this immutable version and the external state homes
+    # before anything below reads paths. A source checkout never sets this.
+    import managed_runtime
+    MANAGED = managed_runtime.configure()
+else:
+    MANAGED = None
+try:
+    import update_manager
+except ImportError:  # historical lab payloads (manifest format 1) carry no updater
+    update_manager = None
+
 MAX_REQUEST = 16384
 SETTINGS = local_dev.launcher_directory() / "launcher-settings.json"
+
+
+class DiscoveryOnly:
+    """Discovery without install support, for payloads that predate the managed updater."""
+
+    def check(self):
+        return release_updates.check()
+
+    def close(self):
+        pass
+
+    def cancel(self):
+        return {}
+
+    def __getattr__(self, name):
+        raise RuntimeError('This copy cannot install updates.')
 
 
 class Backend:
@@ -25,6 +54,7 @@ class Backend:
         self.cancelled = threading.Event()
         self.mutex = threading.Lock()
         self.status = {'stage': 'idle', 'message': 'Choose a character or create a new one.', 'profile': None, 'error': None}
+        self.updates = update_manager.UpdateManager(MANAGED) if update_manager else DiscoveryOnly()
 
     def notify(self, stage, message):
         with self.mutex:
@@ -42,7 +72,23 @@ class Backend:
             # Network timeouts must never delay this backend's active-world stop request.
             if self.current()['running']:
                 return release_updates.result('busy', 'Save & Quit before checking for updates.')
-            return release_updates.check()
+            return self.updates.check()
+        if action == 'update_status':
+            return self.updates.status(world_running=self.current()['running'])
+        if action == 'update_download':
+            if self.current()['running']:
+                raise RuntimeError('Save & Quit before downloading an update.')
+            return self.updates.download()
+        if action == 'update_rebuild':
+            if self.current()['running']:
+                raise RuntimeError('Save & Quit before rebuilding an update.')
+            return self.updates.rebuild()
+        if action == 'update_rollback':
+            return self.updates.rollback(world_running=self.current()['running'])
+        if action == 'update_cancel':
+            return self.updates.cancel()
+        if action == 'update_apply':
+            return self.updates.apply(world_running=self.current()['running'])
         if action == 'settings':
             if request.get('save', False):
                 port = self.port(request)
@@ -136,9 +182,11 @@ class Backend:
                 self.status.update(stage='error', message=str(exc), error=str(exc))
 
     def close(self):
+        self.updates.cancel()  # a stalled download must never delay Save & Quit's save hooks
         self.cancelled.set()
         if self.worker is not None:
             self.worker.join()  # no forced kill while save hooks are running
+        self.updates.close()
 
 
 def serve(source=sys.stdin, destination=sys.stdout):

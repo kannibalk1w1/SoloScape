@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate a patch stack against a disposable copy before extending the checkout."""
+import os
 import pathlib
 import shutil
 import subprocess
@@ -7,13 +8,16 @@ import sys
 import tempfile
 
 
-def apply(cwd, patch, reverse=False, check=False):
+def apply(cwd, patch, reverse=False, check=False, isolated=False):
+    """git apply in cwd. Scratch trees are `isolated`: git must not discover an enclosing repository (a temp folder inside
+    a checkout would make it treat paths outside its subtree as skipped, so every patch would look already applied)."""
+    env = dict(os.environ, GIT_CEILING_DIRECTORIES=str(pathlib.Path(cwd).resolve().parent)) if isolated else None
     args = ["git", "apply"]
     if reverse:
         args.append("--reverse")
     if check:
         args.append("--check")
-    return subprocess.run(args + [str(patch)], cwd=cwd, capture_output=True, text=True)
+    return subprocess.run(args + [str(patch)], cwd=cwd, capture_output=True, text=True, env=env)
 
 
 def main():
@@ -39,9 +43,9 @@ def main():
                     dest = tree / name
                     dest.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(source, dest)
-            if any(apply(tree, patch, reverse=True).returncode for patch in reversed(patches[:prefix])):
+            if any(apply(tree, patch, reverse=True, isolated=True).returncode for patch in reversed(patches[:prefix])):
                 continue
-            if any(apply(tree, patch).returncode for patch in patches):
+            if any(apply(tree, patch, isolated=True).returncode for patch in patches):
                 continue
         for patch in patches[:prefix]:
             print(f"Already applied: {patch.name}")

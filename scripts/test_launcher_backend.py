@@ -103,6 +103,36 @@ profile_session.run(profile,threading.Event(),lambda *args:None,checked=False)
             if time.monotonic()>deadline:self.fail('Simulated session did not reach the expected state')
             time.sleep(.01)
 
+    def test_managed_world_holds_the_install_guard_until_its_children_exit(self):
+        import fcntl
+        install = self.root/'install'
+        install.mkdir()
+        (install/'install.guard').touch()
+        cancelled=threading.Event();errors=[]
+        def target():
+            try:profile_session.run(self.profile,cancelled,lambda *args:None,checked=False,port=43596)
+            except Exception as exc:errors.append(exc)
+        with patch.dict(os.environ,{'SOLOSCAPE_MANAGED_ROOT':str(install)}):
+            worker=threading.Thread(target=target)
+            worker.start()
+            try:
+                self.wait_for(lambda:(self.root/'client.args').exists())
+                fd=os.open(install/'install.guard',os.O_RDWR)
+                try:
+                    with self.assertRaises(BlockingIOError):fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+                finally:os.close(fd)
+                # The guard description is inherited by the owned game JVMs, not only held by the launcher.
+                self.wait_for(lambda:'client' in json.loads((self.profile.directory/'session.json').read_text())['children'])
+                for role,child in json.loads((self.profile.directory/'session.json').read_text())['children'].items():
+                    held=[os.readlink('/proc/%d/fd/%s'%(child['pid'],name)) for name in os.listdir('/proc/%d/fd'%child['pid'])]
+                    self.assertIn(str(install/'install.guard'),held,role)
+            finally:
+                cancelled.set();worker.join(5)
+        self.assertEqual(errors,[])
+        fd=os.open(install/'install.guard',os.O_RDWR)
+        try:fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        finally:os.close(fd)
+
     def test_session_waits_for_readiness_and_holds_lock_until_verified_shutdown(self):
         cancelled=threading.Event();events=[];errors=[]
         def target():
