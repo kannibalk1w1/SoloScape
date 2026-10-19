@@ -16,7 +16,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
-| client | 58 | `0058-update-source-rebuild-and-rollback.patch` | `852ee20db49a77faee9980fb8a3596c8cd7ed842e3958dd5dccc20a881a8d2cd` |
+| client | 59 | `0059-launcher-dialog-focus-recovery.patch` | `3b4d02fbaeec3b59bee3f6318c59cf99423c34324ea5420c331921407a2a66b1` |
 | server | 54 | `0054-persist-death-loot-world-checkpoints.patch` | `8b91a51eb60b4fca1bb77ef3e8511a9e9b67a9522dcbe7c29985d8125c8fc666` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
@@ -95,6 +95,7 @@ These are tracked source identities, not an installed-device inventory or proof 
 | Native permanent Slayer blocks, unblock buttons and exhausted-task recovery | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [53 selected native cases pass, including 17 new cases. All five block/unblock slots survive native disk restore and full account spawn; paid/refused UI actions, account isolation and empty-task streak preservation pass. Supplied stats/tasks/points; earned journey and physical controller acceptance remain open.](SLAYER_TASK_BLOCKS_20261018.md) |
 | Native account-batch recovery foundation (historical prerequisite) | IMPLEMENTED / AUTOMATED VALIDATION PASSED | DEFERRED | [Initial prerequisite report: 38 native storage/save cases passed, including abrupt exits and interrupted replay. Its live-world limitation is superseded by the integrated death-loot persistence entry; retain this report as the earlier scoped evidence.](NATIVE_ACCOUNT_BATCH_20261018.md) |
 | Integrated native grave/floor loot, coherent account/world checkpoints and cold recovery | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [42 native storage/save and40 death/loot cases pass, including9 cold-world scenarios/49 child JVMs, six actual checkpoint exit boundaries, offline-owner banked guest pickup, instance death, relog, repair/demolish, charges and paused clocks. Real native output survives managed backup/import/restore and pending/corrupt canonical replay; frozen52 refuses guarded accounts.294 root cases, one optional skip. Matched54/56 private package passes graphical New/Continue, Save & Quit, failure/cancellation handling and two real Main clean/pending restore sessions. No owner or Deck deployment; physical controller/lifecycle acceptance remains open.](DEATH_LOOT_PERSISTENCE_20261018.md) |
+| Launcher controller focus after Settings and character creation | IMPLEMENTED / AUTOMATED VALIDATION PASSED | PHYSICAL ACCEPTANCE REQUIRED | [Real Swing/private backend focus and nested-update regressions pass with the reported AWT setting; Gaming Mode/hardware retest and delivery remain open.](LAUNCHER_FOCUS_RECOVERY_20261019.md) |
 
 ## Decisions and maintenance
 

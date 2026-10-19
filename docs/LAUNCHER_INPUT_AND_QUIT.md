@@ -1,5 +1,7 @@
 # Launcher input and Save & Quit — 13 October 2026
 
+19 October follow-up: [dialog focus recovery](LAUNCHER_FOCUS_RECOVERY_20261019.md) covers Settings and character creation exits, missing component focus and nested dialogs. Host regression checks pass; Gaming Mode physical acceptance remains open.
+
 The owner reported that neither launcher navigation nor A responded on the Deck. The launcher discarded Steam-mapped navigation keys as soon as SDL reported a connected controller, even if that controller supplied no usable button state. Client patch 0045 merges Steam navigation mappings with SDL before computing press/release edges. Enter/Space maps to A, Escape to B and arrows to the D-pad; native keyboard navigation and Steam text-entry ownership retain their existing modes. A mapped and SDL version of the same held button produces one action.
 
 Right from the character list moves to the first enabled action button. Up/down still selects characters; the visible button rows support directional navigation and skip disabled actions. Up from the top row, left from Continue or B returns to the character list. Bumpers retain focus traversal.

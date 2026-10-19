@@ -561,6 +561,14 @@
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "DEATH_LOOT_PERSISTENCE_20261018.md",
       "note": "42 native storage/save and40 death/loot cases pass, including9 cold-world scenarios/49 child JVMs, six actual checkpoint exit boundaries, offline-owner banked guest pickup, instance death, relog, repair/demolish, charges and paused clocks. Real native output survives managed backup/import/restore and pending/corrupt canonical replay; frozen52 refuses guarded accounts.294 root cases, one optional skip. Matched54/56 private package passes graphical New/Continue, Save & Quit, failure/cancellation handling and two real Main clean/pending restore sessions. No owner or Deck deployment; physical controller/lifecycle acceptance remains open."
+    },
+    {
+      "id": "launcher-dialog-focus",
+      "scope": "Launcher controller focus after Settings and character creation",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "LAUNCHER_FOCUS_RECOVERY_20261019.md",
+      "note": "Real Swing/private backend focus and nested-update regressions pass with the reported AWT setting; Gaming Mode/hardware retest and delivery remain open."
     }
   ]
 }
