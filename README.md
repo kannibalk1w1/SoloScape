@@ -109,8 +109,9 @@ cache, player saves, credentials, local settings and built jars are excluded.
 No game assets or ready-to-run game package are distributed here.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing or submitting work.
-Upstream licence notices and the current original-material licensing status are
-in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). SoloScape is independent and
+Original SoloScape material is available under the [MIT License](LICENSE);
+upstream licence notices and what the MIT License does not cover are in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). SoloScape is independent and
 not affiliated with Jagex, RuneLite or upstream maintainers.
 
 Historical Steam Deck checkpoints record private Desktop deployment, native save

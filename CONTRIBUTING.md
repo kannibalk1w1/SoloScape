@@ -34,8 +34,10 @@ There are no release dates or promised review times at this stage.
 
 Do not upload game cache/assets, save files, account credentials, local configuration,
 Java runtimes, downloaded archives or built jars. Redact personal data from logs.
-The [upstream notices](THIRD_PARTY_NOTICES.md) explain the current licensing status;
-preserve existing notices and only submit work you have permission to share.
+Original SoloScape material is MIT licensed ([LICENSE](LICENSE)); by contributing you
+agree your contribution is offered under the same licence. The
+[upstream notices](THIRD_PARTY_NOTICES.md) explain what it does not cover; preserve
+existing notices and only submit work you have permission to share.
 
 ## Current focus
 
