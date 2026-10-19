@@ -16,7 +16,7 @@ This is the current evidence index. Dated reports remain historical. A generated
 
 | Stack | Patches | Last patch | SHA-256 of ordered names and bytes |
 | --- | ---: | --- | --- |
-| client | 59 | `0059-launcher-dialog-focus-recovery.patch` | `3b4d02fbaeec3b59bee3f6318c59cf99423c34324ea5420c331921407a2a66b1` |
+| client | 59 | `0059-launcher-dialog-focus-recovery.patch` | `c1d1d55c27c23264dcd1ee249dca4477f9042737f620a679ae4902db8751750f` |
 | server | 54 | `0054-persist-death-loot-world-checkpoints.patch` | `8b91a51eb60b4fca1bb77ef3e8511a9e9b67a9522dcbe7c29985d8125c8fc666` |
 
 These are tracked source identities, not an installed-device inventory or proof of a matched jar. See build stamps and private device manifests for the latter.
