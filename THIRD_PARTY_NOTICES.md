@@ -21,7 +21,18 @@ licences and notices. This repository does not grant rights to RuneScape assets,
 trademarks or proprietary game resources. SoloScape is an independent project
 and is not affiliated with Jagex, RuneLite or the upstream maintainers.
 
-No separate repository-wide licence has yet been selected for original SoloScape
-material. Public visibility does not change upstream licences or imply that all
-original material is available under the BSD licences above. A complete
-licence/dependency review is on the roadmap before distributing a game package.
+## Original SoloScape material
+
+Original SoloScape material in this repository (scripts, launcher and updater
+code, tests, documentation and the original parts of the patches) is licensed
+under the [MIT License](LICENSE), copyright 2026 Kannibalkiwi.
+
+The MIT License does not cover:
+
+- upstream source files, or the lines of a patch that come from them; these keep
+  the licences and notices listed above;
+- RuneScape or Jagex assets, trademarks, the game cache, art and other
+  proprietary game resources, none of which are included or licensed here;
+- built jars, server data, JDKs, Gradle dependencies and other third-party
+  binaries or data, which retain their own terms. A complete licence and
+  dependency review is still required before distributing a game package.
