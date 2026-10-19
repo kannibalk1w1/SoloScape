@@ -25,7 +25,7 @@ A code-only package built from the same payload is **under 1 MiB** and contains 
 ## What this does and does not settle
 
 - It removes the two fat jars, the embedded natives and the server data from anything uploaded, so the three unattributed jars, the missing notices and the data provenance no longer gate a **code-only** release. They still gate any release that ships those files.
-- It does not decide that the scripts may be published (no repository licence yet) or that the patches may be (they modify upstream files; their redistribution terms follow those files).
+- It does not decide whether the patches may be published (they modify upstream files; their redistribution terms follow those files).
 - It leaves the game programs and data **outside the release's integrity check**. See the trust section of the [managed updater document](MANAGED_UPDATER_20261018.md#locally-supplied-files).
 
 ## Why the jars are not pinned by hash
