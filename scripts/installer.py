@@ -516,21 +516,26 @@ class Installer:
     def register(self, jdks, cancelled=None):
         local_dev, managed_install, package_builder, source_build, update_package = self.load_project()
         if self.install_complete(managed_install):
-            # Hold the guard across build, staging and activation. A launcher/world must not
-            # open between the version check and the pointer switch; the old version stays intact.
-            with managed_install.acquire(self.install, 'exclusive') as lease:
-                current = managed_install.verify_version(self.install, lease.current())
-                if current['release'] == self.release and current['source_commit'] == self.commit:
-                    self.say('SoloScape release %s is already installed in %s.' % (self.release, self.install))
-                    return None
-                self.say('Updating SoloScape from %s to %s; saves and backups stay in place.' % (current['release'], self.release))
-                package = self.build(jdks, cancelled)
-                digest = sha256_file(package)
-                found = update_package.install_zip(self.install, package, digest, expected_release=self.release,
-                                                   supply_roots=[str(self.source)], job=update_package.Job(cancelled=cancelled))
-                version = managed_install.activate(self.install, found['id'], lease=lease)
-                package.unlink(missing_ok=True)
-                return version
+            try:
+                # Hold the guard across build, staging and activation. A launcher/world must not
+                # open between the version check and the pointer switch; the old version stays intact.
+                with managed_install.acquire(self.install, 'exclusive') as lease:
+                    current = managed_install.verify_version(self.install, lease.current())
+                    if current['release'] == self.release and current['source_commit'] == self.commit:
+                        self.say('SoloScape release %s is already installed in %s.' % (self.release, self.install))
+                        return None
+                    self.say('Updating SoloScape from %s to %s; saves and backups stay in place.' % (current['release'], self.release))
+                    package = self.build(jdks, cancelled)
+                    digest = sha256_file(package)
+                    found = update_package.install_zip(self.install, package, digest, expected_release=self.release,
+                                                       supply_roots=[str(self.source)], job=update_package.Job(cancelled=cancelled))
+                    version = managed_install.activate(self.install, found['id'], lease=lease)
+                    package.unlink(missing_ok=True)
+                    return version
+            except update_package.Cancelled as exc:
+                raise InstallerError(str(exc), 130) from None
+            except (managed_install.InstallError, update_package.PackageError) as exc:
+                raise InstallerError(str(exc)) from None
         if self.install.exists():  # an earlier run stopped before the install was complete; it holds nothing of the player's
             self.remove_tree(self.install)
         package = self.build(jdks, cancelled)

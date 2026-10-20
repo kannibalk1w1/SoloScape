@@ -560,7 +560,7 @@ class Upgrade(Case):
 
     def test_running_launcher_refuses_before_build_or_pointer_change(self):
         with self.mi.acquire(self.inst.install, 'shared'):
-            with self.assertRaises(self.mi.Busy):
+            with self.assertRaisesRegex(ins.InstallerError, 'still running'):
                 self.inst.register({})
         self.inst.build.assert_not_called()
         self.assertEqual(self.mi.read_pointer(self.inst.install)['current'], self.old)
@@ -571,17 +571,18 @@ class Upgrade(Case):
         with self.assertRaises(ins.InstallerError):
             self.inst.register({})
         self.inst.build.side_effect = None
-        import threading, update_package
+        import threading
         cancelled = threading.Event(); cancelled.set()
-        with self.assertRaises(update_package.Cancelled):
+        with self.assertRaises(ins.InstallerError) as caught:
             self.inst.register({}, cancelled)
+        self.assertEqual(caught.exception.code, 130)
         self.assertEqual(self.mi.read_pointer(self.inst.install)['current'], self.old)
         self.assert_preserved()
 
     def test_incompatible_save_storage_keeps_the_old_version(self):
         self.package, _, _ = self.fx.make_package(self.tmp, 'r2', storage=(0,))
         self.inst.build.return_value = self.package
-        with self.assertRaises(self.mi.InstallError):
+        with self.assertRaises(ins.InstallerError):
             self.inst.register({})
         self.assertEqual(self.mi.read_pointer(self.inst.install)['current'], self.old)
         self.assert_preserved()
