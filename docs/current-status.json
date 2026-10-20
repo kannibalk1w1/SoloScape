@@ -568,7 +568,15 @@
       "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
       "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
       "evidence": "LAUNCHER_FOCUS_RECOVERY_20261019.md",
-      "note": "Real Swing/private backend focus and nested-update regressions pass with the reported AWT setting; Gaming Mode/hardware retest and delivery remain open."
+      "note": "v0.51 source and code-only update package published; real Swing/private backend focus and nested-update regressions pass. Physical Gaming Mode retest remains open."
+    },
+    {
+      "id": "release-delivery",
+      "scope": "Code-only release delivery and guarded installer upgrades",
+      "delivery": "IMPLEMENTED / AUTOMATED VALIDATION PASSED",
+      "acceptance": "PHYSICAL ACCEPTANCE REQUIRED",
+      "evidence": "RELEASE_DELIVERY_20261020.md",
+      "note": "Missing v0.51 package published and live digest/download verified; original v0.5 updater stages/applies/rolls back exact package with save unchanged using a prepared local build. Installer upgrade and paired-release artifact regressions pass; physical Deck acceptance remains open."
     }
   ]
 }

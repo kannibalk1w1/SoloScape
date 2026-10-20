@@ -40,6 +40,7 @@ def build(release, commit, output):
         archive.write(HERE / 'installer.py', 'installer.py')
         archive.write(HERE / 'installer_inputs.json', 'installer_inputs.json')
         archive.writestr('release.json', json.dumps({'release': release, 'commit': commit}, sort_keys=True) + '\n')
+        archive.comment = (HERE.parent / 'LICENSE').read_bytes()
     inputs = json.loads((HERE / 'installer_inputs.json').read_text())
     output.write_bytes(header(inputs) + output.read_bytes())
     output.chmod(output.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)

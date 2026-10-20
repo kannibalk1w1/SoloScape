@@ -1,9 +1,8 @@
 """Build a managed package zip from a payload file map or a prepared payload directory.
 
-PRIVATE TEST TOOL. A package built from a deck export or from `prepare.py` output contains the owner's
-authorized game data and jars and is never to be uploaded as a public release. Public package contents and
-their licence inventory are separate, unresolved work (see docs/MANAGED_UPDATER_20261018.md). The builder
-checks only structure and writes a sidecar marking the output private.
+A package built from a deck export contains private game data and jars and must never be published.
+For public delivery use build_release.py: it builds both installer and code-only update assets, audits
+every shipped path and source identity, and includes the MIT notice. checkout_package leaves jars/data local.
 """
 import argparse
 import hashlib

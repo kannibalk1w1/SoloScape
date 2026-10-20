@@ -6,7 +6,7 @@ patch layer over the pinned 2011Scape/Void server and RuneLite-style client.
 
 **Stage: playable console alpha on `main`.** Local gameplay works and the owner
 has confirmed camera, movement feedback and optional direct movement feel good.
-There is no packaged release yet. Steam Deck performance, full interface coverage,
+Installer and code-only update releases are available. Steam Deck performance, full interface coverage,
 upstream content completeness and physical interface play still need acceptance. Isolated native save/reload and a gathering–production–combat route are verified.
 
 This is a public, **maintainer-directed** development repository. Feedback and small,
@@ -59,7 +59,7 @@ For Linux x86_64 with a graphical session, including a Steam Deck in Desktop Mod
 
    It asks `Continue? [y/N]`, then downloads Java and the project source and builds the game on your own computer. Allow roughly 20 to 40 minutes and 8 GB of free space for the first run. If it stops (network, Ctrl-C), run the same command again: finished steps are reused.
 4. **Start SoloScape** from the application menu entry it adds, or `~/.local/share/soloscape/soloscape`. On a Deck you can add that file as a non-Steam game yourself in Desktop Mode; the installer does not touch Steam.
-5. **Updates:** use the launcher's Updates dialog (Check, Download, Install and Restart, Update Source and Rebuild, Roll Back). Your characters, login and settings stay in `~/.local/share/soloscape/profiles` and `launcher`.
+5. **Updates:** open Launcher Settings → Updates → Check for updates → Download. If a new local build is needed, choose Update Source and Rebuild, then Install and Restart when ready. Roll Back becomes available after an update. Your characters, login and settings stay in `~/.local/share/soloscape/profiles` and `launcher`. The missing v0.51 package has been added; see [delivery repair and installer upgrades](docs/RELEASE_DELIVERY_20261020.md).
 
 Everything lives under `~/.local/share/soloscape` (use `--data DIR` to choose another place). Details, limits and what is and is not verified: [installer notes](docs/INSTALLER_20261018.md). This installer has been tested on a clean folder on a desktop Linux machine with Python and git removed from the path; it has **not** yet been tested on a physical Steam Deck. The steps below are the manual developer route.
 

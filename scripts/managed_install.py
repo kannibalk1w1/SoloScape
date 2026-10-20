@@ -506,20 +506,25 @@ def _switch(root, target, expected_current, cutpoint):
     return state
 
 
-def activate(root, candidate, cutpoint=None):
-    """Point current at a verified staged candidate. The old current becomes previous. Pointer-only."""
-    with acquire(root, 'exclusive'):
-        cfg = load_config(root)
-        state = read_pointer(root)
-        if candidate == state['current']:
-            raise InstallError('That version is already installed.')
-        manifest = verify_version(root, candidate)
-        reasons = blockers(cfg, manifest)
-        if reasons:
-            raise InstallError(' '.join(reasons))
-        _publish(root, TRIAL, {'format': FORMAT_TRIAL, 'candidate': candidate, 'previous': state['current']})
-        _switch(root, candidate, state['current'], cutpoint)
-        _prune(root, {candidate, state['current']})
+def activate(root, candidate, cutpoint=None, *, lease=None):
+    """Point current at a verified staged candidate; optionally keep an installer's existing exclusive lease."""
+    if lease is None:
+        with acquire(root, 'exclusive') as owned:
+            return activate(root, candidate, cutpoint, lease=owned)
+    if (not isinstance(lease, Lease) or not lease.open or lease.mode != 'exclusive'
+            or lease.root.absolute() != Path(root).absolute()):
+        raise InstallError('Activation requires this install\'s open exclusive lease.')
+    cfg = load_config(root)
+    state = read_pointer(root)
+    if candidate == state['current']:
+        raise InstallError('That version is already installed.')
+    manifest = verify_version(root, candidate)
+    reasons = blockers(cfg, manifest)
+    if reasons:
+        raise InstallError(' '.join(reasons))
+    _publish(root, TRIAL, {'format': FORMAT_TRIAL, 'candidate': candidate, 'previous': state['current']})
+    _switch(root, candidate, state['current'], cutpoint)
+    _prune(root, {candidate, state['current']})
     return candidate
 
 
