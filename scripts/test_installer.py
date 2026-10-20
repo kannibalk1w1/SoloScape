@@ -505,6 +505,100 @@ class Environment(Case):
         self.assertFalse((self.tmp / 'd').exists())
 
 
+class Upgrade(Case):
+    """An installer rerun upgrades the immutable program and retains the owned mutable homes."""
+
+    def setUp(self):
+        super().setUp()
+        import managed_fixture as fx
+        import managed_install as mi
+        import package_builder, source_build, update_package
+        from unittest.mock import Mock
+        self.mi, self.fx = mi, fx
+        self.inst.profiles.mkdir(parents=True)
+        self.profile, self.save = fx.make_profile(self.inst.profiles)
+        backup = self.profile / 'backups' / 'keep.zip'
+        backup.parent.mkdir(); backup.write_bytes(b'original backup')
+        self.inst.launcher.mkdir(); (self.inst.launcher / 'settings.json').write_bytes(b'original settings')
+        old, digest, _ = fx.make_package(self.tmp, 'r1')
+        self.old = mi.install_first(self.inst.install, old, digest, self.inst.profiles, self.inst.cache, self.inst.launcher)
+        self.before = {p: p.read_bytes() for home in (self.inst.profiles, self.inst.launcher) for p in home.rglob('*') if p.is_file()}
+        self.inst.release, self.inst.commit = 'r2', 'c' * 40
+        self.package, _, _ = fx.make_package(self.tmp, 'r2')
+        self.inst.build = Mock(return_value=self.package)
+        self.inst.load_project = lambda: (None, mi, package_builder, source_build, update_package)
+
+    def assert_preserved(self):
+        for path, content in self.before.items():
+            self.assertEqual(path.read_bytes(), content)
+
+    def test_newer_installer_activates_and_keeps_rollback_and_current_progress(self):
+        new = self.inst.register({})
+        pointer = self.mi.read_pointer(self.inst.install)
+        self.assertEqual(pointer, {'current': new, 'previous': self.old})
+        self.assertEqual(self.mi.verify_version(self.inst.install, new)['release'], 'r2')
+        self.assert_preserved()
+        self.inst.register({})
+        self.inst.build.assert_called_once()
+        self.mi.rollback(self.inst.install)
+        self.assertEqual(self.mi.read_pointer(self.inst.install)['current'], self.old)
+        self.assert_preserved()
+
+    def test_same_label_with_different_source_is_upgraded(self):
+        self.inst.release = 'r1'
+        self.package, _, _ = self.fx.make_package(self.tmp, 'r1', server=b'changed synthetic program')
+        self.inst.build.return_value = self.package
+        # Synthetic packages name cccc…; a different installed commit must not be skipped.
+        original = self.mi.verify_version
+        from unittest.mock import patch
+        def earlier(root, version):
+            value = original(root, version)
+            return dict(value, source_commit='a' * 40) if version == self.old else value
+        with patch.object(self.mi, 'verify_version', side_effect=earlier):
+            self.assertNotEqual(self.inst.register({}), self.old)
+        self.assert_preserved()
+
+    def test_running_launcher_refuses_before_build_or_pointer_change(self):
+        with self.mi.acquire(self.inst.install, 'shared'):
+            with self.assertRaises(self.mi.Busy):
+                self.inst.register({})
+        self.inst.build.assert_not_called()
+        self.assertEqual(self.mi.read_pointer(self.inst.install)['current'], self.old)
+        self.assert_preserved()
+
+    def test_build_failure_and_cancel_keep_the_old_version(self):
+        self.inst.build.side_effect = ins.InstallerError('build failed')
+        with self.assertRaises(ins.InstallerError):
+            self.inst.register({})
+        self.inst.build.side_effect = None
+        import threading, update_package
+        cancelled = threading.Event(); cancelled.set()
+        with self.assertRaises(update_package.Cancelled):
+            self.inst.register({}, cancelled)
+        self.assertEqual(self.mi.read_pointer(self.inst.install)['current'], self.old)
+        self.assert_preserved()
+
+    def test_incompatible_save_storage_keeps_the_old_version(self):
+        self.package, _, _ = self.fx.make_package(self.tmp, 'r2', storage=(0,))
+        self.inst.build.return_value = self.package
+        with self.assertRaises(self.mi.InstallError):
+            self.inst.register({})
+        self.assertEqual(self.mi.read_pointer(self.inst.install)['current'], self.old)
+        self.assert_preserved()
+
+    def test_activation_refuses_shared_closed_and_wrong_install_leases(self):
+        for mode in ('shared', 'exclusive'):
+            with self.mi.acquire(self.inst.install, mode) as lease:
+                if mode == 'shared':
+                    with self.assertRaises(self.mi.InstallError):
+                        self.mi.activate(self.inst.install, self.old, lease=lease)
+                else:
+                    with self.assertRaises(self.mi.InstallError):
+                        self.mi.activate(self.tmp / 'other-install', self.old, lease=lease)
+            with self.assertRaises(self.mi.InstallError):
+                self.mi.activate(self.inst.install, self.old, lease=lease)
+
+
 class Zipapp(Case):
     def build(self, name='i.sh'):
         import build_installer

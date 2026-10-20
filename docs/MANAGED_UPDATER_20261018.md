@@ -1,5 +1,7 @@
 # Managed updater — 18 October 2026
 
+20 October follow-up: [release delivery repair](RELEASE_DELIVERY_20261020.md) records the published code-only update package and correct Check → Download → Rebuild (if needed) → Install sequence. The publication statements below describe the original private validation.
+
 The graphical launcher can now check for, download, verify and install a SoloScape update into a **managed install**, then continue the same characters in the new version. This is the smallest usable production path, built from the merged lab mechanisms. It is verified privately; **no public release exists, nothing was published, and no owner install, Deck or profile was touched.** See [limits](#limits-and-open-questions) before relying on it.
 
 ## What a player sees

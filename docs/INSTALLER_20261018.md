@@ -1,5 +1,7 @@
 # One-command installer — 18 October 2026
 
+20 October follow-up: [delivery repair](RELEASE_DELIVERY_20261020.md) supersedes the publication and rerun limits below. Code-only v0.51 update assets are published; newer installers upgrade a valid existing install through guarded activation and preserve rollback and saves. Generate both delivery assets with `scripts/build_release.py`.
+
 For people who will not build SoloScape from source by hand. One file, `soloscape-installer.sh`, installs Java, builds the game from the fixed source on the player's own computer, asks for the one input it cannot supply (the game cache), and registers the result with the managed launcher so the Update dialog keeps it current. **No installer has been published.** This describes what the code does and what has been tested.
 
 ## What the player does
